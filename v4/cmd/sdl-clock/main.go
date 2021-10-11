@@ -172,8 +172,10 @@ func main() {
 			}
 
 			if state.Info != "" {
-				if state.Info != info {
-					info = state.Info
+				newInfo := fmt.Sprintf("%s\nKeyboard:\nF - Full screen\nEscape - Exit full screen\nC - Open web config", state.Info)
+				if newInfo != info {
+					info = newInfo
+
 					updateInfoScreen(info)
 				}
 				drawInfoScreen()
@@ -201,7 +203,7 @@ func updateInfoScreen(info string) {
 	}
 	lines := strings.Split(info, "\n")
 
-	height := infoFont.LineSkip() * len(lines)
+	height := infoFont.LineSkip() * (len(lines) + 1)
 	infoTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 1024, int32(height))
 	infoTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	check(err)
