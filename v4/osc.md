@@ -211,6 +211,13 @@ Parameters:
 2. int; Green component of the color
 3. int; Blue component of the color
 
+### `/clock/automation`
+
+Turns the signal color automation on or off
+
+Parameters:
+1. bool; desired signal automation state
+
 ## Internal commands
 
 These are used to bridge different state information accross multiple clocks.

@@ -532,6 +532,8 @@ func (engine *Engine) listen() {
 				if message.Counter == engine.signalHardware && len(message.Colors) == 1 {
 					engine.signalHardwareColor = message.Colors[0]
 				}
+			case "signalAutomation":
+				engine.autoSignals = message.Countdown
 			}
 			// We have received a osc command, so stop the version display
 			engine.initialized = true

@@ -496,6 +496,21 @@ func (server *Server) handleHardwareSignal(msg *osc.Message) {
 	}
 }
 
+func (server *Server) handleSignalAutomation(msg *osc.Message) {
+	var v bool
+	debug.Printf("handleSignalAutomation: %v", msg)
+	err := msg.UnmarshalArguments(&v)
+	if err != nil {
+		log.Printf("handleSignalAutomation: %v %v", err, msg)
+		return
+	}
+	message := Message{
+		Type:      "signalAutomation",
+		Countdown: v, // FIXME: Ugly hack!
+	}
+	server.update(message)
+}
+
 /*
  * Deprecated message handlers awaiting removal
  */
@@ -620,6 +635,7 @@ func (server *Server) setup(oscServer *osc.Server) {
 	registerHandler(oscServer, "^/clock/time/set", server.handleTimeSet)
 	registerHandler(oscServer, "^/clock/flash", server.handleFlash)
 	registerHandler(oscServer, "^/clock/signal/*", server.handleHardwareSignal)
+	registerHandler(oscServer, "^/clock/automation", server.handleSignalAutomation)
 
 	// Deprecated
 	registerHandler(oscServer, "^/clock/dual/text", server.handleDualText)
