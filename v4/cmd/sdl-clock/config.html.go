@@ -48,6 +48,7 @@ const configHTML = `
 							<option value="192" {{if eq .Face "192"}} selected {{end}}>Small 192x192px round clock</option>
 							<option value="144" {{if eq .Face "144"}} selected {{end}}>Small 144x144px round clock</option>
 							<option value="288x144" {{if eq .Face "288x144"}} selected {{end}}>Small 288x144px text clock</option>
+							<option value="countdown" {{if eq .Face "countdown"}} selected {{end}}>Countdown to static date and time</option>
 						</select><br />
 					</label>
 
@@ -115,7 +116,7 @@ const configHTML = `
 					image in the fat partition and refer to it as /boot/imagename.png</p>
 
 					<label for="BackgroundPath">
-						<span>Path for OSC selectable background images/span>
+						<span>Path for OSC selectable background images</span>
 						<input type="text" id="BackgroundPath" name="BackgroundPath" value="{{.BackgroundPath}}" />
 					</label>
 					<p>The OSC command /clock/background/ can be used to select a numbered background image from this path.
@@ -134,6 +135,11 @@ const configHTML = `
 					<label for="TODBeep">
 						<span>Enable audio cues for time of day displays on each full hour.</span>
 						<input type="checkbox" id="TODBeep" name="TODBeep" {{if .TODBeep}} checked {{end}}/>
+					</label>
+
+					<label for="CountdownTarget">
+						<span>Target for the countdown clock face (YYYY-MM-DD HH:MM:SS)</span>
+						<input type="text" id="CountdownTarget" name="CountdownTarget" value="{{.CountdownTarget}}" />
 					</label>
 
 				</fieldset>
@@ -431,6 +437,11 @@ const configHTML = `
 				<label for="signal-hw-follow">
 					<span>Hardware signal follows source 1 color</span>
 					<input type="checkbox" id="signal-hw-follow" name="signal-hw-follow" {{if .SignalFollow}} checked {{end}} />
+				</label>
+
+				<label for="SignalToBG">
+					<span>Use hardware signal color as clock background</span>
+					<input type="checkbox" id="SignalToBG" name="SignalToBG" {{if .SignalToBG}} checked {{end}} />
 				</label>
 
 

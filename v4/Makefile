@@ -37,6 +37,7 @@ dep: ## Get the dependencies
 	@go get -v -d ./...
 
 clean:
+	@rm -f $(BINARIES)
 	@rm -f sdl-clock sdl-clock.exe multi-clock matrix-clock clock_port80.ini clock_port8080.ini clock-8001.msi sdl-clock_amd64 sdl-clock_arm64
 	@rm -fr windows
 
@@ -57,10 +58,10 @@ sdl-clock:
 config: clock_port80.ini clock_port8080.ini
 
 clock_port80.ini: sdl-clock
-	./sdl-clock --http-port :80 --defaults --dump-config > clock_port80.ini
+	./sdl-clock --http-port :80 --countdown-target "$(shell date +%Y)-12-24 00:00:00" --defaults --dump-config > clock_port80.ini
 
 clock_port8080.ini: sdl-clock
-	./sdl-clock --http-port :8080 --defaults --dump-config > clock_port8080.ini
+	./sdl-clock --http-port :8080 --countdown-target "$(shell date +%Y)-12-24 00:00:00" --defaults --dump-config > clock_port8080.ini
 
 
 windows: dep clock_port8080.ini ## Build the binary file
@@ -79,9 +80,6 @@ macos:
 	$(shell export GOOS=darwin; export GOARCH=amd64; go build -tags static -ldflags "-s -w -X $(VERSION_PKG).gitCommit=$(GIT_COMMIT) -X $(VERSION_PKG).gitTag=$(GIT_TAG)" -o sdl-clock_amd64 gitlab.com/Depili/clock-8001/v4/cmd/sdl-clock)
 	## $(shell export GOOS=darwin; export GOARCH=arm64; export CGO_CFLAGS="-isysroot $(shell xcrun --sdk macosx11.1 --show-sdk-path) -arch arm64 -I/usr/local/include"; export CGO_LDFLAGS="-isysroot $(shell xcrun --sdk macosx11.1 --show-sdk-path) -arch arm64 -L/usr/local/lib"; export CGO_ENABLED=1 ;go build -tags static -ldflags "-s -w -X $(VERSION_PKG).gitCommit=$(GIT_COMMIT) -X $(VERSION_PKG).gitTag=$(GIT_TAG)" -o sdl-clock_arm64 gitlab.com/Depili/clock-8001/v4/cmd/sdl-clock)
 	## @lipo -create -output sdl-clock_fat sdl-clock_amd64 sdl-clock_arm64
-
-clean: ## Remove previous build
-	@rm -f $(BINARIES)
 
 help: ## Display this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

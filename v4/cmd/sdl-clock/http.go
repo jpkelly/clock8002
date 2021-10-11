@@ -166,6 +166,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.EngineOptions.AutoSignals = r.FormValue("auto-signals") != ""
 	newOptions.EngineOptions.SignalStart = r.FormValue("signal-start") != ""
 	newOptions.SignalFollow = r.FormValue("signal-hw-follow") != ""
+	newOptions.SignalToBG = r.FormValue("SignalToBG") != ""
 
 	newOptions.AudioEnabled = r.FormValue("AudioEnabled") != ""
 	newOptions.TODBeep = r.FormValue("TODBeep") != ""
@@ -178,9 +179,17 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.EngineOptions.Source3.Text = r.FormValue("source3-text")
 	newOptions.EngineOptions.Source4.Text = r.FormValue("source4-text")
 
+	// Countdown face target
+	t := r.FormValue("CountdownTarget")
+	match, err := regexp.MatchString(`^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d`, t)
+	if err != nil || !match {
+		errors += fmt.Sprintf("<li>Countdown face target time is invalid (%s): %s", t, err)
+	}
+	newOptions.CountdownTarget = t
+
 	// Clock face type
 	newOptions.Face = r.FormValue("Face")
-	if f := newOptions.Face; (f != "round") && (f != "dual-round") && (f != "text") && (f != "small") && (f != "single") && (f != "144") && (f != "192") && (f != "288x144") {
+	if f := newOptions.Face; (f != "countdown") && (f != "round") && (f != "dual-round") && (f != "text") && (f != "small") && (f != "single") && (f != "144") && (f != "192") && (f != "288x144") {
 		errors += fmt.Sprintf("<li>Clock face selection is invalid (%s)</li>", newOptions.Face)
 	}
 

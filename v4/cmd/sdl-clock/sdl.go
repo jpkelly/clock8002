@@ -159,6 +159,9 @@ func initTextures() {
 
 	// Texture for 12 static circles
 	renderer.SetDrawColor(0, 0, 0, 0)
+	if staticTexture != nil {
+		staticTexture.Destroy()
+	}
 	staticTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, textureSize, textureSize)
 	check(err)
 	err = staticTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
@@ -184,6 +187,9 @@ func initTextures() {
 
 	// Texture for the second marker circles
 	renderer.SetDrawColor(0, 0, 0, 0)
+	if secTexture != nil {
+		secTexture.Destroy()
+	}
 	secTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, textureSize, textureSize)
 	check(err)
 	err = secTexture.SetBlendMode(sdl.BLENDMODE_BLEND)

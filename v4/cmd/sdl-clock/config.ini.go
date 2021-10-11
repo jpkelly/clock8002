@@ -4,7 +4,7 @@ const configTemplate = `# Example configuration file for clock-8001
 # Lines starting with '#' are comments and
 # are ignored by clock-8001
 
-# Clock face to use. (round, dual-round, text, single or small)
+# Clock face to use. (countdown, round, dual-round, text, single or small)
 Face={{.Face}}
 
 # Username and password for the web configuration interface
@@ -57,6 +57,9 @@ udp-timer-1={{.EngineOptions.UDPTimer1}}
 
 # Timer to send / receive as UDP timer 1 (port 36700)
 udp-timer-2={{.EngineOptions.UDPTimer2}}
+
+# Target for the countdown clock face (YYYY-MM-DD HH:MM:SS)
+CountdownTarget={{.CountdownTarget}}
 
 # Time sources
 #
@@ -165,6 +168,9 @@ signal-hw-brightness={{.SignalBrightness}}
 
 # Hardware signal follows source 1 signal color
 signal-hw-follow={{.SignalFollow}}
+
+# Use hardware signal color as clock background
+SignalToBG={{.SignalToBG}}
 
 # Mitti and Millumin
 

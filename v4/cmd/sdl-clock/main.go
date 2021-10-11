@@ -85,6 +85,7 @@ func main() {
 	configStarted := false
 
 	configTimer := timer.NewTimer(time.Second * 5)
+	isFullScreen := false
 
 	for {
 		select {
@@ -100,9 +101,19 @@ func main() {
 			case *sdl.KeyboardEvent:
 				key := t.Keysym.Sym
 				if key == sdl.K_f {
-					window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+					if !isFullScreen {
+						window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+						setupScaling()
+						initTextures()
+						isFullScreen = true
+					}
 				} else if key == sdl.K_ESCAPE {
-					window.SetFullscreen(0)
+					if isFullScreen {
+						window.SetFullscreen(0)
+						setupScaling()
+						initTextures()
+						isFullScreen = false
+					}
 				} else if key == sdl.K_c {
 					if !configStarted {
 						configStarted = true
@@ -135,6 +146,12 @@ func main() {
 
 			// Get the clock state snapshot
 			state := engine.State()
+
+			if options.SignalToBG {
+				c := toSDLColor(state.HardwareSignalColor)
+				colors.background = c
+			}
+
 			if state.ScreenFlash {
 				drawWhiteScreen()
 			} else {

@@ -97,6 +97,7 @@ type clockOptions struct {
 	SignalBrightness int    `long:"signal-hw-brightness" description:"Brightness for the hardware signal lamps, 0-255" default:"128"`
 	SignalType       string `long:"signal-hw-type" description:"Hardware signal type" default:"unicorn-hd" choice:"none" choice:"unicorn-hd"`
 	SignalFollow     bool   `long:"signal-hw-follow" description:"Hardware signal follows source 1"`
+	SignalToBG       bool   `long:"signal-to-bg" description:"Set the hardware signal color as clock background color"`
 
 	AudioEnabled bool `long:"audio" description:"Play beeps when a timer is about to expire"`
 	TODBeep      bool `long:"tod-beep" description:"Play beeps on each hour on TOD clocks"`
