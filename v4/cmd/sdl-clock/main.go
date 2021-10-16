@@ -147,11 +147,6 @@ func main() {
 			// Get the clock state snapshot
 			state := engine.State()
 
-			if options.SignalToBG {
-				c := toSDLColor(state.HardwareSignalColor)
-				colors.background = c
-			}
-
 			if state.ScreenFlash {
 				drawWhiteScreen()
 			} else {
@@ -184,14 +179,23 @@ func main() {
 			// Update the canvas
 			renderer.Present()
 			// debug.Printf("Frame time: %d ms\n", time.Now().Sub(startTime).Milliseconds())
+
+			// Hardware signal color handling
+			c := state.HardwareSignalColor
+			if options.SignalFollow {
+				// HW follows source 1
+				c = state.Clocks[0].SignalColor
+			}
+
 			if signalHardware != nil {
-				c := state.HardwareSignalColor
-				if options.SignalFollow {
-					c = state.Clocks[0].SignalColor
-				}
 				signalHardware.Fill(signalBrightness(c))
 				signalHardware.Update()
 			}
+
+			if options.SignalToBG {
+				colors.background = toSDLColor(c)
+			}
+
 		}
 	}
 }
