@@ -20,7 +20,7 @@ var numAudioSources int
 var lastBeep []int
 
 func initAudio() {
-	if !options.AudioEnabled {
+	if !options.AudioEnabled && !options.TODBeep {
 		return
 	}
 	var err error
@@ -65,7 +65,7 @@ func todBeep(s *clock.State, i int) {
 		return
 	}
 	clk := s.Clocks[i]
-
+	x
 	if clk.Mode == clock.Normal {
 		if clk.Minutes == 59 {
 			if clk.Seconds >= 55 && lastBeep[i] < clk.Seconds {
