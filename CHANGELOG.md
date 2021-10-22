@@ -1,3 +1,20 @@
+## Version 4.7.0
+Dedicated to Manda and Ilmaleipuri. You were the best cats and companions. I will forever miss you.
+
+* Features:
+  * Audio cue support for expiring countdowns
+  * Build windows binaries automatically
+  * For windows and osx there are several keybindings:
+    * Press F to go full screen
+    * Press escape to exit full screen
+    * Press C to open the web configuration
+  * /clock/automation OSC message for controlling signal color automation
+  * Config option to use the selected hardware signal group color as clock background color
+  * Countdown clock face for countdowns to static date and time
+* Bugfixes:
+  * Stopping a timer with signal color automation now clears the color
+
+
 ## Version 4.6.0
 * Features:
   * 144x144px round clock face
