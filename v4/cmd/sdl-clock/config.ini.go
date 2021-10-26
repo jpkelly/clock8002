@@ -61,6 +61,9 @@ udp-timer-2={{.EngineOptions.UDPTimer2}}
 # Target for the countdown clock face (YYYY-MM-DD HH:MM:SS)
 CountdownTarget={{.CountdownTarget}}
 
+# Countdown face counts up instead if set to true
+Countup={{.Countup}}
+
 # Time sources
 #
 # The single round clock uses source 1 as the main display and source 2 as a secondary timer

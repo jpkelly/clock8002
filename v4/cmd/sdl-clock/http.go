@@ -161,6 +161,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.EngineOptions.Source4.Tod = r.FormValue("source4-tod") != ""
 	newOptions.EngineOptions.Source4.Hidden = r.FormValue("source4-hidden") != ""
 
+	newOptions.Countup = r.FormValue("Countup") != ""
+
 	newOptions.DrawBoxes = r.FormValue("DrawBoxes") != ""
 
 	newOptions.EngineOptions.AutoSignals = r.FormValue("auto-signals") != ""

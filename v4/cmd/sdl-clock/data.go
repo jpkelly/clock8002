@@ -65,6 +65,7 @@ type clockOptions struct {
 	Background      string               `long:"background" description:"Background image file location."`
 	BackgroundPath  string               `long:"background-path" description:"path to load OSC backgrounds from" default:"/boot"`
 	BackgroundColor string               `long:"background-color" description:"Background color, used if no background image is supplied" default:"#000000"`
+	Countup         bool                 `long:"countup" description:"countdown face counts up instead"`
 	EngineOptions   *clock.EngineOptions
 
 	// Round clock stuff

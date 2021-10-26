@@ -141,6 +141,10 @@ const configHTML = `
 						<span>Target for the countdown clock face (YYYY-MM-DD HH:MM:SS)</span>
 						<input type="text" id="CountdownTarget" name="CountdownTarget" value="{{.CountdownTarget}}" />
 					</label>
+					<label for="Countup">
+						<span>Countdown face counts up instead.</span>
+						<input type="checkbox" id="Countup" name="Countup" {{if .Countup}} checked {{end}}/>
+					</label>
 
 				</fieldset>
 				<fieldset>
