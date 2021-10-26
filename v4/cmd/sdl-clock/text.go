@@ -144,6 +144,7 @@ func drawSingleLineClock(state *clock.State) {
 
 	copyIntoRect(textClock.r[0].labelTex, labelR)
 	copyIntoRect(textClock.r[0].signalTex, signalR)
+
 	if state.Clocks[0].Mode != clock.LTC {
 		// Clock time
 
@@ -194,6 +195,7 @@ func draw3TextClocks(state *clock.State) {
 
 		copyIntoRect(textClock.r[i].signalTex, signalR)
 		copyIntoRect(textClock.r[i].labelTex, labelR)
+
 		if state.Clocks[i].Mode != clock.LTC {
 			// Clock time
 
@@ -225,6 +227,9 @@ func destroyTextures(textures []*sdl.Texture) {
 }
 
 func copyIntoRect(t *sdl.Texture, r sdl.Rect) {
+	if t == nil {
+		return
+	}
 	_, _, w, h, err := t.Query()
 	if err != nil {
 		debug.Printf("copyIntoRect: %v", err)
