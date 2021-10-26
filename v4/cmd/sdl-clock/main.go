@@ -218,7 +218,6 @@ func updateInfoScreen(info string) {
 	renderer.Clear()
 
 	var rowTexture *sdl.Texture
-	rowTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	h := int32(0)
 	for _, l := range lines {
 		rowTexture = renderText(l, infoFont, sdl.Color{R: 255, G: 255, B: 255, A: 128})
