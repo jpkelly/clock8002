@@ -1,3 +1,10 @@
+## Version 4.8.0
+* Features:
+  * Countdown face can now also count up
+  * Countdown face displays years to/from target is non-zero
+* Bugfixes:
+  * SDL texture handling fixes to clear assertions
+
 ## Version 4.7.0
 Dedicated to Manda and Ilmaleipuri. You were the best cats and companions. I will forever miss you.
 
