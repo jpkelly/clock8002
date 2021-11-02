@@ -11,7 +11,7 @@ require (
 	github.com/kidoman/embd v0.0.0-20170508013040-d3d8c0c5c68d
 	github.com/pebbe/zmq4 v1.2.0 // indirect
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
-	github.com/veandco/go-sdl2 v0.4.1
+	github.com/veandco/go-sdl2 v0.4.11-0.20211101143930-102e3820d7e8
 	gitlab.com/Depili/go-osc v0.0.0-20210208185228-dd2b4c8eac31
 	gitlab.com/Depili/go-rgb-led-matrix v0.0.0-20170204170814-25b63d4baf68
 	gitlab.com/Depili/ubercorn v1.0.0
