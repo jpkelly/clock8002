@@ -110,9 +110,9 @@ build_v4:
     - make build
   artifacts:
      paths:
-     - v4/sdl-clock
-     - v4/clock_port80.ini
-     - v4/clock_port8080.ini
+      - v4/sdl-clock
+      - v4/clock_port80.ini
+      - v4/clock_port8080.ini
 
 build_v4_windows:
   stage: build
@@ -126,12 +126,13 @@ build_v4_windows:
 
 build_macos:
     stage: build
-    image: registry.gitlab.com/depili/clock-8001/osxcross
+    image: registry.gitlab.com/depili/clock-8001/osxcross:latest
     script:
       - cd v4
       - make osxcross
     artifacts:
-      - v4/sdl-clock_amd64_darwin
+      paths:
+        - v4/sdl-clock_amd64_darwin
 
 deploy_latest:
     stage: deploy
