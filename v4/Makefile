@@ -78,8 +78,10 @@ windows: dep clock_port8080.ini ## Build the binary file
 macos:
 	@echo Building tag $(GIT_TAG) commit $(GIT_COMMIT) for macos
 	$(shell export GOOS=darwin; export GOARCH=amd64; go build -tags static -ldflags "-s -w -X $(VERSION_PKG).gitCommit=$(GIT_COMMIT) -X $(VERSION_PKG).gitTag=$(GIT_TAG)" -o sdl-clock_amd64 gitlab.com/Depili/clock-8001/v4/cmd/sdl-clock)
-	## $(shell export GOOS=darwin; export GOARCH=arm64; export CGO_CFLAGS="-isysroot $(shell xcrun --sdk macosx11.1 --show-sdk-path) -arch arm64 -I/usr/local/include"; export CGO_LDFLAGS="-isysroot $(shell xcrun --sdk macosx11.1 --show-sdk-path) -arch arm64 -L/usr/local/lib"; export CGO_ENABLED=1 ;go build -tags static -ldflags "-s -w -X $(VERSION_PKG).gitCommit=$(GIT_COMMIT) -X $(VERSION_PKG).gitTag=$(GIT_TAG)" -o sdl-clock_arm64 gitlab.com/Depili/clock-8001/v4/cmd/sdl-clock)
-	## @lipo -create -output sdl-clock_fat sdl-clock_amd64 sdl-clock_arm64
+
+osxcross:
+	@echo Building tag $(GIT_TAG) commit $(GIT_COMMIT) for macos via osxcross
+	$(shell export CGO_ENABLED=1; export export CC=x86_64-apple-darwin18-clang; export GOOS=darwin; export GOARCH=amd64; go build -tags static -ldflags "-s -w -X $(VERSION_PKG).gitCommit=$(GIT_COMMIT) -X $(VERSION_PKG).gitTag=$(GIT_TAG)" -o sdl-clock_amd64_darwin gitlab.com/Depili/clock-8001/v4/cmd/sdl-clock)
 
 help: ## Display this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

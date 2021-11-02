@@ -124,6 +124,15 @@ build_v4_windows:
       - v4/sdl-clock.exe
       - v4/clock-8001.msi
 
+build_macos:
+    stage: build
+    image: registry.gitlab.com/depili/clock-8001/osxcross
+    script:
+      - cd v4
+      - make osxcross
+    artifacts:
+      - v4/sdl-clock_amd64_darwin
+
 deploy_latest:
     stage: deploy
     before_script: []
