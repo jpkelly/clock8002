@@ -201,7 +201,6 @@ func composeRoundClocks(state *clock.State) {
 		dualText := font.TextBitmap(fmt.Sprintf("%-.8s", state.Tally))
 		colors.tally = sdl.Color{R: state.TallyColor.R, G: state.TallyColor.G, B: state.TallyColor.B, A: 255}
 
-		x, y, _ := renderer.GetOutputSize()
 		if !options.vertical {
 			// Normal horizontal view with the clocks side by side
 			dest := sdl.Rect{X: 0, Y: 0, W: 800, H: 800}
