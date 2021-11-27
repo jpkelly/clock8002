@@ -202,7 +202,7 @@ func composeRoundClocks(state *clock.State) {
 		colors.tally = sdl.Color{R: state.TallyColor.R, G: state.TallyColor.G, B: state.TallyColor.B, A: 255}
 
 		x, y, _ := renderer.GetOutputSize()
-		if x > y {
+		if !options.vertical {
 			// Normal horizontal view with the clocks side by side
 			dest := sdl.Rect{X: 0, Y: 0, W: 800, H: 800}
 			err := renderer.Copy(clockTextures[0], &source, &dest)
@@ -253,7 +253,7 @@ func composeRoundClocks(state *clock.State) {
 			}
 			err := renderer.Copy(clockTextures[0], &rect, &rect)
 			check(err)
-		} else if x > y {
+		} else if !options.vertical {
 			dest = sdl.Rect{
 				X: (x - y) / 2,
 				Y: 0,
@@ -262,10 +262,9 @@ func composeRoundClocks(state *clock.State) {
 			}
 		} else {
 			// Rotated display
-			// FIXME this centers the clock
 			dest = sdl.Rect{
 				X: 0,
-				Y: (y - x) / 2,
+				Y: 0,
 				W: x,
 				H: x,
 			}

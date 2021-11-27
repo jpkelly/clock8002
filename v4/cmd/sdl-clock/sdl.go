@@ -230,6 +230,7 @@ func setupScaling() {
 			check(err)
 		} else {
 			// rotated display
+			options.vertical = true
 			err := renderer.SetLogicalSize(1080, 1920)
 			check(err)
 		}

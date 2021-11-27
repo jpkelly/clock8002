@@ -113,6 +113,7 @@ type clockOptions struct {
 	textClock  bool
 	singleLine bool
 	countdown  bool
+	vertical   bool
 	Errors     htmlTemplate.HTML // For passing errors to the html template
 	Fonts      []string          // For passing list of font files to html template
 	Timezones  []string
