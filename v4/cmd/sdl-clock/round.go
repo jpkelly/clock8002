@@ -239,7 +239,7 @@ func composeRoundClocks(state *clock.State) {
 		}
 	} else {
 		// Single clock mode
-		x, y, _ := renderer.GetOutputSize()
+		w, h, _ := renderer.GetOutputSize()
 		var dest sdl.Rect
 
 		if options.small {
@@ -254,18 +254,18 @@ func composeRoundClocks(state *clock.State) {
 			check(err)
 		} else if !options.vertical {
 			dest = sdl.Rect{
-				X: (x - y) / 2,
+				X: (w - h) / 2,
 				Y: 0,
-				W: y,
-				H: y,
+				W: h,
+				H: h,
 			}
 		} else {
 			// Rotated display
 			dest = sdl.Rect{
 				X: 0,
 				Y: 0,
-				W: 1080,
-				H: 1080,
+				W: w,
+				H: w,
 			}
 		}
 		err := renderer.Copy(clockTextures[0], &source, &dest)
