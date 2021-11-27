@@ -264,8 +264,8 @@ func composeRoundClocks(state *clock.State) {
 			dest = sdl.Rect{
 				X: 0,
 				Y: 0,
-				W: x,
-				H: x,
+				W: 1080,
+				H: 1080,
 			}
 		}
 		err := renderer.Copy(clockTextures[0], &source, &dest)
