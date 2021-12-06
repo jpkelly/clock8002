@@ -14,12 +14,14 @@ require (
 	github.com/veandco/go-sdl2 v0.4.11-0.20211101143930-102e3820d7e8
 	gitlab.com/Depili/go-osc v0.0.0-20210208185228-dd2b4c8eac31
 	gitlab.com/Depili/go-rgb-led-matrix v0.0.0-20170204170814-25b63d4baf68
+	gitlab.com/Depili/limitimer v0.0.0-20211206161151-cf6cc48ddf80
 	gitlab.com/Depili/ubercorn v1.0.0
-	golang.org/x/sys v0.0.0-20200301153931-2f85c7ec1e52 // indirect
+	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
 	golang.org/x/tools v0.0.0-20200228224639-71482053b885 // indirect
 )
 
 require (
+	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3 // indirect
 	periph.io/x/conn/v3 v3.6.7 // indirect
 	periph.io/x/host/v3 v3.6.7 // indirect
 )

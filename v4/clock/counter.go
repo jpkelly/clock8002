@@ -3,6 +3,7 @@ package clock
 import (
 	"fmt"
 	"gitlab.com/Depili/clock-8001/v4/debug"
+	"gitlab.com/Depili/limitimer"
 	"image/color"
 	"time"
 )
@@ -23,6 +24,7 @@ type Counter struct {
 	state          *counterState
 	media          *mediaState
 	slave          *slaveState
+	limitimer      *limitimerState
 	active         bool // Is this counter active?
 	countdown      bool // Count up / down from the target
 	paused         bool // Is the counter paused?
@@ -55,6 +57,114 @@ type counterState struct {
 	left     time.Duration // Duration left when paused
 }
 
+type limitimerState struct {
+	hours     int
+	minutes   int
+	seconds   int
+	duration  time.Duration
+	ellapsed  time.Duration
+	icon      string
+	blink     bool
+	led       int
+	paused    bool
+	expired   bool
+	hideHours bool
+}
+
+// SetLimitimer set the counter state from a limitimer status message
+func (counter *Counter) SetLimitimer(p *limitimer.State, i int) {
+	h, m, s := p.TimerDisplay(i)
+
+	icon := "Ⅱ"
+	if p.Timers[i].Run() && p.CountDirection && !p.Timers[i].Expired() {
+		icon = "↓"
+	} else if p.Timers[i].Run() {
+		icon = "↑"
+	}
+
+	led := autoColorOff
+
+	if p.Timers[i].Run() {
+		if p.Timers[i].Expired() {
+			led = autoColorEnd
+		} else if p.Timers[i].Warning() {
+			led = autoColorWarn
+		} else {
+			led = autoColorStart
+		}
+	}
+
+	ltState := limitimerState{
+		hours:     h,
+		minutes:   m,
+		seconds:   s,
+		duration:  time.Duration(p.Timers[i].Total.Seconds()) * time.Second,
+		ellapsed:  time.Duration(p.Timers[i].Ellapsed.Seconds()) * time.Second,
+		icon:      icon,
+		led:       led,
+		blink:     p.Timers[i].Blink(),
+		paused:    !p.Timers[i].Run(),
+		expired:   p.Timers[i].Expired(),
+		hideHours: p.Minutes(i),
+	}
+
+	counter.countdown = p.CountDirection
+
+	// Uglyish hack for the hours mode
+	if !ltState.hideHours && h == 0 && m == 0 {
+		ltState.expired = true
+	}
+
+	switch ltState.led {
+	case autoColorOff:
+		counter.signalColor = color.RGBA{R: 0, G: 0, B: 0, A: 0}
+	case autoColorStart:
+		counter.signalColor = color.RGBA{R: 0, G: 255, B: 0, A: 255}
+	case autoColorWarn:
+		counter.signalColor = color.RGBA{R: 255, G: 200, B: 0, A: 255}
+	case autoColorEnd:
+		if !ltState.blink || int(ltState.ellapsed.Seconds())%2 == 0 {
+			counter.signalColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+		} else {
+			counter.signalColor = color.RGBA{R: 0, G: 0, B: 0, A: 0}
+		}
+	}
+
+	counter.limitimer = &ltState
+	counter.active = true
+}
+
+func (counter *Counter) limitimerOutput() *CounterOutput {
+	lt := counter.limitimer
+	secs := int64(lt.hours)*360 + int64(lt.minutes)*60 + int64(lt.seconds)
+	out := CounterOutput{
+		Active:    true,
+		Countdown: counter.countdown,
+		Paused:    lt.paused,
+		Expired:   lt.expired,
+		Hours:     lt.hours,
+		Minutes:   lt.minutes,
+		Seconds:   lt.seconds,
+		Icon:      lt.icon,
+		Diff:      lt.duration - lt.ellapsed,
+		Progress:  1 - lt.ellapsed.Seconds()/lt.duration.Seconds(),
+		HideHours: lt.hideHours,
+		Compact:   fmt.Sprintf("%s%s", lt.icon, secsToCompact(secs)),
+	}
+
+	if lt.hideHours {
+		out.Text = fmt.Sprintf("%0.2d:%0.2d", lt.minutes, lt.seconds)
+	} else {
+		out.Text = fmt.Sprintf("%0.2d:%0.2d", lt.hours, lt.minutes)
+	}
+
+	if out.Expired {
+		out.Progress = 0
+	}
+
+	return &out
+}
+
 // CounterOutput the data structure returned by Counter.Output() and contains the static state of the counter at that time
 type CounterOutput struct {
 	Active      bool          // True if the counter is active
@@ -82,6 +192,8 @@ func (counter *Counter) Output(t time.Time) *CounterOutput {
 		out = counter.slaveOutput()
 	} else if counter.media != nil {
 		out = counter.mediaOutput()
+	} else if counter.limitimer != nil {
+		out = counter.limitimerOutput()
 	} else {
 		out = counter.normalOutput(t)
 	}
