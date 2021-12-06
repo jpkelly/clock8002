@@ -62,7 +62,7 @@ type limitimerState struct {
 	minutes    int
 	seconds    int
 	duration   time.Duration
-	ellapsed   time.Duration
+	elapsed    time.Duration
 	icon       string
 	blink      bool
 	led        int
@@ -99,7 +99,7 @@ func (counter *Counter) SetLimitimer(p *limitimer.State, i int) {
 		minutes:    m,
 		seconds:    s,
 		duration:   time.Duration(p.Timers[i].Total.Seconds()) * time.Second,
-		ellapsed:   time.Duration(p.Timers[i].Ellapsed.Seconds()) * time.Second,
+		elapsed:    time.Duration(p.Timers[i].Elapsed.Seconds()) * time.Second,
 		icon:       icon,
 		led:        led,
 		blink:      p.Timers[i].Blink(),
@@ -123,7 +123,7 @@ func (counter *Counter) SetLimitimer(p *limitimer.State, i int) {
 	case autoColorWarn:
 		counter.signalColor = color.RGBA{R: 255, G: 200, B: 0, A: 255}
 	case autoColorEnd:
-		if !ltState.blink || int(ltState.ellapsed.Seconds())%2 == 0 {
+		if !ltState.blink || int(ltState.elapsed.Seconds())%2 == 0 {
 			counter.signalColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
 		} else {
 			counter.signalColor = color.RGBA{R: 0, G: 0, B: 0, A: 0}
@@ -146,8 +146,8 @@ func (counter *Counter) limitimerOutput() *CounterOutput {
 		Minutes:   lt.minutes,
 		Seconds:   lt.seconds,
 		Icon:      lt.icon,
-		Diff:      lt.duration - lt.ellapsed,
-		Progress:  1 - lt.ellapsed.Seconds()/lt.duration.Seconds(),
+		Diff:      lt.duration - lt.elapsed,
+		Progress:  1 - lt.elapsed.Seconds()/lt.duration.Seconds(),
 	}
 
 	if out.Expired && out.Countdown {
