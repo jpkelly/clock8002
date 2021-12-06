@@ -58,17 +58,17 @@ type counterState struct {
 }
 
 type limitimerState struct {
-	hours     int
-	minutes   int
-	seconds   int
-	duration  time.Duration
-	ellapsed  time.Duration
-	icon      string
-	blink     bool
-	led       int
-	paused    bool
-	expired   bool
-	hideHours bool
+	hours      int
+	minutes    int
+	seconds    int
+	duration   time.Duration
+	ellapsed   time.Duration
+	icon       string
+	blink      bool
+	led        int
+	paused     bool
+	expired    bool
+	minuteMode bool
 }
 
 // SetLimitimer set the counter state from a limitimer status message
@@ -76,7 +76,7 @@ func (counter *Counter) SetLimitimer(p *limitimer.State, i int) {
 	h, m, s := p.TimerDisplay(i)
 
 	icon := "Ⅱ"
-	if p.Timers[i].Run() && p.CountDirection && !p.Timers[i].Expired() {
+	if p.Timers[i].Run() && p.CountDirection {
 		icon = "↓"
 	} else if p.Timers[i].Run() {
 		icon = "↑"
@@ -95,23 +95,23 @@ func (counter *Counter) SetLimitimer(p *limitimer.State, i int) {
 	}
 
 	ltState := limitimerState{
-		hours:     h,
-		minutes:   m,
-		seconds:   s,
-		duration:  time.Duration(p.Timers[i].Total.Seconds()) * time.Second,
-		ellapsed:  time.Duration(p.Timers[i].Ellapsed.Seconds()) * time.Second,
-		icon:      icon,
-		led:       led,
-		blink:     p.Timers[i].Blink(),
-		paused:    !p.Timers[i].Run(),
-		expired:   p.Timers[i].Expired(),
-		hideHours: p.Minutes(i),
+		hours:      h,
+		minutes:    m,
+		seconds:    s,
+		duration:   time.Duration(p.Timers[i].Total.Seconds()) * time.Second,
+		ellapsed:   time.Duration(p.Timers[i].Ellapsed.Seconds()) * time.Second,
+		icon:       icon,
+		led:        led,
+		blink:      p.Timers[i].Blink(),
+		paused:     !p.Timers[i].Run(),
+		expired:    p.Timers[i].Expired(),
+		minuteMode: p.Minutes(i),
 	}
 
 	counter.countdown = p.CountDirection
 
 	// Uglyish hack for the hours mode
-	if !ltState.hideHours && h == 0 && m == 0 {
+	if !ltState.minuteMode && h == 0 && m == 0 {
 		ltState.expired = true
 	}
 
@@ -148,19 +148,22 @@ func (counter *Counter) limitimerOutput() *CounterOutput {
 		Icon:      lt.icon,
 		Diff:      lt.duration - lt.ellapsed,
 		Progress:  1 - lt.ellapsed.Seconds()/lt.duration.Seconds(),
-		HideHours: lt.hideHours,
-		Compact:   fmt.Sprintf("%s%s", lt.icon, secsToCompact(secs)),
 	}
 
-	if lt.hideHours {
-		out.Text = fmt.Sprintf("%0.2d:%0.2d", lt.minutes, lt.seconds)
+	if out.Expired && out.Countdown {
+		out.Progress = 1
+		out.Hours = 0
+		out.Minutes = 0
+		out.Seconds = 0
+	}
+
+	if lt.minuteMode {
+		out.Text = fmt.Sprintf("%0.2d:%0.2d", out.Minutes, out.Seconds)
 	} else {
-		out.Text = fmt.Sprintf("%0.2d:%0.2d", lt.hours, lt.minutes)
+		out.Text = fmt.Sprintf("%0.2d:%0.2d", out.Hours, out.Minutes)
 	}
 
-	if out.Expired {
-		out.Progress = 0
-	}
+	out.Compact = fmt.Sprintf("%s%s", lt.icon, secsToCompact(secs))
 
 	return &out
 }
@@ -181,7 +184,6 @@ type CounterOutput struct {
 	Compact     string        // Compact 4-character output
 	Progress    float64       // Percentage of total time elapsed of the countdown, 0-1
 	Diff        time.Duration // raw difference
-	HideHours   bool
 	SignalColor color.RGBA
 }
 
@@ -321,7 +323,6 @@ func (counter *Counter) slaveOutput() *CounterOutput {
 		Icon:      counter.slave.icon,
 		Progress:  0,
 		Diff:      0,
-		HideHours: counter.slave.hideHours,
 	}
 
 	return out

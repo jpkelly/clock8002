@@ -793,7 +793,6 @@ func (engine *Engine) timerState(c *Clock, s *source, t time.Time) {
 	c.Paused = out.Paused
 	c.Progress = out.Progress
 	c.Icon = out.Icon
-	c.HideHours = out.HideHours
 
 	if engine.autoSignals {
 		if out.Countdown {
