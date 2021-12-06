@@ -97,10 +97,6 @@ func drawTextClock(state *clock.State) {
 			}
 		}
 
-		if clk.Expired && clk.Mode == clock.Countup {
-			text = "00:00:00"
-		}
-
 		renderNumbers(i, text, toSDLColor(clk.TextColor))
 		titleColor := toSDLColor(state.TitleColor)
 		if colors.label != titleColor {

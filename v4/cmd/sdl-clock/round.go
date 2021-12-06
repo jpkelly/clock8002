@@ -127,11 +127,6 @@ func drawRoundClocks(state *clock.State) {
 						leds = int(math.Floor(mainClock.Progress * 59))
 					}
 				} else if mainClock.Mode == clock.Countup {
-					if mainClock.Expired {
-						hours = "00"
-						minutes = "00"
-						seconds = ""
-					}
 					leds, _ = strconv.Atoi(minutes)
 				}
 			}
@@ -143,7 +138,7 @@ func drawRoundClocks(state *clock.State) {
 				colors.tally = sdl.Color{R: state.TallyColor.R, G: state.TallyColor.G, B: state.TallyColor.B, A: 255}
 
 			} else if auxClock.Mode != clock.Normal && !auxClock.Hidden {
-				if auxClock.Expired {
+				if auxClock.Expired && auxClock.Mode == clock.Countdown {
 					if state.Flash {
 						tally = " 00"
 					}
