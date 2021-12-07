@@ -148,6 +148,7 @@ func (counter *Counter) limitimerOutput() *CounterOutput {
 		Icon:      lt.icon,
 		Diff:      lt.duration - lt.elapsed,
 		Progress:  1 - lt.elapsed.Seconds()/lt.duration.Seconds(),
+		Duration:  lt.duration,
 	}
 
 	if out.Expired && out.Countdown {
@@ -184,6 +185,7 @@ type CounterOutput struct {
 	Compact     string        // Compact 4-character output
 	Progress    float64       // Percentage of total time elapsed of the countdown, 0-1
 	Diff        time.Duration // raw difference
+	Duration    time.Duration // Total duration of the count, if available
 	SignalColor color.RGBA
 }
 
@@ -225,6 +227,8 @@ func (counter *Counter) mediaOutput() *CounterOutput {
 	text := fmt.Sprintf("%02d:%02d:%02d", m.hours, m.minutes, m.seconds)
 	compact := fmt.Sprintf("%s%s", icon, secsToCompact(seconds))
 
+	dur := time.Duration(seconds)*time.Second + m.remaining
+
 	out := &CounterOutput{
 		Active:   true,
 		Media:    true,
@@ -238,6 +242,7 @@ func (counter *Counter) mediaOutput() *CounterOutput {
 		Compact:  compact,
 		Progress: counter.media.progress,
 		Diff:     m.remaining,
+		Duration: dur,
 	}
 
 	return out
@@ -295,6 +300,7 @@ func (counter *Counter) normalOutput(t time.Time) *CounterOutput {
 		Icon:      icon,
 		Progress:  progress,
 		Diff:      diff,
+		Duration:  counter.state.duration,
 	}
 
 	return out
@@ -323,6 +329,7 @@ func (counter *Counter) slaveOutput() *CounterOutput {
 		Icon:      counter.slave.icon,
 		Progress:  0,
 		Diff:      0,
+		Duration:  0,
 	}
 
 	return out

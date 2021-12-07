@@ -48,6 +48,10 @@ gitlab.com/Depili/limitimer v0.0.0-20211206173144-6470bc2a1c77 h1:g21ZkD1bxOm24w
 gitlab.com/Depili/limitimer v0.0.0-20211206173144-6470bc2a1c77/go.mod h1:S+UiKGBvnUV9TXiixIL78mdccaCdviPOmzwBqVPpHQQ=
 gitlab.com/Depili/limitimer v0.0.0-20211206214412-d23603567216 h1:M3DhmnHUwAZGfvCRmK5TZCsHDC1ZAO0Ys8N+c9OGfho=
 gitlab.com/Depili/limitimer v0.0.0-20211206214412-d23603567216/go.mod h1:S+UiKGBvnUV9TXiixIL78mdccaCdviPOmzwBqVPpHQQ=
+gitlab.com/Depili/limitimer v0.0.0-20211207102047-4dd1f61ffd06 h1:62wi+OYgzgDbQpLNdb4V5hUARVGMUdURihynmiGMk84=
+gitlab.com/Depili/limitimer v0.0.0-20211207102047-4dd1f61ffd06/go.mod h1:S+UiKGBvnUV9TXiixIL78mdccaCdviPOmzwBqVPpHQQ=
+gitlab.com/Depili/limitimer v0.0.0-20211207103519-7ea14cbe2f71 h1:e/X2mTjuScm4cvfx6LD6KiY+eSvKUPmD4kQzvx8pqa0=
+gitlab.com/Depili/limitimer v0.0.0-20211207103519-7ea14cbe2f71/go.mod h1:S+UiKGBvnUV9TXiixIL78mdccaCdviPOmzwBqVPpHQQ=
 gitlab.com/Depili/ubercorn v0.0.0-20210518135713-745094bb5fa9 h1:EugDAnQp39cv3vmFaUcaSdIf9FmBHNSI0/yUM/4sV5g=
 gitlab.com/Depili/ubercorn v0.0.0-20210518135713-745094bb5fa9/go.mod h1:Drmksj7Z9ZD7d31t8LWvzem9LI4HX9D8T2qYSete1Ho=
 gitlab.com/Depili/ubercorn v1.0.0 h1:B5nRBAZq+rGsrS9LWySg4WXCROatMibJrW34s7at07g=

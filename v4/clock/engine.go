@@ -315,7 +315,8 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 
 	// Limitimer
 	if options.LimitimerListen {
-		go engine.limitimerListen()
+		go engine.limitimerSend()
+		// go engine.limitimerListen()
 	}
 
 	return &engine, nil

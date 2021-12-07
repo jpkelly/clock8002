@@ -4,6 +4,7 @@ import (
 	"github.com/tarm/serial"
 	"gitlab.com/Depili/limitimer"
 	"log"
+	"time"
 )
 
 func (engine *Engine) limitimerListen() {
@@ -46,6 +47,71 @@ func (engine *Engine) limitimerListen() {
 			default:
 				log.Printf(" -> UNKNOWN limitimer message %v\n", msg)
 			}
+		}
+	}
+}
+
+const (
+	limitimerSendMinutes  = true
+	limitimerPeriod       = 250 * time.Millisecond
+	limitimerCountupTotal = (99 * 360) + (59 * 60) + 59
+)
+
+func (engine *Engine) limitimerSend() {
+	c := &serial.Config{Name: engine.limitimerSerial, Baud: 19200}
+
+	port, err := serial.OpenPort(c)
+	if err != nil {
+		log.Fatalf("Error opening limitimer serial port %s %v", engine.limitimerSerial, err)
+		return
+	}
+
+	// Base config for the limitimer state packet
+	p := limitimer.State{
+		CountDirection:    true,
+		ProgramMinutes:    limitimerSendMinutes,
+		SessionMinutes:    limitimerSendMinutes,
+		ContinueAfterZero: engine.overtimeCountMode == "continue",
+		SelectedTimer:     0,
+	}
+
+	ticker := time.NewTicker(limitimerPeriod)
+
+	for {
+		select {
+		case <-ticker.C:
+			t := time.Now()
+			p.Sequence = time.Now().Nanosecond() / 100000000
+
+			for i := 0; i < 4; i++ {
+				c := engine.Counters[i+1].Output(t)
+				p.Timers[i].SetRun(!c.Paused)
+				p.Timers[i].SetBlink(engine.overtimeVisibility == "blink" || engine.overtimeVisibility == "both")
+
+				if !c.Active {
+					// Inactive, show 00:00
+					p.Timers[i].Total.SetSeconds(0)
+					p.Timers[i].Sumup.SetSeconds(0)
+					p.Timers[i].Elapsed.SetSeconds(0)
+					p.Timers[i].SetRun(false)
+				} else if c.Countdown {
+					p.Timers[i].Total.SetSeconds(int(c.Duration.Seconds()))
+					p.Timers[i].Sumup.SetSeconds(int(engine.signalThresholdWarning.Seconds()))
+					p.Timers[i].Elapsed.SetSeconds(int(c.Duration.Seconds()-c.Diff.Seconds()) + 1)
+				} else {
+					p.Timers[i].Total.SetSeconds(limitimerCountupTotal)
+					p.Timers[i].Sumup.SetSeconds(0)
+					p.Timers[i].Elapsed.SetSeconds(limitimerCountupTotal - int(c.Diff.Seconds()))
+				}
+			}
+
+			_, err := port.Write(p.Marshal())
+			if err != nil {
+				log.Printf("Error writing to limitimer serial %v", err)
+				return
+			}
+
+			// Send the ping packet???
 		}
 	}
 }
