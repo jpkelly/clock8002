@@ -189,6 +189,15 @@ millumin={{.EngineOptions.Millumin}}
 # Millumin layer ignore regexp
 millumin-ignore-layer={{.EngineOptions.Ignore}}
 
+# Limitimer
+# see https://gitlab.com/Depili/clock-8001/-/blob/master/limitimer.md
+
+# Mode, off, send or receive
+limitimer-mode={{.EngineOptions.LimitimerMode}}
+# Serial device to use for limitimer communications
+limitimer-serial={{.EngineOptions.LimitimerSerial}}
+
+
 # Font to use
 Font={{.Font}}
 

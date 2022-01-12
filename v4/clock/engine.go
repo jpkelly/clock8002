@@ -80,7 +80,7 @@ type EngineOptions struct {
 	SignalThresholdEnd     int    `long:"signal-threshold-end" description:"Threshold for medium color transition (seconds)" default:"60"`
 	SignalHardware         int    `long:"signal-hw-group" description:"Hardware signal group number" default:"1"`
 
-	LimitimerListen bool   `long:"limitimer-listen" description:"Listen for limitimer messages on the serial device and update sources based on them"`
+	LimitimerMode   string `long:"limitimer-mode" description:"Listen for limitimer messages on the serial device and update sources based on them" choice:"off" choice:"send" choice:"receive" default:"off"`
 	LimitimerSerial string `long:"limitimer-serial" description:"Serial device for limitimer communication"`
 
 	Source1 *SourceOptions `group:"1st clock display source" namespace:"source1"`
@@ -165,7 +165,7 @@ type Engine struct {
 	signalHardware         int
 	overtimeCountMode      string
 	overtimeVisibility     string
-	limitimer              bool
+	limitimer              string
 	limitimerSerial        string
 }
 
@@ -230,7 +230,7 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 		signalHardware:         options.SignalHardware,
 		overtimeCountMode:      options.OvertimeCountMode,
 		overtimeVisibility:     options.OvertimeVisibility,
-		limitimer:              options.LimitimerListen,
+		limitimer:              options.LimitimerMode,
 		limitimerSerial:        options.LimitimerSerial,
 	}
 	uuid, err := machineid.ProtectedID("clock-8001")
@@ -314,9 +314,10 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	}
 
 	// Limitimer
-	if options.LimitimerListen {
+	if options.LimitimerMode == "send" {
 		go engine.limitimerSend()
-		// go engine.limitimerListen()
+	} else if options.LimitimerMode == "receive" {
+		go engine.limitimerListen()
 	}
 
 	return &engine, nil

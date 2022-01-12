@@ -183,6 +183,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.EngineOptions.Source3.Text = r.FormValue("source3-text")
 	newOptions.EngineOptions.Source4.Text = r.FormValue("source4-text")
 
+	newOptions.EngineOptions.LimitimerSerial = r.FormValue("limitimer-serial")
+
 	// Countdown face target
 	t := r.FormValue("CountdownTarget")
 	match, err := regexp.MatchString(`^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d`, t)
@@ -201,6 +203,12 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.SignalType = r.FormValue("signal-hw-type")
 	if t := newOptions.SignalType; (t != "unicorn-hd") && (t != "none") {
 		errors += fmt.Sprintf("<li>Signal hardware type selection is invalid (%s)</li>", newOptions.SignalType)
+	}
+
+	// Limitimer mode
+	newOptions.EngineOptions.LimitimerMode = r.FormValue("limitimer-mode")
+	if t := newOptions.EngineOptions.LimitimerMode; (t != "off") && (t != "send") && (t != "receive") {
+		errors += fmt.Sprintf("<li>Limitimer mode is invalid (%s)</li>", newOptions.EngineOptions.LimitimerMode)
 	}
 
 	// UDPTime

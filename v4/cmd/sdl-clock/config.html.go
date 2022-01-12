@@ -478,6 +478,24 @@ const configHTML = `
 			</fieldset>
 
 			<fieldset>
+				<lengend>DSAN Limitimer</legend>
+				<p>See <a href="https://gitlab.com/Depili/clock-8001/-/blob/master/limitimer.md">https://gitlab.com/Depili/clock-8001/-/blob/master/README.md</a> for documentation.</p>
+				<label for="limitimer-mode">
+						<span>Limitimer mode</span>
+						<select name="limitimer-mode" id="limitimer-mode">
+							<option value="off" {{if eq .EngineOptions.LimitimerMode "off"}} selected {{end}}>Off</option>
+							<option value="send" {{if eq .EngineOptions.LimitimerMode "send"}} selected {{end}}>Send timers</option>
+							<option value="receive" {{if eq .EngineOptions.LimitimerMode "receive"}} selected {{end}}>Receive timers</option>
+						</select>
+				</label>
+
+				<label for="limitimer-serial">
+					<span>Serial device for limitimer communication</span>
+					<input type="text" id="limitimer-serial" name="limitimer-serial" value="{{.EngineOptions.LimitimerSerial}}" />
+				</label>
+			</fieldset>
+
+			<fieldset>
 				<legend>InterSpace Industries Countdown2 UDP</legend>
 				<p>StageTimer2 and Irisdown also support sending data with this protocol.</p>
 				<label for="udp-time">
