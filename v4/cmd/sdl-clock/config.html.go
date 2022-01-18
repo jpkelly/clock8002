@@ -62,6 +62,11 @@ const configHTML = `
 						<input type="checkbox" id="NoARCorrection" name="NoARCorrection" {{if .NoARCorrection}} checked {{end}}/>
 					</label>
 
+					<label for="FullScreen">
+						<span>Start in full screen mode (ignored on raspberry pi images)</span>
+						<input type="checkbox" id="FullScreen" name="FullScreen" {{if .FullScreen}} checked {{end}}/>
+					</label>
+
 					<label for="Debug">
 						<span>Output verbose debug information. This will impact performance</span>
 						<input type="checkbox" id="Debug" name="Debug" {{if .Debug}} checked {{end}}/>

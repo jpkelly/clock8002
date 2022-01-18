@@ -173,6 +173,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.AudioEnabled = r.FormValue("AudioEnabled") != ""
 	newOptions.TODBeep = r.FormValue("TODBeep") != ""
 
+	newOptions.FullScreen = r.FormValue("FullScreen") != ""
+
 	// Strings, will not be validated
 	newOptions.HTTPUser = r.FormValue("HTTPUser")
 	newOptions.HTTPPassword = r.FormValue("HTTPPassword")

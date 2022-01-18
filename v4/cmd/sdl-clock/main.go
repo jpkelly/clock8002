@@ -47,6 +47,12 @@ func main() {
 	defer window.Destroy()
 	defer renderer.Destroy()
 
+	isFullScreen := false
+	if options.FullScreen {
+		window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+		isFullScreen = true
+	}
+
 	setupScaling()
 	initColors()
 	initTextures()
@@ -85,7 +91,6 @@ func main() {
 	configStarted := false
 
 	configTimer := timer.NewTimer(time.Second * 5)
-	isFullScreen := false
 
 	for {
 		select {

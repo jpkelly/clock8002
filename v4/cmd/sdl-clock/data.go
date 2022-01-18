@@ -94,6 +94,7 @@ type clockOptions struct {
 	DrawBoxes      bool   `long:"draw-boxes" description:"Draw the container boxes for timers"`
 	NumberFontSize int    `long:"numbers-size" default:"250"`
 	FontPath       string `long:"font-path" description:"Path for loading font choices into web config" default:"."`
+	FullScreen     bool   `long:"fullscreen" description:"Start in full screen mode"`
 
 	SignalBrightness int    `long:"signal-hw-brightness" description:"Brightness for the hardware signal lamps, 0-255" default:"128"`
 	SignalType       string `long:"signal-hw-type" description:"Hardware signal type" default:"unicorn-hd" choice:"none" choice:"unicorn-hd"`

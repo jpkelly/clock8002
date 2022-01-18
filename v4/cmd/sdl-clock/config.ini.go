@@ -17,6 +17,9 @@ Format12h={{.EngineOptions.Format12h}}
 # Set to true to disable detection of official raspberry pi display for aspect ratio correction
 NoARCorrection={{.NoARCorrection}}
 
+# Start in full screen mode (excluding raspberry pi images)
+FullScreen={{.FullScreen}}
+
 # Background image support. You need to provide the background in
 # the correct resolution as a png or jpeg image.
 Background={{.Background}}
