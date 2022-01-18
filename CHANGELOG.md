@@ -1,7 +1,7 @@
 ## Version 4.9.0
 * Features:
   * Ability to start in full screen mode on windows / osx via config option
-Bugfixes:
+* Bugfixes:
   * Round clock position and scaling with rotated displays
 
 ## Version 4.8.0
