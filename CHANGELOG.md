@@ -1,3 +1,8 @@
+## Version 4.10.1
+* Bugfixes:
+  * Missing default on limitimer serial device
+  * Typo in limitimer help link in config page (user visible link text only)
+
 ## Version 4.10.0
 * Features:
   * Limitimer integration ###
