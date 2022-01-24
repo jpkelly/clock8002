@@ -1,3 +1,12 @@
+## Version 4.10.0
+* Features:
+  * Limitimer integration ###
+    * See `limitimer.md` for usage.
+    * Caveats:
+      * Companion integration needs version 5.2.2 of the module for the feedback to work
+      * Updating the clock config might cause loss-of-signal from limitimer until the raspberry pi is rebooted, investigation ongoing
+
+
 ## Version 4.9.0
 * Features:
   * Ability to start in full screen mode on windows / osx via config option
