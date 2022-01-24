@@ -479,7 +479,7 @@ const configHTML = `
 
 			<fieldset>
 				<lengend>DSAN Limitimer</legend>
-				<p>See <a href="https://gitlab.com/Depili/clock-8001/-/blob/master/limitimer.md">https://gitlab.com/Depili/clock-8001/-/blob/master/README.md</a> for documentation.</p>
+				<p>See <a href="https://gitlab.com/Depili/clock-8001/-/blob/master/limitimer.md">https://gitlab.com/Depili/clock-8001/-/blob/master/limitimer.md</a> for documentation.</p>
 				<label for="limitimer-mode">
 						<span>Limitimer mode</span>
 						<select name="limitimer-mode" id="limitimer-mode">
