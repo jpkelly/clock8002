@@ -81,7 +81,7 @@ type EngineOptions struct {
 	SignalHardware         int    `long:"signal-hw-group" description:"Hardware signal group number" default:"1"`
 
 	LimitimerMode   string `long:"limitimer-mode" description:"Listen for limitimer messages on the serial device and update sources based on them" choice:"off" choice:"send" choice:"receive" default:"off"`
-	LimitimerSerial string `long:"limitimer-serial" description:"Serial device for limitimer communication"`
+	LimitimerSerial string `long:"limitimer-serial" description:"Serial device for limitimer communication" default:"/dev/ttyAMA0"`
 
 	Source1 *SourceOptions `group:"1st clock display source" namespace:"source1"`
 	Source2 *SourceOptions `group:"2nd clock display source" namespace:"source2"`

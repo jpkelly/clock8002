@@ -8,6 +8,8 @@ clock-8001 supports acting as a display for limitimer controllers or acting as a
 
 The limitimer functionality requires an RS-485 adapter and a wiring adapter. For raspberry pi a RS-485 hat, like the waveshare rs-485 + can hat, is recommended. Any hat that uses the UART provided on the gpio header should work. Most USB rs-485 dongles can also be made to work, but doing so will require loading the kernel modules for it.
 
+For raspberry pi hats the serial device to use is `/dev/ttyAMA0`
+
 ### Wiring
 
 The complete RS-485 differential pair signal is only available on the rj-45 (ethernet) connectors from limitimer. The pinout of the connector is as follows:
