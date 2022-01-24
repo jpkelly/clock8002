@@ -15,6 +15,7 @@ func (engine *Engine) limitimerListen() {
 		log.Fatalf("Error opening limitimer serial port %s %v", engine.limitimerSerial, err)
 		return
 	}
+	defer port.Close()
 
 	buff := make([]byte, 100)
 	decoder := limitimer.Decoder{}
@@ -65,6 +66,7 @@ func (engine *Engine) limitimerSend() {
 		log.Fatalf("Error opening limitimer serial port %s %v", engine.limitimerSerial, err)
 		return
 	}
+	defer port.Close()
 
 	// Base config for the limitimer state packet
 	p := limitimer.State{
