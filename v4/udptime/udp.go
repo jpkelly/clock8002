@@ -39,7 +39,7 @@ func (msg *Message) String() string {
 }
 
 // Listen for udptime messages on a port
-func Listen(addr string, ctx context.Context, wg *sync.WaitGroup) (chan *Message, error) {
+func Listen(ctx context.Context, addr string, wg *sync.WaitGroup) (chan *Message, error) {
 	ch := make(chan *Message)
 	pc, err := net.ListenPacket("udp", addr)
 	if err != nil {
@@ -47,12 +47,12 @@ func Listen(addr string, ctx context.Context, wg *sync.WaitGroup) (chan *Message
 	}
 
 	wg.Add(1)
-	go server(pc, ch, ctx, wg)
+	go server(ctx, pc, ch, wg)
 	return ch, nil
 }
 
 // FIXME: non blocking reads and graceful shutdown
-func server(pc net.PacketConn, ch chan *Message, ctx context.Context, wg *sync.WaitGroup) {
+func server(ctx context.Context, pc net.PacketConn, ch chan *Message, wg *sync.WaitGroup) {
 	defer wg.Done()
 	go func(ctx context.Context, pc net.PacketConn) {
 		for range ctx.Done() {

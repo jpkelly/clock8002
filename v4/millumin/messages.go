@@ -1,7 +1,7 @@
 package millumin
 
 import (
-	"gitlab.com/Depili/clock-8001/v4/oscUtil"
+	"gitlab.com/Depili/clock-8001/v4/oscutil"
 	"gitlab.com/Depili/go-osc/osc"
 	// "github.com/chabad360/go-osc/osc"
 )
@@ -15,13 +15,13 @@ type MediaInfo struct {
 
 // UnmarshalOSC converts a osc.Message to MediaInfo message
 func (i *MediaInfo) UnmarshalOSC(msg *osc.Message) error {
-	if err := oscUtil.UnmarshalArgument(msg, 0, &i.Index); err != nil {
+	if err := oscutil.UnmarshalArgument(msg, 0, &i.Index); err != nil {
 		return err
 	}
-	if err := oscUtil.UnmarshalArgument(msg, 1, &i.Name); err != nil {
+	if err := oscutil.UnmarshalArgument(msg, 1, &i.Name); err != nil {
 		return err
 	}
-	if err := oscUtil.UnmarshalArgument(msg, 2, &i.Duration); err != nil {
+	if err := oscutil.UnmarshalArgument(msg, 2, &i.Duration); err != nil {
 		return err
 	}
 
@@ -37,10 +37,10 @@ type MediaTime struct {
 
 // UnmarshalOSC converts a osc.Message to MediaTime
 func (mt *MediaTime) UnmarshalOSC(msg *osc.Message) error {
-	if err := oscUtil.UnmarshalArgument(msg, 0, &mt.Value); err != nil {
+	if err := oscutil.UnmarshalArgument(msg, 0, &mt.Value); err != nil {
 		return err
 	}
-	if err := oscUtil.UnmarshalArgument(msg, 1, &mt.Duration); err != nil {
+	if err := oscutil.UnmarshalArgument(msg, 1, &mt.Duration); err != nil {
 		return err
 	}
 

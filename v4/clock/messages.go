@@ -1,7 +1,7 @@
 package clock
 
 import (
-	"gitlab.com/Depili/clock-8001/v4/oscUtil"
+	"gitlab.com/Depili/clock-8001/v4/oscutil"
 	"gitlab.com/Depili/go-osc/osc"
 	// "github.com/chabad360/go-osc/osc"
 
@@ -47,7 +47,7 @@ type MediaMessage struct {
 
 // UnmarshalOSC converts a osc.Message to MediaMessage
 func (message *MediaMessage) UnmarshalOSC(msg *osc.Message) error {
-	return oscUtil.UnmarshalArguments(
+	return oscutil.UnmarshalArguments(
 		msg,
 		&message.hours,
 		&message.minutes,
@@ -108,7 +108,7 @@ type displayTextMessage struct {
 }
 
 func (message *displayTextMessage) UnmarshalOSC(msg *osc.Message) error {
-	return oscUtil.UnmarshalArguments(
+	return oscutil.UnmarshalArguments(
 		msg,
 		&message.r,
 		&message.g,
@@ -130,7 +130,7 @@ type TextMessage struct {
 
 // UnmarshalOSC converts a osc.Message to TextMessage
 func (message *TextMessage) UnmarshalOSC(msg *osc.Message) error {
-	return oscUtil.UnmarshalArguments(
+	return oscutil.UnmarshalArguments(
 		msg,
 		&message.Text,
 	)
@@ -145,7 +145,7 @@ func (message TextMessage) MarshalOSC(addr string) *osc.Message {
 
 // UnmarshalOSC converts a osc.Message to TimeMessage
 func (message *TimeMessage) UnmarshalOSC(msg *osc.Message) error {
-	return oscUtil.UnmarshalArguments(
+	return oscutil.UnmarshalArguments(
 		msg,
 		&message.Time,
 	)
@@ -160,7 +160,7 @@ func (message TimeMessage) MarshalOSC(addr string) *osc.Message {
 
 // UnmarshalOSC converts a osc.Message to DisplayMessage
 func (message *DisplayMessage) UnmarshalOSC(msg *osc.Message) error {
-	return oscUtil.UnmarshalArguments(
+	return oscutil.UnmarshalArguments(
 		msg,
 		&message.ColorRed,
 		&message.ColorGreen,
@@ -181,7 +181,7 @@ func (message DisplayMessage) MarshalOSC(addr string) *osc.Message {
 
 // UnmarshalOSC converts a osc.Message to CountdownMessage
 func (message *CountdownMessage) UnmarshalOSC(msg *osc.Message) error {
-	return oscUtil.UnmarshalArguments(
+	return oscutil.UnmarshalArguments(
 		msg,
 		&message.Seconds,
 	)
@@ -208,7 +208,7 @@ type ColorMessage struct {
 
 // UnmarshalOSC creates a colormessage from OSC message
 func (message *ColorMessage) UnmarshalOSC(msg *osc.Message) error {
-	return oscUtil.UnmarshalArguments(
+	return oscutil.UnmarshalArguments(
 		msg,
 		&message.r,
 		&message.g,

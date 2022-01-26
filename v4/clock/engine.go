@@ -6,7 +6,7 @@ import (
 	"github.com/denisbrodbeck/machineid"
 	"github.com/desertbit/timer"
 	"gitlab.com/Depili/clock-8001/v4/debug"
-	"gitlab.com/Depili/clock-8001/v4/oscUtil"
+	"gitlab.com/Depili/clock-8001/v4/oscutil"
 	"gitlab.com/Depili/clock-8001/v4/udptime"
 	"gitlab.com/Depili/go-osc/osc"
 	// "github.com/chabad360/go-osc/osc"
@@ -132,7 +132,7 @@ type Engine struct {
 	flashPeriod            int
 	clockServer            *Server
 	oscServer              osc.Server
-	oscDispatcher          *oscUtil.RegexpDispatcher
+	oscDispatcher          *oscutil.RegexpDispatcher
 	oscDests               *feedbackDestination // udp connections to send osc feedback to
 	oscSendChan            chan []byte
 	oscTally               bool          // Tally text was from osc event
@@ -347,12 +347,12 @@ func (engine *Engine) Close() {
 func (engine *Engine) listenUDPTime() {
 	engine.wg.Add(1)
 	defer engine.wg.Done()
-	chan1, err := udptime.Listen("0.0.0.0:36700", engine.ctx, engine.wg)
+	chan1, err := udptime.Listen(engine.ctx, "0.0.0.0:36700", engine.wg)
 	if err != nil {
 		log.Printf("UDPTime listen error: %v", err)
 		return
 	}
-	chan2, err := udptime.Listen("0.0.0.0:36701", engine.ctx, engine.wg)
+	chan2, err := udptime.Listen(engine.ctx, "0.0.0.0:36701", engine.wg)
 	if err != nil {
 		log.Printf("UDPTime listen error: %v", err)
 		return
@@ -1152,7 +1152,7 @@ func (engine *Engine) initSources(sources []*SourceOptions) error {
 // initOSC Sets up the OSC listener and feedback
 func (engine *Engine) initOSC(options *EngineOptions) {
 	if !options.DisableOSC {
-		engine.oscDispatcher = oscUtil.NewRegexpDispatcher()
+		engine.oscDispatcher = oscutil.NewRegexpDispatcher()
 		engine.oscServer = osc.Server{
 			Addr:       options.ListenAddr,
 			Dispatcher: engine.oscDispatcher,

@@ -2,7 +2,7 @@ package clock
 
 import (
 	"gitlab.com/Depili/clock-8001/v4/debug"
-	"gitlab.com/Depili/clock-8001/v4/oscUtil"
+	"gitlab.com/Depili/clock-8001/v4/oscutil"
 	"gitlab.com/Depili/go-osc/osc"
 	// "github.com/chabad360/go-osc/osc"
 
@@ -20,7 +20,7 @@ const (
 )
 
 // MakeServer creates a clock.Server instance from osc.Server instance
-func MakeServer(oscServer *osc.Server, d *oscUtil.RegexpDispatcher, uuid string) *Server {
+func MakeServer(oscServer *osc.Server, d *oscutil.RegexpDispatcher, uuid string) *Server {
 	var server = Server{
 		listeners:    make(map[chan Message]struct{}),
 		Debug:        false,
@@ -109,7 +109,7 @@ func (server *Server) sendTargetMessage(msg *osc.Message, countdown bool) {
 	if matches := server.timerRegexp.FindStringSubmatch(msg.Address); len(matches) == 2 {
 		counter, _ := strconv.Atoi(matches[1])
 		var target string
-		err := oscUtil.UnmarshalArguments(msg, &target)
+		err := oscutil.UnmarshalArguments(msg, &target)
 		if err != nil {
 			log.Printf("handleTimerTarget error: %v", err)
 			return
@@ -184,7 +184,7 @@ func (server *Server) handleTimerSignal(msg *osc.Message) {
 	if matches := server.timerRegexp.FindStringSubmatch(msg.Address); len(matches) == 2 {
 		counter, _ := strconv.Atoi(matches[1])
 		var r, g, b, a int32
-		err := oscUtil.UnmarshalArguments(msg, &r, &g, &b, &a)
+		err := oscutil.UnmarshalArguments(msg, &r, &g, &b, &a)
 		if err != nil {
 			log.Printf("handleTimerSignal: %v %v", err, msg)
 			return
@@ -261,7 +261,7 @@ func (server *Server) handleSourceTitle(msg *osc.Message) {
 		counter, _ := strconv.Atoi(matches[1])
 
 		var label string
-		err := oscUtil.UnmarshalArguments(msg, &label)
+		err := oscutil.UnmarshalArguments(msg, &label)
 		if err != nil {
 			log.Printf("handleSourceTitle error: %v", err)
 			return
@@ -365,7 +365,7 @@ func (server *Server) handleResetMedia(msg *osc.Message) {
 		return
 	}
 
-	err := oscUtil.UnmarshalArguments(msg, &timeStamp, &uuid)
+	err := oscutil.UnmarshalArguments(msg, &timeStamp, &uuid)
 	if err != nil {
 		log.Printf("Unmarshal %v: %v", msg, err)
 		return
@@ -434,7 +434,7 @@ func (server *Server) handleTimeSet(msg *osc.Message) {
 func (server *Server) handleBackground(msg *osc.Message) {
 	debug.Printf("background: %v", msg)
 	var bg int32
-	err := oscUtil.UnmarshalArguments(msg, &bg)
+	err := oscutil.UnmarshalArguments(msg, &bg)
 	if err != nil {
 		log.Printf("Background msg error: %v", err)
 		return
@@ -449,7 +449,7 @@ func (server *Server) handleBackground(msg *osc.Message) {
 func (server *Server) handleInfo(msg *osc.Message) {
 	debug.Printf("handleInfo")
 	var bg int32
-	err := oscUtil.UnmarshalArguments(msg, &bg)
+	err := oscutil.UnmarshalArguments(msg, &bg)
 	if err != nil {
 		log.Printf("Info msg error: %v", err)
 		return
@@ -474,7 +474,7 @@ func (server *Server) handleHardwareSignal(msg *osc.Message) {
 	if matches := server.signalRegexp.FindStringSubmatch(msg.Address); len(matches) == 2 {
 		counter, _ := strconv.Atoi(matches[1])
 		var r, g, b int32
-		err := oscUtil.UnmarshalArguments(msg, &r, &g, &b)
+		err := oscutil.UnmarshalArguments(msg, &r, &g, &b)
 		if err != nil {
 			log.Printf("handleHardwareSignal: %v %v", err, msg)
 			return
@@ -501,7 +501,7 @@ func (server *Server) handleHardwareSignal(msg *osc.Message) {
 func (server *Server) handleSignalAutomation(msg *osc.Message) {
 	var v bool
 	debug.Printf("handleSignalAutomation: %v", msg)
-	err := oscUtil.UnmarshalArguments(msg, &v)
+	err := oscutil.UnmarshalArguments(msg, &v)
 	if err != nil {
 		log.Printf("handleSignalAutomation: %v %v", err, msg)
 		return
@@ -600,7 +600,7 @@ func (server *Server) handleDisplay(msg *osc.Message) {
 }
 
 // Le huge registerHandler block
-func (server *Server) setupDispatch(d *oscUtil.RegexpDispatcher) {
+func (server *Server) setupDispatch(d *oscutil.RegexpDispatcher) {
 	// Sync messages
 	registerHandler(d, "^/clock/media/*", server.handleMedia)
 	registerHandler(d, "^/clock/resetmedia/*", server.handleResetMedia)
@@ -654,7 +654,7 @@ func (server *Server) setupDispatch(d *oscUtil.RegexpDispatcher) {
 	registerHandler(d, "^/clock/countdown2/stop", server.handleTimerStop)
 }
 
-func registerHandler(d *oscUtil.RegexpDispatcher, addr string, handler osc.HandlerFunc) {
+func registerHandler(d *oscutil.RegexpDispatcher, addr string, handler osc.HandlerFunc) {
 	if err := d.AddMsgHandler(addr, handler); err != nil {
 		panic(err)
 	}

@@ -2,7 +2,7 @@ package mitti
 
 import (
 	"gitlab.com/Depili/clock-8001/v4/debug"
-	"gitlab.com/Depili/clock-8001/v4/oscUtil"
+	"gitlab.com/Depili/clock-8001/v4/oscutil"
 	"gitlab.com/Depili/go-osc/osc"
 	// "github.com/chabad360/go-osc/osc"
 
@@ -10,7 +10,7 @@ import (
 )
 
 // MakeListener creates a Mitti OSC message listener
-func MakeListener(d *oscUtil.RegexpDispatcher) *Listener {
+func MakeListener(d *oscutil.RegexpDispatcher) *Listener {
 	var listener = Listener{
 		listeners: make(map[chan State]struct{}),
 	}
@@ -50,7 +50,7 @@ func (listener *Listener) update() {
 func (listener *Listener) handleTogglePlay(msg *osc.Message) {
 	var playing int32
 
-	if err := oscUtil.UnmarshalArgument(msg, 0, &playing); err != nil {
+	if err := oscutil.UnmarshalArgument(msg, 0, &playing); err != nil {
 		log.Printf("mitti togglePlay unmarshal %v: %v\n", msg, err)
 	}
 
@@ -61,7 +61,7 @@ func (listener *Listener) handleTogglePlay(msg *osc.Message) {
 func (listener *Listener) handleToggleLoop(msg *osc.Message) {
 	var loop int32
 
-	if err := oscUtil.UnmarshalArgument(msg, 0, &loop); err != nil {
+	if err := oscutil.UnmarshalArgument(msg, 0, &loop); err != nil {
 		log.Printf("mitti toggleLoop unmarshal %v: %v\n", msg, err)
 	}
 
@@ -72,7 +72,7 @@ func (listener *Listener) handleToggleLoop(msg *osc.Message) {
 func (listener *Listener) handleCueTimeLeft(msg *osc.Message) {
 	var cueTimeLeft string
 
-	if err := oscUtil.UnmarshalArgument(msg, 0, &cueTimeLeft); err != nil {
+	if err := oscutil.UnmarshalArgument(msg, 0, &cueTimeLeft); err != nil {
 		log.Printf("mitti cueTimeLeft unmarshal %v: %v\n", msg, err)
 	}
 
@@ -83,20 +83,20 @@ func (listener *Listener) handleCueTimeLeft(msg *osc.Message) {
 func (listener *Listener) handleCueTimeElapsed(msg *osc.Message) {
 	var cueTimeElapsed string
 
-	if err := oscUtil.UnmarshalArgument(msg, 0, &cueTimeElapsed); err != nil {
+	if err := oscutil.UnmarshalArgument(msg, 0, &cueTimeElapsed); err != nil {
 		log.Printf("mitti cueTimeLeft unmarshal %v: %v\n", msg, err)
 	}
 
 	listener.state.CueTimeElapsed(cueTimeElapsed)
 }
 
-func registerHandler(d *oscUtil.RegexpDispatcher, addr string, handler osc.HandlerFunc) {
+func registerHandler(d *oscutil.RegexpDispatcher, addr string, handler osc.HandlerFunc) {
 	if err := d.AddMsgHandler(addr, handler); err != nil {
 		panic(err)
 	}
 }
 
-func (listener *Listener) setup(d *oscUtil.RegexpDispatcher) {
+func (listener *Listener) setup(d *oscutil.RegexpDispatcher) {
 	registerHandler(d, "/mitti/cueTimeLeft", listener.handleCueTimeLeft)
 	registerHandler(d, "/mitti/cueTimeElapsed", listener.handleCueTimeElapsed)
 	registerHandler(d, "/mitti/togglePlay", listener.handleTogglePlay)
