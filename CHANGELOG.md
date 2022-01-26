@@ -1,3 +1,11 @@
+## Version 4.11.0
+* Features:
+  * Reloading (most) config options doesn't require a restart anymore
+    * HTTP option changes aren't applied until the clock has been restarted
+    * Expect there to be still some issues
+  * The OSC communication library has been updated for a better performing implementation. There might be some issues with OSC communication
+
+
 ## Version 4.10.1
 * Bugfixes:
   * Missing default on limitimer serial device
