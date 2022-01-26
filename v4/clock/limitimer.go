@@ -8,6 +8,7 @@ import (
 )
 
 func (engine *Engine) limitimerListen() {
+	engine.wg.Add(1)
 	defer engine.wg.Done()
 
 	c := &serial.Config{
@@ -71,6 +72,7 @@ const (
 )
 
 func (engine *Engine) limitimerSend() {
+	engine.wg.Add(1)
 	defer engine.wg.Done()
 
 	c := &serial.Config{Name: engine.limitimerSerial, Baud: 19200}

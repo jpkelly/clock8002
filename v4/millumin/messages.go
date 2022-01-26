@@ -1,7 +1,9 @@
 package millumin
 
 import (
+	"gitlab.com/Depili/clock-8001/v4/oscUtil"
 	"gitlab.com/Depili/go-osc/osc"
+	// "github.com/chabad360/go-osc/osc"
 )
 
 // MediaInfo contains the information of a given media file in Millumin playback state
@@ -13,13 +15,13 @@ type MediaInfo struct {
 
 // UnmarshalOSC converts a osc.Message to MediaInfo message
 func (i *MediaInfo) UnmarshalOSC(msg *osc.Message) error {
-	if err := msg.UnmarshalArgument(0, &i.Index); err != nil {
+	if err := oscUtil.UnmarshalArgument(msg, 0, &i.Index); err != nil {
 		return err
 	}
-	if err := msg.UnmarshalArgument(1, &i.Name); err != nil {
+	if err := oscUtil.UnmarshalArgument(msg, 1, &i.Name); err != nil {
 		return err
 	}
-	if err := msg.UnmarshalArgument(2, &i.Duration); err != nil {
+	if err := oscUtil.UnmarshalArgument(msg, 2, &i.Duration); err != nil {
 		return err
 	}
 
@@ -35,10 +37,10 @@ type MediaTime struct {
 
 // UnmarshalOSC converts a osc.Message to MediaTime
 func (mt *MediaTime) UnmarshalOSC(msg *osc.Message) error {
-	if err := msg.UnmarshalArgument(0, &mt.Value); err != nil {
+	if err := oscUtil.UnmarshalArgument(msg, 0, &mt.Value); err != nil {
 		return err
 	}
-	if err := msg.UnmarshalArgument(1, &mt.Duration); err != nil {
+	if err := oscUtil.UnmarshalArgument(msg, 1, &mt.Duration); err != nil {
 		return err
 	}
 

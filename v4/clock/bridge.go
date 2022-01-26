@@ -7,6 +7,8 @@ import (
 	"gitlab.com/Depili/clock-8001/v4/millumin"
 	"gitlab.com/Depili/clock-8001/v4/mitti"
 	"gitlab.com/Depili/go-osc/osc"
+	// "github.com/chabad360/go-osc/osc"
+
 	"log"
 	"time"
 )
@@ -143,7 +145,7 @@ func (engine *Engine) sendMedia(player string, hours, minutes, seconds, frames, 
 		return nil
 	}
 	address := fmt.Sprintf("/clock/media/%s", player)
-	packet := osc.NewMessage(address, hours, minutes, seconds, frames, remaining, progress, paused, looping, *osc.NewTimetag(time.Now()), engine.uuid)
+	packet := osc.NewMessage(address, hours, minutes, seconds, frames, remaining, progress, paused, looping, osc.NewTimetagFromTime(time.Now()), engine.uuid)
 
 	data, err := packet.MarshalBinary()
 	if err != nil {
@@ -167,7 +169,7 @@ func (engine *Engine) sendResetMedia(player string) error {
 	}
 
 	address := fmt.Sprintf("/clock/resetmedia/%s", player)
-	packet := osc.NewMessage(address, *osc.NewTimetag(time.Now()), engine.uuid)
+	packet := osc.NewMessage(address, osc.NewTimetagFromTime(time.Now()), engine.uuid)
 
 	data, err := packet.MarshalBinary()
 	if err != nil {

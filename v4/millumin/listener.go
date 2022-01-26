@@ -2,12 +2,15 @@ package millumin
 
 import (
 	"gitlab.com/Depili/clock-8001/v4/debug"
+	"gitlab.com/Depili/clock-8001/v4/oscUtil"
 	"gitlab.com/Depili/go-osc/osc"
+	//"github.com/chabad360/go-osc/osc"
+
 	"log"
 )
 
 // MakeListener creates a osc listener for messages sent by Millumin
-func MakeListener(d *osc.StandardDispatcher) *Listener {
+func MakeListener(d *oscUtil.RegexpDispatcher) *Listener {
 	var listener = Listener{
 		layers:    make(map[string]*LayerState),
 		listeners: make(map[chan State]struct{}),
@@ -111,13 +114,13 @@ func (listener *Listener) handleMediaStopped(msg *osc.Message) {
 	}
 }
 
-func registerHandler(d *osc.StandardDispatcher, addr string, handler osc.HandlerFunc) {
+func registerHandler(d *oscUtil.RegexpDispatcher, addr string, handler osc.HandlerFunc) {
 	if err := d.AddMsgHandler(addr, handler); err != nil {
 		panic(err)
 	}
 }
 
-func (listener *Listener) setup(d *osc.StandardDispatcher) {
+func (listener *Listener) setup(d *oscUtil.RegexpDispatcher) {
 	registerHandler(d, "/millumin/layer:*/mediaStarted", listener.handleMediaStarted)
 	registerHandler(d, "/millumin/layer:*/media/time", listener.handleMediaTime)
 	registerHandler(d, "/millumin/layer:*/mediaPaused", listener.handleMediaPaused)

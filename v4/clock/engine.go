@@ -6,8 +6,11 @@ import (
 	"github.com/denisbrodbeck/machineid"
 	"github.com/desertbit/timer"
 	"gitlab.com/Depili/clock-8001/v4/debug"
+	"gitlab.com/Depili/clock-8001/v4/oscUtil"
 	"gitlab.com/Depili/clock-8001/v4/udptime"
 	"gitlab.com/Depili/go-osc/osc"
+	// "github.com/chabad360/go-osc/osc"
+
 	"image/color"
 	"log"
 	"net"
@@ -129,11 +132,11 @@ type Engine struct {
 	flashPeriod            int
 	clockServer            *Server
 	oscServer              osc.Server
-	oscDispatcher          *osc.StandardDispatcher
+	oscDispatcher          *oscUtil.RegexpDispatcher
 	oscDests               *feedbackDestination // udp connections to send osc feedback to
 	oscSendChan            chan []byte
-	timeout                time.Duration // Timeout for osc tally events
 	oscTally               bool          // Tally text was from osc event
+	timeout                time.Duration // Timeout for osc tally events
 	message                string        // Full tally message as received from OSC
 	messageColor           *color.RGBA   // Tally message color from OSC
 	messageBG              *color.RGBA
@@ -319,17 +322,14 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 		} else {
 			log.Printf("Initializing UDP time receiver")
 			// Receive timers
-			engine.wg.Add(1)
 			go engine.listenUDPTime()
 		}
 	}
 
 	// Limitimer
 	if options.LimitimerMode == "send" {
-		engine.wg.Add(1)
 		go engine.limitimerSend()
 	} else if options.LimitimerMode == "receive" {
-		engine.wg.Add(1)
 		go engine.limitimerListen()
 	}
 
@@ -345,6 +345,7 @@ func (engine *Engine) Close() {
 }
 
 func (engine *Engine) listenUDPTime() {
+	engine.wg.Add(1)
 	defer engine.wg.Done()
 	chan1, err := udptime.Listen("0.0.0.0:36700", engine.ctx, engine.wg)
 	if err != nil {
@@ -395,6 +396,7 @@ func (engine *Engine) infoTimeout() {
 }
 
 func (engine *Engine) runOSC() {
+	engine.wg.Add(1)
 	defer engine.wg.Done()
 
 	err := engine.oscBridge()
@@ -402,14 +404,28 @@ func (engine *Engine) runOSC() {
 		panic(err)
 	}
 
-	err = engine.oscServer.ListenAndServe()
-	if err != nil {
-		panic(err)
+	for {
+		err = engine.oscServer.ListenAndServe()
+		if err != nil {
+			if e, ok := err.(*net.OpError); ok {
+				if e.Temporary() {
+					log.Printf("OSC-listen: Temporary error: %v. Retrying", e)
+				} else {
+					log.Printf("OSC-listen fatal error: %v. Giving up", e)
+					return
+				}
+			} else {
+				log.Printf("OSC-listen error: %T %v", err, err)
+				log.Printf("Retrying...")
+			}
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 
 // Listen for OSC messages
 func (engine *Engine) listen() {
+	engine.wg.Add(1)
 	defer engine.wg.Done()
 
 	oscChan := engine.clockServer.Listen()
@@ -428,7 +444,10 @@ func (engine *Engine) listen() {
 		select {
 		case <-engine.ctx.Done():
 			log.Printf("engine.listen() quitting")
-			engine.oscServer.CloseConnection()
+			err := engine.oscServer.Close()
+			if err != nil {
+				log.Printf("-> error: %v", err)
+			}
 			return
 		case message := <-oscChan:
 			// New OSC message received
@@ -1133,7 +1152,7 @@ func (engine *Engine) initSources(sources []*SourceOptions) error {
 // initOSC Sets up the OSC listener and feedback
 func (engine *Engine) initOSC(options *EngineOptions) {
 	if !options.DisableOSC {
-		engine.oscDispatcher = osc.NewStandardDispatcher()
+		engine.oscDispatcher = oscUtil.NewRegexpDispatcher()
 		engine.oscServer = osc.Server{
 			Addr:       options.ListenAddr,
 			Dispatcher: engine.oscDispatcher,
@@ -1141,7 +1160,6 @@ func (engine *Engine) initOSC(options *EngineOptions) {
 		engine.clockServer = MakeServer(&engine.oscServer, engine.oscDispatcher, engine.uuid)
 		log.Printf("OSC control: listening on %v", engine.oscServer.Addr)
 
-		engine.wg.Add(1)
 		go engine.runOSC()
 
 		// process osc commands

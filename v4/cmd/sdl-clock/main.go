@@ -77,8 +77,9 @@ func main() {
 	eventTicker := time.NewTicker(time.Millisecond * 5)
 
 	// Create main clock engine
-	engine, err := clock.MakeEngine(options.EngineOptions)
+	engine, err = clock.MakeEngine(options.EngineOptions)
 	check(err)
+
 	for i := 0; i < 3; i++ {
 		engine.SetSourceColors(i, toRGBA(colors.row[i]), toRGBA(colors.rowBG[i]))
 	}
