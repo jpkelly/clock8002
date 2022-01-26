@@ -25,6 +25,9 @@ var parser = flags.NewParser(&options, flags.Default)
 var showBackground bool
 var backgroundNumber int
 
+// Channel to notify for configuration changes
+var confChan chan bool
+
 const updateTime = time.Second / 30
 
 func main() {
@@ -32,6 +35,9 @@ func main() {
 	var info string
 
 	parseOptions()
+
+	// Channel to notify for config changes
+	confChan = make(chan bool, 1)
 
 	if !options.DisableHTTP {
 		go runHTTP()
@@ -77,7 +83,7 @@ func main() {
 	eventTicker := time.NewTicker(time.Millisecond * 5)
 
 	// Create main clock engine
-	engine, err = clock.MakeEngine(options.EngineOptions)
+	engine, err := clock.MakeEngine(options.EngineOptions)
 	check(err)
 
 	for i := 0; i < 3; i++ {
@@ -97,7 +103,44 @@ func main() {
 		select {
 		case <-sigChan:
 			// SIGINT received, shutdown gracefully
+			engine.Close()
 			os.Exit(1)
+		case <-confChan:
+			log.Printf("Reloading config!")
+			engine.Close()
+			newOptions.configFile = options.configFile
+			options = newOptions
+			computeDerivedOptions()
+
+			if hw, ok := signalHardwareList[options.SignalType]; ok {
+				hw.Init()
+			}
+
+			setupScaling()
+			initColors()
+			initTextures()
+			initAudio()
+
+			log.Printf("->Initializing clock face")
+			if options.textClock {
+				initTextClock()
+			} else if options.Face == "288x144" {
+				initSmallTextClock()
+			} else if options.countdown {
+				initCountdown()
+			} else {
+				initRoundClock()
+			}
+			// Create main clock engine
+			engine, err = clock.MakeEngine(options.EngineOptions)
+			check(err)
+			for i := 0; i < 3; i++ {
+				engine.SetSourceColors(i, toRGBA(colors.row[i]), toRGBA(colors.rowBG[i]))
+			}
+			engine.SetTitleColors(toRGBA(colors.label), toRGBA(colors.labelBG))
+
+			loadBackground(options.Background)
+			log.Printf("Config reloaded!")
 		case <-eventTicker.C:
 			// SDL event polling
 			e := sdl.PollEvent()
@@ -299,6 +342,10 @@ func parseOptions() {
 		}
 	}
 
+	computeDerivedOptions()
+}
+
+func computeDerivedOptions() {
 	switch options.Face {
 	case "round":
 	case "dual-round":

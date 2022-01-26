@@ -121,6 +121,7 @@ type clockOptions struct {
 }
 
 var options clockOptions
+var newOptions clockOptions
 
 // Pixel coordinates for the 192x192 pixel clock circles
 var circlePixels = [][2]int32{

@@ -120,7 +120,6 @@ func importHandler(w http.ResponseWriter, r *http.Request) {
 
 // TODO: validation
 func saveHandler(w http.ResponseWriter, r *http.Request) {
-	var newOptions clockOptions
 	var errors string
 	var err error
 
@@ -445,7 +444,8 @@ func delayedReboot() {
 
 func delayedExit() {
 	time.Sleep(time.Second)
-	os.Exit(0)
+	confChan <- true
+	// os.Exit(0)
 }
 
 func (options *clockOptions) writeConfig(path string) {
