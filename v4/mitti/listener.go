@@ -7,7 +7,7 @@ import (
 )
 
 // MakeListener creates a Mitti OSC message listener
-func MakeListener(oscServer *osc.Server) *Listener {
+func MakeListener(d *osc.StandardDispatcher) *Listener {
 	var listener = Listener{
 		listeners: make(map[chan State]struct{}),
 	}
@@ -16,7 +16,7 @@ func MakeListener(oscServer *osc.Server) *Listener {
 	state.Loop = false
 	state.Remaining = 0
 	listener.state = &state
-	listener.setup(oscServer)
+	listener.setup(d)
 	return &listener
 }
 
@@ -87,16 +87,16 @@ func (listener *Listener) handleCueTimeElapsed(msg *osc.Message) {
 	listener.state.CueTimeElapsed(cueTimeElapsed)
 }
 
-func registerHandler(server *osc.Server, addr string, handler osc.HandlerFunc) {
-	if err := server.Handle(addr, handler); err != nil {
+func registerHandler(d *osc.StandardDispatcher, addr string, handler osc.HandlerFunc) {
+	if err := d.AddMsgHandler(addr, handler); err != nil {
 		panic(err)
 	}
 }
 
-func (listener *Listener) setup(server *osc.Server) {
-	registerHandler(server, "/mitti/cueTimeLeft", listener.handleCueTimeLeft)
-	registerHandler(server, "/mitti/cueTimeElapsed", listener.handleCueTimeElapsed)
-	registerHandler(server, "/mitti/togglePlay", listener.handleTogglePlay)
-	registerHandler(server, "/mitti/toggleLoop", listener.handleToggleLoop)
-	registerHandler(server, "/mitti/current/toggleLoop", listener.handleToggleLoop)
+func (listener *Listener) setup(d *osc.StandardDispatcher) {
+	registerHandler(d, "/mitti/cueTimeLeft", listener.handleCueTimeLeft)
+	registerHandler(d, "/mitti/cueTimeElapsed", listener.handleCueTimeElapsed)
+	registerHandler(d, "/mitti/togglePlay", listener.handleTogglePlay)
+	registerHandler(d, "/mitti/toggleLoop", listener.handleToggleLoop)
+	registerHandler(d, "/mitti/current/toggleLoop", listener.handleToggleLoop)
 }

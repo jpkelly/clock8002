@@ -8,7 +8,13 @@ import (
 )
 
 func (engine *Engine) limitimerListen() {
-	c := &serial.Config{Name: engine.limitimerSerial, Baud: 19200}
+	defer engine.wg.Done()
+
+	c := &serial.Config{
+		Name:        engine.limitimerSerial,
+		Baud:        19200,
+		ReadTimeout: 500 * time.Millisecond,
+	}
 
 	port, err := serial.OpenPort(c)
 	if err != nil {
@@ -21,14 +27,20 @@ func (engine *Engine) limitimerListen() {
 	decoder := limitimer.Decoder{}
 
 	for {
+		select {
+		case <-engine.ctx.Done():
+			log.Printf("Limitimer listener quiting")
+			return
+		default:
+		}
+
 		n, err := port.Read(buff)
 		if err != nil {
 			log.Printf("Error reading from limitimer serial port %v", err)
 			return
 		}
 		if n == 0 {
-			log.Printf("Limitimer serial: EOF")
-			return
+			continue
 		}
 
 		messages := decoder.Feed(buff[:n])
@@ -59,6 +71,8 @@ const (
 )
 
 func (engine *Engine) limitimerSend() {
+	defer engine.wg.Done()
+
 	c := &serial.Config{Name: engine.limitimerSerial, Baud: 19200}
 
 	port, err := serial.OpenPort(c)
@@ -81,6 +95,9 @@ func (engine *Engine) limitimerSend() {
 
 	for {
 		select {
+		case <-engine.ctx.Done():
+			log.Printf("Limitimer sender quitting")
+			return
 		case <-ticker.C:
 			t := time.Now()
 			p.Sequence = time.Now().Nanosecond() / 100000000

@@ -1,10 +1,12 @@
 package udptime
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"net"
+	"sync"
 )
 
 // This is an implementation of the 3-byte udp protocol used by irisdown and stage timer 2
@@ -37,18 +39,27 @@ func (msg *Message) String() string {
 }
 
 // Listen for udptime messages on a port
-func Listen(addr string) (chan *Message, error) {
+func Listen(addr string, ctx context.Context, wg *sync.WaitGroup) (chan *Message, error) {
 	ch := make(chan *Message)
 	pc, err := net.ListenPacket("udp", addr)
 	if err != nil {
 		return nil, err
 	}
 
-	go server(pc, ch)
+	wg.Add(1)
+	go server(pc, ch, ctx, wg)
 	return ch, nil
 }
 
-func server(pc net.PacketConn, ch chan *Message) {
+// FIXME: non blocking reads and graceful shutdown
+func server(pc net.PacketConn, ch chan *Message, ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	go func(ctx context.Context, pc net.PacketConn) {
+		for range ctx.Done() {
+			pc.Close()
+		}
+	}(ctx, pc)
+
 	buffer := make([]byte, 3)
 	for {
 		n, _, err := pc.ReadFrom(buffer)

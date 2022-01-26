@@ -17,8 +17,8 @@ const (
 )
 
 func (engine *Engine) oscBridge() error {
-	var milluminListener = millumin.MakeListener(&engine.oscServer)
-	var mittiListener = mitti.MakeListener(&engine.oscServer)
+	var milluminListener = millumin.MakeListener(engine.oscDispatcher)
+	var mittiListener = mitti.MakeListener(engine.oscDispatcher)
 
 	if err := engine.startClockClient(milluminListener, mittiListener); err != nil {
 		return fmt.Errorf("start clock client: %v", err)

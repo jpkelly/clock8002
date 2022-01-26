@@ -7,13 +7,13 @@ import (
 )
 
 // MakeListener creates a osc listener for messages sent by Millumin
-func MakeListener(oscServer *osc.Server) *Listener {
+func MakeListener(d *osc.StandardDispatcher) *Listener {
 	var listener = Listener{
 		layers:    make(map[string]*LayerState),
 		listeners: make(map[chan State]struct{}),
 	}
 
-	listener.setup(oscServer)
+	listener.setup(d)
 
 	return &listener
 }
@@ -111,15 +111,15 @@ func (listener *Listener) handleMediaStopped(msg *osc.Message) {
 	}
 }
 
-func registerHandler(server *osc.Server, addr string, handler osc.HandlerFunc) {
-	if err := server.Handle(addr, handler); err != nil {
+func registerHandler(d *osc.StandardDispatcher, addr string, handler osc.HandlerFunc) {
+	if err := d.AddMsgHandler(addr, handler); err != nil {
 		panic(err)
 	}
 }
 
-func (listener *Listener) setup(server *osc.Server) {
-	registerHandler(server, "/millumin/layer:*/mediaStarted", listener.handleMediaStarted)
-	registerHandler(server, "/millumin/layer:*/media/time", listener.handleMediaTime)
-	registerHandler(server, "/millumin/layer:*/mediaPaused", listener.handleMediaPaused)
-	registerHandler(server, "/millumin/layer:*/mediaStopped", listener.handleMediaStopped)
+func (listener *Listener) setup(d *osc.StandardDispatcher) {
+	registerHandler(d, "/millumin/layer:*/mediaStarted", listener.handleMediaStarted)
+	registerHandler(d, "/millumin/layer:*/media/time", listener.handleMediaTime)
+	registerHandler(d, "/millumin/layer:*/mediaPaused", listener.handleMediaPaused)
+	registerHandler(d, "/millumin/layer:*/mediaStopped", listener.handleMediaStopped)
 }

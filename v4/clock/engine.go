@@ -1,6 +1,7 @@
 package clock
 
 import (
+	"context"
 	"fmt"
 	"github.com/denisbrodbeck/machineid"
 	"github.com/desertbit/timer"
@@ -16,6 +17,7 @@ import (
 	db "runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -127,13 +129,14 @@ type Engine struct {
 	flashPeriod            int
 	clockServer            *Server
 	oscServer              osc.Server
+	oscDispatcher          *osc.StandardDispatcher
+	oscDests               *feedbackDestination // udp connections to send osc feedback to
+	oscSendChan            chan []byte
 	timeout                time.Duration // Timeout for osc tally events
 	oscTally               bool          // Tally text was from osc event
 	message                string        // Full tally message as received from OSC
 	messageColor           *color.RGBA   // Tally message color from OSC
 	messageBG              *color.RGBA
-	oscDests               *feedbackDestination // udp connections to send osc feedback to
-	oscSendChan            chan []byte
 	udpDests               []*feedbackDestination // Stagetimer2 udp time destinations
 	udpCounters            []*Counter
 	initialized            bool     // Show version on startup until ntp synced or receiving OSC control
@@ -167,6 +170,9 @@ type Engine struct {
 	overtimeVisibility     string
 	limitimer              string
 	limitimerSerial        string
+	ctx                    context.Context
+	cancelFunc             context.CancelFunc
+	wg                     *sync.WaitGroup
 }
 
 // Clock contains the state of a single component clock / timer
@@ -232,7 +238,11 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 		overtimeVisibility:     options.OvertimeVisibility,
 		limitimer:              options.LimitimerMode,
 		limitimerSerial:        options.LimitimerSerial,
+		wg:                     &sync.WaitGroup{},
 	}
+
+	engine.ctx, engine.cancelFunc = context.WithCancel(context.Background())
+
 	uuid, err := machineid.ProtectedID("clock-8001")
 	if err != nil {
 		log.Fatalf("Failed to generate unique identifier: %v", err)
@@ -309,27 +319,39 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 		} else {
 			log.Printf("Initializing UDP time receiver")
 			// Receive timers
+			engine.wg.Add(1)
 			go engine.listenUDPTime()
 		}
 	}
 
 	// Limitimer
 	if options.LimitimerMode == "send" {
+		engine.wg.Add(1)
 		go engine.limitimerSend()
 	} else if options.LimitimerMode == "receive" {
+		engine.wg.Add(1)
 		go engine.limitimerListen()
 	}
 
 	return &engine, nil
 }
 
+// Close stops the engine and closes all open connections and files
+func (engine *Engine) Close() {
+	log.Printf("Stopping the clock engine on request...")
+	engine.cancelFunc()
+	engine.wg.Wait()
+	log.Printf("Clock engine stopped")
+}
+
 func (engine *Engine) listenUDPTime() {
-	chan1, err := udptime.Listen("0.0.0.0:36700")
+	defer engine.wg.Done()
+	chan1, err := udptime.Listen("0.0.0.0:36700", engine.ctx, engine.wg)
 	if err != nil {
 		log.Printf("UDPTime listen error: %v", err)
 		return
 	}
-	chan2, err := udptime.Listen("0.0.0.0:36701")
+	chan2, err := udptime.Listen("0.0.0.0:36701", engine.ctx, engine.wg)
 	if err != nil {
 		log.Printf("UDPTime listen error: %v", err)
 		return
@@ -343,6 +365,8 @@ func (engine *Engine) listenUDPTime() {
 			t = 0
 		case msg = <-chan2:
 			t = 1
+		case <-engine.ctx.Done():
+			return
 		}
 		icon := ""
 		if msg.OverTime {
@@ -371,6 +395,8 @@ func (engine *Engine) infoTimeout() {
 }
 
 func (engine *Engine) runOSC() {
+	defer engine.wg.Done()
+
 	err := engine.oscBridge()
 	if err != nil {
 		panic(err)
@@ -384,6 +410,8 @@ func (engine *Engine) runOSC() {
 
 // Listen for OSC messages
 func (engine *Engine) listen() {
+	defer engine.wg.Done()
+
 	oscChan := engine.clockServer.Listen()
 	tallyTimer := timer.NewTimer(engine.timeout)
 	tallyTimer.Stop()
@@ -398,6 +426,10 @@ func (engine *Engine) listen() {
 
 	for {
 		select {
+		case <-engine.ctx.Done():
+			log.Printf("engine.listen() quitting")
+			engine.oscServer.CloseConnection()
+			return
 		case message := <-oscChan:
 			// New OSC message received
 			debug.Printf("Got new osc data: %v\n", message)
@@ -587,11 +619,12 @@ func (engine *Engine) sendState(state *State) error {
 	engine.sendLegacyState(state)
 
 	bundle := osc.NewBundle(time.Now())
+	var packet *osc.Message
 
 	for i, s := range state.Clocks {
 		addr := fmt.Sprintf("/clock/source/%d/state", i+1)
 
-		packet := osc.NewMessage(addr, engine.uuid, s.Hidden, s.Text, s.Compact, s.Icon, float32(s.Progress), s.Expired, s.Paused, s.Label, int32(s.Mode))
+		packet = osc.NewMessage(addr, engine.uuid, s.Hidden, s.Text, s.Compact, s.Icon, float32(s.Progress), s.Expired, s.Paused, s.Label, int32(s.Mode))
 		bundle.Append(packet)
 	}
 
@@ -599,7 +632,7 @@ func (engine *Engine) sendState(state *State) error {
 		addr := fmt.Sprintf("/clock/timer/%d/state", i)
 		out := c.Output(t)
 
-		packet := osc.NewMessage(addr, engine.uuid, out.Active, out.Text, out.Compact, out.Icon, float32(out.Progress), out.Expired, out.Paused)
+		packet = osc.NewMessage(addr, engine.uuid, out.Active, out.Text, out.Compact, out.Icon, float32(out.Progress), out.Expired, out.Paused)
 		bundle.Append(packet)
 	}
 
@@ -1100,12 +1133,15 @@ func (engine *Engine) initSources(sources []*SourceOptions) error {
 // initOSC Sets up the OSC listener and feedback
 func (engine *Engine) initOSC(options *EngineOptions) {
 	if !options.DisableOSC {
+		engine.oscDispatcher = osc.NewStandardDispatcher()
 		engine.oscServer = osc.Server{
-			Addr: options.ListenAddr,
+			Addr:       options.ListenAddr,
+			Dispatcher: engine.oscDispatcher,
 		}
-		engine.clockServer = MakeServer(&engine.oscServer, engine.uuid)
+		engine.clockServer = MakeServer(&engine.oscServer, engine.oscDispatcher, engine.uuid)
 		log.Printf("OSC control: listening on %v", engine.oscServer.Addr)
 
+		engine.wg.Add(1)
 		go engine.runOSC()
 
 		// process osc commands

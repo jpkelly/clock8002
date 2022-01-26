@@ -17,7 +17,7 @@ const (
 )
 
 // MakeServer creates a clock.Server instance from osc.Server instance
-func MakeServer(oscServer *osc.Server, uuid string) *Server {
+func MakeServer(oscServer *osc.Server, d *osc.StandardDispatcher, uuid string) *Server {
 	var server = Server{
 		listeners:    make(map[chan Message]struct{}),
 		Debug:        false,
@@ -27,8 +27,7 @@ func MakeServer(oscServer *osc.Server, uuid string) *Server {
 		uuid:         uuid,
 	}
 
-	server.setup(oscServer)
-
+	server.setupDispatch(d)
 	return &server
 }
 
@@ -598,62 +597,62 @@ func (server *Server) handleDisplay(msg *osc.Message) {
 }
 
 // Le huge registerHandler block
-func (server *Server) setup(oscServer *osc.Server) {
+func (server *Server) setupDispatch(d *osc.StandardDispatcher) {
 	// Sync messages
-	registerHandler(oscServer, "^/clock/media/*", server.handleMedia)
-	registerHandler(oscServer, "^/clock/resetmedia/*", server.handleResetMedia)
-	registerHandler(oscServer, "^/clock/ltc", server.handleLTC)
+	registerHandler(d, "^/clock/media/*", server.handleMedia)
+	registerHandler(d, "^/clock/resetmedia/*", server.handleResetMedia)
+	registerHandler(d, "^/clock/ltc", server.handleLTC)
 
 	// Timer related
-	registerHandler(oscServer, "^/clock/timer/*/countdown/target", server.handleCountdownTarget)
-	registerHandler(oscServer, "^/clock/timer/*/countdown$", server.handleCountdownStart)
-	registerHandler(oscServer, "^/clock/timer/*/countup/target", server.handleCountupTarget)
-	registerHandler(oscServer, "^/clock/timer/*/countup$", server.handleCountupStart)
-	registerHandler(oscServer, "^/clock/timer/*/modify", server.handleTimerModify)
-	registerHandler(oscServer, "^/clock/timer/*/signal", server.handleTimerSignal)
-	registerHandler(oscServer, "^/clock/timer/*/stop", server.handleTimerStop)
-	registerHandler(oscServer, "^/clock/timer/*/pause", server.handleTimerPause)
-	registerHandler(oscServer, "^/clock/timer/*/resume", server.handleTimerResume)
-	registerHandler(oscServer, "^/clock/pause", server.handlePause)
-	registerHandler(oscServer, "^/clock/resume", server.handleResume)
+	registerHandler(d, "^/clock/timer/*/countdown/target", server.handleCountdownTarget)
+	registerHandler(d, "^/clock/timer/*/countdown$", server.handleCountdownStart)
+	registerHandler(d, "^/clock/timer/*/countup/target", server.handleCountupTarget)
+	registerHandler(d, "^/clock/timer/*/countup$", server.handleCountupStart)
+	registerHandler(d, "^/clock/timer/*/modify", server.handleTimerModify)
+	registerHandler(d, "^/clock/timer/*/signal", server.handleTimerSignal)
+	registerHandler(d, "^/clock/timer/*/stop", server.handleTimerStop)
+	registerHandler(d, "^/clock/timer/*/pause", server.handleTimerPause)
+	registerHandler(d, "^/clock/timer/*/resume", server.handleTimerResume)
+	registerHandler(d, "^/clock/pause", server.handlePause)
+	registerHandler(d, "^/clock/resume", server.handleResume)
 
 	// Source related
-	registerHandler(oscServer, "^/clock/source/*/hide", server.handleHide)
-	registerHandler(oscServer, "^/clock/source/*/show", server.handleShow)
-	registerHandler(oscServer, "^/clock/source/*/title", server.handleSourceTitle)
-	registerHandler(oscServer, "^/clock/source/*/color", server.handleSourceColor)
-	registerHandler(oscServer, "^/clock/hide", server.handleHideAll)
-	registerHandler(oscServer, "^/clock/show", server.handleShowAll)
+	registerHandler(d, "^/clock/source/*/hide", server.handleHide)
+	registerHandler(d, "^/clock/source/*/show", server.handleShow)
+	registerHandler(d, "^/clock/source/*/title", server.handleSourceTitle)
+	registerHandler(d, "^/clock/source/*/color", server.handleSourceColor)
+	registerHandler(d, "^/clock/hide", server.handleHideAll)
+	registerHandler(d, "^/clock/show", server.handleShowAll)
 
 	// Misc commands
-	registerHandler(oscServer, "^/clock/background", server.handleBackground)
-	registerHandler(oscServer, "^/clock/info", server.handleInfo)
-	registerHandler(oscServer, "^/clock/text", server.handleDisplayText)
-	registerHandler(oscServer, "^/clock/titlecolors", server.handleTitleColors)
-	registerHandler(oscServer, "^/clock/seconds/off", server.handleSecondsOff)
-	registerHandler(oscServer, "^/clock/seconds/on", server.handleSecondsOn)
-	registerHandler(oscServer, "^/clock/time/set", server.handleTimeSet)
-	registerHandler(oscServer, "^/clock/flash", server.handleFlash)
-	registerHandler(oscServer, "^/clock/signal/*", server.handleHardwareSignal)
-	registerHandler(oscServer, "^/clock/automation", server.handleSignalAutomation)
+	registerHandler(d, "^/clock/background", server.handleBackground)
+	registerHandler(d, "^/clock/info", server.handleInfo)
+	registerHandler(d, "^/clock/text", server.handleDisplayText)
+	registerHandler(d, "^/clock/titlecolors", server.handleTitleColors)
+	registerHandler(d, "^/clock/seconds/off", server.handleSecondsOff)
+	registerHandler(d, "^/clock/seconds/on", server.handleSecondsOn)
+	registerHandler(d, "^/clock/time/set", server.handleTimeSet)
+	registerHandler(d, "^/clock/flash", server.handleFlash)
+	registerHandler(d, "^/clock/signal/*", server.handleHardwareSignal)
+	registerHandler(d, "^/clock/automation", server.handleSignalAutomation)
 
 	// Deprecated
-	registerHandler(oscServer, "^/clock/dual/text", server.handleDualText)
-	registerHandler(oscServer, "^/clock/kill", server.handleHideAll)
-	registerHandler(oscServer, "^/clock/normal", server.handleShowAll)
-	registerHandler(oscServer, "^/clock/countup/start", server.handleCountupStart)
-	registerHandler(oscServer, "^/clock/countup/modify", server.handleTimerModify)
-	registerHandler(oscServer, "^/clock/display", server.handleDisplay)
-	registerHandler(oscServer, "^/clock/countdown/start", server.handleCountdownStart)
-	registerHandler(oscServer, "^/clock/countdown2/start", server.handleCountdownStart)
-	registerHandler(oscServer, "^/clock/countdown/modify", server.handleTimerModify)
-	registerHandler(oscServer, "^/clock/countdown2/modify", server.handleTimerModify)
-	registerHandler(oscServer, "^/clock/countdown/stop", server.handleTimerStop)
-	registerHandler(oscServer, "^/clock/countdown2/stop", server.handleTimerStop)
+	registerHandler(d, "^/clock/dual/text", server.handleDualText)
+	registerHandler(d, "^/clock/kill", server.handleHideAll)
+	registerHandler(d, "^/clock/normal", server.handleShowAll)
+	registerHandler(d, "^/clock/countup/start", server.handleCountupStart)
+	registerHandler(d, "^/clock/countup/modify", server.handleTimerModify)
+	registerHandler(d, "^/clock/display", server.handleDisplay)
+	registerHandler(d, "^/clock/countdown/start", server.handleCountdownStart)
+	registerHandler(d, "^/clock/countdown2/start", server.handleCountdownStart)
+	registerHandler(d, "^/clock/countdown/modify", server.handleTimerModify)
+	registerHandler(d, "^/clock/countdown2/modify", server.handleTimerModify)
+	registerHandler(d, "^/clock/countdown/stop", server.handleTimerStop)
+	registerHandler(d, "^/clock/countdown2/stop", server.handleTimerStop)
 }
 
-func registerHandler(server *osc.Server, addr string, handler osc.HandlerFunc) {
-	if err := server.Handle(addr, handler); err != nil {
+func registerHandler(d *osc.StandardDispatcher, addr string, handler osc.HandlerFunc) {
+	if err := d.AddMsgHandler(addr, handler); err != nil {
 		panic(err)
 	}
 }
