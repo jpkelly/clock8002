@@ -317,8 +317,8 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 			log.Printf("Initializing UDP time sender")
 			// Send timers
 			engine.udpDests = make([]*feedbackDestination, 2)
-			engine.udpDests[0] = initFeedback("255.255.255.255:36700")
-			engine.udpDests[1] = initFeedback("255.255.255.255:36701")
+			engine.udpDests[0] = initFeedback(engine.ctx, "255.255.255.255:36700", engine.wg)
+			engine.udpDests[1] = initFeedback(engine.ctx, "255.255.255.255:36701", engine.wg)
 		} else {
 			log.Printf("Initializing UDP time receiver")
 			// Receive timers
@@ -1170,7 +1170,7 @@ func (engine *Engine) initOSC(options *EngineOptions) {
 			log.Printf("OSC feedback disabled")
 		} else {
 			// OSC feedback
-			engine.oscDests = initFeedback(options.Connect)
+			engine.oscDests = initFeedback(engine.ctx, options.Connect, engine.wg)
 		}
 	} else {
 		log.Printf("OSC control and feedback disabled.\n")

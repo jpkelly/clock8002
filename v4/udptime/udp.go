@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 )
 
 // This is an implementation of the 3-byte udp protocol used by irisdown and stage timer 2
@@ -54,9 +55,16 @@ func Listen(ctx context.Context, addr string, wg *sync.WaitGroup) (chan *Message
 // FIXME: non blocking reads and graceful shutdown
 func server(ctx context.Context, pc net.PacketConn, ch chan *Message, wg *sync.WaitGroup) {
 	defer wg.Done()
+
+	// Close the connection on context loss
 	go func(ctx context.Context, pc net.PacketConn) {
-		for range ctx.Done() {
-			pc.Close()
+		for {
+			select {
+			case <-ctx.Done():
+				pc.Close()
+			default:
+			}
+			time.Sleep(10 * time.Millisecond)
 		}
 	}(ctx, pc)
 

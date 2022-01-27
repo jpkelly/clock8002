@@ -108,6 +108,7 @@ func main() {
 		case <-confChan:
 			log.Printf("Reloading config!")
 			engine.Close()
+			log.Printf("Clock engine closed")
 			newOptions.configFile = options.configFile
 			options = newOptions
 			computeDerivedOptions()
@@ -115,10 +116,13 @@ func main() {
 			if hw, ok := signalHardwareList[options.SignalType]; ok {
 				hw.Init()
 			}
-
+			log.Printf("HW init done")
 			setupScaling()
+			log.Printf("Scaling init done")
 			initColors()
+			log.Printf("Color init done")
 			initTextures()
+			log.Printf("texture init done")
 			initAudio()
 
 			log.Printf("->Initializing clock face")

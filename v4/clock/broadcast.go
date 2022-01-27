@@ -1,11 +1,13 @@
 package clock
 
 import (
+	"context"
 	"fmt"
 	"gitlab.com/Depili/clock-8001/v4/debug"
 	"log"
 	"net"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -14,11 +16,14 @@ const interfacePollTime = 5 * time.Second
 type feedbackDestination struct {
 	udpConns []*net.UDPConn
 	address  string
+	ctx      context.Context
+	wg       *sync.WaitGroup
 }
 
-func initFeedback(address string) *feedbackDestination {
+func initFeedback(ctx context.Context, address string) *feedbackDestination {
 	var fbDest = feedbackDestination{
 		address: address,
+		ctx:     ctx,
 	}
 	go fbDest.monitor()
 	return &fbDest
@@ -40,6 +45,15 @@ func (fbDest *feedbackDestination) monitor() {
 
 	for {
 		time.Sleep(interfacePollTime)
+		select {
+		case <-fbDest.ctx.Done():
+			log.Printf("fbDest monitor for %v shutting down", fbDest.address)
+			for _, c := range fbDest.udpConns {
+				c.Close()
+			}
+			return
+		default:
+		}
 		debug.Printf("Updating feedback connections\n")
 
 		if !strings.Contains(fbDest.address, "255.255.255.255") {

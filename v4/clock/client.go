@@ -1,8 +1,10 @@
 package clock
 
 import (
+	"context"
 	"fmt"
 	"gitlab.com/Depili/go-osc/osc"
+	"sync"
 )
 
 // ClientOptions common options for client instances
@@ -11,9 +13,9 @@ type ClientOptions struct {
 }
 
 // MakeClient Create a clock OSC client
-func (options ClientOptions) MakeClient() (*Client, error) {
+func (options ClientOptions) MakeClient(ctx context.Context, wg *sync.WaitGroup) (*Client, error) {
 	var client = Client{}
-	client.oscDests = initFeedback(options.Connect)
+	client.oscDests = initFeedback(ctx, options.Connect, wg)
 
 	return &client, nil
 }
