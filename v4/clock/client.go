@@ -15,7 +15,7 @@ type ClientOptions struct {
 // MakeClient Create a clock OSC client
 func (options ClientOptions) MakeClient(ctx context.Context, wg *sync.WaitGroup) (*Client, error) {
 	var client = Client{}
-	client.oscDests = initFeedback(ctx, options.Connect, wg)
+	client.oscDests = initFeedback(ctx, options.Connect)
 
 	return &client, nil
 }
