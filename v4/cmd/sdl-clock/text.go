@@ -49,15 +49,27 @@ func initTextClock() {
 	var f *ttf.Font
 	var err error
 
+	if textClock.numberFont != nil {
+		textClock.numberFont.Close()
+	}
+
 	if f, err = ttf.OpenFont(options.NumberFont, options.NumberFontSize); err != nil {
 		panic(err)
 	}
 	textClock.numberFont = f
 
+	if textClock.labelFont != nil {
+		textClock.labelFont.Close()
+	}
+
 	if f, err = ttf.OpenFont(options.LabelFont, labelSize); err != nil {
 		panic(err)
 	}
 	textClock.labelFont = f
+
+	if textClock.iconFont != nil {
+		textClock.iconFont.Close()
+	}
 
 	if f, err = ttf.OpenFont(options.IconFont, iconSize); err != nil {
 		panic(err)

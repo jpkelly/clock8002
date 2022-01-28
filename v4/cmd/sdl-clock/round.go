@@ -28,6 +28,10 @@ func initRoundClock() {
 
 	createRings()
 
+	for _, t := range clockTextures {
+		t.Destroy()
+	}
+
 	clockTextures = make([]*sdl.Texture, 2)
 	for i := range clockTextures {
 		clockTextures[i], err = renderer.CreateTexture(

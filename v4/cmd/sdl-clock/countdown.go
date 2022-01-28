@@ -26,10 +26,18 @@ func initCountdown() {
 	var f *ttf.Font
 	var err error
 
+	if countdown.smallFont != nil {
+		countdown.smallFont.Close()
+	}
+
 	if f, err = ttf.OpenFont(options.NumberFont, 250); err != nil {
 		panic(err)
 	}
 	countdown.smallFont = f
+
+	if countdown.largeFont != nil {
+		countdown.largeFont.Close()
+	}
 
 	if f, err = ttf.OpenFont(options.NumberFont, 350); err != nil {
 		panic(err)
