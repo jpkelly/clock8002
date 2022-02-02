@@ -159,8 +159,6 @@ func drawSingleLineClock(state *clock.State) {
 		copyIntoRect(textClock.r[0].textTex, textR)
 		if textClock.r[0].iconTex != nil {
 			copyIntoRect(textClock.r[0].iconTex, iconR)
-		} else {
-			debug.Printf("Nil icon texture!")
 		}
 	} else {
 		// LTC
@@ -210,8 +208,6 @@ func draw3TextClocks(state *clock.State) {
 			copyIntoRect(textClock.r[i].textTex, textR)
 			if textClock.r[i].iconTex != nil {
 				copyIntoRect(textClock.r[i].iconTex, iconR)
-			} else {
-				debug.Printf("Nil icon texture!")
 			}
 
 		} else {

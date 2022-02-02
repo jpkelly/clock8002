@@ -50,7 +50,7 @@ func (s *RegexpDispatcher) Dispatch(packet osc.Packet) {
 
 	case *osc.Message:
 		msg, _ := packet.(*osc.Message)
-		debug.Printf("Dispatching osc message %v", msg.Address)
+		debug.Printf("Dispatching osc message %v %v", msg.Address, msg.Arguments)
 		for _, h := range s.handlers {
 			if h.exp.MatchString(msg.Address) {
 				debug.Printf("-> found handler")
