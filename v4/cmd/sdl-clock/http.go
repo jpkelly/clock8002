@@ -408,13 +408,14 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 				check(err)
 				_, err = f.WriteString(r.FormValue("configtxt"))
 				check(err)
+				f.Sync()
 				f.Close()
-
 				// reboot the rpi
 				go delayedReboot()
 			}
 
 		}
+
 		go delayedExit()
 
 		// Render success page
@@ -458,6 +459,8 @@ func (options *clockOptions) writeConfig(path string) {
 		panic(err)
 	}
 	err = tmpl.Execute(f, options)
+	f.Sync()
+	f.Close()
 }
 
 func (options *clockOptions) createHTML() {
