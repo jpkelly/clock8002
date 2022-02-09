@@ -68,31 +68,72 @@ type limitimerState struct {
 	led        int
 	paused     bool
 	expired    bool
+	warning    bool
 	minuteMode bool
+	countdown  bool
+}
+
+func (counter *Counter) parseLimitimer(p *LimitimerMessage) {
+	expired := p.Total-p.Elapsed < 1
+	warning := p.Total-p.Elapsed <= p.Sumup
+
+	t := int32(0)
+	var hour, min, sec int32
+
+	if p.Countdown {
+		// Count down
+		t = p.Total - p.Elapsed
+	} else {
+		t = p.Elapsed
+	}
+
+	if p.Minutes {
+		hour = 0
+		min = t / 60
+		sec = t % 60
+	} else {
+		hour = t / 60 / 60
+		min = t / 60
+		sec = t % 60
+	}
+
+	if min > 99 {
+		min = 99
+		sec = 59
+	}
+
+	if expired {
+		if hour < 0 {
+			hour = -hour
+		}
+		if min < 0 {
+			min = -min
+		}
+		if sec < 0 {
+			sec = -sec
+		}
+	}
+
+	ltState := limitimerState{
+		hours:      int(hour),
+		minutes:    int(min),
+		seconds:    int(sec),
+		duration:   time.Duration(p.Total) * time.Second,
+		elapsed:    time.Duration(p.Elapsed) * time.Second,
+		blink:      p.Blink,
+		paused:     !p.Run,
+		expired:    expired,
+		warning:    warning,
+		minuteMode: p.Minutes,
+		countdown:  p.Countdown,
+	}
+
+	counter.setLimitimerState(&ltState)
 }
 
 // SetLimitimer set the counter state from a limitimer status message
 func (counter *Counter) SetLimitimer(p *limitimer.State, i int) {
 	h, m, s := p.TimerDisplay(i)
-
-	icon := "Ⅱ"
-	if p.Timers[i].Run() && p.CountDirection {
-		icon = "↓"
-	} else if p.Timers[i].Run() {
-		icon = "↑"
-	}
-
-	led := autoColorOff
-
-	if p.Timers[i].Run() {
-		if p.Timers[i].Expired() {
-			led = autoColorEnd
-		} else if p.Timers[i].Warning() {
-			led = autoColorWarn
-		} else {
-			led = autoColorStart
-		}
-	}
 
 	ltState := limitimerState{
 		hours:      h,
@@ -100,18 +141,41 @@ func (counter *Counter) SetLimitimer(p *limitimer.State, i int) {
 		seconds:    s,
 		duration:   time.Duration(p.Timers[i].Total.Seconds()) * time.Second,
 		elapsed:    time.Duration(p.Timers[i].Elapsed.Seconds()) * time.Second,
-		icon:       icon,
-		led:        led,
 		blink:      p.Timers[i].Blink(),
 		paused:     !p.Timers[i].Run(),
 		expired:    p.Timers[i].Expired(),
+		warning:    p.Timers[i].Warning(),
 		minuteMode: p.Minutes(i),
+		countdown:  p.CountDirection,
 	}
 
-	counter.countdown = p.CountDirection
+	counter.setLimitimerState(&ltState)
+}
+
+func (counter *Counter) setLimitimerState(ltState *limitimerState) {
+	icon := "Ⅱ"
+	if !ltState.paused && ltState.countdown {
+		icon = "↓"
+	} else if !ltState.paused {
+		icon = "↑"
+	}
+	ltState.icon = icon
+
+	led := autoColorOff
+
+	if !ltState.paused {
+		if ltState.expired {
+			led = autoColorEnd
+		} else if ltState.warning {
+			led = autoColorWarn
+		} else {
+			led = autoColorStart
+		}
+	}
+	ltState.led = led
 
 	// Uglyish hack for the hours mode
-	if !ltState.minuteMode && h == 0 && m == 0 {
+	if !ltState.minuteMode && ltState.hours == 0 && ltState.minutes == 0 {
 		ltState.expired = true
 	}
 
@@ -130,7 +194,8 @@ func (counter *Counter) SetLimitimer(p *limitimer.State, i int) {
 		}
 	}
 
-	counter.limitimer = &ltState
+	counter.limitimer = ltState
+	counter.countdown = ltState.countdown
 	counter.active = true
 }
 

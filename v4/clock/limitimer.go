@@ -1,6 +1,7 @@
 package clock
 
 import (
+	"fmt"
 	"github.com/tarm/serial"
 	"gitlab.com/Depili/limitimer"
 	"log"
@@ -53,9 +54,32 @@ func (engine *Engine) limitimerListen() {
 					log.Printf(" -> Invalid limitimer message %v", err)
 				} else {
 					for i := range p.Timers {
-						engine.Counters[i+1].SetLimitimer(p, i)
+						if engine.limitimerReceive[i] {
+							engine.Counters[i+1].SetLimitimer(p, i)
+							if engine.limitimerBroadcast[i] {
+								msg := makeLimitimerMessage(p, i, engine.uuid)
+								addr := fmt.Sprintf("/clock/limitimer/%d", i+1)
+								b, err := msg.MarshalOSC(addr).MarshalBinary()
+								if err != nil {
+									log.Printf("Limitimer message osc marshal error: %v", err)
+								} else {
+									engine.oscSendChan <- b
+								}
+							}
+						}
 					}
-					engine.Counters[5].SetLimitimer(p, p.SelectedTimer)
+					if engine.limitimerReceive[4] {
+						engine.Counters[5].SetLimitimer(p, p.SelectedTimer)
+						if engine.limitimerBroadcast[4] {
+							msg := makeLimitimerMessage(p, p.SelectedTimer, engine.uuid)
+							b, err := msg.MarshalOSC("/clock/limitimer/active").MarshalBinary()
+							if err != nil {
+								log.Printf("Limitimer message osc marshal error: %v", err)
+							} else {
+								engine.oscSendChan <- b
+							}
+						}
+					}
 				}
 			case limitimer.PING_MSG:
 			default:
@@ -135,4 +159,26 @@ func (engine *Engine) limitimerSend() {
 			// Send the ping packet???
 		}
 	}
+}
+
+func makeLimitimerMessage(p *limitimer.State, i int, uuid string) LimitimerMessage {
+	msg := LimitimerMessage{
+		Total:     int32(p.Timers[i].Total.Seconds()),
+		Sumup:     int32(p.Timers[i].Sumup.Seconds()),
+		Elapsed:   int32(p.Timers[i].Elapsed.Seconds()),
+		Minutes:   minutes(p, i),
+		Countdown: p.CountDirection,
+		Run:       p.Timers[i].Run(),
+		Blink:     p.Timers[i].Blink(),
+		Beep:      p.Timers[i].Beep(),
+		UUID:      uuid,
+	}
+	return msg
+}
+
+func minutes(p *limitimer.State, i int) bool {
+	if i < 4 {
+		return p.ProgramMinutes
+	}
+	return p.SessionMinutes
 }

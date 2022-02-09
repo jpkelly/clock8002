@@ -233,9 +233,35 @@ Parameters:
 
 Where `*` is either `mitti` or `millumin`
 
+Parameters:
+1. int; hours remaining
+2. int; minutes remaining
+3. int; seconds remaining
+4. int; frames remaining
+5. float; progress, 0-1
+6. bool; is the media paused
+7. bool; is the media looping
+8. timetag; message timestamp
+9. string; UUID of the sending clock
+
 ### `/clock/resetmedia/*`
 
 Where `*` is either `mitti` or `millumin`
+
+### `/clock/limitimer/*`
+
+Where `*` is 1-4 or `active`
+
+Parameters:
+1. int; Total seconds
+2. int; Sumup seconds
+3. int; Elapsed seconds
+4. bool; Minutes (true) / Hours (false)
+4. bool; countdown
+5. bool; run
+6. bool; blink
+7. bool; beep
+8. string; uuid of sending clock
 
 ## Deprecated commands
 

@@ -28,6 +28,7 @@ type Message struct {
 	DisplayMessage     *DisplayMessage
 	MediaMessage       *MediaMessage
 	DisplayTextMessage *displayTextMessage
+	LimitimerMessage   *LimitimerMessage
 	Colors             []color.RGBA
 }
 
@@ -120,6 +121,51 @@ func (message *displayTextMessage) UnmarshalOSC(msg *osc.Message) error {
 		&message.bgA,
 		&message.time,
 		&message.text,
+	)
+}
+
+// LimitimerMessage is for relaying limitimer program states over OSC
+type LimitimerMessage struct {
+	Total     int32
+	Sumup     int32
+	Elapsed   int32
+	Minutes   bool
+	Countdown bool
+	Run       bool
+	Blink     bool
+	Beep      bool
+	UUID      string
+}
+
+// UnmarshalOSC converts a osc.Message to LimitimerMessage
+func (message *LimitimerMessage) UnmarshalOSC(msg *osc.Message) error {
+	return oscutil.UnmarshalArguments(
+		msg,
+		&message.Total,
+		&message.Sumup,
+		&message.Elapsed,
+		&message.Minutes,
+		&message.Countdown,
+		&message.Run,
+		&message.Blink,
+		&message.Beep,
+		&message.UUID,
+	)
+}
+
+// MarshalOSC converts a LimitimerMessage to osc.Message
+func (message *LimitimerMessage) MarshalOSC(addr string) *osc.Message {
+	return osc.NewMessage(addr,
+		&message.Total,
+		&message.Total,
+		&message.Sumup,
+		&message.Elapsed,
+		&message.Minutes,
+		&message.Countdown,
+		&message.Run,
+		&message.Blink,
+		&message.Beep,
+		&message.UUID,
 	)
 }
 

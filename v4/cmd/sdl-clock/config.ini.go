@@ -197,6 +197,30 @@ limitimer-mode={{.EngineOptions.LimitimerMode}}
 # Serial device to use for limitimer communications
 limitimer-serial={{.EngineOptions.LimitimerSerial}}
 
+# Receive and broadcast flags per limitimer program:
+
+# Limitimer program 1 as timer 1
+limitimer-receive-timer1={{.EngineOptions.LimitimerReceive1}}
+# Limitimer program 2 as timer 2
+limitimer-receive-timer2={{.EngineOptions.LimitimerReceive2}}
+# Limitimer program 3 as timer 3
+limitimer-receive-timer3={{.EngineOptions.LimitimerReceive3}}
+# Limitimer session (program 4) as timer 4
+limitimer-receive-timer4={{.EngineOptions.LimitimerReceive4}}
+# Limitimer program selected on controller as timer 5
+limitimer-receive-timer5={{.EngineOptions.LimitimerReceive5}}
+
+# Send program 1 as timer 1 to other clocks via OSC
+limitimer-broadcast-timer1={{.EngineOptions.LimitimerBroadcast1}}
+# Send program 2 as timer 2 to other clocks via OSC
+limitimer-broadcast-timer2={{.EngineOptions.LimitimerBroadcast2}}
+# Send program 3 as timer 3 to other clocks via OSC
+limitimer-broadcast-timer3={{.EngineOptions.LimitimerBroadcast3}}
+# Send session (program 4) as timer 4 to other clocks via OSC
+limitimer-broadcast-timer4={{.EngineOptions.LimitimerBroadcast4}}
+# Send program selected on controller as timer 5 to other clocks via OSC
+limitimer-broadcast-timer5={{.EngineOptions.LimitimerBroadcast5}}
+
 
 # Font to use
 Font={{.Font}}

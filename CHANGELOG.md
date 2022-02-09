@@ -4,6 +4,10 @@
     * HTTP option changes aren't applied until the clock has been restarted
     * Expect there to be still some issues
   * The OSC communication library has been updated for a better performing implementation. There might be some issues with OSC communication
+  * Limitimer timers can now be rebroadcast via OSC to other clocks
+  * Limitimer timer reception from RS485 can be toggled on and off per limitimer program
+* Bugfixes:
+  * Flush the config file changes straight to disc for extra robustness
 
 
 ## Version 4.10.1

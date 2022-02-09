@@ -85,8 +85,18 @@ type EngineOptions struct {
 	SignalThresholdEnd     int    `long:"signal-threshold-end" description:"Threshold for medium color transition (seconds)" default:"60"`
 	SignalHardware         int    `long:"signal-hw-group" description:"Hardware signal group number" default:"1"`
 
-	LimitimerMode   string `long:"limitimer-mode" description:"Listen for limitimer messages on the serial device and update sources based on them" choice:"off" choice:"send" choice:"receive" default:"off"`
-	LimitimerSerial string `long:"limitimer-serial" description:"Serial device for limitimer communication" default:"/dev/ttyAMA0"`
+	LimitimerMode       string `long:"limitimer-mode" description:"Listen for limitimer messages on the serial device and update sources based on them" choice:"off" choice:"send" choice:"receive" default:"off"`
+	LimitimerSerial     string `long:"limitimer-serial" description:"Serial device for limitimer communication" default:"/dev/ttyAMA0"`
+	LimitimerReceive1   bool   `long:"limitimer-receive-timer1" description:"Receive limitimer program 1 as timer 1"`
+	LimitimerReceive2   bool   `long:"limitimer-receive-timer2" description:"Receive limitimer program 2 as timer 2"`
+	LimitimerReceive3   bool   `long:"limitimer-receive-timer3" description:"Receive limitimer program 3 as timer 3"`
+	LimitimerReceive4   bool   `long:"limitimer-receive-timer4" description:"Receive limitimer program 4 as timer 4"`
+	LimitimerReceive5   bool   `long:"limitimer-receive-timer5" description:"Receive limitimer active program as timer 5"`
+	LimitimerBroadcast1 bool   `long:"limitimer-broadcast-timer1" description:"Broadcast limitimer program 1 to other clocks as timer 1"`
+	LimitimerBroadcast2 bool   `long:"limitimer-broadcast-timer2" description:"Broadcast limitimer program 2 to other clocks as timer 2"`
+	LimitimerBroadcast3 bool   `long:"limitimer-broadcast-timer3" description:"Broadcast limitimer program 3 to other clocks as timer 3"`
+	LimitimerBroadcast4 bool   `long:"limitimer-broadcast-timer4" description:"Broadcast limitimer program 4 to other clocks as timer 4"`
+	LimitimerBroadcast5 bool   `long:"limitimer-broadcast-timer5" description:"Broadcast limitimer active program to other clocks as timer 5"`
 
 	Source1 *SourceOptions `group:"1st clock display source" namespace:"source1"`
 	Source2 *SourceOptions `group:"2nd clock display source" namespace:"source2"`
@@ -173,6 +183,8 @@ type Engine struct {
 	overtimeVisibility     string
 	limitimer              string
 	limitimerSerial        string
+	limitimerBroadcast     [5]bool
+	limitimerReceive       [5]bool
 	ctx                    context.Context
 	cancelFunc             context.CancelFunc
 	wg                     *sync.WaitGroup
@@ -599,6 +611,8 @@ func (engine *Engine) listen() {
 				}
 			case "signalAutomation":
 				engine.autoSignals = message.Countdown
+			case "limitimer":
+				engine.Counters[message.Counter].parseLimitimer(message.LimitimerMessage)
 			}
 			// We have received a osc command, so stop the version display
 			engine.initialized = true

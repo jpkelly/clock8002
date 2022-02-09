@@ -493,6 +493,41 @@ const configHTML = `
 					<span>Serial device for limitimer communication</span>
 					<input type="text" id="limitimer-serial" name="limitimer-serial" value="{{.EngineOptions.LimitimerSerial}}" />
 				</label>
+
+				<p>RS-485 reception and OSC broadcast controls for individual limitimer source programs:</p>
+				<table>
+					<tr>
+						<th>Timer</th>
+						<th>Receive</th>
+						<th>Broadcast</th>
+					</tr>
+					<tr>
+						<td>Program 1</td>
+						<td><input type="checkbox" id="limitimer-receive-timer1" name="limitimer-receive-timer1" {{if .EngineOptions.LimitimerReceive1}} checked {{end}}/></td>
+						<td><input type="checkbox" id="limitimer-broadcast-timer1" name="limitimer-broadcast-timer1" {{if .EngineOptions.LimitimerBroadcast1}} checked {{end}}/></td>
+					</tr>
+					<tr>
+						<td>Program 2</td>
+						<td><input type="checkbox" id="limitimer-receive-timer2" name="limitimer-receive-timer2" {{if .EngineOptions.LimitimerReceive2}} checked {{end}}/></td>
+						<td><input type="checkbox" id="limitimer-broadcast-timer2" name="limitimer-broadcast-timer2" {{if .EngineOptions.LimitimerBroadcast2}} checked {{end}}/></td>
+					</tr>
+					<tr>
+						<td>Program 3</td>
+						<td><input type="checkbox" id="limitimer-receive-timer3" name="limitimer-receive-timer3" {{if .EngineOptions.LimitimerReceive3}} checked {{end}}/></td>
+						<td><input type="checkbox" id="limitimer-broadcast-timer3" name="limitimer-broadcast-timer3" {{if .EngineOptions.LimitimerBroadcast3}} checked {{end}}/></td>
+					</tr>
+					<tr>
+						<td>Session / Program 4</td>
+						<td><input type="checkbox" id="limitimer-receive-timer4" name="limitimer-receive-timer4" {{if .EngineOptions.LimitimerReceive4}} checked {{end}}/></td>
+						<td><input type="checkbox" id="limitimer-broadcast-timer4" name="limitimer-broadcast-timer4" {{if .EngineOptions.LimitimerBroadcast4}} checked {{end}}/></td>
+					</tr>
+					<tr>
+						<td>Selected program</td>
+						<td><input type="checkbox" id="limitimer-receive-timer5" name="limitimer-receive-timer5" {{if .EngineOptions.LimitimerReceive5}} checked {{end}}/></td>
+						<td><input type="checkbox" id="limitimer-broadcast-timer5" name="limitimer-broadcast-timer5" {{if .EngineOptions.LimitimerBroadcast5}} checked {{end}}/></td>
+					</tr>
+				</table>
+
 			</fieldset>
 
 			<fieldset>
@@ -829,6 +864,20 @@ const configHTML = `
 			font-weight: bold;
 			max-width: 800px;
 			width: 100%;
+		}
+		.config-form table th{
+			text-align: right;
+			color: #F072A9;
+			font-weight: bold;
+			font-size: 13px;
+			text-shadow: 1px 1px 1px #fff;
+			padding-right: 2em;
+		}
+		.config-form table td{
+			color: #F072A9;
+			font-weight: normal;
+			font-size: 13px;
+			text-shadow: 1px 1px 1px #fff;
 		}
 		.required{
 			color:red;

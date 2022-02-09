@@ -14,20 +14,22 @@ import (
 )
 
 const (
-	timerPattern  = `/clock/timer/(\d)/`
-	sourcePattern = `/clock/source/([1-4])/`
-	signalPattern = `/clock/signal/(\d)`
+	timerPattern     = `/clock/timer/(\d)/`
+	sourcePattern    = `/clock/source/([1-4])/`
+	signalPattern    = `/clock/signal/(\d)`
+	limitimerPattern = `/clock/limitimer/([1-4]|active)`
 )
 
 // MakeServer creates a clock.Server instance from osc.Server instance
 func MakeServer(oscServer *osc.Server, d *oscutil.RegexpDispatcher, uuid string) *Server {
 	var server = Server{
-		listeners:    make(map[chan Message]struct{}),
-		Debug:        false,
-		timerRegexp:  regexp.MustCompile(timerPattern),
-		sourceRegexp: regexp.MustCompile(sourcePattern),
-		signalRegexp: regexp.MustCompile(signalPattern),
-		uuid:         uuid,
+		listeners:       make(map[chan Message]struct{}),
+		Debug:           false,
+		timerRegexp:     regexp.MustCompile(timerPattern),
+		sourceRegexp:    regexp.MustCompile(sourcePattern),
+		signalRegexp:    regexp.MustCompile(signalPattern),
+		limitimerRegexp: regexp.MustCompile(limitimerPattern),
+		uuid:            uuid,
 	}
 
 	server.setupDispatch(d)
@@ -36,13 +38,14 @@ func MakeServer(oscServer *osc.Server, d *oscutil.RegexpDispatcher, uuid string)
 
 // Server is a clock osc server and listens for incoming osc messages
 type Server struct {
-	listeners    map[chan Message]struct{}
-	Debug        bool
-	timerRegexp  *regexp.Regexp
-	sourceRegexp *regexp.Regexp
-	signalRegexp *regexp.Regexp
-	lastMedia    time.Time
-	uuid         string
+	listeners       map[chan Message]struct{}
+	Debug           bool
+	timerRegexp     *regexp.Regexp
+	sourceRegexp    *regexp.Regexp
+	signalRegexp    *regexp.Regexp
+	limitimerRegexp *regexp.Regexp
+	lastMedia       time.Time
+	uuid            string
 }
 
 // Listen adds a new listener for the decoded incoming osc messages
@@ -102,6 +105,37 @@ func (server *Server) handleCountdownTarget(msg *osc.Message) {
 
 func (server *Server) handleCountupTarget(msg *osc.Message) {
 	server.sendTargetMessage(msg, false)
+}
+
+func (server *Server) handleLimitimer(msg *osc.Message) {
+	if matches := server.limitimerRegexp.FindStringSubmatch(msg.Address); len(matches) == 2 {
+		var counter int
+		var err error
+
+		if matches[1] == "active" {
+			counter = 5
+		} else {
+			counter, err = strconv.Atoi(matches[1])
+			if err != nil {
+				log.Printf("handleLimitimer error: %v", err)
+				return
+			}
+		}
+		ltMsg := LimitimerMessage{}
+		ltMsg.UnmarshalOSC(msg)
+		if ltMsg.UUID == server.uuid {
+			// Discard our own messages
+			return
+		}
+
+		m := Message{
+			Type:             "limitimer",
+			Counter:          counter,
+			LimitimerMessage: &ltMsg,
+		}
+
+		server.update(m)
+	}
 }
 
 func (server *Server) sendTargetMessage(msg *osc.Message, countdown bool) {
@@ -618,6 +652,7 @@ func (server *Server) setupDispatch(d *oscutil.RegexpDispatcher) {
 	registerHandler(d, "^/clock/timer/*/resume", server.handleTimerResume)
 	registerHandler(d, "^/clock/pause", server.handlePause)
 	registerHandler(d, "^/clock/resume", server.handleResume)
+	registerHandler(d, "^/clock/limitimer/*", server.handleLimitimer)
 
 	// Source related
 	registerHandler(d, "^/clock/source/*/hide", server.handleHide)

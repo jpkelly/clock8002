@@ -174,6 +174,18 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 
 	newOptions.FullScreen = r.FormValue("FullScreen") != ""
 
+	newOptions.EngineOptions.LimitimerReceive1 = r.FormValue("limitimer-receive-timer1") != ""
+	newOptions.EngineOptions.LimitimerReceive2 = r.FormValue("limitimer-receive-timer2") != ""
+	newOptions.EngineOptions.LimitimerReceive3 = r.FormValue("limitimer-receive-timer3") != ""
+	newOptions.EngineOptions.LimitimerReceive4 = r.FormValue("limitimer-receive-timer4") != ""
+	newOptions.EngineOptions.LimitimerReceive5 = r.FormValue("limitimer-receive-timer5") != ""
+
+	newOptions.EngineOptions.LimitimerBroadcast1 = r.FormValue("limitimer-broadcast-timer1") != ""
+	newOptions.EngineOptions.LimitimerBroadcast2 = r.FormValue("limitimer-broadcast-timer2") != ""
+	newOptions.EngineOptions.LimitimerBroadcast3 = r.FormValue("limitimer-broadcast-timer3") != ""
+	newOptions.EngineOptions.LimitimerBroadcast4 = r.FormValue("limitimer-broadcast-timer4") != ""
+	newOptions.EngineOptions.LimitimerBroadcast5 = r.FormValue("limitimer-broadcast-timer5") != ""
+
 	// Strings, will not be validated
 	newOptions.HTTPUser = r.FormValue("HTTPUser")
 	newOptions.HTTPPassword = r.FormValue("HTTPPassword")
