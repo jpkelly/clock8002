@@ -30,6 +30,8 @@ gitlab.com/Depili/limitimer v0.0.0-20211207103519-7ea14cbe2f71 h1:e/X2mTjuScm4cv
 gitlab.com/Depili/limitimer v0.0.0-20211207103519-7ea14cbe2f71/go.mod h1:S+UiKGBvnUV9TXiixIL78mdccaCdviPOmzwBqVPpHQQ=
 gitlab.com/Depili/limitimer v0.0.0-20220210114744-020e61807e80 h1:y+Uc9CU0MWT1HmABYy1vzuYQwkQRzmt+agm95ftt/Xc=
 gitlab.com/Depili/limitimer v0.0.0-20220210114744-020e61807e80/go.mod h1:S+UiKGBvnUV9TXiixIL78mdccaCdviPOmzwBqVPpHQQ=
+gitlab.com/Depili/limitimer v0.0.0-20220210134834-7d7614fcbbef h1:wWmJwvP8/Q46+7KwyFpsgWlLswBUYCHnvW0023GEbBI=
+gitlab.com/Depili/limitimer v0.0.0-20220210134834-7d7614fcbbef/go.mod h1:S+UiKGBvnUV9TXiixIL78mdccaCdviPOmzwBqVPpHQQ=
 gitlab.com/Depili/ubercorn v1.0.0 h1:B5nRBAZq+rGsrS9LWySg4WXCROatMibJrW34s7at07g=
 gitlab.com/Depili/ubercorn v1.0.0/go.mod h1:Drmksj7Z9ZD7d31t8LWvzem9LI4HX9D8T2qYSete1Ho=
 golang.org/x/sys v0.0.0-20211205182925-97ca703d548d h1:FjkYO/PPp4Wi0EAUOVLxePm7qVW4r4ctbWpURyuOD0E=

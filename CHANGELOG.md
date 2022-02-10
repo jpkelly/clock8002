@@ -8,6 +8,7 @@
   * Limitimer timer reception from RS485 can be toggled on and off per limitimer program
 * Bugfixes:
   * Flush the config file changes straight to disc for extra robustness
+  * Support for older limitimer controllers that don't send message checksums
 
 
 ## Version 4.10.1
