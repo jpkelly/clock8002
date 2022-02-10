@@ -339,6 +339,18 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	}
 
 	// Limitimer
+	engine.limitimerReceive[0] = options.LimitimerReceive1
+	engine.limitimerReceive[1] = options.LimitimerReceive2
+	engine.limitimerReceive[2] = options.LimitimerReceive3
+	engine.limitimerReceive[3] = options.LimitimerReceive4
+	engine.limitimerReceive[4] = options.LimitimerReceive5
+
+	engine.limitimerBroadcast[0] = options.LimitimerBroadcast1
+	engine.limitimerBroadcast[1] = options.LimitimerBroadcast2
+	engine.limitimerBroadcast[2] = options.LimitimerBroadcast3
+	engine.limitimerBroadcast[3] = options.LimitimerBroadcast4
+	engine.limitimerBroadcast[4] = options.LimitimerBroadcast5
+
 	if options.LimitimerMode == "send" {
 		go engine.limitimerSend()
 	} else if options.LimitimerMode == "receive" {
