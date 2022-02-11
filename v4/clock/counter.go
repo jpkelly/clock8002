@@ -2,14 +2,14 @@ package clock
 
 import (
 	"fmt"
-	"gitlab.com/Depili/clock-8001/v4/debug"
+	// "gitlab.com/Depili/clock-8001/v4/debug"
 	"gitlab.com/Depili/limitimer"
 	"image/color"
 	"time"
 )
 
 /*
- * Counters representing generic countdowns / ups
+ * Counters representing generic countdowns / ups or external sources
  */
 
 const (
@@ -22,14 +22,24 @@ const (
 // Counter abstracts a generic counter counting up or down
 type Counter struct {
 	state          *counterState
-	media          *mediaState
-	slave          *slaveState
-	limitimer      *limitimerState
+	externalState  externalState
 	active         bool // Is this counter active?
 	countdown      bool // Count up / down from the target
 	paused         bool // Is the counter paused?
 	signalColor    color.RGBA
 	autoColorState int
+}
+
+const (
+	priorityNormal    = 0
+	priorityLimitimer = iota
+	priorityMedia     = iota
+	prioritySlave     = iota
+)
+
+type externalState interface {
+	output() *CounterOutput
+	priority() int
 }
 
 type slaveState struct {
@@ -38,6 +48,40 @@ type slaveState struct {
 	seconds   int
 	icon      string
 	hideHours bool
+}
+
+func (slave *slaveState) output() *CounterOutput {
+	hours := slave.hours
+	minutes := slave.minutes
+	seconds := slave.seconds
+
+	text := fmt.Sprintf("%02d:%02d:%02d", hours, abs(minutes), abs(seconds))
+	if slave.hideHours {
+		text = text[3:8]
+	}
+
+	out := &CounterOutput{
+		Active:    true,
+		Countdown: true,
+		Paused:    false,
+		Expired:   false,
+		Hours:     hours,
+		Minutes:   minutes,
+		Seconds:   seconds,
+		Text:      text,
+		Compact:   "",
+		Icon:      slave.icon,
+		Progress:  0,
+		Diff:      0,
+		Duration:  0,
+		Mode:      "slave",
+	}
+
+	return out
+}
+
+func (slave *slaveState) priority() int {
+	return prioritySlave
 }
 
 type mediaState struct {
@@ -49,6 +93,51 @@ type mediaState struct {
 	frames    int32
 	progress  float64
 	remaining time.Duration
+}
+
+func (m *mediaState) output() *CounterOutput {
+	var icon string
+	var seconds int64
+
+	if m.paused {
+		icon = "Ⅱ"
+	} else if m.looping {
+		icon = "⇄"
+	} else {
+		icon = "▶"
+	}
+
+	seconds = int64(m.hours) * 60
+	seconds = (int64(m.minutes) + seconds) * 60
+	seconds = seconds + int64(m.seconds)
+
+	text := fmt.Sprintf("%02d:%02d:%02d", m.hours, m.minutes, m.seconds)
+	compact := fmt.Sprintf("%s%s", icon, secsToCompact(seconds))
+
+	dur := time.Duration(seconds)*time.Second + m.remaining
+
+	out := &CounterOutput{
+		Active:   true,
+		Media:    true,
+		Icon:     icon,
+		Paused:   m.paused,
+		Looping:  m.looping,
+		Hours:    int(m.hours),
+		Minutes:  int(m.minutes),
+		Seconds:  int(m.seconds),
+		Text:     text,
+		Compact:  compact,
+		Progress: m.progress,
+		Diff:     m.remaining,
+		Duration: dur,
+		Mode:     "media",
+	}
+
+	return out
+}
+
+func (m *mediaState) priority() int {
+	return priorityMedia
 }
 
 type counterState struct {
@@ -71,6 +160,45 @@ type limitimerState struct {
 	warning    bool
 	minuteMode bool
 	countdown  bool
+}
+
+func (lt *limitimerState) output() *CounterOutput {
+	secs := int64(lt.hours)*360 + int64(lt.minutes)*60 + int64(lt.seconds)
+	out := CounterOutput{
+		Active:    true,
+		Countdown: lt.countdown,
+		Paused:    lt.paused,
+		Expired:   lt.expired,
+		Hours:     lt.hours,
+		Minutes:   lt.minutes,
+		Seconds:   lt.seconds,
+		Icon:      lt.icon,
+		Diff:      lt.duration - lt.elapsed,
+		Progress:  1 - lt.elapsed.Seconds()/lt.duration.Seconds(),
+		Duration:  lt.duration,
+		Mode:      "limitimer",
+	}
+
+	if out.Expired && out.Countdown {
+		out.Progress = 1
+		out.Hours = 0
+		out.Minutes = 0
+		out.Seconds = 0
+	}
+
+	if lt.minuteMode {
+		out.Text = fmt.Sprintf("%0.2d:%0.2d", out.Minutes, out.Seconds)
+	} else {
+		out.Text = fmt.Sprintf("%0.2d:%0.2d", out.Hours, out.Minutes)
+	}
+
+	out.Compact = fmt.Sprintf("%s%s", lt.icon, secsToCompact(secs))
+
+	return &out
+}
+
+func (lt *limitimerState) priority() int {
+	return priorityLimitimer
 }
 
 func (counter *Counter) parseLimitimer(p *LimitimerMessage) {
@@ -194,44 +322,17 @@ func (counter *Counter) setLimitimerState(ltState *limitimerState) {
 		}
 	}
 
-	counter.limitimer = ltState
-	counter.countdown = ltState.countdown
-	counter.active = true
+	counter.setExternal(ltState)
 }
 
-func (counter *Counter) limitimerOutput() *CounterOutput {
-	lt := counter.limitimer
-	secs := int64(lt.hours)*360 + int64(lt.minutes)*60 + int64(lt.seconds)
-	out := CounterOutput{
-		Active:    true,
-		Countdown: counter.countdown,
-		Paused:    lt.paused,
-		Expired:   lt.expired,
-		Hours:     lt.hours,
-		Minutes:   lt.minutes,
-		Seconds:   lt.seconds,
-		Icon:      lt.icon,
-		Diff:      lt.duration - lt.elapsed,
-		Progress:  1 - lt.elapsed.Seconds()/lt.duration.Seconds(),
-		Duration:  lt.duration,
-	}
-
-	if out.Expired && out.Countdown {
-		out.Progress = 1
-		out.Hours = 0
-		out.Minutes = 0
-		out.Seconds = 0
-	}
-
-	if lt.minuteMode {
-		out.Text = fmt.Sprintf("%0.2d:%0.2d", out.Minutes, out.Seconds)
+func (counter *Counter) setExternal(ext externalState) {
+	if counter.externalState != nil {
+		if counter.externalState.priority() <= ext.priority() {
+			counter.externalState = ext
+		}
 	} else {
-		out.Text = fmt.Sprintf("%0.2d:%0.2d", out.Hours, out.Minutes)
+		counter.externalState = ext
 	}
-
-	out.Compact = fmt.Sprintf("%s%s", lt.icon, secsToCompact(secs))
-
-	return &out
 }
 
 // CounterOutput the data structure returned by Counter.Output() and contains the static state of the counter at that time
@@ -252,63 +353,19 @@ type CounterOutput struct {
 	Diff        time.Duration // raw difference
 	Duration    time.Duration // Total duration of the count, if available
 	SignalColor color.RGBA
+	Mode        string
 }
 
 // Output generates the static output of the counter for use in clock displays
 func (counter *Counter) Output(t time.Time) *CounterOutput {
 	var out *CounterOutput
-	if counter.slave != nil {
-		out = counter.slaveOutput()
-	} else if counter.media != nil {
-		out = counter.mediaOutput()
-	} else if counter.limitimer != nil {
-		out = counter.limitimerOutput()
+
+	if counter.externalState != nil {
+		out = counter.externalState.output()
 	} else {
 		out = counter.normalOutput(t)
 	}
 	out.SignalColor = counter.signalColor
-
-	return out
-}
-
-func (counter *Counter) mediaOutput() *CounterOutput {
-	debug.Printf("Mediaoutput")
-	var icon string
-	var seconds int64
-	m := counter.media
-
-	if m.paused {
-		icon = "Ⅱ"
-	} else if m.looping {
-		icon = "⇄"
-	} else {
-		icon = "▶"
-	}
-
-	seconds = int64(m.hours) * 60
-	seconds = (int64(m.minutes) + seconds) * 60
-	seconds = seconds + int64(m.seconds)
-
-	text := fmt.Sprintf("%02d:%02d:%02d", m.hours, m.minutes, m.seconds)
-	compact := fmt.Sprintf("%s%s", icon, secsToCompact(seconds))
-
-	dur := time.Duration(seconds)*time.Second + m.remaining
-
-	out := &CounterOutput{
-		Active:   true,
-		Media:    true,
-		Icon:     icon,
-		Paused:   m.paused,
-		Looping:  m.looping,
-		Hours:    int(m.hours),
-		Minutes:  int(m.minutes),
-		Seconds:  int(m.seconds),
-		Text:     text,
-		Compact:  compact,
-		Progress: counter.media.progress,
-		Diff:     m.remaining,
-		Duration: dur,
-	}
 
 	return out
 }
@@ -371,35 +428,6 @@ func (counter *Counter) normalOutput(t time.Time) *CounterOutput {
 	return out
 }
 
-func (counter *Counter) slaveOutput() *CounterOutput {
-	hours := counter.slave.hours
-	minutes := counter.slave.minutes
-	seconds := counter.slave.seconds
-
-	text := fmt.Sprintf("%02d:%02d:%02d", hours, abs(minutes), abs(seconds))
-	if counter.slave.hideHours {
-		text = text[3:8]
-	}
-
-	out := &CounterOutput{
-		Active:    true,
-		Countdown: true,
-		Paused:    false,
-		Expired:   false,
-		Hours:     hours,
-		Minutes:   minutes,
-		Seconds:   seconds,
-		Text:      text,
-		Compact:   "",
-		Icon:      counter.slave.icon,
-		Progress:  0,
-		Diff:      0,
-		Duration:  0,
-	}
-
-	return out
-}
-
 func secsToCompact(rawSecs int64) string {
 	for _, unit := range clockUnits {
 		if rawSecs/int64(unit.seconds) >= 100 {
@@ -453,13 +481,15 @@ func (counter *Counter) SetSlave(hours, minutes, seconds int, hideHours bool, ic
 		hideHours: hideHours,
 		icon:      icon,
 	}
-	counter.slave = s
-	counter.active = true
+	counter.setExternal(s)
 }
 
 // ResetSlave removes slave state from external source
 func (counter *Counter) ResetSlave() {
-	counter.slave = nil
+	if _, ok := counter.externalState.(*slaveState); ok {
+		counter.externalState = nil
+		counter.active = false
+	}
 }
 
 // SetMedia sets the counter state from a playing media file
@@ -475,15 +505,15 @@ func (counter *Counter) SetMedia(hours, minutes, seconds, frames int32, remainin
 		progress:  progress,
 		remaining: remaining,
 	}
-	counter.media = &m
+	counter.setExternal(&m)
 	counter.active = true
 }
 
 // ResetMedia removes the media state from a counter
 func (counter *Counter) ResetMedia() {
-	if counter.media != nil {
+	if _, ok := counter.externalState.(*mediaState); ok {
 		counter.active = false
-		counter.media = nil
+		counter.externalState = nil
 	}
 }
 

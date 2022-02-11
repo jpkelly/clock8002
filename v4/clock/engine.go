@@ -783,8 +783,8 @@ func (engine *Engine) State() *State {
 
 		if s.ltc && engine.ltcActive {
 			engine.ltcState(&c, s)
-		} else if s.timer && s.counter.active {
-			engine.timerState(&c, s, t)
+		} else if out := s.counter.Output(t); s.timer && out.Active {
+			engine.timerState(&c, s, out)
 		} else if s.tod {
 			engine.todState(&c, s, t)
 		}
@@ -861,9 +861,8 @@ func (engine *Engine) ltcState(c *Clock, s *source) {
 	}
 }
 
-func (engine *Engine) timerState(c *Clock, s *source, t time.Time) {
+func (engine *Engine) timerState(c *Clock, s *source, out *CounterOutput) {
 	// Active timer
-	out := s.counter.Output(t)
 	c.Text = out.Text
 	c.Hours = out.Hours
 	c.Minutes = out.Minutes
@@ -895,9 +894,9 @@ func (engine *Engine) timerState(c *Clock, s *source, t time.Time) {
 		c.SignalColor = out.SignalColor
 	}
 
-	if s.counter.slave != nil {
+	if out.Mode == "slave" {
 		c.Mode = Slave
-	} else if s.counter.media != nil {
+	} else if out.Mode == "media" {
 		c.Mode = Media
 	} else if out.Countdown {
 		c.Mode = Countdown
