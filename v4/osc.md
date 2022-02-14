@@ -235,14 +235,15 @@ Where `*` is either `mitti` or `millumin`
 
 Parameters:
 1. int; hours remaining
-2. int; minutes remaining
-3. int; seconds remaining
+2. int; minutes remaining, 0-59
+3. int; seconds remaining, 0-59
 4. int; frames remaining
-5. float; progress, 0-1
-6. bool; is the media paused
-7. bool; is the media looping
-8. timetag; message timestamp
-9. string; UUID of the sending clock
+5. int; remaining time in seconds
+6. float; progress, 0-1
+7. bool; is the media paused
+8. bool; is the media looping
+9. timetag; message timestamp
+10. string; UUID of the sending clock
 
 ### `/clock/resetmedia/*`
 
