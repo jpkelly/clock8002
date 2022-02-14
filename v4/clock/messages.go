@@ -42,7 +42,7 @@ type MediaMessage struct {
 	progress  float64
 	paused    bool
 	looping   bool
-	timeStamp *osc.Timetag
+	timeStamp osc.Timetag
 	uuid      string
 }
 
