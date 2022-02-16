@@ -1,4 +1,4 @@
-∑package clock
+package clock
 
 import (
 	"gitlab.com/Depili/clock-8001/v4/oscutil"
