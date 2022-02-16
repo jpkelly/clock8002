@@ -173,10 +173,12 @@ func (lt *limitimerState) output() *CounterOutput {
 		Minutes:   lt.minutes,
 		Seconds:   lt.seconds,
 		Icon:      lt.icon,
-		Diff:      lt.duration - lt.elapsed,
-		Progress:  1 - lt.elapsed.Seconds()/lt.duration.Seconds(),
-		Duration:  lt.duration,
-		Mode:      "limitimer",
+		// FIXME: The one millisecond fudge is to work around the general time handling case
+		// for overtime counters. Without it limitimer skips display of 00:00:00
+		Diff:     lt.duration - lt.elapsed + (time.Millisecond),
+		Progress: 1 - lt.elapsed.Seconds()/lt.duration.Seconds(),
+		Duration: lt.duration,
+		Mode:     "limitimer",
 	}
 
 	if out.Expired && out.Countdown {
