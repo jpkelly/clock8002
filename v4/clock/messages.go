@@ -288,6 +288,8 @@ func (message *ColorMessage) ToRGBA() []color.RGBA {
 	return ret
 }
 
+// SourceStateMessage is a representation of
+// the clock source state OSC messages
 type SourceStateMessage struct {
 	UUID     string
 	Hidden   bool
@@ -301,6 +303,7 @@ type SourceStateMessage struct {
 	Mode     int32
 }
 
+// MarshalOSC converts SourceStateMessage into osc.Message
 func (ssm *SourceStateMessage) MarshalOSC(addr string) *osc.Message {
 	return osc.NewMessage(addr,
 		ssm.UUID,
@@ -316,6 +319,7 @@ func (ssm *SourceStateMessage) MarshalOSC(addr string) *osc.Message {
 	)
 }
 
+// UnmarshalOSC converts osc.Message into SourceStateMessage
 func (ssm *SourceStateMessage) UnmarshalOSC(msg *osc.Message) error {
 	return oscutil.UnmarshalArguments(
 		msg,
@@ -332,6 +336,8 @@ func (ssm *SourceStateMessage) UnmarshalOSC(msg *osc.Message) error {
 	)
 }
 
+// TimerStateMessage is a representation of timer
+// state OSC messages
 type TimerStateMessage struct {
 	UUID     string
 	Active   bool
@@ -343,6 +349,7 @@ type TimerStateMessage struct {
 	Paused   bool
 }
 
+// MarshalOSC converts a TimerStateMessage to osc.Message
 func (tsm *TimerStateMessage) MarshalOSC(addr string) *osc.Message {
 	return osc.NewMessage(addr,
 		tsm.UUID,
@@ -356,6 +363,7 @@ func (tsm *TimerStateMessage) MarshalOSC(addr string) *osc.Message {
 	)
 }
 
+// UnmarshalOSC converts osc.Message into TimerStateMessage
 func (tsm *TimerStateMessage) UnmarshalOSC(msg *osc.Message) error {
 	return oscutil.UnmarshalArguments(
 		msg,
