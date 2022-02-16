@@ -69,7 +69,7 @@ func (state *State) CueTimeElapsed(cueTimeElapsed string) {
 
 	state.Updated = time.Now()
 	state.Elapsed = sec
-	debug.Printf("Mitti: elpased: %f\n", state.Elapsed)
+	debug.Printf("Mitti: elpased: %v\n", state.Elapsed)
 }
 
 // TogglePlay toggles the play/pause state
