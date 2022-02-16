@@ -156,16 +156,16 @@ func (message *LimitimerMessage) UnmarshalOSC(msg *osc.Message) error {
 // MarshalOSC converts a LimitimerMessage to osc.Message
 func (message *LimitimerMessage) MarshalOSC(addr string) *osc.Message {
 	return osc.NewMessage(addr,
-		&message.Total,
-		&message.Total,
-		&message.Sumup,
-		&message.Elapsed,
-		&message.Minutes,
-		&message.Countdown,
-		&message.Run,
-		&message.Blink,
-		&message.Beep,
-		&message.UUID,
+		message.Total,
+		message.Total,
+		message.Sumup,
+		message.Elapsed,
+		message.Minutes,
+		message.Countdown,
+		message.Run,
+		message.Blink,
+		message.Beep,
+		message.UUID,
 	)
 }
 
