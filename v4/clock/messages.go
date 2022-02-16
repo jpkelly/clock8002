@@ -74,6 +74,8 @@ func (message MediaMessage) MarshalOSC(addr string) *osc.Message {
 		message.progress,
 		message.paused,
 		message.looping,
+		message.timeStamp,
+		message.uuid,
 	)
 }
 
