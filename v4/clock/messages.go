@@ -1,4 +1,4 @@
-package clock
+∑package clock
 
 import (
 	"gitlab.com/Depili/clock-8001/v4/oscutil"
@@ -156,7 +156,6 @@ func (message *LimitimerMessage) UnmarshalOSC(msg *osc.Message) error {
 // MarshalOSC converts a LimitimerMessage to osc.Message
 func (message *LimitimerMessage) MarshalOSC(addr string) *osc.Message {
 	return osc.NewMessage(addr,
-		message.Total,
 		message.Total,
 		message.Sumup,
 		message.Elapsed,
