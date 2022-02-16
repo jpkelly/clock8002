@@ -1,3 +1,8 @@
+## Version 4.11.1
+* Bugfixes:
+  * Limitimer state OSC broadcasting was not working
+
+
 ## Version 4.11.0
 * Features:
   * Reloading (most) config options doesn't require a restart anymore
