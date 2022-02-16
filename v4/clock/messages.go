@@ -287,3 +287,85 @@ func (message *ColorMessage) ToRGBA() []color.RGBA {
 	ret[1] = bg
 	return ret
 }
+
+type SourceStateMessage struct {
+	UUID     string
+	Hidden   bool
+	Text     string
+	Compact  string
+	Icon     string
+	Progress float32
+	Expired  bool
+	Paused   bool
+	Label    string
+	Mode     int32
+}
+
+func (ssm *SourceStateMessage) MarshalOSC(addr string) *osc.Message {
+	return osc.NewMessage(addr,
+		ssm.UUID,
+		ssm.Hidden,
+		ssm.Text,
+		ssm.Compact,
+		ssm.Icon,
+		ssm.Progress,
+		ssm.Expired,
+		ssm.Paused,
+		ssm.Label,
+		ssm.Mode,
+	)
+}
+
+func (ssm *SourceStateMessage) UnmarshalOSC(msg *osc.Message) error {
+	return oscutil.UnmarshalArguments(
+		msg,
+		&ssm.UUID,
+		&ssm.Hidden,
+		&ssm.Text,
+		&ssm.Compact,
+		&ssm.Icon,
+		&ssm.Progress,
+		&ssm.Expired,
+		&ssm.Paused,
+		&ssm.Label,
+		&ssm.Mode,
+	)
+}
+
+type TimerStateMessage struct {
+	UUID     string
+	Active   bool
+	Text     string
+	Compact  string
+	Icon     string
+	Progress float32
+	Expired  bool
+	Paused   bool
+}
+
+func (tsm *TimerStateMessage) MarshalOSC(addr string) *osc.Message {
+	return osc.NewMessage(addr,
+		tsm.UUID,
+		tsm.Active,
+		tsm.Text,
+		tsm.Compact,
+		tsm.Icon,
+		tsm.Progress,
+		tsm.Expired,
+		tsm.Paused,
+	)
+}
+
+func (tsm *TimerStateMessage) UnmarshalOSC(msg *osc.Message) error {
+	return oscutil.UnmarshalArguments(
+		msg,
+		&tsm.UUID,
+		&tsm.Active,
+		&tsm.Text,
+		&tsm.Compact,
+		&tsm.Icon,
+		&tsm.Progress,
+		&tsm.Expired,
+		&tsm.Paused,
+	)
+}
