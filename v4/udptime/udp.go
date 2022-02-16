@@ -36,7 +36,7 @@ type Message struct {
 }
 
 func (msg *Message) String() string {
-	return fmt.Sprintf("%02d:%02d Overtime: %v Green: %v Red %v", msg.OverTime, msg.Minutes, msg.Seconds, msg.Green, msg.Red)
+	return fmt.Sprintf("%02d:%02d Overtime: %v Green: %v Red %v", msg.Minutes, msg.Seconds, msg.OverTime, msg.Green, msg.Red)
 }
 
 // Listen for udptime messages on a port
