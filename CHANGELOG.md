@@ -1,3 +1,12 @@
+## Version 4.11.3
+* Bugfixes:
+  * Limitimer: Fix count-after-zero skipping 0
+
+## Version 4.11.2
+* Bugfixes:
+  * Another bug in the limitimer broadcasting feature
+  * Another upgrade on go-osc to deal with some bugs that were still present
+
 ## Version 4.11.1
 * Bugfixes:
   * Limitimer state OSC broadcasting was not working
