@@ -48,7 +48,7 @@ func (engine *Engine) limitimerListen() {
 		messages := decoder.Feed(buff[:n])
 		for _, msg := range messages {
 			switch limitimer.Type(msg) {
-			case limitimer.STATUS_MSG:
+			case limitimer.StatusMsg:
 				p, err := limitimer.ParseStateMessage(msg)
 				if err != nil {
 					log.Printf(" -> Invalid limitimer message %v", err)
@@ -81,7 +81,7 @@ func (engine *Engine) limitimerListen() {
 						}
 					}
 				}
-			case limitimer.PING_MSG:
+			case limitimer.PingMsg:
 			default:
 				log.Printf(" -> UNKNOWN limitimer message %v\n", msg)
 			}

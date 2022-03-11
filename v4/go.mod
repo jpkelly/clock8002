@@ -14,7 +14,7 @@ require (
 	github.com/veandco/go-sdl2 v0.4.11-0.20211101143930-102e3820d7e8
 	gitlab.com/Depili/go-osc v0.0.0-20220126123138-cdbd92c9027a
 	gitlab.com/Depili/go-rgb-led-matrix v0.0.0-20170204170814-25b63d4baf68
-	gitlab.com/Depili/limitimer v0.0.0-20220210134834-7d7614fcbbef
+	gitlab.com/Depili/limitimer v0.0.0-20220311085604-f2a2901d32a6
 	gitlab.com/Depili/ubercorn v1.0.0
 	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
 )
