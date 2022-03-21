@@ -163,7 +163,6 @@ type limitimerState struct {
 }
 
 func (lt *limitimerState) output() *CounterOutput {
-	secs := int64(lt.hours)*360 + int64(lt.minutes)*60 + int64(lt.seconds)
 	out := CounterOutput{
 		Active:    true,
 		Countdown: lt.countdown,
@@ -194,6 +193,7 @@ func (lt *limitimerState) output() *CounterOutput {
 		out.Text = fmt.Sprintf("%0.2d:%0.2d", out.Hours, out.Minutes)
 	}
 
+	secs := int64(out.Hours)*360 + int64(out.Minutes)*60 + int64(out.Seconds)
 	out.Compact = fmt.Sprintf("%s%s", lt.icon, secsToCompact(secs))
 
 	return &out
