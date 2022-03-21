@@ -664,20 +664,21 @@ func (engine *Engine) sendState(state *State) error {
 	engine.sendLegacyState(state)
 
 	bundle := osc.NewBundle(time.Now())
-	var packet *osc.Message
 
 	for i, s := range state.Clocks {
 		addr := fmt.Sprintf("/clock/source/%d/state", i+1)
+		state := sourceStateMessageFromClock(s, engine.uuid)
 
-		packet = osc.NewMessage(addr, engine.uuid, s.Hidden, s.Text, s.Compact, s.Icon, float32(s.Progress), s.Expired, s.Paused, s.Label, int32(s.Mode))
+		packet := state.MarshalOSC(addr)
 		bundle.Append(packet)
 	}
 
 	for i, c := range engine.Counters {
 		addr := fmt.Sprintf("/clock/timer/%d/state", i)
 		out := c.Output(t)
+		state := timerStateMessageFromOutput(out, engine.uuid)
 
-		packet = osc.NewMessage(addr, engine.uuid, out.Active, out.Text, out.Compact, out.Icon, float32(out.Progress), out.Expired, out.Paused)
+		packet := state.MarshalOSC(addr)
 		bundle.Append(packet)
 	}
 
@@ -901,6 +902,8 @@ func (engine *Engine) timerState(c *Clock, s *source, out *CounterOutput) {
 	} else if out.Countdown {
 		c.Mode = Countdown
 		if out.Expired {
+			// FIXME make "continue" the default on counters, and just zero here if needed
+			// FIXME same logic needs to apply to counters, move logic deeper?
 			switch engine.overtimeCountMode {
 			case "zero":
 				// Default, nothing to do

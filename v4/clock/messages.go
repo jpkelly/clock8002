@@ -336,6 +336,22 @@ func (ssm *SourceStateMessage) UnmarshalOSC(msg *osc.Message) error {
 	)
 }
 
+func sourceStateMessageFromClock(s *Clock, uuid string) *SourceStateMessage {
+	state := SourceStateMessage{
+		UUID:     uuid,
+		Hidden:   s.Hidden,
+		Text:     s.Text,
+		Compact:  s.Compact,
+		Icon:     s.Icon,
+		Progress: float32(s.Progress),
+		Expired:  s.Expired,
+		Paused:   s.Paused,
+		Label:    s.Label,
+		Mode:     int32(s.Mode),
+	}
+	return &state
+}
+
 // TimerStateMessage is a representation of timer
 // state OSC messages
 type TimerStateMessage struct {
@@ -376,4 +392,18 @@ func (tsm *TimerStateMessage) UnmarshalOSC(msg *osc.Message) error {
 		&tsm.Expired,
 		&tsm.Paused,
 	)
+}
+
+func timerStateMessageFromOutput(out *CounterOutput, uuid string) *TimerStateMessage {
+	state := TimerStateMessage{
+		UUID:     uuid,
+		Active:   out.Active,
+		Text:     out.Text,
+		Compact:  out.Compact,
+		Icon:     out.Icon,
+		Progress: float32(out.Progress),
+		Expired:  out.Expired,
+		Paused:   out.Paused,
+	}
+	return &state
 }
