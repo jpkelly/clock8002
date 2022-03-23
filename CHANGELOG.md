@@ -1,3 +1,9 @@
+## Version 4.11.4
+* Bugfixes:
+  * Limitimer: Improve handling of communication errors
+  * Limitimer: "Compact" output was out of sync with main output on some cases
+  * HTTP: Fix typo in the html for limitimer settings block
+
 ## Version 4.11.3
 * Bugfixes:
   * Limitimer: Fix count-after-zero skipping 0
