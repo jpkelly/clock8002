@@ -8,8 +8,8 @@ import (
 	"gitlab.com/Depili/clock-8001/v4/debug"
 	"gitlab.com/Depili/clock-8001/v4/oscutil"
 	"gitlab.com/Depili/clock-8001/v4/udptime"
-	"gitlab.com/Depili/go-osc/osc"
-	// "github.com/chabad360/go-osc/osc"
+	// "gitlab.com/Depili/go-osc/osc"
+	"github.com/chabad360/go-osc/osc"
 
 	"image/color"
 	"log"
@@ -605,7 +605,7 @@ func (engine *Engine) sendState(state *State) error {
 	t := time.Now()
 	engine.sendLegacyState(state)
 
-	bundle := osc.NewBundle(time.Now())
+	bundle := osc.NewBundleWithTime(time.Now())
 
 	for i, s := range state.Clocks {
 		addr := fmt.Sprintf("/clock/source/%d/state", i+1)
@@ -1157,8 +1157,8 @@ func (engine *Engine) initOSC(options *EngineOptions) {
 	if !options.DisableOSC {
 		engine.oscDispatcher = oscutil.NewRegexpDispatcher()
 		engine.oscServer = osc.Server{
-			Addr:       options.ListenAddr,
-			Dispatcher: engine.oscDispatcher,
+			Addr:    options.ListenAddr,
+			Handler: engine.oscDispatcher.Dispatch,
 		}
 		engine.clockServer = MakeServer(&engine.oscServer, engine.oscDispatcher, engine.uuid)
 		log.Printf("OSC control: listening on %v", engine.oscServer.Addr)

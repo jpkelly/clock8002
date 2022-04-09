@@ -2,8 +2,8 @@ package millumin
 
 import (
 	"fmt"
-	"gitlab.com/Depili/go-osc/osc"
-	// "github.com/chabad360/go-osc/osc"
+	// "gitlab.com/Depili/go-osc/osc"
+	"github.com/chabad360/go-osc/osc"
 
 	"regexp"
 )

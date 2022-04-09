@@ -3,7 +3,7 @@ module gitlab.com/Depili/clock-8001/v4
 go 1.17
 
 require (
-	github.com/chabad360/go-osc v0.0.0-20211117011233-5673a33c881f
+	github.com/chabad360/go-osc v0.0.0-20220217020417-1229c4fc60a5
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect

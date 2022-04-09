@@ -2,8 +2,8 @@ package millumin
 
 import (
 	"gitlab.com/Depili/clock-8001/v4/oscutil"
-	"gitlab.com/Depili/go-osc/osc"
-	// "github.com/chabad360/go-osc/osc"
+	// "gitlab.com/Depili/go-osc/osc"
+	"github.com/chabad360/go-osc/osc"
 )
 
 // MediaInfo contains the information of a given media file in Millumin playback state

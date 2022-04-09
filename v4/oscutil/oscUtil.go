@@ -3,8 +3,9 @@ package oscutil
 import (
 	"fmt"
 	"gitlab.com/Depili/clock-8001/v4/debug"
-	"gitlab.com/Depili/go-osc/osc"
-	// "github.com/chabad360/go-osc/osc"
+	// "gitlab.com/Depili/go-osc/osc"
+	"github.com/chabad360/go-osc/osc"
+	"net"
 	"reflect"
 	"regexp"
 	"strings"
@@ -15,11 +16,11 @@ import (
 // received OSC packets to Handlers for their given address.
 type RegexpDispatcher struct {
 	handlers       []*oscHandler
-	defaultHandler osc.Handler
+	defaultHandler osc.MethodFunc
 }
 
 type oscHandler struct {
-	handler osc.Handler
+	handler osc.MethodFunc
 	exp     *regexp.Regexp
 }
 
@@ -29,7 +30,7 @@ func NewRegexpDispatcher() *RegexpDispatcher {
 }
 
 // AddMsgHandler adds a new message handler for the given OSC address.
-func (s *RegexpDispatcher) AddMsgHandler(addr string, handler osc.HandlerFunc) error {
+func (s *RegexpDispatcher) AddMsgHandler(addr string, handler osc.MethodFunc) error {
 	if addr == "*" {
 		s.defaultHandler = handler
 		return nil
@@ -43,7 +44,7 @@ func (s *RegexpDispatcher) AddMsgHandler(addr string, handler osc.HandlerFunc) e
 }
 
 // Dispatch dispatches OSC packets. Implements the Dispatcher interface.
-func (s *RegexpDispatcher) Dispatch(packet osc.Packet) {
+func (s *RegexpDispatcher) Dispatch(packet osc.Packet, a net.Addr) {
 	switch p := packet.(type) {
 	default:
 		return
@@ -82,7 +83,7 @@ func (s *RegexpDispatcher) Dispatch(packet osc.Packet) {
 						s.defaultHandler.HandleMessage(m)
 					}
 				case *osc.Bundle:
-					s.Dispatch(m)
+					s.Dispatch(m, a)
 				}
 			}
 		}()

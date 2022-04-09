@@ -3,8 +3,8 @@ package mitti
 import (
 	"gitlab.com/Depili/clock-8001/v4/debug"
 	"gitlab.com/Depili/clock-8001/v4/oscutil"
-	"gitlab.com/Depili/go-osc/osc"
-	// "github.com/chabad360/go-osc/osc"
+	// "gitlab.com/Depili/go-osc/osc"
+	"github.com/chabad360/go-osc/osc"
 
 	"log"
 )
@@ -90,7 +90,7 @@ func (listener *Listener) handleCueTimeElapsed(msg *osc.Message) {
 	listener.state.CueTimeElapsed(cueTimeElapsed)
 }
 
-func registerHandler(d *oscutil.RegexpDispatcher, addr string, handler osc.HandlerFunc) {
+func registerHandler(d *oscutil.RegexpDispatcher, addr string, handler osc.MethodFunc) {
 	if err := d.AddMsgHandler(addr, handler); err != nil {
 		panic(err)
 	}
