@@ -113,7 +113,7 @@ func (engine *Engine) limitimerSend() {
 		CountDirection:    true,
 		ProgramMinutes:    limitimerSendMinutes,
 		SessionMinutes:    limitimerSendMinutes,
-		ContinueAfterZero: engine.overtimeCountMode == "continue",
+		ContinueAfterZero: engine.Counters[1].overtimeMode == "continue", // FIXME Limitimer configuration for this
 		SelectedTimer:     0,
 	}
 
@@ -125,6 +125,7 @@ func (engine *Engine) limitimerSend() {
 			log.Printf("Limitimer sender quitting")
 			return
 		case <-ticker.C:
+			// FIXME: Send the first active timer as selected?
 			t := time.Now()
 			p.Sequence = time.Now().Nanosecond() / 100000000
 
@@ -141,7 +142,7 @@ func (engine *Engine) limitimerSend() {
 					p.Timers[i].SetRun(false)
 				} else if c.Countdown {
 					p.Timers[i].Total.SetSeconds(int(c.Duration.Seconds()))
-					p.Timers[i].Sumup.SetSeconds(int(engine.signalThresholdWarning.Seconds()))
+					p.Timers[i].Sumup.SetSeconds(int(engine.Counters[i].warningThreshold.Seconds()))
 					p.Timers[i].Elapsed.SetSeconds(int(c.Duration.Seconds()-c.Diff.Seconds()) + 1)
 				} else {
 					p.Timers[i].Total.SetSeconds(limitimerCountupTotal)

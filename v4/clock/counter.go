@@ -5,6 +5,7 @@ import (
 	// "gitlab.com/Depili/clock-8001/v4/debug"
 	"gitlab.com/Depili/limitimer"
 	"image/color"
+	"strings"
 	"time"
 )
 
@@ -21,13 +22,19 @@ const (
 
 // Counter abstracts a generic counter counting up or down
 type Counter struct {
-	state          *counterState
-	externalState  externalState
-	active         bool // Is this counter active?
-	countdown      bool // Count up / down from the target
-	paused         bool // Is the counter paused?
-	signalColor    color.RGBA
-	autoColorState int
+	state            *counterState
+	externalState    externalState
+	active           bool // Is this counter active?
+	countdown        bool // Count up / down from the target
+	paused           bool // Is the counter paused?
+	signalColor      color.RGBA
+	autoColorState   int
+	endThreshold     time.Duration // Seconds for the "end" warning color
+	warningThreshold time.Duration // Seconds for the warning color
+	signalColors     [3]color.RGBA
+	signalStart      bool
+	autoSignals      bool
+	overtimeMode     string
 }
 
 const (
@@ -119,6 +126,7 @@ func (m *mediaState) output() *CounterOutput {
 	out := &CounterOutput{
 		Active:   true,
 		Media:    true,
+		Expired:  false,
 		Icon:     icon,
 		Paused:   m.paused,
 		Looping:  m.looping,
@@ -182,9 +190,6 @@ func (lt *limitimerState) output() *CounterOutput {
 
 	if out.Expired && out.Countdown {
 		out.Progress = 1
-		out.Hours = 0
-		out.Minutes = 0
-		out.Seconds = 0
 	}
 
 	if lt.minuteMode {
@@ -367,9 +372,64 @@ func (counter *Counter) Output(t time.Time) *CounterOutput {
 	} else {
 		out = counter.normalOutput(t)
 	}
+
+	// Signal color
 	out.SignalColor = counter.signalColor
 
+	if counter.autoSignals && out.Active && out.Countdown {
+		if out.Countdown {
+			if out.Diff < counter.endThreshold {
+				counter.setAutoColor(counter.signalColors[colorEnd], autoColorEnd)
+			} else if out.Diff < counter.warningThreshold {
+				counter.setAutoColor(counter.signalColors[colorWarning], autoColorWarn)
+			} else if counter.signalStart {
+				counter.setAutoColor(counter.signalColors[colorStart], autoColorStart)
+			} else {
+				counter.setAutoColor(color.RGBA{R: 0, G: 0, B: 0, A: 0}, autoColorOff)
+			}
+		} else if counter.signalStart {
+			counter.setAutoColor(counter.signalColors[colorStart], autoColorStart)
+		} else {
+			counter.setAutoColor(color.RGBA{R: 0, G: 0, B: 0, A: 0}, autoColorOff)
+		}
+		out.SignalColor = counter.signalColor
+	}
+
+	if out.Expired {
+		// FIXME make "continue" the default on counters, and just zero here if needed
+		// FIXME same logic needs to apply to counters, move logic deeper?
+		switch counter.overtimeMode {
+		case "zero":
+			out.zero()
+		case "blank":
+			out.blank()
+		case "continue":
+			out.Icon = "+"
+		}
+
+	}
+
 	return out
+}
+
+func (out *CounterOutput) blank() {
+	out.Icon = ""
+	out.Text = ""
+	out.Compact = ""
+}
+
+func (out *CounterOutput) zero() {
+	switch strings.Count(out.Text, ":") {
+	case 0:
+		out.Text = "00"
+	case 1:
+		out.Text = "00:00"
+	case 2:
+		out.Text = "00:00:00"
+	case 3:
+		out.Text = "00:00:00:00"
+	}
+	out.Compact = fmt.Sprintf("%s%s", out.Icon, secsToCompact(0))
 }
 
 func (counter *Counter) normalOutput(t time.Time) *CounterOutput {
@@ -388,9 +448,9 @@ func (counter *Counter) normalOutput(t time.Time) *CounterOutput {
 	expired := diff.Seconds() < 1
 
 	if expired {
-		hours = 0
-		minutes = 0
-		seconds = 0
+		hours = -hours
+		minutes = -minutes
+		seconds = -seconds
 		progress = 1
 	}
 

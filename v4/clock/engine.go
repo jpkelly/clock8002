@@ -135,59 +135,53 @@ type ltcData struct {
 
 // Engine contains the state machine for clock-8001
 type Engine struct {
-	mode                   int        // Main display mode
-	Counters               []*Counter // Timer counters
-	sources                []*source  // Time sources for 1-3 displays
-	displaySeconds         bool
-	flashPeriod            int
-	clockServer            *Server
-	oscServer              osc.Server
-	oscDispatcher          *oscutil.RegexpDispatcher
-	oscDests               *feedbackDestination // udp connections to send osc feedback to
-	oscSendChan            chan []byte
-	oscTally               bool          // Tally text was from osc event
-	timeout                time.Duration // Timeout for osc tally events
-	message                string        // Full tally message as received from OSC
-	messageColor           *color.RGBA   // Tally message color from OSC
-	messageBG              *color.RGBA
-	udpDests               []*feedbackDestination // Stagetimer2 udp time destinations
-	udpCounters            []*Counter
-	initialized            bool     // Show version on startup until ntp synced or receiving OSC control
-	ltc                    *ltcData // LTC time code status
-	ltcShowSeconds         bool     // Toggles led display on LTC mode between seconds and frames
-	ltcFollow              bool     // Continue on internal timer if LTC signal is lost
-	ltcEnabled             bool     // Toggle LTC mode on or off
-	ltcTimeout             bool     // Set to true if LTC signal is lost by the ltc timer
-	ltcActive              bool     // Do we have a active LTC to display?
-	format12h              bool     // Use 12 hour format for time-of-day
-	off                    bool     // Is the engine output off?
-	ignoreRegexp           *regexp.Regexp
-	mittiCounter           *Counter
-	milluminCounter        *Counter
-	background             int
-	info                   string // Version, ip address etc
-	showInfo               bool
-	infoTimer              *timer.Timer
-	uuid                   string // Clock unique id
-	titleTextColor         color.RGBA
-	titleBGColor           color.RGBA
-	screenFlash            bool
-	autoSignals            bool
-	signalStart            bool
-	signalColors           [3]color.RGBA
-	signalThresholdWarning time.Duration
-	signalThresholdEnd     time.Duration
-	signalHardwareColor    color.RGBA
-	signalHardware         int
-	overtimeCountMode      string
-	overtimeVisibility     string
-	limitimer              string
-	limitimerSerial        string
-	limitimerBroadcast     [5]bool
-	limitimerReceive       [5]bool
-	ctx                    context.Context
-	cancelFunc             context.CancelFunc
-	wg                     *sync.WaitGroup
+	mode                int        // Main display mode
+	Counters            []*Counter // Timer counters
+	sources             []*source  // Time sources for 1-3 displays
+	displaySeconds      bool
+	flashPeriod         int
+	clockServer         *Server
+	oscServer           osc.Server
+	oscDispatcher       *oscutil.RegexpDispatcher
+	oscDests            *feedbackDestination // udp connections to send osc feedback to
+	oscSendChan         chan []byte
+	oscTally            bool          // Tally text was from osc event
+	timeout             time.Duration // Timeout for osc tally events
+	message             string        // Full tally message as received from OSC
+	messageColor        *color.RGBA   // Tally message color from OSC
+	messageBG           *color.RGBA
+	udpDests            []*feedbackDestination // Stagetimer2 udp time destinations
+	udpCounters         []*Counter
+	initialized         bool     // Show version on startup until ntp synced or receiving OSC control
+	ltc                 *ltcData // LTC time code status
+	ltcShowSeconds      bool     // Toggles led display on LTC mode between seconds and frames
+	ltcFollow           bool     // Continue on internal timer if LTC signal is lost
+	ltcEnabled          bool     // Toggle LTC mode on or off
+	ltcTimeout          bool     // Set to true if LTC signal is lost by the ltc timer
+	ltcActive           bool     // Do we have a active LTC to display?
+	format12h           bool     // Use 12 hour format for time-of-day
+	off                 bool     // Is the engine output off?
+	ignoreRegexp        *regexp.Regexp
+	mittiCounter        *Counter
+	milluminCounter     *Counter
+	background          int
+	info                string // Version, ip address etc
+	showInfo            bool
+	infoTimer           *timer.Timer
+	uuid                string // Clock unique id
+	titleTextColor      color.RGBA
+	titleBGColor        color.RGBA
+	screenFlash         bool
+	signalHardwareColor color.RGBA
+	signalHardware      int
+	limitimer           string
+	limitimerSerial     string
+	limitimerBroadcast  [5]bool
+	limitimerReceive    [5]bool
+	ctx                 context.Context
+	cancelFunc          context.CancelFunc
+	wg                  *sync.WaitGroup
+	overtimeVisibility  string
 }
 
 // Clock contains the state of a single component clock / timer
@@ -231,29 +225,25 @@ type State struct {
 // MakeEngine creates a clock engine
 func MakeEngine(options *EngineOptions) (*Engine, error) {
 	var engine = Engine{
-		mode:                   Normal,
-		displaySeconds:         true,
-		oscTally:               false,
-		timeout:                time.Duration(options.Timeout) * time.Millisecond,
-		initialized:            false,
-		oscDests:               nil,
-		ltcShowSeconds:         options.LTCSeconds,
-		ltcFollow:              options.LTCFollow,
-		ltcEnabled:             !options.DisableLTC,
-		ltcActive:              false,
-		format12h:              options.Format12h,
-		off:                    false,
-		messageColor:           &color.RGBA{255, 255, 155, 255},
-		autoSignals:            options.AutoSignals,
-		signalStart:            options.SignalStart,
-		signalThresholdWarning: time.Duration(options.SignalThresholdWarning) * time.Second,
-		signalThresholdEnd:     time.Duration(options.SignalThresholdEnd) * time.Second,
-		signalHardware:         options.SignalHardware,
-		overtimeCountMode:      options.OvertimeCountMode,
-		overtimeVisibility:     options.OvertimeVisibility,
-		limitimer:              options.LimitimerMode,
-		limitimerSerial:        options.LimitimerSerial,
-		wg:                     &sync.WaitGroup{},
+		mode:               Normal,
+		displaySeconds:     true,
+		oscTally:           false,
+		timeout:            time.Duration(options.Timeout) * time.Millisecond,
+		initialized:        false,
+		oscDests:           nil,
+		ltcShowSeconds:     options.LTCSeconds,
+		ltcFollow:          options.LTCFollow,
+		ltcEnabled:         !options.DisableLTC,
+		ltcActive:          false,
+		format12h:          options.Format12h,
+		off:                false,
+		messageColor:       &color.RGBA{255, 255, 155, 255},
+		signalHardware:     options.SignalHardware,
+		limitimer:          options.LimitimerMode,
+		limitimerSerial:    options.LimitimerSerial,
+		wg:                 &sync.WaitGroup{},
+		flashPeriod:        options.Flash,
+		overtimeVisibility: options.OvertimeVisibility,
 	}
 
 	engine.ctx, engine.cancelFunc = context.WithCancel(context.Background())
@@ -264,15 +254,6 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	}
 	engine.uuid = uuid
 
-	for i, s := range []string{options.SignalColorStart, options.SignalColorWarning, options.SignalColorEnd} {
-		c := color.RGBA{A: 255}
-		_, err = fmt.Sscanf(s, "#%02x%02x%02x", &c.R, &c.G, &c.B)
-		if err != nil {
-			return nil, err
-		}
-		engine.signalColors[i] = c
-	}
-
 	log.Printf("Source1: %v", options.Source1)
 	log.Printf("Source2: %v", options.Source2)
 	log.Printf("Source3: %v", options.Source3)
@@ -282,12 +263,10 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	engine.ltc = &ltc
 
 	engine.printVersion()
-	engine.initCounters()
-
-	engine.mittiCounter = engine.Counters[options.Mitti]
-	engine.milluminCounter = engine.Counters[options.Millumin]
-
-	log.Printf("Media counters - Mitti: %d, Millumin %d", options.Mitti, options.Millumin)
+	err = engine.initCounters(options)
+	if err != nil {
+		log.Fatalf("Failed to initialize counters: %v", err)
+	}
 
 	sources := make([]*SourceOptions, 4)
 	sources[0] = options.Source1
@@ -300,10 +279,6 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 		return nil, err
 	}
 	engine.initOSC(options)
-
-	// Led flash cycle
-	// Setting the interval to 0 disables
-	engine.flashPeriod = options.Flash
 
 	// Millumin ignore regexp
 	regexp, err := regexp.Compile("(?i)" + options.Ignore)
@@ -319,43 +294,8 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	engine.showInfo = true
 	fmt.Printf(engine.info)
 
-	// Stagetimer2 UDP time reception
-	if options.UDPTime != "off" {
-		engine.udpCounters = make([]*Counter, 2)
-		engine.udpCounters[0] = engine.Counters[options.UDPTimer1]
-		engine.udpCounters[1] = engine.Counters[options.UDPTimer2]
-
-		if options.UDPTime == "send" {
-			log.Printf("Initializing UDP time sender")
-			// Send timers
-			engine.udpDests = make([]*feedbackDestination, 2)
-			engine.udpDests[0] = initFeedback(engine.ctx, "255.255.255.255:36700")
-			engine.udpDests[1] = initFeedback(engine.ctx, "255.255.255.255:36701")
-		} else {
-			log.Printf("Initializing UDP time receiver")
-			// Receive timers
-			go engine.listenUDPTime()
-		}
-	}
-
-	// Limitimer
-	engine.limitimerReceive[0] = options.LimitimerReceive1
-	engine.limitimerReceive[1] = options.LimitimerReceive2
-	engine.limitimerReceive[2] = options.LimitimerReceive3
-	engine.limitimerReceive[3] = options.LimitimerReceive4
-	engine.limitimerReceive[4] = options.LimitimerReceive5
-
-	engine.limitimerBroadcast[0] = options.LimitimerBroadcast1
-	engine.limitimerBroadcast[1] = options.LimitimerBroadcast2
-	engine.limitimerBroadcast[2] = options.LimitimerBroadcast3
-	engine.limitimerBroadcast[3] = options.LimitimerBroadcast4
-	engine.limitimerBroadcast[4] = options.LimitimerBroadcast5
-
-	if options.LimitimerMode == "send" {
-		go engine.limitimerSend()
-	} else if options.LimitimerMode == "receive" {
-		go engine.limitimerListen()
-	}
+	engine.initUDPTime(options)
+	engine.initLimitimer(options)
 
 	return &engine, nil
 }
@@ -622,7 +562,9 @@ func (engine *Engine) listen() {
 					engine.signalHardwareColor = message.Colors[0]
 				}
 			case "signalAutomation":
-				engine.autoSignals = message.Countdown
+				for i := range engine.Counters {
+					engine.Counters[i].autoSignals = message.Countdown
+				}
 			case "limitimer":
 				engine.Counters[message.Counter].parseLimitimer(message.LimitimerMessage)
 			}
@@ -873,27 +815,7 @@ func (engine *Engine) timerState(c *Clock, s *source, out *CounterOutput) {
 	c.Paused = out.Paused
 	c.Progress = out.Progress
 	c.Icon = out.Icon
-
-	if engine.autoSignals {
-		if out.Countdown {
-			if out.Diff < engine.signalThresholdEnd {
-				s.counter.setAutoColor(engine.signalColors[colorEnd], autoColorEnd)
-			} else if out.Diff < engine.signalThresholdWarning {
-				s.counter.setAutoColor(engine.signalColors[colorWarning], autoColorWarn)
-			} else if engine.signalStart {
-				s.counter.setAutoColor(engine.signalColors[colorStart], autoColorStart)
-			} else {
-				s.counter.setAutoColor(color.RGBA{R: 0, G: 0, B: 0, A: 0}, autoColorOff)
-			}
-		} else if engine.signalStart {
-			s.counter.setAutoColor(engine.signalColors[colorStart], autoColorStart)
-		} else {
-			s.counter.setAutoColor(color.RGBA{R: 0, G: 0, B: 0, A: 0}, autoColorOff)
-		}
-		c.SignalColor = s.counter.signalColor
-	} else {
-		c.SignalColor = out.SignalColor
-	}
+	c.SignalColor = out.SignalColor
 
 	if out.Mode == "slave" {
 		c.Mode = Slave
@@ -902,18 +824,6 @@ func (engine *Engine) timerState(c *Clock, s *source, out *CounterOutput) {
 	} else if out.Countdown {
 		c.Mode = Countdown
 		if out.Expired {
-			// FIXME make "continue" the default on counters, and just zero here if needed
-			// FIXME same logic needs to apply to counters, move logic deeper?
-			switch engine.overtimeCountMode {
-			case "zero":
-				// Default, nothing to do
-			case "blank":
-				c.Icon = ""
-				c.Text = ""
-			case "continue":
-				overtimeFormat(out, c)
-				c.Text = fmt.Sprintf("%02d:%02d:%02d", c.Hours, c.Minutes, c.Seconds)
-			}
 			switch engine.overtimeVisibility {
 			case "none":
 				c.Expired = false
@@ -960,7 +870,7 @@ func (engine *Engine) StopCounter(counter int) {
 	}
 
 	engine.Counters[counter].Stop()
-	if engine.autoSignals {
+	if engine.Counters[counter].autoSignals {
 		engine.Counters[counter].signalColor = color.RGBA{R: 0, G: 0, B: 0, A: 0}
 	}
 }
@@ -1135,15 +1045,80 @@ func (engine *Engine) printVersion() {
 }
 
 // initCounters initializes the countdown and count up timers
-func (engine *Engine) initCounters() {
+func (engine *Engine) initCounters(options *EngineOptions) (err error) {
 	engine.Counters = make([]*Counter, numCounters)
 	for i := 0; i < numCounters; i++ {
 		engine.Counters[i] = &Counter{
-			active: false,
-			state:  &counterState{},
+			active:           false,
+			state:            &counterState{},
+			autoSignals:      options.AutoSignals,
+			signalStart:      options.SignalStart,
+			warningThreshold: time.Duration(options.SignalThresholdWarning) * time.Second,
+			endThreshold:     time.Duration(options.SignalThresholdEnd) * time.Second,
+			overtimeMode:     options.OvertimeCountMode,
 		}
 	}
+
+	for i, s := range []string{options.SignalColorStart, options.SignalColorWarning, options.SignalColorEnd} {
+		c := color.RGBA{A: 255}
+		_, err = fmt.Sscanf(s, "#%02x%02x%02x", &c.R, &c.G, &c.B)
+		if err != nil {
+			return
+		}
+		for j := range engine.Counters {
+			engine.Counters[j].signalColors[i] = c
+		}
+	}
+
+	engine.mittiCounter = engine.Counters[options.Mitti]
+	engine.milluminCounter = engine.Counters[options.Millumin]
+	log.Printf("Media counters - Mitti: %d, Millumin %d", options.Mitti, options.Millumin)
+
 	log.Printf("Initialized %d timer counters", len(engine.Counters))
+	return nil
+}
+
+func (engine *Engine) initUDPTime(options *EngineOptions) {
+	// Stagetimer2 UDP time reception
+	if options.UDPTime != "off" {
+		engine.udpCounters = make([]*Counter, 2)
+		engine.udpCounters[0] = engine.Counters[options.UDPTimer1]
+		engine.udpCounters[1] = engine.Counters[options.UDPTimer2]
+
+		if options.UDPTime == "send" {
+			log.Printf("Initializing UDP time sender")
+			// Send timers
+			engine.udpDests = make([]*feedbackDestination, 2)
+			engine.udpDests[0] = initFeedback(engine.ctx, "255.255.255.255:36700")
+			engine.udpDests[1] = initFeedback(engine.ctx, "255.255.255.255:36701")
+		} else {
+			log.Printf("Initializing UDP time receiver")
+			// Receive timers
+			go engine.listenUDPTime()
+		}
+	}
+
+}
+
+func (engine *Engine) initLimitimer(options *EngineOptions) {
+	engine.limitimerReceive[0] = options.LimitimerReceive1
+	engine.limitimerReceive[1] = options.LimitimerReceive2
+	engine.limitimerReceive[2] = options.LimitimerReceive3
+	engine.limitimerReceive[3] = options.LimitimerReceive4
+	engine.limitimerReceive[4] = options.LimitimerReceive5
+
+	engine.limitimerBroadcast[0] = options.LimitimerBroadcast1
+	engine.limitimerBroadcast[1] = options.LimitimerBroadcast2
+	engine.limitimerBroadcast[2] = options.LimitimerBroadcast3
+	engine.limitimerBroadcast[3] = options.LimitimerBroadcast4
+	engine.limitimerBroadcast[4] = options.LimitimerBroadcast5
+
+	if options.LimitimerMode == "send" {
+		go engine.limitimerSend()
+	} else if options.LimitimerMode == "receive" {
+		go engine.limitimerListen()
+	}
+
 }
 
 func (engine *Engine) initSources(sources []*SourceOptions) error {
