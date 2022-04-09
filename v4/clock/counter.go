@@ -439,13 +439,18 @@ func (counter *Counter) normalOutput(t time.Time) *CounterOutput {
 
 	var icon string
 	diff := counter.Diff(t)
+	expired := diff.Seconds() < 1
+
+	// Fudge dual-00:00:00 due to rounding direction change
+	if expired {
+		diff -= time.Second
+	}
 
 	hours := int(diff.Truncate(time.Hour).Hours())
 	minutes := int(diff.Truncate(time.Minute).Minutes()) - (hours * 60)
 	seconds := int(diff.Truncate(time.Second).Seconds()) - (((hours * 60) + minutes) * 60)
 
 	progress := (float64(diff) / float64(counter.state.duration))
-	expired := diff.Seconds() < 1
 
 	if expired {
 		hours = -hours
