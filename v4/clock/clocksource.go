@@ -14,11 +14,12 @@ type source struct {
 	tz      *time.Location // timezone to use
 
 	// Booleans controlling what might be displayed by this clock data source
-	ltc       bool // LTC timecode decoded from sound input
-	timer     bool // Countdown / up timer
-	tod       bool // Time of day, lowest priority
-	hidden    bool // Master control to turn output off
-	textColor color.RGBA
-	bgColor   color.RGBA
-	overtime  color.RGBA
+	ltc         bool // LTC timecode decoded from sound input
+	timer       bool // Countdown / up timer
+	tod         bool // Time of day, lowest priority
+	hidden      bool // Master control to turn output off
+	textColor   color.RGBA
+	bgColor     color.RGBA
+	overtime    color.RGBA
+	timerTarget bool
 }

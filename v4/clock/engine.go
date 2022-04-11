@@ -43,6 +43,7 @@ const (
 	IconPlaying   = "▶" // Icon for playing media readouts
 	IconCountdown = "↓" // Icon for countdown timers
 	IconCountup   = "↑" // Icon for upwards counting timers
+	IconTarget    = "⇒" // Icon for countdown target times
 )
 
 const (
@@ -55,6 +56,7 @@ const (
 type SourceOptions struct {
 	Text          string `long:"text" description:"Title text for the time source"`
 	Counter       int    `long:"counter" description:"Counter number to associate with this source, leave empty to disable it as a suorce" default:"0"`
+	TimerTarget   bool   `long:"counter-target" description:"Show end time of the timer instead of time remaining"`
 	LTC           bool   `long:"ltc" description:"Enable LTC as a source"`
 	Timer         bool   `long:"timer" description:"Enable timer counter as a source"`
 	Tod           bool   `long:"tod" description:"Enable time-of-day as a source"`
@@ -815,16 +817,21 @@ func (engine *Engine) ltcState(c *Clock, s *source) {
 
 func (engine *Engine) timerState(c *Clock, s *source, out *CounterOutput) {
 	// Active timer
-	c.Text = out.Text
-	c.Hours = out.Hours
-	c.Minutes = out.Minutes
-	c.Seconds = out.Seconds
-	c.Compact = out.Compact
-	c.Expired = out.Expired
-	c.Paused = out.Paused
-	c.Progress = out.Progress
-	c.Icon = out.Icon
-	c.SignalColor = out.SignalColor
+	if s.timerTarget && out.Target != nil {
+		engine.todState(c, s, *out.Target)
+		c.Icon = IconTarget
+	} else {
+		c.Text = out.Text
+		c.Hours = out.Hours
+		c.Minutes = out.Minutes
+		c.Seconds = out.Seconds
+		c.Compact = out.Compact
+		c.Expired = out.Expired
+		c.Paused = out.Paused
+		c.Progress = out.Progress
+		c.Icon = out.Icon
+		c.SignalColor = out.SignalColor
+	}
 
 	if out.Mode == "slave" {
 		c.Mode = Slave
@@ -1147,14 +1154,15 @@ func (engine *Engine) initSources(sources []*SourceOptions) error {
 		}
 
 		engine.sources[i] = &source{
-			counter:  engine.Counters[s.Counter],
-			tod:      s.Tod,
-			timer:    s.Timer,
-			ltc:      s.LTC,
-			tz:       tz,
-			title:    s.Text,
-			hidden:   s.Hidden,
-			overtime: c,
+			counter:     engine.Counters[s.Counter],
+			tod:         s.Tod,
+			timer:       s.Timer,
+			ltc:         s.LTC,
+			tz:          tz,
+			title:       s.Text,
+			hidden:      s.Hidden,
+			overtime:    c,
+			timerTarget: s.TimerTarget,
 		}
 	}
 	log.Printf("Initialized %d clock display sources", len(engine.sources))

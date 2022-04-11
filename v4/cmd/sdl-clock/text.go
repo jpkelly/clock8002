@@ -491,18 +491,20 @@ func centerRect(w, h int32, r sdl.Rect) sdl.Rect {
 // Substitute unicode glyphs used for icons to material design icon font private glyphs
 func materialIcon(icon string) string {
 	switch icon {
-	case "Ⅱ":
+	case clock.IconPaused:
 		return "\ue034"
-	case "↓":
+	case clock.IconCountdown:
 		return "\ue5db"
-	case "↑":
+	case clock.IconCountup:
 		return "\ue5d8"
-	case "⇄":
+	case clock.IconLooping:
 		return "\ue040"
-	case "▶":
+	case clock.IconPlaying:
 		return "\ue037"
-	case "+":
+	case clock.IconOvertime:
 		return "\ue145"
+	case clock.IconTarget:
+		return "\ue044"
 	}
 	return ""
 }
