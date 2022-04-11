@@ -1,3 +1,10 @@
+## Version 4.12.0
+* Features:
+  * Option to display timer end time. Hint: Assign same timer to two sources to show both remaining and target time
+* Bugfixes:
+  * Timer feedback when counting up from zero
+  * OSC library has been updated
+
 ## Version 4.11.4
 * Bugfixes:
   * Limitimer: Improve handling of communication errors
