@@ -100,6 +100,7 @@ type mediaState struct {
 	frames    int32
 	progress  float64
 	remaining time.Duration
+	target    time.Time
 }
 
 func (m *mediaState) output() *CounterOutput {
@@ -123,8 +124,6 @@ func (m *mediaState) output() *CounterOutput {
 
 	dur := time.Duration(seconds)*time.Second + m.remaining
 
-	target := time.Now().Add(m.remaining)
-
 	out := &CounterOutput{
 		Active:   true,
 		Media:    true,
@@ -141,7 +140,7 @@ func (m *mediaState) output() *CounterOutput {
 		Diff:     m.remaining,
 		Duration: dur,
 		Mode:     "media",
-		Target:   &target,
+		Target:   &m.target,
 	}
 
 	return out
@@ -586,6 +585,7 @@ func (counter *Counter) SetMedia(hours, minutes, seconds, frames int32, remainin
 		looping:   looping,
 		progress:  progress,
 		remaining: remaining,
+		target:    time.Now().Add(remaining),
 	}
 	counter.setExternal(&m)
 	counter.active = true
