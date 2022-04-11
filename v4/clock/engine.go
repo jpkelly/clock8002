@@ -36,14 +36,22 @@ const flashDuration = 200 * time.Millisecond
 var gitCommit = "Unknown"
 var gitTag = "v4.0.0"
 
+// Icons
 const (
-	IconOvertime  = "+" // Icon for overtime timers
-	IconPaused    = "Ⅱ" // Icon for paused media readouts
-	IconLooping   = "⇄" // Icon for looping media readouts
-	IconPlaying   = "▶" // Icon for playing media readouts
-	IconCountdown = "↓" // Icon for countdown timers
-	IconCountup   = "↑" // Icon for upwards counting timers
-	IconTarget    = "⇒" // Icon for countdown target times
+	// Icon for overtime timers
+	IconOvertime = "+"
+	// Icon for paused media readouts
+	IconPaused = "Ⅱ"
+	// Icon for looping media readouts
+	IconLooping = "⇄"
+	// Icon for playing media readouts
+	IconPlaying = "▶"
+	// Icon for countdown timers
+	IconCountdown = "↓"
+	// Icon for upwards counting timers
+	IconCountup = "↑"
+	// Icon for countdown target times
+	IconTarget = "⇒"
 )
 
 const (
