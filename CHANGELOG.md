@@ -1,3 +1,7 @@
+## Version 4.12.1
+* Bugfixes:
+  * Fix linter errors
+
 ## Version 4.12.0
 * Features:
   * Option to display timer end time. Hint: Assign same timer to two sources to show both remaining and target time
