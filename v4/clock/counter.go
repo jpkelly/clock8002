@@ -171,6 +171,7 @@ type limitimerState struct {
 	warning    bool
 	minuteMode bool
 	countdown  bool
+	target     time.Time
 }
 
 func (lt *limitimerState) output() *CounterOutput {
@@ -190,8 +191,7 @@ func (lt *limitimerState) output() *CounterOutput {
 	}
 
 	if lt.countdown {
-		target := time.Now().Add(lt.duration - lt.elapsed)
-		out.Target = &target
+		out.Target = &lt.target
 	}
 
 	if out.Expired && out.Countdown {
@@ -288,6 +288,11 @@ func (counter *Counter) SetLimitimer(p *limitimer.State, i int) {
 		warning:    p.Timers[i].Warning(),
 		minuteMode: p.Minutes(i),
 		countdown:  p.CountDirection,
+	}
+
+	if ltState.countdown {
+		target := time.Now().Add(ltState.duration - ltState.elapsed)
+		ltState.target = target
 	}
 
 	counter.setLimitimerState(&ltState)

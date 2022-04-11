@@ -56,7 +56,7 @@ const (
 type SourceOptions struct {
 	Text          string `long:"text" description:"Title text for the time source"`
 	Counter       int    `long:"counter" description:"Counter number to associate with this source, leave empty to disable it as a suorce" default:"0"`
-	TimerTarget   bool   `long:"counter-target" description:"Show end time of the timer instead of time remaining"`
+	TimerTarget   bool   `long:"timer-target" description:"Show end time of the timer instead of time remaining"`
 	LTC           bool   `long:"ltc" description:"Enable LTC as a source"`
 	Timer         bool   `long:"timer" description:"Enable timer counter as a source"`
 	Tod           bool   `long:"tod" description:"Enable time-of-day as a source"`
