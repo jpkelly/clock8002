@@ -187,6 +187,11 @@ const configHTML = `
 						<input type="checkbox" id="source1-timer" name="source1-timer" {{if .EngineOptions.Source1.Timer}} checked {{end}} />
 					</label>
 
+					<label for="source1-timer-target">
+						<span>Display timer end time, if available, instead of the time remaining</span>
+						<input type="checkbox" id="source1-timer-target" name="source1-timer-target" {{if .EngineOptions.Source1.TimerTarget}} checked {{end}} />
+					</label>
+
 					<label for="source1-counter">
 						<span>Timer number to use (0-9)</span>
 						<input type="number" min="0" max="9" id="source1-counter" name="source1-counter" value="{{.EngineOptions.Source1.Counter}}" />
@@ -234,6 +239,11 @@ const configHTML = `
 					<label for="source2-timer">
 						<span>Enable input from the associated timer</span>
 						<input type="checkbox" id="source2-timer" name="source2-timer" {{if .EngineOptions.Source2.Timer}} checked {{end}} />
+					</label>
+
+					<label for="source2-timer-target">
+						<span>Display timer end time, if available, instead of the time remaining</span>
+						<input type="checkbox" id="source2-timer-target" name="source2-timer-target" {{if .EngineOptions.Source2.TimerTarget}} checked {{end}} />
 					</label>
 
 					<label for="source2-counter">
@@ -284,6 +294,11 @@ const configHTML = `
 						<input type="checkbox" id="source3-timer" name="source3-timer" {{if .EngineOptions.Source3.Timer}} checked {{end}} />
 					</label>
 
+					<label for="source3-timer-target">
+						<span>Display timer end time, if available, instead of the time remaining</span>
+						<input type="checkbox" id="source3-timer-target" name="source3-timer-target" {{if .EngineOptions.Source3.TimerTarget}} checked {{end}} />
+					</label>
+
 					<label for="source3-counter">
 						<span>Timer number to use (0-9)</span>
 						<input type="number" min="0" max="9" id="source3-counter" name="source3-counter" value="{{.EngineOptions.Source3.Counter}}" />
@@ -330,6 +345,11 @@ const configHTML = `
 					<label for="source4-timer">
 						<span>Enable input from the associated timer on this source</span>
 						<input type="checkbox" id="source4-timer" name="source4-timer" {{if .EngineOptions.Source4.Timer}} checked {{end}} />
+					</label>
+
+					<label for="source4-timer-target">
+						<span>Display timer end time, if available, instead of the time remaining</span>
+						<input type="checkbox" id="source4-timer-target" name="source4-timer-target" {{if .EngineOptions.Source4.TimerTarget}} checked {{end}} />
 					</label>
 
 					<label for="source4-counter">

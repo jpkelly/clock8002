@@ -142,21 +142,25 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 
 	newOptions.EngineOptions.Source1.LTC = r.FormValue("source1-ltc") != ""
 	newOptions.EngineOptions.Source1.Timer = r.FormValue("source1-timer") != ""
+	newOptions.EngineOptions.Source1.TimerTarget = r.FormValue("source1-timer-target") != ""
 	newOptions.EngineOptions.Source1.Tod = r.FormValue("source1-tod") != ""
 	newOptions.EngineOptions.Source1.Hidden = r.FormValue("source1-hidden") != ""
 
 	newOptions.EngineOptions.Source2.LTC = r.FormValue("source2-ltc") != ""
 	newOptions.EngineOptions.Source2.Timer = r.FormValue("source2-timer") != ""
+	newOptions.EngineOptions.Source2.TimerTarget = r.FormValue("source2-timer-target") != ""
 	newOptions.EngineOptions.Source2.Tod = r.FormValue("source2-tod") != ""
 	newOptions.EngineOptions.Source2.Hidden = r.FormValue("source2-hidden") != ""
 
 	newOptions.EngineOptions.Source3.LTC = r.FormValue("source3-ltc") != ""
 	newOptions.EngineOptions.Source3.Timer = r.FormValue("source3-timer") != ""
+	newOptions.EngineOptions.Source3.TimerTarget = r.FormValue("source3-timer-target") != ""
 	newOptions.EngineOptions.Source3.Tod = r.FormValue("source3-tod") != ""
 	newOptions.EngineOptions.Source3.Hidden = r.FormValue("source3-hidden") != ""
 
 	newOptions.EngineOptions.Source4.LTC = r.FormValue("source4-ltc") != ""
 	newOptions.EngineOptions.Source4.Timer = r.FormValue("source4-timer") != ""
+	newOptions.EngineOptions.Source4.TimerTarget = r.FormValue("source4-timer-target") != ""
 	newOptions.EngineOptions.Source4.Tod = r.FormValue("source4-tod") != ""
 	newOptions.EngineOptions.Source4.Hidden = r.FormValue("source4-hidden") != ""
 

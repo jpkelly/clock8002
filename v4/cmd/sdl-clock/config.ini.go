@@ -86,6 +86,8 @@ source1.text={{.EngineOptions.Source1.Text}}
 source1.ltc={{.EngineOptions.Source1.LTC}}
 # Set to true for countdown / count up timer input on this source
 source1.timer={{.EngineOptions.Source1.Timer}}
+# Set to true to show counter end time instead of time remaining (if available)
+source1.timer-target={{.EngineOptions.Source1.TimerTarget}}
 # Counter number for timer support (0-9)
 source1.counter={{.EngineOptions.Source1.Counter}}
 # Set to true to enable time of day input on this source
@@ -100,6 +102,7 @@ source1.overtime-color={{.EngineOptions.Source1.OvertimeColor}}
 source2.text={{.EngineOptions.Source2.Text}}
 source2.ltc={{.EngineOptions.Source2.LTC}}
 source2.timer={{.EngineOptions.Source2.Timer}}
+source2.timer-target={{.EngineOptions.Source2.TimerTarget}}
 source2.counter={{.EngineOptions.Source2.Counter}}
 source2.tod={{.EngineOptions.Source2.Tod}}
 source2.timezone={{.EngineOptions.Source2.TimeZone}}
@@ -109,6 +112,7 @@ source2.overtime-color={{.EngineOptions.Source2.OvertimeColor}}
 source3.text={{.EngineOptions.Source3.Text}}
 source3.ltc={{.EngineOptions.Source3.LTC}}
 source3.timer={{.EngineOptions.Source3.Timer}}
+source3.timer-target={{.EngineOptions.Source3.TimerTarget}}
 source3.counter={{.EngineOptions.Source3.Counter}}
 source3.tod={{.EngineOptions.Source3.Tod}}
 source3.timezone={{.EngineOptions.Source3.TimeZone}}
@@ -118,6 +122,7 @@ source3.overtime-color={{.EngineOptions.Source3.OvertimeColor}}
 source4.text={{.EngineOptions.Source4.Text}}
 source4.ltc={{.EngineOptions.Source4.LTC}}
 source4.timer={{.EngineOptions.Source4.Timer}}
+source4.timer-target={{.EngineOptions.Source4.TimerTarget}}
 source4.counter={{.EngineOptions.Source4.Counter}}
 source4.tod={{.EngineOptions.Source4.Tod}}
 source4.timezone={{.EngineOptions.Source4.TimeZone}}
