@@ -37,6 +37,15 @@ var gitCommit = "Unknown"
 var gitTag = "v4.0.0"
 
 const (
+	IconOvertime  = "+" // Icon for overtime timers
+	IconPaused    = "Ⅱ" // Icon for paused media readouts
+	IconLooping   = "⇄" // Icon for looping media readouts
+	IconPlaying   = "▶" // Icon for playing media readouts
+	IconCountdown = "↓" // Icon for countdown timers
+	IconCountup   = "↑" // Icon for upwards counting timers
+)
+
+const (
 	colorStart   = 0
 	colorWarning = 1
 	colorEnd     = 2
@@ -1208,17 +1217,6 @@ func (engine *Engine) SetSourceColors(source int, text, bg color.RGBA) {
 func (engine *Engine) SetTitleColors(text, bg color.RGBA) {
 	engine.titleTextColor = text
 	engine.titleBGColor = bg
-}
-
-func overtimeFormat(out *CounterOutput, c *Clock) {
-	if out.Diff < 1*time.Second {
-		out.Diff -= 1 * time.Second
-	}
-	c.Icon = "+"
-	c.Hours = -int(out.Diff.Truncate(time.Hour).Hours())
-	c.Minutes = -int(out.Diff.Truncate(time.Minute).Minutes()) - (c.Hours * 60)
-	c.Seconds = -int(out.Diff.Truncate(time.Second).Seconds()) - (((c.Hours * 60) + c.Minutes) * 60)
-
 }
 
 func clockAddresses() string {

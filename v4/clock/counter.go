@@ -107,11 +107,11 @@ func (m *mediaState) output() *CounterOutput {
 	var seconds int64
 
 	if m.paused {
-		icon = "Ⅱ"
+		icon = IconPaused
 	} else if m.looping {
-		icon = "⇄"
+		icon = IconLooping
 	} else {
-		icon = "▶"
+		icon = IconPlaying
 	}
 
 	seconds = int64(m.hours) * 60
@@ -122,6 +122,8 @@ func (m *mediaState) output() *CounterOutput {
 	compact := fmt.Sprintf("%s%s", icon, secsToCompact(seconds))
 
 	dur := time.Duration(seconds)*time.Second + m.remaining
+
+	target := time.Now().Add(m.remaining)
 
 	out := &CounterOutput{
 		Active:   true,
@@ -139,6 +141,7 @@ func (m *mediaState) output() *CounterOutput {
 		Diff:     m.remaining,
 		Duration: dur,
 		Mode:     "media",
+		Target:   &target,
 	}
 
 	return out
@@ -184,6 +187,11 @@ func (lt *limitimerState) output() *CounterOutput {
 		Progress:  1 - lt.elapsed.Seconds()/lt.duration.Seconds(),
 		Duration:  lt.duration,
 		Mode:      "limitimer",
+	}
+
+	if lt.countdown {
+		target := time.Now().Add(lt.duration - lt.elapsed)
+		out.Target = &target
 	}
 
 	if out.Expired && out.Countdown {
@@ -359,6 +367,7 @@ type CounterOutput struct {
 	Duration    time.Duration // Total duration of the count, if available
 	SignalColor color.RGBA
 	Mode        string
+	Target      *time.Time // End time for counter, if available
 }
 
 // Output generates the static output of the counter for use in clock displays
@@ -402,7 +411,7 @@ func (counter *Counter) Output(t time.Time) *CounterOutput {
 		case "blank":
 			out.blank()
 		case "continue":
-			out.Icon = "+"
+			out.Icon = IconOvertime
 		}
 
 	}
@@ -464,15 +473,17 @@ func (counter *Counter) normalOutput(t time.Time) *CounterOutput {
 	}
 
 	if counter.paused {
-		icon = "Ⅱ"
+		icon = IconPaused
 	} else if counter.countdown {
-		icon = "↓"
+		icon = IconCountdown
 	} else {
-		icon = "↑"
+		icon = IconCountup
 	}
 
 	rawSecs := int64((counter.Diff(t).Truncate(time.Second) + time.Second).Seconds())
 	c := secsToCompact(rawSecs)
+
+	target := counter.state.target
 
 	out := &CounterOutput{
 		Active:    counter.active,
@@ -488,6 +499,7 @@ func (counter *Counter) normalOutput(t time.Time) *CounterOutput {
 		Progress:  progress,
 		Diff:      diff,
 		Duration:  counter.state.duration,
+		Target:    &target,
 	}
 
 	return out
