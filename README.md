@@ -5,6 +5,12 @@
 Support clock-8001 development by paypal: [![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=XUMXUL5RX5MWJ&currency_code=EUR)
 
 
+## Repository name change 2022-06-02
+
+Due to changes to gitlab OSS licensing the project had to be moved to a new location inside a gitlab clock-8001 organization. So this is the new home for the project, https://gitlab.com/clock-8001/clock-8001/ Unfortunately this also means that go projects importing the clock packages need to be updated to reflect on the new module location and name. Sorry about that, but it had to be done.
+
+## About
+
 This is a simplistic clock written in go that can be used either as a video out with SDL or as a dedicated clock buidt with a 32x32 pixel hub75 led matrix and a ring of 60 addressable leds.
 
 The README has been written for the version 4.x.x clocks, ie. the gitlab.com/clock-8001/clock-8001/v4 go module.
