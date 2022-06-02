@@ -2,7 +2,7 @@ package millumin
 
 import (
 	"fmt"
-	"gitlab.com/Depili/clock-8001/v3/debug"
+	"gitlab.com/clock-8001/clock-8001/v3/debug"
 	"time"
 )
 

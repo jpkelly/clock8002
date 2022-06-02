@@ -2,7 +2,7 @@ package millumin
 
 import (
 	"github.com/hypebeast/go-osc/osc"
-	"gitlab.com/Depili/clock-8001/debug"
+	"gitlab.com/clock-8001/clock-8001/debug"
 	"log"
 )
 

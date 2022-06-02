@@ -6,9 +6,9 @@ import (
 	"github.com/kidoman/embd"
 	_ "github.com/kidoman/embd/host/rpi" // This loads the RPi driver
 	"github.com/tarm/serial"
-	"gitlab.com/Depili/clock-8001/v3/clock"
 	"gitlab.com/Depili/go-rgb-led-matrix/bdf"
 	"gitlab.com/Depili/go-rgb-led-matrix/matrix"
+	"gitlab.com/clock-8001/clock-8001/v3/clock"
 	"os"
 	"os/signal"
 	"time"

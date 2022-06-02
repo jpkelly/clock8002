@@ -5,7 +5,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 	// "gitlab.com/Depili/clock-8001/v4/clock"
-	"gitlab.com/Depili/clock-8001/v4/debug"
+	"gitlab.com/clock-8001/clock-8001/v4/debug"
 	"log"
 	"math"
 	"time"

@@ -195,7 +195,7 @@ millumin={{.EngineOptions.Millumin}}
 millumin-ignore-layer={{.EngineOptions.Ignore}}
 
 # Limitimer
-# see https://gitlab.com/Depili/clock-8001/-/blob/master/limitimer.md
+# see https://gitlab.com/clock-8001/clock-8001/-/blob/master/limitimer.md
 
 # Mode, off, send or receive
 limitimer-mode={{.EngineOptions.LimitimerMode}}

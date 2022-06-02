@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/veandco/go-sdl2/gfx"
 	"github.com/veandco/go-sdl2/sdl"
-	"gitlab.com/Depili/clock-8001/v4/clock"
 	"gitlab.com/Depili/go-rgb-led-matrix/bdf"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
 	"regexp"
 )
 

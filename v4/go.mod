@@ -1,4 +1,4 @@
-module gitlab.com/Depili/clock-8001/v4
+module gitlab.com/clock-8001/clock-8001/v4
 
 go 1.17
 

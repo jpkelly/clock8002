@@ -1,17 +1,17 @@
 # OSC controlled simple clock
-* Clock binary builds: [![pipeline status](https://gitlab.com/Depili/clock-8001/badges/master/pipeline.svg)](https://gitlab.com/Depili/clock-8001/commits/master)
-* Clock image builds: [![pipeline status](https://gitlab.com/Depili/buildroot-clock-8001/badges/master/pipeline.svg)](https://gitlab.com/Depili/buildroot-clock-8001/commits/master)
+* Clock binary builds: [![pipeline status](https://gitlab.com/clock-8001/clock-8001/badges/master/pipeline.svg)](https://gitlab.com/clock-8001/clock-8001/commits/master)
+* Clock image builds: [![pipeline status](https://gitlab.com/clock-8001/buildroot-clock-8001/badges/master/pipeline.svg)](https://gitlab.com/clock-8001/buildroot-clock-8001/commits/master)
 
 Support clock-8001 development by paypal: [![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=XUMXUL5RX5MWJ&currency_code=EUR)
 
 
 This is a simplistic clock written in go that can be used either as a video out with SDL or as a dedicated clock buidt with a 32x32 pixel hub75 led matrix and a ring of 60 addressable leds.
 
-The README has been written for the version 4.x.x clocks, ie. the gitlab.com/Depili/clock-8001/v4 go module.
+The README has been written for the version 4.x.x clocks, ie. the gitlab.com/clock-8001/clock-8001/v4 go module.
 
 The clock can be controlled with the depili-clock-8001 companion module: https://github.com/bitfocus/companion-module-depili-clock-8001 Module version 5.0.0 is the first to implement V4 clock API.
 
-Features and configuration in greated detail can be found in the [getting started guide in wiki](https://gitlab.com/Depili/clock-8001/-/wikis/Getting-started-on-clock-8001-version-4).
+Features and configuration in greated detail can be found in the [getting started guide in wiki](https://gitlab.com/clock-8001/clock-8001/-/wikis/Getting-started-on-clock-8001-version-4).
 
 Developed in co-operation with Daniel Richert and with a grant from FUUG - Finnish Unix User Group.
 
@@ -59,11 +59,11 @@ The new unified images have a web configuration interface for the clock settings
 
 ## sdl-clock - Output the clock to hdmi on the raspberry pi
 
-You can build the clock binary with `go get gitlab.com/Depili/clock-8001/cmd/sdl_clock`. Compiling requires SDL 2 and SDL_GFX 2 libraries. On the raspberry pi the default libraries shipped with rasbian will only output data to X11 window, so for full screen dedicated clock you need to compile the SDL libraries from source. For compiling use `./configure --host=armv7l-raspberry-linux-gnueabihf --disable-pulseaudio --disable-esd --disable-video-mir --disable-video-wayland --disable-video-x11 --disable-video-opengl` for config flags.
+You can build the clock binary with `go get gitlab.com/clock-8001/clock-8001/v4/cmd/sdl_clock`. Compiling requires SDL 2 and SDL_GFX 2 libraries. On the raspberry pi the default libraries shipped with rasbian will only output data to X11 window, so for full screen dedicated clock you need to compile the SDL libraries from source. For compiling use `./configure --host=armv7l-raspberry-linux-gnueabihf --disable-pulseaudio --disable-esd --disable-video-mir --disable-video-wayland --disable-video-x11 --disable-video-opengl` for config flags.
 
 ### Precompiled binaries
 
-* Latest from git master: [sdl-clock](https://gitlab.com/Depili/clock-8001/-/jobs/artifacts/master/raw/sdl-clock?job=build)
+* Latest from git master: [sdl-clock](https://gitlab.com/clock-8001/clock-8001/-/jobs/artifacts/master/raw/sdl-clock?job=build)
 * Testing builds: https://kissa.depili.fi/clock-8001/testing/
 * Tagged releases: https://kissa.depili.fi/clock-8001/releases/
 
@@ -197,12 +197,12 @@ Bill of materials:
 
 You need to compile https://gitlab.com/Depili/rpi-matrix for a small program that will listen on udp socket for the led matrix data and handle driving the led matrix.
 
-Compile the led matrix clock binary with `go get gitlab.com/Depili/clock-8001/cmd/clock`
+Compile the led matrix clock binary with `go get gitlab.com/clock-8001/clock-8001/v3/cmd/matrix-clock`
 
 ### Precompiled binaries
 
-* Latest from git master: [matrix-clock](https://gitlab.com/Depili/clock-8001/-/jobs/artifacts/master/raw/matrix-clock?job=build)
+* Latest from git master: [matrix-clock](https://gitlab.com/clock-8001/clock-8001/-/jobs/artifacts/master/raw/matrix-clock?job=build)
 
 ## OSC commands understood by the clock
 
-See https://gitlab.com/Depili/clock-8001/-/blob/master/v4/osc.md
+See https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md

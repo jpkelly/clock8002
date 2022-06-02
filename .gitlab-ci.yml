@@ -1,4 +1,4 @@
-image: registry.gitlab.com/depili/clock-8001:latest
+image: registry.gitlab.com/clock-8001/clock-8001:latest
 
 variables:
   GIT_STRATEGY: fetch
@@ -18,10 +18,10 @@ stages:
   - build
   - deploy
 
-before_script:
-  - mkdir -p /go/src/gitlab.com/Depili /go/src/_/builds
-  - cp -r $CI_PROJECT_DIR /go/src/gitlab.com/Depili/clock-8001
-  - ln -s /go/src/gitlab.com/Depili /go/src/_/builds/clock-8001
+# before_script:
+#  - mkdir -p /go/src/gitlab.com/Depili /go/src/_/builds
+#  - cp -r $CI_PROJECT_DIR /go/src/gitlab.com/Depili/clock-8001
+#  - ln -s /go/src/gitlab.com/Depili /go/src/_/builds/clock-8001
 
 # unit_tests:
 #   stage: test
@@ -88,7 +88,7 @@ create_config_4:
             - v4/clock_port8080.ini
 
 build:
-    image: registry.gitlab.com/depili/clock-8001-build:master
+    image: registry.gitlab.com/clock-8001/clock-8001-build:master
     stage: build
     script:
       - cd v3
@@ -103,7 +103,7 @@ build:
         - fonts/7x13.bdf
 
 build_v4:
-  image: registry.gitlab.com/depili/clock-8001-build:master
+  image: registry.gitlab.com/clock-8001/clock-8001-build:master
   stage: build
   script:
     - cd v4
@@ -126,7 +126,7 @@ build_v4_windows:
 
 build_macos:
     stage: build
-    image: registry.gitlab.com/depili/clock-8001/osxcross:latest
+    image: registry.gitlab.com/clock-8001/clock-8001/osxcross:latest
     script:
       - cd v4
       - make osxcross

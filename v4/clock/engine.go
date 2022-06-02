@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/denisbrodbeck/machineid"
 	"github.com/desertbit/timer"
-	"gitlab.com/Depili/clock-8001/v4/debug"
-	"gitlab.com/Depili/clock-8001/v4/oscutil"
-	"gitlab.com/Depili/clock-8001/v4/udptime"
+	"gitlab.com/clock-8001/clock-8001/v4/debug"
+	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
+	"gitlab.com/clock-8001/clock-8001/v4/udptime"
 	// "gitlab.com/Depili/go-osc/osc"
 	"github.com/chabad360/go-osc/osc"
 
@@ -1058,7 +1058,7 @@ func (engine *Engine) printVersion() {
 	if ok {
 		for _, mod := range clockModule.Deps {
 			log.Printf("Dep: %s: version %s", mod.Path, mod.Version)
-			if mod.Path == "gitlab.com/Depili/clock-8001" {
+			if mod.Path == "gitlab.com/clock-8001/clock-8001" {
 				// gitTag = mod.Version
 			}
 		}

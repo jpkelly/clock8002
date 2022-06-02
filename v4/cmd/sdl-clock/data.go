@@ -1,8 +1,8 @@
 package main
 
 import (
-	"gitlab.com/Depili/clock-8001/v4/clock"
-	"gitlab.com/Depili/clock-8001/v4/util"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
+	"gitlab.com/clock-8001/clock-8001/v4/util"
 	htmlTemplate "html/template"
 	"image/color"
 )

@@ -2,7 +2,6 @@ package clock
 
 import (
 	"fmt"
-	// "gitlab.com/Depili/clock-8001/v4/debug"
 	"gitlab.com/Depili/limitimer"
 	"image/color"
 	"strings"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/jessevdk/go-flags"
-	"gitlab.com/Depili/clock-8001/clock"
+	"gitlab.com/clock-8001/clock-8001/clock"
 	"log"
 )
 

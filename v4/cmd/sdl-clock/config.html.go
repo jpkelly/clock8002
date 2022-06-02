@@ -20,7 +20,7 @@ const configHTML = `
 				<fieldset>
 					<legend>Project links</legend>
 					<ul>
-						<li><a href="https://gitlab.com/depili/clock-8001/">View the project on gitlab</a></li>
+						<li><a href="https://gitlab.com/clock-8001/clock-8001/">View the project on gitlab</a></li>
 						<li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=XUMXUL5RX5MWJ&currency_code=EUR">Support development of clock-8001 via Paypal</a></li>
 					</ul>
 				</fieldset>
@@ -499,7 +499,7 @@ const configHTML = `
 
 			<fieldset>
 				<legend>DSAN Limitimer</legend>
-				<p>See <a href="https://gitlab.com/Depili/clock-8001/-/blob/master/limitimer.md">https://gitlab.com/Depili/clock-8001/-/blob/master/limitimer.md</a> for documentation.</p>
+				<p>See <a href="https://gitlab.com/clock-8001/clock-8001/-/blob/master/limitimer.md">https://gitlab.com/Depili/clock-8001/-/blob/master/limitimer.md</a> for documentation.</p>
 				<label for="limitimer-mode">
 						<span>Limitimer mode</span>
 						<select name="limitimer-mode" id="limitimer-mode">

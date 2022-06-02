@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"github.com/veandco/go-sdl2/mix"
 	"github.com/veandco/go-sdl2/sdl"
-	"gitlab.com/Depili/clock-8001/v4/clock"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
 )
 
 //go:embed 1kHz_100ms.wav
