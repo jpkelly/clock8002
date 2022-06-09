@@ -1,3 +1,7 @@
+## Version 4.12.2
+* New project url. The project had to be changed to a gitlab namespace due to OSS project lisencing changes in gitlab.
+* Image: Improved the detection of capture interfaces for LTC
+
 ## Version 4.12.1
 * Bugfixes:
   * Fix linter errors
