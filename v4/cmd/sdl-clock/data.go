@@ -73,7 +73,7 @@ type clockOptions struct {
 	TextColor      string `long:"text-color" description:"Color for round clock text" default:"#FF8000"`
 	StaticColor    string `long:"static-color" description:"Color for round clock static circles" default:"#505000"`
 	SecondColor    string `long:"second-color" description:"Color for round clock second circles" default:"#C80000"`
-	CountdownColor string `long:"countdown-color" description:"Color for round clock second circles" default:"#FF0000"`
+	CountdownColor string `long:"countdown-color" description:"Color for round clock aux countdowns" default:"#FF0000"`
 
 	// Text clock stuff
 	NumberFont     string `long:"number-font" description:"Font for text clock face numbers" default:"Copse-Regular.ttf"`
