@@ -1,3 +1,8 @@
+## Version 4.12.3
+* Bugfixes: Some web config values weren't validated as intended
+* Added proper ifupdown support in the raspberry pi image
+  * This allows setting static dns servers in interfaces file.
+
 ## Version 4.12.2
 * New project url. The project had to be changed to a gitlab namespace due to OSS project lisencing changes in gitlab.
 * Image: Improved the detection of capture interfaces for LTC
