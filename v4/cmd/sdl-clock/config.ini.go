@@ -41,8 +41,14 @@ LabelFont={{.LabelFont}}
 # Font for icons
 IconFont={{.IconFont}}
 
-# Enable audio cues for countdowns, currently produces the BBC bips on 5 last seconds of a countdown
+# Enable beeps for countdowns, currently produces the BBC bips on 5 last seconds of a countdown
 AudioEnabled={{.AudioEnabled}}
+
+# Enable voice sample triggereing for countdowns and media durations.
+VoiceEnabled={{.VoiceEnabled}}
+
+# Directory to load voice samples from. Samples should be named 1234.wav where the numbers are the trigger time in seconds
+VoiceDir={{.VoiceDir}}
 
 # Enable audio beeps on each full hour
 TODBeep={{.TODBeep}}

@@ -175,6 +175,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 
 	newOptions.AudioEnabled = r.FormValue("AudioEnabled") != ""
 	newOptions.TODBeep = r.FormValue("TODBeep") != ""
+	newOptions.VoiceEnabled = r.FormValue("VoiceEnabled") != ""
 
 	newOptions.FullScreen = r.FormValue("FullScreen") != ""
 
@@ -199,6 +200,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.EngineOptions.Source4.Text = r.FormValue("source4-text")
 
 	newOptions.EngineOptions.LimitimerSerial = r.FormValue("limitimer-serial")
+
+	newOptions.VoiceDir = r.FormValue("VoiceDir")
 
 	// Countdown face target
 	t := r.FormValue("CountdownTarget")

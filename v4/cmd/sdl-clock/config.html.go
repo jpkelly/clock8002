@@ -137,6 +137,17 @@ const configHTML = `
 						<span>Enable audio cues for expiring countdown timers.</span>
 						<input type="checkbox" id="AudioEnabled" name="AudioEnabled" {{if .AudioEnabled}} checked {{end}}/>
 					</label>
+
+					<label for="VoiceEnabled">
+						<span>Enable voice cues for expiring countdown timers and media durations.</span>
+						<input type="checkbox" id="VoiceEnabled" name="VoiceEnabled" {{if .VoiceEnabled}} checked {{end}}/>
+					</label>
+
+					<label for="VoiceDir">
+						<span>Directory to load the voice samples from. Files should be named 1234.wav where 1234 is the time in seconds to trigger the sample.</span>
+						<input type="text" id="VoiceDir" name="VoiceDir" value="{{.VoiceDir}}"/>
+					</label>
+
 					<label for="TODBeep">
 						<span>Enable audio cues for time of day displays on each full hour.</span>
 						<input type="checkbox" id="TODBeep" name="TODBeep" {{if .TODBeep}} checked {{end}}/>

@@ -73,6 +73,7 @@ windows: dep clock_port8080.ini ## Build the binary file
 	@cp -r fonts windows/
 	@cp clock_port8080.ini windows/clock.ini
 	@cp sdl-clock.exe windows/
+	@cp -r voices windows/
 	@msi-packager windows/ clock-8001.msi -l -n clock-8001 -v $(WIN_VERSION) -a x86 -u 28bebbbc-0430-4ab0-a322-1660d5824663 -e "sdl-clock.exe" -m Depili -i cmd/sdl-clock/winres/icon.ico
 
 macos:

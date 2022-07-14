@@ -101,8 +101,10 @@ type clockOptions struct {
 	SignalFollow     bool   `long:"signal-hw-follow" description:"Hardware signal follows source 1"`
 	SignalToBG       bool   `long:"signal-to-bg" description:"Set the hardware signal color as clock background color"`
 
-	AudioEnabled bool `long:"audio" description:"Play beeps when a timer is about to expire"`
-	TODBeep      bool `long:"tod-beep" description:"Play beeps on each hour on TOD clocks"`
+	AudioEnabled bool   `long:"audio" description:"Play beeps when a timer is about to expire"`
+	TODBeep      bool   `long:"tod-beep" description:"Play beeps on each hour on TOD clocks"`
+	VoiceEnabled bool   `long:"voice" description:"Load and play samples according to countdown or media state"`
+	VoiceDir     string `long:"voice-dir" description:"Directory to load voice samples from" default:"voices/us"`
 
 	CountdownTarget string `long:"countdown-target" default:"2020-12-24 00:00:00"`
 	Raspberry       bool   // Is the host a raspberry pi
