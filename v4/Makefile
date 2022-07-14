@@ -58,7 +58,7 @@ sdl-clock:
 config: clock_port80.ini clock_port8080.ini
 
 clock_port80.ini: sdl-clock
-	./sdl-clock --http-port :80 --countdown-target "$(shell date +%Y)-12-24 00:00:00" --defaults --dump-config > clock_port80.ini
+	./sdl-clock --http-port :80 --countdown-target "$(shell date +%Y)-12-24 00:00:00" --voice-dir /boot/voices/us --defaults --dump-config > clock_port80.ini
 
 clock_port8080.ini: sdl-clock
 	./sdl-clock --http-port :8080 --countdown-target "$(shell date +%Y)-12-24 00:00:00" --defaults --dump-config > clock_port8080.ini
