@@ -449,8 +449,9 @@ func drawTally(state *clock.State) {
 			textClock.tally = state.Tally
 			colors.tally = tallyColor
 			colors.tallyBG = bgColor
+			tally := fmt.Sprintf("%.16s", state.Tally)
 
-			textClock.tallyTex = renderText(state.Tally, textClock.labelFont, colors.tally)
+			textClock.tallyTex = renderText(tally, textClock.labelFont, colors.tally)
 			textClock.tallyTex.SetBlendMode(sdl.BLENDMODE_BLEND)
 			textClock.tallyTex.SetAlphaMod(colors.tally.A)
 		}
