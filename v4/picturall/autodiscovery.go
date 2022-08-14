@@ -15,6 +15,8 @@ const (
 	picturallDiscovery = "224.0.0.180:11009"
 )
 
+var magic = [16]byte{0x50, 0x49, 0x43, 0x54, 0x55, 0x52, 0x41, 0x4c, 0x4c, 0x20, 0x53, 0x45, 0x52, 0x56, 0x45, 0x52}
+
 // Ident is the autodiscovery reply message sent by Picturall media servers
 type Ident struct {
 	Magic     [16]byte // "PICTURALL SERVER" (no null termination)
@@ -30,9 +32,9 @@ func (p *Ident) String() string {
 
 // Discover performs autodiscovery for Picturalls via multicast.
 // Returns the info for the first unit discovered or nil for timeout
-func Discover(timeout time.Duration) *Ident {
+func Discover(timeout time.Duration) (string, bool) {
 	log.Printf("Picturall autodiscovery starting...")
-	c := make(chan *Ident)
+	c := make(chan string)
 
 	addr, err := net.ResolveUDPAddr("udp4", picturallDiscovery)
 	if err != nil {
@@ -58,13 +60,13 @@ func Discover(timeout time.Duration) *Ident {
 	timer := timer.NewTimer(timeout)
 	select {
 	case p := <-c:
-		return p
+		return p, true
 	case <-timer.C:
-		return nil
+		return "", false
 	}
 }
 
-func autoDiscover(conn *net.UDPConn, c chan *Ident) {
+func autoDiscover(conn *net.UDPConn, c chan string) {
 
 	// Loop forever reading from the socket
 	for {
@@ -84,8 +86,13 @@ func autoDiscover(conn *net.UDPConn, c chan *Ident) {
 			log.Printf("Picturall discovery: binary.Read failed: %v", err)
 			continue
 		}
+
+		if picturall.Magic != magic {
+			log.Printf("Picturall discovery: wrong magic identifier")
+		}
+
 		log.Printf("Read pictural data: %v", picturall.String())
-		c <- &picturall
+		c <- src.IP.String()
 		close(c)
 		return
 	}

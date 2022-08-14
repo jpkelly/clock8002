@@ -52,7 +52,7 @@ func openConnection(ip string, mainChan chan *Media) {
 		log.Printf("Starting picturall listener for %s", addr)
 		state.conn, err = net.Dial("tcp", addr)
 		if err != nil {
-			log.Printf("Error connecting to picturall %e", err)
+			log.Printf("Error connecting to picturall %v", err)
 			time.Sleep(time.Second)
 			continue
 		}
@@ -87,9 +87,9 @@ func openConnection(ip string, mainChan chan *Media) {
 func resolveAddr(ip string) (addr string) {
 	if parts := strings.Split(ip, ":"); len(parts[0]) == 0 {
 		// Autodiscovery time
-		p := Discover(time.Second)
-		if p != nil {
-			addr = fmt.Sprintf("%s:%s", p.IP, parts[1])
+		p, found := Discover(time.Second)
+		if found {
+			addr = fmt.Sprintf("%s:%s", p, parts[1])
 		} else {
 			// Didn't find anything...
 			return ""
@@ -97,6 +97,7 @@ func resolveAddr(ip string) (addr string) {
 	} else {
 		addr = ip
 	}
+	log.Printf("Picturall address resolved to: '%s' %X", addr, []byte(addr))
 	return
 }
 
