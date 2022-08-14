@@ -97,6 +97,8 @@ func (p *Msg) SourceString() (string, bool) {
 // ParseMedia parses the message payload into a struct representing playing media
 func (p *Msg) ParseMedia() *Media {
 	var msgMap map[string](map[string]string)
+	var timecode, mediaLength int64
+	var err error
 
 	if p.Type != CtrlStatus {
 		return nil
@@ -112,13 +114,13 @@ func (p *Msg) ParseMedia() *Media {
 
 	debug.Printf("Picturall ParseMedia() payload: %v", payload)
 
-	timecode, err := strconv.ParseInt(payload["timecode"], 10, 64)
+	timecode, err = strconv.ParseInt(payload["timecode"], 10, 64)
 	if err != nil {
 		debug.Printf("Picturall ParseMedia() error parsing timecode %s - %v", payload["timecode"], err)
 		return nil
 	}
 
-	mediaLength, err := strconv.ParseInt(payload["media_length"], 10, 64)
+	mediaLength, err = strconv.ParseInt(payload["media_length"], 10, 64)
 	if err != nil {
 		debug.Printf("Picturall ParseMedia() error parsing media length %s - %v", payload["media_length"], err)
 		return nil
