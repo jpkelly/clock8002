@@ -129,6 +129,11 @@ func (engine *Engine) picturallAccept(m *picturall.Media) bool {
 				return false
 			}
 		}
+	} else {
+		if m.Length == m.Head {
+			log.Printf("Picturall bug: ignoring end-of-file media with no knowledge of previous state")
+			return false
+		}
 	}
 
 	engine.picturall.lastHead[m.Layer] = m.Head
