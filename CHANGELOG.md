@@ -1,3 +1,6 @@
+## Version 4.13.1
+* Bugfix: picturall autodiscovery on linux and windows
+
 ## Version 4.13.0
 * Added support for Analog Way Picturall media servers
 
