@@ -1,0 +1,259 @@
+package clock
+
+import (
+	"context"
+	"github.com/desertbit/timer"
+	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
+	// "gitlab.com/Depili/go-osc/osc"
+	"github.com/chabad360/go-osc/osc"
+
+	"image/color"
+	"regexp"
+	"sync"
+	"time"
+)
+
+// Version is the current clock engine version
+const Version = "4.0.0"
+
+// State feedback timer
+const stateTimer = time.Second / 2
+const udpTimer = time.Second / 10
+const flashDuration = 200 * time.Millisecond
+
+// Will get overridden by ldflags in Makefile
+var gitCommit = "Unknown"
+var gitTag = "v4.0.0"
+
+// Icons
+const (
+	// Icon for overtime timers
+	IconOvertime = "+"
+	// Icon for paused media readouts
+	IconPaused = "Ⅱ"
+	// Icon for looping media readouts
+	IconLooping = "⇄"
+	// Icon for playing media readouts
+	IconPlaying = "▶"
+	// Icon for countdown timers
+	IconCountdown = "↓"
+	// Icon for upwards counting timers
+	IconCountup = "↑"
+	// Icon for countdown target times
+	IconTarget = "⇒"
+)
+
+const (
+	colorStart   = 0
+	colorWarning = 1
+	colorEnd     = 2
+)
+
+// SourceOptions contains all options for clock display sources.
+type SourceOptions struct {
+	Text          string `long:"text" description:"Title text for the time source"`
+	Counter       int    `long:"counter" description:"Counter number to associate with this source, leave empty to disable it as a suorce" default:"0"`
+	TimerTarget   bool   `long:"timer-target" description:"Show end time of the timer instead of time remaining"`
+	LTC           bool   `long:"ltc" description:"Enable LTC as a source"`
+	Timer         bool   `long:"timer" description:"Enable timer counter as a source"`
+	Tod           bool   `long:"tod" description:"Enable time-of-day as a source"`
+	TimeZone      string `long:"timezone" description:"Time zone to use for ToD display" default:"Europe/Helsinki"`
+	Hidden        bool   `long:"hidden" description:"Hide this time source"`
+	OvertimeColor string `long:"overtime-color" description:"Background color for overtime countdowns, in HTML format #FFFFFF" default:"#FF0000"`
+}
+
+// EngineOptions contains all common options for clock.Engines
+type EngineOptions struct {
+	Flash              int    `long:"flash" description:"Flashing interval when countdown reached zero (ms), 0 disables" default:"500"`
+	ListenAddr         string `long:"osc-listen" description:"Address to listen for incoming osc messages" default:"0.0.0.0:1245"`
+	Timeout            int    `short:"d" long:"timeout" description:"Timeout for OSC message updates in milliseconds" default:"1000"`
+	Connect            string `short:"o" long:"osc-dest" description:"Address to send OSC feedback to" default:"255.255.255.255:1245"`
+	DisableOSC         bool   `long:"disable-osc" description:"Disable OSC control and feedback"`
+	DisableFeedback    bool   `long:"disable-feedback" description:"Disable OSC feedback"`
+	DisableLTC         bool   `long:"disable-ltc" description:"Disable LTC display mode"`
+	LTCSeconds         bool   `long:"ltc-seconds" description:"Show seconds on the ring in LTC mode"`
+	UDPTime            string `long:"udp-time" description:"Stagetimer2 UDP protocol support" choice:"off" choice:"send" choice:"receive" default:"receive"`
+	UDPTimer1          int    `long:"udp-timer-1" description:"Timer to send as UDP timer 1 (port 36700)" default:"1"`
+	UDPTimer2          int    `long:"udp-timer-2" description:"Timer to send as UDP timer 2 (port 36701)" default:"2"`
+	LTCFollow          bool   `long:"ltc-follow" description:"Continue on internal clock if LTC signal is lost. If unset display will blank when signal is gone."`
+	Format12h          bool   `long:"format-12h" description:"Use 12 hour format for time-of-day display"`
+	Mitti              int    `long:"mitti" description:"Counter number for Mitti OSC feedback" default:"8"`
+	Millumin           int    `long:"millumin" description:"Counter number for Millumin OSC feedback" default:"9"`
+	Ignore             string `long:"millumin-ignore-layer" value-name:"REGEXP" description:"Ignore matching millumin layers (case-insensitive regexp)" default:"ignore"`
+	ShowInfo           int    `long:"info-timer" description:"Show clock status for x seconds on startup" default:"30"`
+	OvertimeCountMode  string `long:"overtime-count-mode" description:"Behaviour for expired countdown timer counts" default:"zero" choice:"zero" choice:"blank" choice:"continue"`
+	OvertimeVisibility string `long:"overtime-visibility" description:"Extra visibility for overtime timers" default:"blink" choice:"blink" choice:"background" choice:"both" choice:"none"`
+
+	AutoSignals            bool   `long:"auto-signals" description:"Automatic signal colors based on timer state"`
+	SignalStart            bool   `long:"signal-start" description:"Set signal color on timer start"`
+	SignalColorStart       string `long:"signal-color-start" description:"Signal colors for timers above thresholds" default:"#00FF00"`
+	SignalColorWarning     string `long:"signal-color-warning" description:"Signal colors for timers between thresholds" default:"#FFFF00"`
+	SignalColorEnd         string `long:"signal-color-end" description:"Signal colors for timers bellow thresholds" default:"#FF0000"`
+	SignalThresholdWarning int    `long:"signal-threshold-warning" description:"Threshold for medium color transition (seconds)" default:"180"`
+	SignalThresholdEnd     int    `long:"signal-threshold-end" description:"Threshold for medium color transition (seconds)" default:"60"`
+	SignalHardware         int    `long:"signal-hw-group" description:"Hardware signal group number" default:"1"`
+
+	LimitimerMode       string `long:"limitimer-mode" description:"Listen for limitimer messages on the serial device and update sources based on them" choice:"off" choice:"send" choice:"receive" default:"off"`
+	LimitimerSerial     string `long:"limitimer-serial" description:"Serial device for limitimer communication" default:"/dev/ttyAMA0"`
+	LimitimerReceive1   bool   `long:"limitimer-receive-timer1" description:"Receive limitimer program 1 as timer 1"`
+	LimitimerReceive2   bool   `long:"limitimer-receive-timer2" description:"Receive limitimer program 2 as timer 2"`
+	LimitimerReceive3   bool   `long:"limitimer-receive-timer3" description:"Receive limitimer program 3 as timer 3"`
+	LimitimerReceive4   bool   `long:"limitimer-receive-timer4" description:"Receive limitimer program 4 as timer 4"`
+	LimitimerReceive5   bool   `long:"limitimer-receive-timer5" description:"Receive limitimer active program as timer 5"`
+	LimitimerBroadcast1 bool   `long:"limitimer-broadcast-timer1" description:"Broadcast limitimer program 1 to other clocks as timer 1"`
+	LimitimerBroadcast2 bool   `long:"limitimer-broadcast-timer2" description:"Broadcast limitimer program 2 to other clocks as timer 2"`
+	LimitimerBroadcast3 bool   `long:"limitimer-broadcast-timer3" description:"Broadcast limitimer program 3 to other clocks as timer 3"`
+	LimitimerBroadcast4 bool   `long:"limitimer-broadcast-timer4" description:"Broadcast limitimer program 4 to other clocks as timer 4"`
+	LimitimerBroadcast5 bool   `long:"limitimer-broadcast-timer5" description:"Broadcast limitimer active program to other clocks as timer 5"`
+
+	PicturallAddress      string `long:"picturall-address" description:"Address for picturall media server to connect to"`
+	PicturallPort         int    `long:"picturall-port" description:"Picturall telnet port" default:"11000"`
+	PicturallTimer        int    `long:"picturall-timer" description:"Timer for picturall video state" default:"7"`
+	PicturallEnabled      bool   `long:"picturall-enabled" descriptin:"Enable picturall media info support"`
+	PicturallLoops        bool   `long:"picturall-loops" description:"Show looping content"`
+	PicturallTimeout      int    `long:"picturall-timeout" description:"Timeout for communication, the display will be blanked after this time, in milliseconds" default:"1000"`
+	PicturallMediaName    bool   `long:"picturall-media-name" description:"Show picturall media name as clock text"`
+	PicturallIgnoreLayers string `long:"picturall-ignore-layers" description:"Comma separated list of layers to ignore"`
+	PicturallDebug        bool   `long:"picturall-debug" description:"Write picturall traffic to a logfile"`
+	PicturallStreams      bool   `long:"picturall-streams" description:"Show streaming content"`
+	PicturallMediaColor   string `long:"picturall-media-color" description:"CSS color for picturall media name" default:"#FF8000"`
+	PicturallMediaBG      string `long:"picturall-media-bg" description:"CSS color for picturall media name background" default:"#101010"`
+
+	Source1 *SourceOptions `group:"1st clock display source" namespace:"source1"`
+	Source2 *SourceOptions `group:"2nd clock display source" namespace:"source2"`
+	Source3 *SourceOptions `group:"3rd clock display source" namespace:"source3"`
+	Source4 *SourceOptions `group:"4th clock display source" namespace:"source4"`
+}
+
+// Clock engine state constants
+const (
+	Normal    = iota // Display current time
+	Countdown = iota // Display countdown timer only
+	Countup   = iota // Count time up
+	Off       = iota // (Mostly) blank screen
+	Paused    = iota // Paused countdown timer(s)
+	LTC       = iota // LTC display
+	Media     = iota // Playing media counter
+	Slave     = iota // Displaying slaved output
+)
+
+// Misc constants
+const (
+	numCounters      = 10 // Number of distinct counters to initialize
+	numSources       = 4
+	PrimaryCounter   = 0 // Main counter that replaces the ToD display on the round clock when active
+	SecondaryCounter = 1 // Secondary counter that is displayed in the tally message space on the round clock
+)
+
+type ltcData struct {
+	hours   int
+	minutes int
+	seconds int
+	frames  int
+	target  time.Time
+	timeout bool
+}
+
+// Engine contains the state machine for clock-8001
+type Engine struct {
+	mode                int        // Main display mode
+	Counters            []*Counter // Timer counters
+	sources             []*source  // Time sources for 1-3 displays
+	displaySeconds      bool
+	flashPeriod         int
+	clockServer         *Server
+	oscServer           osc.Server
+	oscDispatcher       *oscutil.RegexpDispatcher
+	oscDests            *feedbackDestination // udp connections to send osc feedback to
+	oscSendChan         chan []byte
+	oscTally            bool          // Tally text was from osc event
+	timeout             time.Duration // Timeout for osc tally events
+	message             string        // Full tally message as received from OSC
+	messageColor        *color.RGBA   // Tally message color from OSC
+	messageBG           *color.RGBA
+	messageTimer        *timer.Timer
+	udpDests            []*feedbackDestination // Stagetimer2 udp time destinations
+	udpCounters         []*Counter
+	initialized         bool     // Show version on startup until ntp synced or receiving OSC control
+	ltc                 *ltcData // LTC time code status
+	ltcShowSeconds      bool     // Toggles led display on LTC mode between seconds and frames
+	ltcFollow           bool     // Continue on internal timer if LTC signal is lost
+	ltcEnabled          bool     // Toggle LTC mode on or off
+	ltcTimeout          bool     // Set to true if LTC signal is lost by the ltc timer
+	ltcActive           bool     // Do we have a active LTC to display?
+	format12h           bool     // Use 12 hour format for time-of-day
+	off                 bool     // Is the engine output off?
+	ignoreRegexp        *regexp.Regexp
+	mittiCounter        *Counter
+	milluminCounter     *Counter
+	picturall           picturallState
+	background          int
+	info                string // Version, ip address etc
+	showInfo            bool
+	infoTimer           *timer.Timer
+	uuid                string // Clock unique id
+	titleTextColor      color.RGBA
+	titleBGColor        color.RGBA
+	screenFlash         bool
+	signalHardwareColor color.RGBA
+	signalHardware      int
+	limitimer           string
+	limitimerSerial     string
+	limitimerBroadcast  [5]bool
+	limitimerReceive    [5]bool
+	ctx                 context.Context
+	cancelFunc          context.CancelFunc
+	wg                  *sync.WaitGroup
+	overtimeVisibility  string
+}
+
+type picturallState struct {
+	counter      *Counter
+	noLoop       bool
+	noStreams    bool
+	timeout      time.Duration
+	mediaName    bool
+	mediaColor   *color.RGBA
+	mediaBG      *color.RGBA
+	ignoreLayers map[int]bool
+	lastLayer    int
+	lastHead     map[int]time.Duration
+}
+
+// Clock contains the state of a single component clock / timer
+type Clock struct {
+	Text        string     // Normal clock representation HH:MM:SS(:FF)
+	Hours       int        // Hours on the clock
+	Minutes     int        // Minutes on the clock
+	Seconds     int        // Seconds on the clock
+	Frames      int        // Frames, only on LTC
+	Label       string     // Label text
+	Icon        string     // Icon for the clock type
+	Compact     string     // 4 character condensed output
+	Expired     bool       // true if asscociated timer is expired
+	Mode        int        // Display type
+	Paused      bool       // Is the clock/timer paused?
+	Progress    float64    // Progress of the total timer 0-1
+	Hidden      bool       // The timer should not be rendered if true
+	TextColor   color.RGBA // Color for text
+	BGColor     color.RGBA // Background color
+	HideHours   bool       // Should the hour field of the time be displayed for this clock.
+	HideSeconds bool       // Should seconds be shown for this clock
+	SignalColor color.RGBA
+}
+
+// State is a snapshot of the clock representation on the time State() was called
+type State struct {
+	Initialized         bool        // Does the clock have valid time or has it received an osc command?
+	Clocks              []*Clock    // All configured clocks / timers
+	Tally               string      // Tally message text
+	TallyColor          *color.RGBA // Tally message color
+	TallyBG             *color.RGBA // Tally message background color
+	Flash               bool        // Flash cycle state
+	Background          int         // User selected background number
+	Info                string      // Clock information, version, ip-address etc. Should be displayed if not empty
+	TitleColor          color.RGBA  // Color for the clock title text
+	TitleBGColor        color.RGBA  // Background color for clock title text
+	ScreenFlash         bool        // Set to true if the screen should be flashed white
+	HardwareSignalColor color.RGBA
+}
