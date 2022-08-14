@@ -1,3 +1,6 @@
+## Version 4.13.0
+* Added support for Analog Way Picturall media servers
+
 ## Version 4.12.3
 * Bugfixes: Some web config values weren't validated as intended
 * Added proper ifupdown support in the raspberry pi image
