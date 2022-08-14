@@ -156,6 +156,11 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.EngineOptions.LimitimerBroadcast4 = r.FormValue("limitimer-broadcast-timer4") != ""
 	newOptions.EngineOptions.LimitimerBroadcast5 = r.FormValue("limitimer-broadcast-timer5") != ""
 
+	newOptions.EngineOptions.PicturallEnabled = r.FormValue("picturall-enabled") != ""
+	newOptions.EngineOptions.PicturallLoops = r.FormValue("picturall-loop") != ""
+	newOptions.EngineOptions.PicturallStreams = r.FormValue("picturall-streams") != ""
+	newOptions.EngineOptions.PicturallMediaName = r.FormValue("picturall-media-name") != ""
+
 	// Strings, will not be validated
 	newOptions.HTTPUser = r.FormValue("HTTPUser")
 	newOptions.HTTPPassword = r.FormValue("HTTPPassword")
@@ -169,6 +174,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.Matrix = r.FormValue("Matrix")
 	newOptions.SerialName = r.FormValue("SerialName")
 	errors += validateFile(newOptions.SerialName, "Led ring serial name")
+
+	newOptions.EngineOptions.PicturallAddress = r.FormValue("picturall-address")
 
 	// Limitimer mode
 	newOptions.EngineOptions.LimitimerMode = r.FormValue("limitimer-mode")
@@ -266,6 +273,24 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.SerialBaud, err = strconv.Atoi(r.FormValue("SerialBaud"))
 	errors += validateNumber(err, "Serial baud rate")
 
+	newOptions.EngineOptions.PicturallPort, err = strconv.Atoi(r.FormValue("picturall-port"))
+	errors += validateNumber(err, "Picturall port")
+
+	newOptions.EngineOptions.PicturallTimer, err = strconv.Atoi(r.FormValue("picturall-timer"))
+	errors += validateNumber(err, "Picturall timer")
+
+	newOptions.EngineOptions.PicturallTimeout, err = strconv.Atoi(r.FormValue("picturall-timeout"))
+	errors += validateNumber(err, "Picturall timeout")
+
+	// Picturall ignore layers
+	picturallIgnoreLayers := r.FormValue("picturall-ignore-layers")
+	log.Printf("adasdafafaasdas %s", picturallIgnoreLayers)
+	if ok, err := regexp.MatchString(`^(?:\d+,?)+$`, picturallIgnoreLayers); len(picturallIgnoreLayers) == 0 || (ok && err == nil) {
+		newOptions.EngineOptions.PicturallIgnoreLayers = picturallIgnoreLayers
+	} else {
+		errors += "<li>Picturall layer ignore list is not valid</li>"
+	}
+
 	// Colors
 	newOptions.TextColor = r.FormValue("TextColor")
 	errors += validateColor(newOptions.TextColor, "Clock text color")
@@ -289,6 +314,11 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	errors += validateColor(newOptions.EngineOptions.Source3.OvertimeColor, "Source3 overtime color")
 	newOptions.EngineOptions.Source4.OvertimeColor = r.FormValue("source4-overtime-color")
 	errors += validateColor(newOptions.EngineOptions.Source4.OvertimeColor, "Source4 overtime color")
+
+	newOptions.EngineOptions.PicturallMediaColor = r.FormValue("picturall-media-color")
+	errors += validateColor(newOptions.EngineOptions.PicturallMediaColor, "Picturall media text color")
+	newOptions.EngineOptions.PicturallMediaBG = r.FormValue("picturall-media-bg")
+	errors += validateColor(newOptions.EngineOptions.PicturallMediaBG, "Picturall media background color")
 
 	if errors != "" {
 		tmpl, err := htmlTemplate.New("config.html").Parse(configHTML)

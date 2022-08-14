@@ -165,6 +165,39 @@ millumin={{.EngineOptions.Millumin}}
 # Millumin layer ignore regexp
 millumin-ignore-layer={{.EngineOptions.Ignore}}
 
+# Picturall
+
+# Enable picturall integration
+picturall-enabled={{.EngineOptions.PicturallEnabled}}
+
+# Picturall address. Leave blank for autodiscovery. Autodiscovery will use the first instance that responds.
+picturall-address={{.EngineOptions.PicturallAddress}}
+
+# Picturall port
+picturall-port={{.EngineOptions.PicturallPort}}
+
+# Pictural destination timer
+picturall-timer={{.EngineOptions.PicturallTimer}}
+
+# Picturall show looping media
+picturall-loops={{.EngineOptions.PicturallLoops}}
+
+# Picturall show streaming media
+picturall-streams={{.EngineOptions.PicturallStreams}}
+
+# Picturall show media name as tally message
+picturall-media-name={{.EngineOptions.PicturallMediaName}}
+
+# Picturall message timeout, in milliseconds
+picturall-timeout={{.EngineOptions.PicturallTimeout}}
+
+# Picturall layer ignore list, comma separated
+picturall-ignore-layers={{.EngineOptions.PicturallIgnoreLayers}}
+
+# Picturall media name color & background
+picturall-media-color={{.EngineOptions.PicturallMediaColor}}
+picturall-media-bg={{.EngineOptions.PicturallMediaBG}}
+
 # Limitimer
 # see https://gitlab.com/clock-8001/clock-8001/-/blob/master/limitimer.md
 

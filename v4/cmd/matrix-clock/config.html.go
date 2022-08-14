@@ -431,6 +431,66 @@ const configHTML = `
 			</fieldset>
 
 			<fieldset>
+				<legend>Analog Way Picturall</legend>
+
+				<label for="picturall-enabled">
+					<span>Enable Picturall integration</span>
+					<input type="checkbox" id="picturall-enabled" name="picturall-enabled" {{if .EngineOptions.PicturallEnabled}} checked {{end}} />
+				</label>
+
+				<label for="picturall-address">
+					<span>Address to connect to. Leave blank for autodiscovery. Autodiscovery will use the first picturall that responds.</span>
+					<input type="text" id="picturall-address" name="picturall-address" value="{{.EngineOptions.PicturallAddress}}" />
+				</label>
+
+				<label for="picturall-port">
+					<span>Port to connect to</span>
+					<input type="number" id="picturall-port" name="picturall-port" value="{{.EngineOptions.PicturallPort}}" />
+				</label>
+
+				<label for="picturall-timer">
+					<span>Timer number for feedback from Picturall</span>
+					<input type="number" min="0" max="9" id="picturall-timer" name="picturall-timer" value="{{.EngineOptions.PicturallTimer}}" />
+				</label>
+
+				<label for="picturall-loops">
+					<span>Show looping media</span>
+					<input type="checkbox" id="picturall-loops" name="picturall-loops" {{if .EngineOptions.PicturallLoops}} checked {{end}} />
+				</label>
+
+				<label for="picturall-streams">
+					<span>Show streaming media</span>
+					<input type="checkbox" id="picturall-streams" name="picturall-streams" {{if .EngineOptions.PicturallStreams}} checked {{end}} />
+				</label>
+
+
+				<label for="picturall-media-name">
+					<span>Show media name as tally message on the clock</span>
+					<input type="checkbox" id="picturall-media-name" name="picturall-media-name" {{if .EngineOptions.PicturallMediaName}} checked {{end}} />
+				</label>
+
+				<label for="picturall-timeout">
+					<span>Message timeout for clearing the clock display</span>
+					<input type="number" id="picturall-timeout" name="picturall-timeout" value="{{.EngineOptions.PicturallTimeout}}" />
+				</label>
+
+				<label for="picturall-ignore-layers">
+					<span>List of layer numbers to ignore, comma separated</span>
+					<input type="text" id="picturall-ignore-layers" name="picturall-ignore-layers" value="{{.EngineOptions.PicturallIgnoreLayers}}" />
+				</label>
+
+				<label for="picturall-media-color">
+					<span>Media name text color</span>
+					<input type="color" id="picturall-media-color" name="picturall-media-color" value="{{.EngineOptions.PicturallMediaColor}}" />
+				</label>
+				<label for="picturall-media-bg">
+					<span>Media name background color</span>
+					<input type="color" id="picturall-media-bg" name="picturall-media-bg" value="{{.EngineOptions.PicturallMediaBG}}" />
+				</label>
+
+			</fieldset>
+
+			<fieldset>
 				<legend>DSAN Limitimer</legend>
 				<p>See <a href="https://gitlab.com/clock-8001/clock-8001/-/blob/master/limitimer.md">https://gitlab.com/Depili/clock-8001/-/blob/master/limitimer.md</a> for documentation.</p>
 				<label for="limitimer-mode">
