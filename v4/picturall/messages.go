@@ -112,13 +112,13 @@ func (p *Msg) ParseMedia() *Media {
 
 	debug.Printf("Picturall ParseMedia() payload: %v", payload)
 
-	timecode, err := strconv.Atoi(payload["timecode"])
+	timecode, err := strconv.ParseInt(payload["timecode"], 10, 64)
 	if err != nil {
 		debug.Printf("Picturall ParseMedia() error parsing timecode %s - %v", payload["timecode"], err)
 		return nil
 	}
 
-	mediaLength, err := strconv.Atoi(payload["media_length"])
+	mediaLength, err := strconv.ParseInt(payload["media_length"], 10, 64)
 	if err != nil {
 		debug.Printf("Picturall ParseMedia() error parsing media length %s - %v", payload["media_length"], err)
 		return nil
