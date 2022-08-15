@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/desertbit/timer"
+	"gitlab.com/clock-8001/clock-8001/v4/debug"
 	"log"
 	"net"
 	"time"
@@ -48,20 +49,23 @@ func Discover(timeout time.Duration) (string, bool) {
 	}
 
 	conn.SetReadBuffer(maxDatagramSize)
-
 	go autoDiscover(conn, c)
 
-	conn, err = newBroadcaster(picturallDiscovery)
+	bc, err := newBroadcaster(picturallDiscovery)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Picturall error opening port: %v", err)
 	}
 
-	conn.Write([]byte("HELLO"))
+	bc.Write([]byte("HELLO"))
 	timer := timer.NewTimer(timeout)
 	select {
 	case p := <-c:
+		conn.Close()
+		bc.Close()
 		return p, true
 	case <-timer.C:
+		conn.Close()
+		bc.Close()
 		return "", false
 	}
 }
@@ -73,17 +77,24 @@ func autoDiscover(conn *net.UDPConn, c chan string) {
 		buffer := make([]byte, maxDatagramSize)
 		numBytes, src, err := conn.ReadFromUDP(buffer)
 		if err != nil {
-			log.Fatal("Picturall discovery: ReadFromUDP failed:", err)
+			debug.Printf("Picturall discovery: ReadFromUDP failed: %v", err)
+			close(c)
+			return
 		}
 
-		log.Printf("Picturall discovery: Got %d bytes from %v: %X", numBytes, src, buffer[:numBytes])
+		debug.Printf("Picturall discovery: Got %d bytes from %v: %X", numBytes, src, buffer[:numBytes])
+
+		if numBytes == 5 {
+			continue
+		}
+
 		reader := bytes.NewReader(buffer[:numBytes])
 
 		picturall := Ident{}
 
 		err = binary.Read(reader, binary.LittleEndian, &picturall)
 		if err != nil {
-			log.Printf("Picturall discovery: binary.Read failed: %v", err)
+			debug.Printf("Picturall discovery: binary.Read failed: %v", err)
 			continue
 		}
 
