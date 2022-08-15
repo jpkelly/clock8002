@@ -1,7 +1,13 @@
 package picturall
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/binary"
 	"fmt"
+	"log"
+	"net"
+	"time"
 )
 
 // 34 bytes for media request, client -> picturall
@@ -66,6 +72,140 @@ func (p *PicaPkt) String() string {
 	return fmt.Sprintf("%s: 1: %d 2: %d 3: %d 4: %d length: %d", p.Magic, p.Something1, p.Something2, p.Something3, p.Something4, p.Length)
 }
 
+// MediaXML returns true if this is a packet that should contain the media collection xml
 func (p *PicaPkt) MediaXML() bool {
 	return p.Something1 == 5 && p.Something2 == 0 && p.Something3 == 4 && p.Something4 == 0
+}
+
+// ParsePicaPkt parses a byte slice into a PicaPkt header struct
+func ParsePicaPkt(data []byte) (*PicaPkt, error) {
+	header := &PicaPkt{}
+	if bytes.Equal(data[:7], PicaPktMagic()) && len(data) >= 30 {
+		err := binary.Read(bytes.NewReader(data), binary.BigEndian, header)
+		if err != nil {
+			return nil, fmt.Errorf("Binary read for header failed: %w", err)
+		}
+		return header, nil
+
+	}
+	return nil, fmt.Errorf("Start magic missmatch, expected %s got %s", PicaPktMagic(), data[:7])
+}
+
+// FetchMedia connects to a picturall and tries to fetch the media collection info via port 11001
+func FetchMedia(ip string) (*MediaCollections, error) {
+	addr := fmt.Sprintf("%s:11001", ip)
+	c := make(chan *MediaCollections)
+
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	go xmlListener(conn, c)
+
+	time.Sleep(50 * time.Millisecond)
+	_, err = conn.Write(picaPktMediaReq)
+	if err != nil {
+		log.Fatalf("Failed to write: %v", err)
+	}
+
+	timer := time.NewTimer(time.Second)
+	select {
+	case mc, ok := <-c:
+		if ok {
+			return mc, nil
+		}
+		return nil, fmt.Errorf("Listener closed the channel")
+	case <-timer.C:
+		return nil, fmt.Errorf("Timeout waiting for the XML data")
+	}
+}
+
+func xmlListener(conn net.Conn, c chan *MediaCollections) {
+	buffer := bytes.NewBuffer(nil)
+	reader := bufio.NewReader(buffer)
+	read := make([]byte, 30)
+
+	var header *PicaPkt
+
+	for {
+		// Calculate the size we want to read
+		buffSize(header, read, buffer.Len())
+
+		nRead, err := conn.Read(read)
+		if err != nil {
+			log.Printf("Read failed: %v", err)
+			close(c)
+			return
+		}
+		buffer.Write(read[:nRead])
+
+		if header == nil && buffer.Len() >= 30 {
+			start, err := reader.Peek(30)
+			if err != nil {
+				conn.Close()
+				log.Printf("Failed to peek")
+				close(c)
+				return
+			}
+			header, err = ParsePicaPkt(start)
+			if err == nil {
+				// Header found
+				reader.Discard(30)
+				buffer.Truncate(buffer.Len())
+			} else {
+				reader.Discard(1)
+			}
+		} else if header != nil {
+			// Have header, waiting for payload
+			if buffer.Len() >= int(header.Length) {
+				// Have the payload
+				var n uint32
+				var other []byte
+
+				if header.Length >= 4 {
+					err := binary.Read(reader, binary.LittleEndian, &n)
+					if err != nil {
+						log.Printf("Error parsing payload 1: %v", err)
+					}
+				}
+
+				if header.Length > 4 {
+					other = make([]byte, header.Length-4)
+					err := binary.Read(reader, binary.LittleEndian, &other)
+					if err != nil {
+						log.Printf("Error parsing payload 2: %v", err)
+					}
+				}
+
+				if header.MediaXML() {
+					mc, err := parseMediaCollections(other)
+
+					if err != nil {
+						log.Printf("Error parsing media collections %v", err)
+						continue
+					}
+					c <- mc
+					return
+				}
+				header = nil
+				buffer.Truncate(buffer.Len())
+			}
+		}
+	}
+}
+
+func buffSize(header *PicaPkt, read []byte, pending int) {
+	if header == nil {
+		read = make([]byte, 30)
+	} else {
+		missing := int(header.Length) - pending
+		if missing > 1460 {
+			missing = 1460
+		}
+		if len(read) != missing {
+			read = make([]byte, missing)
+		}
+	}
 }

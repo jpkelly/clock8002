@@ -21,6 +21,7 @@ require (
 
 require (
 	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3 // indirect
+	golang.org/x/text v0.3.7 // indirect
 	periph.io/x/conn/v3 v3.6.7 // indirect
 	periph.io/x/host/v3 v3.6.7 // indirect
 )

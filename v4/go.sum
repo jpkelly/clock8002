@@ -29,6 +29,8 @@ gitlab.com/Depili/ubercorn v1.0.0 h1:B5nRBAZq+rGsrS9LWySg4WXCROatMibJrW34s7at07g
 gitlab.com/Depili/ubercorn v1.0.0/go.mod h1:Drmksj7Z9ZD7d31t8LWvzem9LI4HX9D8T2qYSete1Ho=
 golang.org/x/sys v0.0.0-20211205182925-97ca703d548d h1:FjkYO/PPp4Wi0EAUOVLxePm7qVW4r4ctbWpURyuOD0E=
 golang.org/x/sys v0.0.0-20211205182925-97ca703d548d/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/text v0.3.7 h1:olpwvP2KacW1ZWvsR7uQhoyTYvKAupfQrRGBFM352Gk=
+golang.org/x/text v0.3.7/go.mod h1:u+2+/6zg+i71rQMx5EYifcz6MCKuco9NR6JIITiCfzQ=
 periph.io/x/conn/v3 v3.6.7 h1:hem/gzoUI0tnvdJOJAk+XLBhqBGX9sHkwShBXRGGy0k=
 periph.io/x/conn/v3 v3.6.7/go.mod h1:3OD27w9YVa5DS97VsUxsPGzD9Qrm5Ny7cF5b6xMMIWg=
 periph.io/x/host v0.0.1 h1:xE83x4KluTcn3rjzOJ+IGls3L0TzlwVbcoEoNLQ70Cc=
