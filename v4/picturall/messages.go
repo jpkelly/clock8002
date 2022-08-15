@@ -24,6 +24,12 @@ func parseMsg(msg string) *Msg {
 
 // Loop returns true if the media is looping
 func (m *Media) Loop() bool {
+	if m.DefaultPlayMode != -100 {
+		if m.PlayState == PlayDefault && m.MediaEndAction == PlayDefault {
+			pm := m.DefaultPlayMode
+			return pm == PlayDefault || pm == PlayLoop
+		}
+	}
 	return (m.PlayState == PlayDefault && m.MediaEndAction == 4) || m.PlayState == PlayLoop
 }
 
@@ -48,18 +54,30 @@ func (m *Media) String() string {
 }
 
 func (m *Media) combineSource(source string) {
+	m.DefaultPlayMode = -100
+	m.MediaEndAction = -100
+	m.Layer = -1
+
 	if p := sourceNumberRe.FindStringSubmatch(source); len(p) == 2 {
 		m.Layer, _ = strconv.Atoi(p[1])
-	} else {
-		m.Layer = -1
 	}
 
 	if s, ok := state.sources[source]; ok {
 		m.MediaEndAction = s.MediaEndAction
 		m.PlayStateReq = s.PlayStateReq
 		m.PlayState = s.PlayStateReq
-	} else {
-		m.MediaEndAction = -1
+
+		if state.mc != nil {
+			// Try to get the default playmode....
+			if len(state.mc.Collections) >= s.Collection {
+				for _, media := range state.mc.Collections[s.Collection].Medias {
+					if media.Index == s.Slot {
+						m.DefaultPlayMode = media.PlayMode
+					}
+				}
+			}
+		}
+
 	}
 }
 
@@ -188,6 +206,18 @@ func (p *Msg) ParseSource() *Source {
 			s.PlayStateReq, err = strconv.Atoi(payload["control"]["play_state_req"])
 			if err != nil {
 				debug.Printf("Pictural ParseSource() error parsing play state req %s - %v", payload["play_state_req"], err)
+				return nil
+			}
+
+			s.Slot, err = strconv.Atoi(payload["selection"]["slot"])
+			if err != nil {
+				debug.Printf("Pictural ParseSource() error parsing slot %s - %v", payload["play_state_req"], err)
+				return nil
+			}
+
+			s.Collection, err = strconv.Atoi(payload["selection"]["collection"])
+			if err != nil {
+				debug.Printf("Pictural ParseSource() error parsing collection %s - %v", payload["play_state_req"], err)
 				return nil
 			}
 

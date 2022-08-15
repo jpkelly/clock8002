@@ -110,7 +110,7 @@ func FetchMedia(ip string) (*MediaCollections, error) {
 		log.Fatalf("Failed to write: %v", err)
 	}
 
-	timer := time.NewTimer(time.Second)
+	timer := time.NewTimer(time.Second * 5)
 	select {
 	case mc, ok := <-c:
 		if ok {

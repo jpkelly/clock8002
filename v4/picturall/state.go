@@ -16,6 +16,7 @@ func (s *State) reset() {
 	s.sources = make(map[string]*Source)
 	s.enums = nil
 	s.mediaChan = make(chan *Media)
+	s.mc = nil
 }
 
 func (s *State) initConnection() error {
@@ -46,14 +47,21 @@ func (s *State) keepAlive() {
 	defer s.conn.Close()
 
 	for {
-		_, err := s.conn.Write([]byte("\n"))
 		if !s.haveEnums() {
-			_, err = s.conn.Write([]byte("enum_objects\n"))
+			_, err := s.conn.Write([]byte("enum_objects\n"))
 			if err != nil {
 				return
 			}
 		}
 
+		mc, err := FetchMedia(state.ip)
+		if err != nil {
+			log.Printf("Picturall error getting media collection: %v", err)
+		} else {
+			state.mc = mc
+		}
+
+		_, err = s.conn.Write([]byte("\n"))
 		if err != nil {
 			log.Printf("Picturall keepAlive() error writing: %v", err)
 			return

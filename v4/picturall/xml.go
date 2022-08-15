@@ -78,7 +78,7 @@ func parseMediaCollections(data []byte) (*MediaCollections, error) {
 }
 
 func (mc *MediaCollections) String() string {
-	ret := "Media collection:"
+	ret := "Media collection:\n"
 	for i, c := range mc.Collections {
 		if len(c.Medias) == 0 {
 			continue

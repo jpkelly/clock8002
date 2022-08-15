@@ -49,6 +49,9 @@ func openConnection(ip string, mainChan chan *Media) {
 			continue
 		}
 
+		parts := strings.Split(addr, ":")
+		state.ip = parts[0]
+
 		log.Printf("Starting picturall listener for %s", addr)
 		state.conn, err = net.Dial("tcp", addr)
 		if err != nil {

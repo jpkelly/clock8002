@@ -9,7 +9,7 @@ import (
 func main() {
 	log.Printf("Attempting to connect to picturall and dump the media collection xml...")
 
-	ip, found := picturall.Discover(time.Second)
+	ip, found := picturall.Discover(time.Second * 2)
 	if !found {
 		log.Fatalf("Autodiscovery failed")
 	}

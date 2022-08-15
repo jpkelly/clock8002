@@ -33,13 +33,14 @@ type Msg struct {
 // Media is a struct for Picturall media status messages
 type Media struct {
 	Msg
-	Name           string
-	PlayState      int
-	Head           time.Duration
-	Length         time.Duration
-	MediaEndAction int
-	Layer          int
-	PlayStateReq   int
+	Name            string
+	PlayState       int
+	Head            time.Duration
+	Length          time.Duration
+	MediaEndAction  int
+	Layer           int
+	PlayStateReq    int
+	DefaultPlayMode int
 }
 
 // Source is a struct for Picturall source state
@@ -50,6 +51,8 @@ type Source struct {
 	MediaEndAction int
 	PlayStateReq   int
 	Map            map[string](map[string]string)
+	Collection     int
+	Slot           int
 }
 
 // State is a struct for complete Picturall state
@@ -59,6 +62,8 @@ type State struct {
 	conn      net.Conn
 	mediaChan chan *Media
 	ctx       context.Context
+	ip        string
+	mc        *MediaCollections
 }
 
 var state *State
