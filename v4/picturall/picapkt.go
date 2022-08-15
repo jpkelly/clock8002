@@ -110,7 +110,7 @@ func FetchMedia(ip string) (*MediaCollections, error) {
 		return nil, fmt.Errorf("Failed to write to picturall: %w", err)
 	}
 
-	timer := time.NewTimer(time.Second * 5)
+	timer := time.NewTimer(fetchTimeout)
 	select {
 	case mc, ok := <-c:
 		if ok {

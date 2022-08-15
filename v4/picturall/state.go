@@ -66,7 +66,7 @@ func (s *State) keepAlive() {
 			log.Printf("Picturall keepAlive() error writing: %v", err)
 			return
 		}
-		time.Sleep(time.Second)
+		time.Sleep(keepAliveSleep)
 	}
 }
 
