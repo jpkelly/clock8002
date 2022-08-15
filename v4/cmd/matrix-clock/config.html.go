@@ -433,6 +433,13 @@ const configHTML = `
 			<fieldset>
 				<legend>Analog Way Picturall</legend>
 
+				<p>Picturall integration connects to a single picturall in local network. Tested against
+				picturall pro mk2 with software version 3.4.1.</p>
+				<p>By default the media information from the highest playing layer is displayed and
+				looping and streaming media is ignored.</p>
+				<p>A known caveat is that the looping detection might result in false negatives and thus
+				in some cases information about loops might still be displayed.</p>
+
 				<label for="picturall-enabled">
 					<span>Enable Picturall integration</span>
 					<input type="checkbox" id="picturall-enabled" name="picturall-enabled" {{if .EngineOptions.PicturallEnabled}} checked {{end}} />
