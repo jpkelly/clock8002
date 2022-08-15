@@ -107,7 +107,7 @@ func FetchMedia(ip string) (*MediaCollections, error) {
 	time.Sleep(50 * time.Millisecond)
 	_, err = conn.Write(picaPktMediaReq)
 	if err != nil {
-		log.Fatalf("Failed to write: %v", err)
+		return nil, fmt.Errorf("Failed to write to picturall: %w", err)
 	}
 
 	timer := time.NewTimer(time.Second * 5)
