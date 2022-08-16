@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"gitlab.com/clock-8001/clock-8001/v4/debug"
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/transform"
+	"io"
 	"io/ioutil"
+	"net/http"
 )
 
 // MediaCollections is the parsed picturall media collection
@@ -36,12 +39,36 @@ type XMLMedia struct {
 	Duration float64  `xml:"duration,attr"`
 }
 
+// FetchMedia connects to a picturall and tries to fetch the media collection
+func FetchMedia(ip string) (*MediaCollections, error) {
+	url := fmt.Sprintf("http://%s/filedownload/media_collection.xml", ip)
+
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("Picturall: Error downloading media xml: %w", err)
+	}
+	defer resp.Body.Close()
+
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Picturall: Error reading response body: %w", err)
+	}
+
+	mc, err := parseXML(bytes)
+	if err != nil {
+		return nil, err
+	}
+	debug.Printf("Picturall: Updated media collection")
+	return mc, nil
+}
+
 // parseXML takes a byte slice and attempts to parse it as a picturall media collection xml
 func parseXML(x []byte) (*MediaCollections, error) {
 	mc := &MediaCollections{}
 	err := xml.Unmarshal(x[:len(x)-1], mc)
 	if err != nil {
-		return nil, fmt.Errorf("UTF16 decode error: %w", err)
+		return nil, fmt.Errorf("Picturall: UTF16 decode error: %w", err)
 	}
 	return mc, nil
 }
@@ -59,7 +86,7 @@ func decodeXML(data []byte) ([]byte, error) {
 	x, err := ioutil.ReadAll(unicodeReader)
 
 	if err != nil {
-		return nil, fmt.Errorf("XML parsing error: %w", err)
+		return nil, fmt.Errorf("Picturall: XML parsing error: %w", err)
 	}
 	return x, err
 }

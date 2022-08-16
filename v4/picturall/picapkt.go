@@ -91,8 +91,7 @@ func ParsePicaPkt(data []byte) (*PicaPkt, error) {
 	return nil, fmt.Errorf("Start magic missmatch, expected %s got %s", PicaPktMagic(), data[:7])
 }
 
-// FetchMedia connects to a picturall and tries to fetch the media collection info via port 11001
-func FetchMedia(ip string) (*MediaCollections, error) {
+func fetchMediaPicaPkt(ip string) (*MediaCollections, error) {
 	addr := fmt.Sprintf("%s:11001", ip)
 	c := make(chan *MediaCollections)
 

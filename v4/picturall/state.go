@@ -54,6 +54,17 @@ func (s *State) keepAlive() {
 			}
 		}
 
+		// Request saving of the media XML to a file
+		_, err := s.conn.Write([]byte("save_media_db /picturall/media/media_collection.xml\n"))
+		if err != nil {
+			log.Printf("Picturall keepAlive() error writing: %v", err)
+			return
+		}
+
+		// Wait for the media xml to get actually saved
+		time.Sleep(500 * time.Millisecond)
+
+		// Try to fetch the media XML
 		mc, err := FetchMedia(state.ip)
 		if err != nil {
 			log.Printf("Picturall error getting media collection: %v", err)
@@ -61,11 +72,6 @@ func (s *State) keepAlive() {
 			state.mc = mc
 		}
 
-		_, err = s.conn.Write([]byte("\n"))
-		if err != nil {
-			log.Printf("Picturall keepAlive() error writing: %v", err)
-			return
-		}
 		time.Sleep(keepAliveSleep)
 	}
 }

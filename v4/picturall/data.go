@@ -23,7 +23,7 @@ var DumpTraffic = false
 const logTimestamp = "2006-01-02T15:04:05.000"
 
 const (
-	keepAliveSleep = time.Second * 5
+	keepAliveSleep = time.Second * 10
 	fetchTimeout   = time.Second * 20
 )
 
