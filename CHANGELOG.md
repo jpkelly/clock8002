@@ -1,3 +1,9 @@
+## Version 4.13.2
+* Picturall improvements and fixes:
+  * Autodiscovery kept socket open after returning
+  * Fetch the media library and check DefaultPlayMode for looping
+    * The media library fetch is bit iffy, once a better way is available it will be migrated
+
 ## Version 4.13.1
 * Bugfix: picturall autodiscovery on linux and windows
 
