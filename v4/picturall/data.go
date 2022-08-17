@@ -11,8 +11,9 @@ const msgRegexp = `^MSG\((\d+), (\d+), (\d+), (.+)\)`
 const sourceRegexp = `^object name="(source\d+)"`
 const sourceNumberRegexp = `source(\d+)`
 const messageMapRegexp = `^(\S+) ((?:\S+=.+,?)+)`
-const attrRegexp = `([a-z_]+)=(?:((?:\\.|[^"])*)"|(\d+)),?`
+const attrRegexp = `([a-z_]+)=(?:(?:"(\\.|[^"]*"))|(\d+(?:.\d+)?))`
 const collectionRegexp = `([a-z_]+)=(?:"((?:\\.|[^"])*)"|(\d+)|")(?: ,)?`
+const sectionRegexp = `([a-z_]+) ((?:(?:[a-z_]+)=(?:(?:"(?:\\.|[^"])*")|\d+(?:.\d+)?),?)+)(?:\\n)?`
 
 var msgRe = regexp.MustCompile(msgRegexp)
 var sourceRe = regexp.MustCompile(sourceRegexp)
@@ -20,6 +21,7 @@ var sourceNumberRe = regexp.MustCompile(sourceNumberRegexp)
 var messageMapRe = regexp.MustCompile(messageMapRegexp)
 var attrRe = regexp.MustCompile(attrRegexp)
 var collectionRe = regexp.MustCompile(collectionRegexp)
+var sectionRe = regexp.MustCompile(sectionRegexp)
 
 // DumpTraffic controls if all traffic gets dumped to a log file
 var DumpTraffic = false

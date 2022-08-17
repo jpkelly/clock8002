@@ -24,7 +24,7 @@ func parseMsg(msg string) *Msg {
 
 // Loop returns true if the media is looping
 func (m *Media) Loop() bool {
-	log.Printf("Picturall: loop() MEA: %d DPM: %d", m.MediaEndAction, m.DefaultPlayMode)
+	debug.Printf("Picturall: loop() MEA: %d DPM: %d", m.MediaEndAction, m.DefaultPlayMode)
 	if m.DefaultPlayMode != -100 {
 		if m.MediaEndAction == PlayDefault {
 			pm := m.DefaultPlayMode
@@ -314,18 +314,16 @@ func (p *Msg) parseCollection() {
 func parseMap(data string) map[string](map[string]string) {
 	ret := make(map[string](map[string]string))
 	debug.Printf("Pictural parseMap -> data %s", data)
-	sections := strings.Split(data, "\\n")
+	sections := sectionRe.FindAllStringSubmatch(data, -1)
 	for _, section := range sections {
-		matches := messageMapRe.FindStringSubmatch(section)
 		m := make(map[string]string)
-		if len(matches) != 3 {
-			continue
-		}
-		sectionName := matches[1]
 
-		attrs := attrRe.FindAllStringSubmatch(matches[2], -1)
+		sectionName := section[1]
+
+		attrs := attrRe.FindAllStringSubmatch(section[2], -1)
 
 		for _, a := range attrs {
+			debug.Printf(" -> Attrs: %v", a)
 			if a[2] != "" {
 				m[a[1]] = a[2]
 			} else {
