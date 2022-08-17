@@ -12,8 +12,8 @@ const sourceRegexp = `^object name="(source\d+)"`
 const sourceNumberRegexp = `source(\d+)`
 const messageMapRegexp = `^(\S+) ((?:\S+=.+,?)+)`
 const attrRegexp = `([a-z_]+)=(?:(?:"(\\.|[^"]*"))|(\d+(?:.\d+)?))`
-const collectionRegexp = `([a-z_]+)=(?:"((?:\\.|[^"])*)"|(\d+)|")(?: ,)?`
-const sectionRegexp = `([a-z_]+) ((?:(?:[a-z_]+)=(?:(?:"(?:\\.|[^"])*")|\d+(?:.\d+)?),?)+)(?:\\n)?`
+const collectionRegexp = `([a-z_]+)=(?:"((?:\\.|[^"])*)"|(-?\d+)|")(?: ,)?`
+const sectionRegexp = `([a-z_]+) ((?:(?:[a-z_]+)=(?:(?:"(?:\\.|[^"])*")|-?\d+(?:.\d+)?),?)+)(?:\\n)?`
 
 var msgRe = regexp.MustCompile(msgRegexp)
 var sourceRe = regexp.MustCompile(sourceRegexp)
