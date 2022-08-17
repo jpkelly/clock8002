@@ -1,3 +1,14 @@
+## Version 4.13.3
+* Picturall: Better parsers for the messages
+  * Previous parsers didn't cope with filenames with spaces (among other things)
+  * Rewrote the parsers using regexp-vomit
+  * Worked around a picturall bug where media collection messages have unbalanced " in them
+* Picturall: Improve looping media filtering
+  * Starting and stopping looping media should no longer produce temporary readouts on the clock
+* Picturall: Try to get media collection & default_play_mode via telnet
+  * This is currently broken in the telnet protocol but might eventually be fixed by AW
+  * If we are able to get that data via a command use it instead of the save_media_db hack
+
 ## Version 4.13.2
 * Picturall improvements and fixes:
   * Autodiscovery kept socket open after returning
