@@ -25,12 +25,12 @@ func parseMsg(msg string) *Msg {
 // Loop returns true if the media is looping
 func (m *Media) Loop() bool {
 	if m.DefaultPlayMode != -100 {
-		if m.PlayState == PlayDefault && m.MediaEndAction == PlayDefault {
+		if m.MediaEndAction == PlayDefault {
 			pm := m.DefaultPlayMode
 			return pm == PlayDefault || pm == PlayLoop
 		}
 	}
-	return (m.PlayState == PlayDefault && m.MediaEndAction == 4) || m.PlayState == PlayLoop
+	return m.MediaEndAction == PlayLoop
 }
 
 // Progress returns the media progress, between 0 and 1
