@@ -307,7 +307,7 @@ func (p *Msg) parseCollection() {
 		Index:    slot,
 		PlayMode: playmode,
 	}
-
+	debug.Printf("Picturall -> got media info: %v", m)
 	state.mcTelnet[collection][slot] = media
 }
 
