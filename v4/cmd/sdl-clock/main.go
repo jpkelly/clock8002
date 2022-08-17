@@ -33,6 +33,7 @@ const updateTime = time.Second / 30
 func main() {
 	var err error
 	var info string
+	log.SetFlags(log.Lmicroseconds)
 
 	parseOptions()
 
