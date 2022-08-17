@@ -17,6 +17,18 @@ func TestParseMap(t *testing.T) {
 		t.Errorf("Wrong media file name: %s", data["info"]["media_file"])
 	}
 
+	data = parseMap(`object name="source1 \n\"",description=""\ninfo media_file="/picturall/media/assy_wide_2.mp4",play_state=0,timecode=31866666666,media_length=60032000000\nmetadata width=8000,height=1600,has_video=1,supported_video=1,fps=60,aspect_ratio=5,video_codec="hevc",media_container="mp4",media_type="media",has_audio=1,supported_audio=1,frequency=48000,channels=2,audio_codec="aac",media_in=0,media_out=1\nselection slot=2,collection=4\ncontrol media_end_action=4,play_state_req=0,seek=0.958128\nsync source=0,timecode=31866666666,input_offset=0,output_offset=0\ntime fps=30,relative_fps=1,fps_mode=0,effective_fps=60,fps_control_allowed=1\ncrossfade type=1,duration=1,smoothing=1,progress=0\nfade in_type=0,in=1,out_type=0,out=1\nframe_blending mode=0\ntools step=0\n`)
+	if len(data) != 11 {
+		t.Errorf("Wrong number of sections parsed, got: %d expected 11", len(data))
+	}
+	if len(data["control"]) != 3 {
+		t.Errorf("Wrong number of entries in control section, got %d expected 3", len(data["control"]))
+	}
+
+	if data["info"]["media_file"] != `/picturall/media/assy_wide_2.mp4` {
+		t.Errorf("Wrong media file name: %s", data["info"]["media_file"])
+	}
+
 	data = parseMap(`info media_file="",play_state=6,timecode=0,media_length=0`)
 	if i, ok := data["info"]; ok {
 		if len(i) != 4 {
