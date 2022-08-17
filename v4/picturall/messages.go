@@ -54,37 +54,12 @@ func (m *Media) String() string {
 	return fmt.Sprintf("Source: %d Target: %d Media: %s state: %d layer: %d looping: %v (%0.4fs / %0.4fs)", m.Source, m.Target, m.Name, m.PlayState, m.Layer, m.Loop(), m.Head.Seconds(), m.Length.Seconds())
 }
 
-func (m *Media) combineSource(source string) {
-	m.DefaultPlayMode = -100
-	m.MediaEndAction = -100
-	m.Layer = -1
-
-	if p := sourceNumberRe.FindStringSubmatch(source); len(p) == 2 {
-		m.Layer, _ = strconv.Atoi(p[1])
+// SourceString gets the string representation of the source enum
+func (p *Msg) SourceString() (string, bool) {
+	if source, ok := state.enums[p.Source]; ok {
+		return source, true
 	}
-
-	if s, ok := state.sources[source]; ok {
-		m.MediaEndAction = s.MediaEndAction
-		m.PlayStateReq = s.PlayStateReq
-
-		if state.telnetHasDefaultPlayMode {
-			if c, ok := state.mcTelnet[s.Collection]; ok {
-				if media, ok := c[s.Slot]; ok {
-					m.DefaultPlayMode = media.PlayMode
-				}
-			}
-		} else if state.mc != nil {
-			// Try to get the default playmode....
-			if len(state.mc.Collections) >= s.Collection {
-				for _, media := range state.mc.Collections[s.Collection].Medias {
-					if media.Index == s.Slot {
-						m.DefaultPlayMode = media.PlayMode
-					}
-				}
-			}
-		}
-
-	}
+	return "", false
 }
 
 //ParseEnum parses an enum_objects reply message into a id -> name mapping
@@ -98,7 +73,7 @@ func (p *Msg) ParseEnum() map[int]string {
 		parts := strings.Split(l, ":")
 		e, err := strconv.Atoi(parts[0])
 		if err != nil {
-			log.Printf("Picturall ParseEnum() error: %v", err)
+			debug.Printf("Picturall ParseEnum() error: %v", err)
 			continue
 		}
 		if parts[1][len(parts[1])-1] == ':' {
@@ -108,14 +83,6 @@ func (p *Msg) ParseEnum() map[int]string {
 		}
 	}
 	return enum
-}
-
-// SourceString gets the string representation of the source enum
-func (p *Msg) SourceString() (string, bool) {
-	if source, ok := state.enums[p.Source]; ok {
-		return source, true
-	}
-	return "", false
 }
 
 // ParseMedia parses the message payload into a struct representing playing media
@@ -246,6 +213,7 @@ func (p *Msg) collectionMsg() bool {
 	return true
 }
 
+// MSG(100003, 1, 39, collection=21, slot=29, file="/picturall/media/compo/photocompo.mp4", name="photocompo.mp4", description=")
 func (p *Msg) parseCollection() {
 	var err error
 	if !p.collectionMsg() {
@@ -309,40 +277,6 @@ func (p *Msg) parseCollection() {
 	}
 	debug.Printf("Picturall -> got media info: %v", m)
 	state.mcTelnet[collection][slot] = media
-}
-
-func parseMap(data string) map[string](map[string]string) {
-	ret := make(map[string](map[string]string))
-	debug.Printf("Pictural parseMap -> data %s", data)
-	sections := sectionRe.FindAllStringSubmatch(data, -1)
-	for _, section := range sections {
-		m := make(map[string]string)
-
-		sectionName := section[1]
-
-		attrs := attrRe.FindAllStringSubmatch(section[2], -1)
-
-		for _, a := range attrs {
-			debug.Printf(" -> Attrs: %v", a)
-			if a[2] != "" {
-				m[a[1]] = a[2]
-			} else {
-				m[a[1]] = a[3]
-			}
-		}
-		ret[sectionName] = m
-
-	}
-	if debug.Enabled {
-		log.Printf("Picturall parseMap:")
-		for k, v := range ret {
-			log.Printf(" -> %s:", k)
-			for kk, vv := range v {
-				log.Printf("   -> %s: %s", kk, vv)
-			}
-		}
-	}
-	return ret
 }
 
 // PlayState converts the play state enum field to string

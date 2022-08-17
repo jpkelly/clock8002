@@ -1,7 +1,7 @@
 package clock
 
 import (
-	"gitlab.com/Depili/go-osc/osc"
+	"github.com/chabad360/go-osc/osc"
 	"math/rand"
 	"testing"
 	"time"

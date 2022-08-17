@@ -23,10 +23,11 @@ stages:
 #  - cp -r $CI_PROJECT_DIR /go/src/gitlab.com/Depili/clock-8001
 #  - ln -s /go/src/gitlab.com/Depili /go/src/_/builds/clock-8001
 
-# unit_tests:
-#   stage: test
-#   script:
-#     - make test
+unit_tests_v4:
+   stage: test
+   script:
+    - cd v4
+    - make test
 #
 # race_detector:
 #   stage: test

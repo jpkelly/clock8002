@@ -31,11 +31,11 @@ func (engine *Engine) initPicturall(options *EngineOptions) {
 	engine.picturall.lastHead = make(map[int]time.Duration)
 	engine.picturall.mediaColor, err = parseColor(options.PicturallMediaColor)
 	if err != nil {
-		log.Fatal("Error parsing picturall media color: %s %v", options.PicturallMediaColor, err)
+		log.Fatalf("Error parsing picturall media color: %s %v", options.PicturallMediaColor, err)
 	}
 	engine.picturall.mediaBG, err = parseColor(options.PicturallMediaBG)
 	if err != nil {
-		log.Fatal("Error parsing picturall media bg color: %s %v", options.PicturallMediaBG, err)
+		log.Fatalf("Error parsing picturall media bg color: %s %v", options.PicturallMediaBG, err)
 	}
 
 	if options.PicturallDebug {
