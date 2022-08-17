@@ -171,6 +171,8 @@ func listen() {
 			} else if p.Type == EnumObjects {
 				// fmt.Printf("-> Parsed: %s\n", p.String())
 				state.enums = p.ParseEnum()
+			} else if p.collectionMsg() {
+				p.parseCollection()
 			} else {
 				//fmt.Printf("Unkown: %s\n", p.String())
 			}

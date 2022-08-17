@@ -24,6 +24,7 @@ func parseMsg(msg string) *Msg {
 
 // Loop returns true if the media is looping
 func (m *Media) Loop() bool {
+	log.Printf("Picturall: loop() MEA: %d DPM: %d", m.MediaEndAction, m.DefaultPlayMode)
 	if m.DefaultPlayMode != -100 {
 		if m.MediaEndAction == PlayDefault {
 			pm := m.DefaultPlayMode
@@ -65,9 +66,14 @@ func (m *Media) combineSource(source string) {
 	if s, ok := state.sources[source]; ok {
 		m.MediaEndAction = s.MediaEndAction
 		m.PlayStateReq = s.PlayStateReq
-		m.PlayState = s.PlayStateReq
 
-		if state.mc != nil {
+		if state.telnetHasDefaultPlayMode {
+			if c, ok := state.mcTelnet[s.Collection]; ok {
+				if media, ok := c[s.Slot]; ok {
+					m.DefaultPlayMode = media.PlayMode
+				}
+			}
+		} else if state.mc != nil {
 			// Try to get the default playmode....
 			if len(state.mc.Collections) >= s.Collection {
 				for _, media := range state.mc.Collections[s.Collection].Medias {
@@ -233,6 +239,78 @@ func (p *Msg) ParseSource() *Source {
 	return nil
 }
 
+func (p *Msg) collectionMsg() bool {
+	if p.Source != 1 && p.Type != MediaInfo {
+		return false
+	}
+	return true
+}
+
+func (p *Msg) parseCollection() {
+	var err error
+	if !p.collectionMsg() {
+		return
+	}
+	debug.Printf("Picturall: Parsing media collection message: %s", p.Content)
+
+	m := make(map[string]string)
+	attrs := collectionRe.FindAllStringSubmatch(p.Content, -1)
+	for _, a := range attrs {
+		if a[2] != "" {
+			m[a[1]] = a[2]
+		} else {
+			m[a[1]] = a[3]
+		}
+	}
+	debug.Printf("Picturall: Map: %v", m)
+
+	collection := -1
+	slot := -1
+	playmode := 100
+
+	if v, ok := m["collection"]; ok {
+		collection, err = strconv.Atoi(v)
+		if err != nil {
+			log.Printf("Picturall: Error parsing collection %s - %v", v, err)
+		}
+	} else {
+		log.Printf("Picturall: Error media collection message has no collection info")
+	}
+
+	if v, ok := m["slot"]; ok {
+		slot, err = strconv.Atoi(v)
+		if err != nil {
+			log.Printf("Picturall: Error parsing slot %s - %v", v, err)
+		}
+	} else {
+		log.Printf("Picturall: Error media collection message has no slot info")
+	}
+
+	if v, ok := m["default_play_mode"]; ok {
+		playmode, err = strconv.Atoi(v)
+		if err != nil {
+			debug.Printf("Picturall: Error parsing default play mode %s - %v", v, err)
+		}
+		state.telnetHasDefaultPlayMode = true
+	} else {
+		debug.Printf("Picturall: Error media collection message has no default play mode info")
+	}
+
+	if state.mcTelnet[collection] == nil {
+		state.mcTelnet[collection] = make(map[int]*XMLMedia)
+	}
+
+	media := &XMLMedia{
+		Name:     m["name"],
+		File:     m["file"],
+		Type:     m["type"],
+		Index:    slot,
+		PlayMode: playmode,
+	}
+
+	state.mcTelnet[collection][slot] = media
+}
+
 func parseMap(data string) map[string](map[string]string) {
 	ret := make(map[string](map[string]string))
 	debug.Printf("Pictural parseMap -> data %s", data)
@@ -245,13 +323,13 @@ func parseMap(data string) map[string](map[string]string) {
 		}
 		sectionName := matches[1]
 
-		attrs := strings.Split(matches[2], ",")
+		attrs := attrRe.FindAllStringSubmatch(matches[2], -1)
+
 		for _, a := range attrs {
-			s := strings.Split(a, "=")
-			if len(s) < 2 {
-				debug.Printf("Pictural parseMap -> error splitting %s", a)
+			if a[2] != "" {
+				m[a[1]] = a[2]
 			} else {
-				m[s[0]] = strings.Join(s[1:], "=")
+				m[a[1]] = a[3]
 			}
 		}
 		ret[sectionName] = m
@@ -260,7 +338,10 @@ func parseMap(data string) map[string](map[string]string) {
 	if debug.Enabled {
 		log.Printf("Picturall parseMap:")
 		for k, v := range ret {
-			log.Printf(" -> %s: %v", k, v)
+			log.Printf(" -> %s:", k)
+			for kk, vv := range v {
+				log.Printf("   -> %s: %s", kk, vv)
+			}
 		}
 	}
 	return ret

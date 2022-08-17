@@ -10,12 +10,16 @@ import (
 const msgRegexp = `^MSG\((\d+), (\d+), (\d+), (.+)\)`
 const sourceRegexp = `^object name="(source\d+)"`
 const sourceNumberRegexp = `source(\d+)`
-const messageMapRegexp = `^(\S+) ((?:\S+=\S+,?)+)`
+const messageMapRegexp = `^(\S+) ((?:\S+=.+,?)+)`
+const attrRegexp = `([a-z_]+)=(?:((?:\\.|[^"])*)"|(\d+)),?`
+const collectionRegexp = `([a-z_]+)=(?:"((?:\\.|[^"])*)"|(\d+)|")(?: ,)?`
 
 var msgRe = regexp.MustCompile(msgRegexp)
 var sourceRe = regexp.MustCompile(sourceRegexp)
 var sourceNumberRe = regexp.MustCompile(sourceNumberRegexp)
 var messageMapRe = regexp.MustCompile(messageMapRegexp)
+var attrRe = regexp.MustCompile(attrRegexp)
+var collectionRe = regexp.MustCompile(collectionRegexp)
 
 // DumpTraffic controls if all traffic gets dumped to a log file
 var DumpTraffic = false
@@ -62,13 +66,15 @@ type Source struct {
 
 // State is a struct for complete Picturall state
 type State struct {
-	enums     map[int]string
-	sources   map[string]*Source
-	conn      net.Conn
-	mediaChan chan *Media
-	ctx       context.Context
-	ip        string
-	mc        *MediaCollections
+	enums                    map[int]string
+	sources                  map[string]*Source
+	conn                     net.Conn
+	mediaChan                chan *Media
+	ctx                      context.Context
+	ip                       string
+	mc                       *MediaCollections
+	mcTelnet                 map[int](map[int]*XMLMedia)
+	telnetHasDefaultPlayMode bool
 }
 
 var state *State
@@ -82,6 +88,7 @@ const (
 	ModelChangeAdd       = 24
 	CmdSystemResults     = 33
 	CmdSystemLineResults = 38
+	MediaInfo            = 39
 )
 
 // Media modes
