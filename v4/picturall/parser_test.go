@@ -90,7 +90,7 @@ func TestParseCollection(t *testing.T) {
 	msg := `MSG(100003, 1, 39, collection=21, slot=29, file="/picturall/media/compo/photocompo.mp4", name="assembly photocompo.mp4", description=")`
 	p := parseMsg(msg)
 	if p == nil {
-		t.Errorf("Error parsing picturall message")
+		t.Errorf("Error parsing picturall collection message")
 	}
 
 	p.parseCollection()
@@ -106,4 +106,26 @@ func TestParseCollection(t *testing.T) {
 	if state.mcTelnet[21][29].Name != `assembly photocompo.mp4` {
 		t.Errorf("Media name not correct")
 	}
+
+	msg = `MSG(100003, 1, 39, collection=12, slot=5, file="/picturall/media/compo/photocompo.mp4", name="assembly photocompo.mp4", description="", default_play_mode=4)`
+	p = parseMsg(msg)
+	if p == nil {
+		t.Errorf("Error parsing picturall message")
+	}
+	p.parseCollection()
+	if len(state.mcTelnet[12]) != 1 {
+		t.Errorf("Didn't get media in collection")
+	}
+
+	if state.mcTelnet[12][5] == nil {
+		t.Errorf("Media not in right slot")
+	}
+
+	if state.mcTelnet[12][5].Name != `assembly photocompo.mp4` {
+		t.Errorf("Media name not correct")
+	}
+	if !state.telnetHasDefaultPlayMode {
+		t.Errorf("state.telnetHasDefaultPlayMode didn't get set")
+	}
+
 }
