@@ -43,6 +43,19 @@ func TestParseMap(t *testing.T) {
 		t.Errorf("Failed to parse string with spaces")
 	}
 
+	data = parseMap(`info media_file="Test ASD",play_state=-1,timecode=-1.234,media_length=1.234`)
+	if data["info"]["play_state"] != `-1` {
+		t.Errorf("Failed to parse negative number, got %s expected: -1", data["info"]["play_state"])
+	}
+
+	if data["info"]["timecode"] != `-1.234` {
+		t.Errorf("Failed to parse negative floating point number, got: %s expected -1.234", data["info"]["timecode"])
+	}
+
+	if data["info"]["media_length"] != `1.234` {
+		t.Errorf("Failed to parse positive floating point number")
+	}
+
 	data = parseMap(`info media_file="Test \"ASD",play_state=6,timecode=0,media_length=0`)
 	if data["info"]["media_file"] != `Test \"ASD` {
 		t.Errorf("Failed to parse string with escapes: %s", data["info"]["media_file"])
