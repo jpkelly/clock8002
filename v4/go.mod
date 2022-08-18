@@ -18,6 +18,7 @@ require (
 	gitlab.com/Depili/ubercorn v1.0.0
 	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
 	golang.org/x/text v0.3.7
+	periph.io/x/periph v3.6.7+incompatible
 )
 
 require (

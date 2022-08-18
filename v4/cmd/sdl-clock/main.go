@@ -48,6 +48,15 @@ func main() {
 		hw.Init()
 	}
 
+	for _, m := range outputModules {
+		m.Options()
+	}
+
+	log.Printf("Staring output modules")
+	for _, m := range outputModules {
+		go m.Run()
+	}
+
 	// Initialize SDL
 	initSDL()
 	defer sdl.Quit()
@@ -94,7 +103,7 @@ func main() {
 
 	loadBackground(options.Background)
 
-	log.Printf("Entering main loop\n")
+	log.Printf("Entering main loop")
 
 	configStarted := false
 
@@ -251,6 +260,9 @@ func main() {
 				colors.background = toSDLColor(c)
 			}
 
+			for _, m := range outputModules {
+				m.Update(state)
+			}
 		}
 	}
 }

@@ -42,8 +42,15 @@ type signalHardwareProvider interface {
 }
 
 var signalHardwareList map[string]signalHardwareProvider = make(map[string]signalHardwareProvider)
-
 var signalHardware signalHW
+
+type outputModule interface {
+	Run()
+	Options()
+	Update(*clock.State)
+}
+
+var outputModules []outputModule = make([]outputModule, 0)
 
 type optionsColor struct {
 	R uint8 `long:"red" description:"Red component of the color"`
@@ -107,8 +114,21 @@ type clockOptions struct {
 	VoiceDir     string `long:"voice-dir" description:"Directory to load voice samples from" default:"voices/us"`
 
 	CountdownTarget string `long:"countdown-target" default:"2020-12-24 00:00:00"`
-	Raspberry       bool   // Is the host a raspberry pi
-	ConfigTxt       string // /boot/config.txt contents
+
+	SecA           string `long:"gpio-seconds-a-pin" description:"Seconds alternating pin" default:"5"`
+	SecPulse       string `long:"gpio-seconds-pulse-pin" description:"Seconds pulsing pin" default:"6"`
+	SecTrigger     string `long:"gpio-seconds-trigger" description:"Seconds trigger pin" default:"17"`
+	MinA           string `long:"gpio-minutes-a-pin" description:"Minutes alternating pin" default:"13"`
+	MinPulse       string `long:"gpio-minutes-pulse-pin" description:"Minutes pulsing pin" default:"19"`
+	MinTrigger     string `long:"gpio-minutes-trigger" description:"Minutes treiggering pin" default:"27"`
+	HourA          string `long:"gpio-hours-a-pin" description:"Hours alternating pin" default:"26"`
+	HourPulse      string `long:"gpio-hours-pulse-pin" description:"Hours pulsing pin" default:"20"`
+	HourTrigger    string `long:"gpio-hours-trigger" description:"Hours triggering pin" default:"22"`
+	PulseDuration  int    `long:"gpio-pulse-duration" description:"Pulse duration, in milliseconds" default:"300"`
+	InvertPolarity bool   `long:"gpio-invert-polarity" description:"Invert pulse polarity"`
+
+	Raspberry bool   // Is the host a raspberry pi
+	ConfigTxt string // /boot/config.txt contents
 
 	configFile string
 	small      bool
