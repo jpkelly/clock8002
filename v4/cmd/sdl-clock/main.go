@@ -57,6 +57,12 @@ func main() {
 		go m.Run()
 	}
 
+	if runtime.OS == "windows" {
+		// Windows is silly and allows too large windows...
+		winWidth = 1280
+		winHeight = 720
+	}
+
 	// Initialize SDL
 	initSDL()
 	defer sdl.Quit()
