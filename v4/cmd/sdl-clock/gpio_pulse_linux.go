@@ -71,15 +71,15 @@ func (p *gpioPulser) Options() {
 		trigger: gpioreg.ByName(options.HourTrigger),
 	}
 
-	if err := p.secPins.init(); err != nil {
+	if err := p.secPins.init(p.polarity); err != nil {
 		log.Printf("Error initializing second pulse pins: %v", err)
 	}
 
-	if err := p.minPins.init(); err != nil {
+	if err := p.minPins.init(p.polarity); err != nil {
 		log.Printf("Error initializing minute pulse pins: %v", err)
 	}
 
-	if err := p.hourPins.init(); err != nil {
+	if err := p.hourPins.init(p.polarity); err != nil {
 		log.Printf("Error initializing hour pulse pins: %v", err)
 	}
 }
@@ -99,7 +99,7 @@ func (g *gpioPins) listen(polarity gpio.Level, duration time.Duration) {
 	}
 }
 
-func (g *gpioPins) init() error {
+func (g *gpioPins) init(polarity gpio.Level) error {
 	if g.a == nil {
 		return fmt.Errorf("Alternating pin missing")
 	}
@@ -113,6 +113,7 @@ func (g *gpioPins) init() error {
 	}
 
 	g.a.Out(g.direction)
+	g.pulse.Out(!polarity)
 	g.c = make(chan bool)
 	return nil
 }
