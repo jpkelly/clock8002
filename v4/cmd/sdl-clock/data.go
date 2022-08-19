@@ -120,7 +120,7 @@ type clockOptions struct {
 	SecTrigger     string `long:"gpio-seconds-trigger" description:"Seconds trigger pin" default:"17"`
 	MinA           string `long:"gpio-minutes-a-pin" description:"Minutes alternating pin" default:"13"`
 	MinPulse       string `long:"gpio-minutes-pulse-pin" description:"Minutes pulsing pin" default:"19"`
-	MinTrigger     string `long:"gpio-minutes-trigger" description:"Minutes treiggering pin" default:"27"`
+	MinTrigger     string `long:"gpio-minutes-trigger" description:"Minutes triggering pin" default:"27"`
 	HourA          string `long:"gpio-hours-a-pin" description:"Hours alternating pin" default:"26"`
 	HourPulse      string `long:"gpio-hours-pulse-pin" description:"Hours pulsing pin" default:"20"`
 	HourTrigger    string `long:"gpio-hours-trigger" description:"Hours triggering pin" default:"22"`
