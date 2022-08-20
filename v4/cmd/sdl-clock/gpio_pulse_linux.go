@@ -185,7 +185,7 @@ func (p *gpioPulser) Run() {
 			log.Printf("Minute pulse sent")
 		case <-hourTimer.C:
 			p.hourPins.c <- true
-			minTimer.Reset(hourDuration())
+			hourTimer.Reset(hourDuration())
 			log.Printf("Hour pulse sent")
 		}
 	}
