@@ -196,6 +196,12 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.EngineOptions.PicturallStreams = r.FormValue("picturall-streams") != ""
 	newOptions.EngineOptions.PicturallMediaName = r.FormValue("picturall-media-name") != ""
 
+	newOptions.EngineOptions.VmixEnabled = r.FormValue("vmix-enabled") != ""
+	newOptions.EngineOptions.VmixLoops = r.FormValue("vmix-loops") != ""
+	newOptions.EngineOptions.VmixPGMOnly = r.FormValue("vmix-pgm-only") != ""
+	newOptions.EngineOptions.VmixPVM = r.FormValue("vmix-show-pvm") != ""
+	newOptions.EngineOptions.VmixMediaName = r.FormValue("vmix-media-name") != ""
+
 	// Strings, will not be validated
 	newOptions.HTTPUser = r.FormValue("HTTPUser")
 	newOptions.HTTPPassword = r.FormValue("HTTPPassword")
@@ -209,6 +215,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.VoiceDir = r.FormValue("VoiceDir")
 
 	newOptions.EngineOptions.PicturallAddress = r.FormValue("picturall-address")
+
+	newOptions.EngineOptions.VmixAddress = r.FormValue("vmix-address")
 
 	// Countdown face target
 	t := r.FormValue("CountdownTarget")
@@ -366,12 +374,19 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 
 	newOptions.EngineOptions.PicturallPort, err = strconv.Atoi(r.FormValue("picturall-port"))
 	errors += validateNumber(err, "Picturall port")
-
 	newOptions.EngineOptions.PicturallTimer, err = strconv.Atoi(r.FormValue("picturall-timer"))
 	errors += validateNumber(err, "Picturall timer")
-
 	newOptions.EngineOptions.PicturallTimeout, err = strconv.Atoi(r.FormValue("picturall-timeout"))
 	errors += validateNumber(err, "Picturall timeout")
+
+	newOptions.EngineOptions.VmixPort, err = strconv.Atoi(r.FormValue("vmix-port"))
+	errors += validateNumber(err, "vMix port")
+	newOptions.EngineOptions.VmixTimer, err = strconv.Atoi(r.FormValue("vmix-timer"))
+	errors += validateNumber(err, "vMix timer")
+	newOptions.EngineOptions.VmixInterval, err = strconv.Atoi(r.FormValue("vmix-interval"))
+	errors += validateNumber(err, "vMix interval")
+	newOptions.EngineOptions.VmixTimeout, err = strconv.Atoi(r.FormValue("vmix-timeout"))
+	errors += validateNumber(err, "vMix timeout")
 
 	// Picturall ignore layers
 	picturallIgnoreLayers := r.FormValue("picturall-ignore-layers")
@@ -380,6 +395,14 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		newOptions.EngineOptions.PicturallIgnoreLayers = picturallIgnoreLayers
 	} else {
 		errors += "<li>Picturall layer ignore list is not valid</li>"
+	}
+
+	// vMix ignore overlays
+	vmixIgnoreOverlays := r.FormValue("vmix-ignore-overlays")
+	if ok, err := regexp.MatchString(`^(?:\d+,?)+$`, vmixIgnoreOverlays); len(vmixIgnoreOverlays) == 0 || (ok && err == nil) {
+		newOptions.EngineOptions.VmixIgnoreOverlays = vmixIgnoreOverlays
+	} else {
+		errors += "<li>vMix overlay ignore list is not valid</li>"
 	}
 
 	// Colors
@@ -429,6 +452,11 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	errors += validateColor(newOptions.EngineOptions.PicturallMediaColor, "Picturall media text color")
 	newOptions.EngineOptions.PicturallMediaBG = r.FormValue("picturall-media-bg")
 	errors += validateColor(newOptions.EngineOptions.PicturallMediaBG, "Picturall media background color")
+
+	newOptions.EngineOptions.VmixMediaColor = r.FormValue("vmix-media-color")
+	errors += validateColor(newOptions.EngineOptions.VmixMediaColor, "vMix media text color")
+	newOptions.EngineOptions.VmixMediaBG = r.FormValue("vmix-media-bg")
+	errors += validateColor(newOptions.EngineOptions.VmixMediaBG, "vMix media background color")
 
 	if errors != "" {
 		tmpl, err := htmlTemplate.New("config.html").Parse(configHTML)

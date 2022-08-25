@@ -555,7 +555,7 @@ const configHTML = `
 				</label>
 
 				<label for="picturall-timeout">
-					<span>Message timeout for clearing the clock display</span>
+					<span>Message timeout for clearing the clock display, in milliseconds</span>
 					<input type="number" id="picturall-timeout" name="picturall-timeout" value="{{.EngineOptions.PicturallTimeout}}" />
 				</label>
 
@@ -572,7 +572,76 @@ const configHTML = `
 					<span>Media name background color</span>
 					<input type="color" id="picturall-media-bg" name="picturall-media-bg" value="{{.EngineOptions.PicturallMediaBG}}" />
 				</label>
+			</fieldset>
 
+			<fieldset>
+				<legend>vMix integration</legend>
+				<p>By default the clock displays the data about the first video found in list PGM - overlay 8... overlay 1.<p>
+
+				<label for="vmix-enabled">
+					<span>Enable vMix integration</span>
+					<input type="checkbox" id="vmix-enabled" name="vmix-enabled" {{if .EngineOptions.VmixEnabled}} checked {{end}} />
+				</label>
+
+				<label for="vmix-address">
+					<span>Address to connect to.</span>
+					<input type="text" id="vmix-address" name="vmix-address" value="{{.EngineOptions.VmixAddress}}" />
+				</label>
+
+				<label for="vmix-port">
+					<span>Port to connect to</span>
+					<input type="number" id="vmix-port" name="vmix-port" value="{{.EngineOptions.VmixPort}}" />
+				</label>
+
+				<label for="vmix-timer">
+					<span>Timer number for feedback from vmix</span>
+					<input type="number" min="0" max="9" id="vmix-timer" name="vmix-timer" value="{{.EngineOptions.VmixTimer}}" />
+				</label>
+
+				<label for="vmix-loops">
+					<span>Show looping media</span>
+					<input type="checkbox" id="vmix-loops" name="vmix-loops" {{if .EngineOptions.VmixLoops}} checked {{end}} />
+				</label>
+
+				<label for="vmix-pgm-only">
+					<span>Show only PGM media</span>
+					<input type="checkbox" id="vmix-pgm-only" name="vmix-pgm-only" {{if .EngineOptions.VmixPGMOnly}} checked {{end}} />
+				</label>
+
+				<label for="vmix-show-pvm">
+					<span>Show media in preview</span>
+					<input type="checkbox" id="vmix-show-pvm" name="vmix-show-pvm" {{if .EngineOptions.VmixPVM}} checked {{end}} />
+				</label>
+
+				<label for="vmix-ignore-overlays">
+					<span>List of overlay numbers to ignore, comma separated</span>
+					<input type="text" id="vmix-ignore-overlays" name="vmix-ignore-overlays" value="{{.EngineOptions.VmixIgnoreOverlays}}" />
+				</label>
+
+				<label for="vmix-media-name">
+					<span>Show media name as tally message on the clock</span>
+					<input type="checkbox" id="vmix-media-name" name="vmix-media-name" {{if .EngineOptions.VmixMediaName}} checked {{end}} />
+				</label>
+
+				<label for="vmix-media-color">
+					<span>Media name text color</span>
+					<input type="color" id="vmix-media-color" name="vmix-media-color" value="{{.EngineOptions.VmixMediaColor}}" />
+				</label>
+
+				<label for="vmix-media-bg">
+					<span>Media name background color</span>
+					<input type="color" id="vmix-media-bg" name="vmix-media-bg" value="{{.EngineOptions.VmixMediaBG}}" />
+				</label>
+
+				<label for="vmix-interval">
+					<span>Polling interval, in milliseconds. Adjust if the clock causes too high load on the vMix machine or if you need better accuracy.</span>
+					<input type="number" id="vmix-interval" name="vmix-interval" value="{{.EngineOptions.VmixInterval}}" />
+				</label>
+
+				<label for="vmix-timeout">
+					<span>Message timeout for clearing the clock display, in milliseconds.</span>
+					<input type="number" id="vmix-timeout" name="vmix-timeout" value="{{.EngineOptions.VmixTimeout}}" />
+				</label>
 			</fieldset>
 
 			<fieldset>

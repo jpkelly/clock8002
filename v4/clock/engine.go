@@ -98,6 +98,7 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	fmt.Printf(engine.info)
 
 	engine.initPicturall(options)
+	engine.initVmix(options)
 	engine.initUDPTime(options)
 	engine.initLimitimer(options)
 

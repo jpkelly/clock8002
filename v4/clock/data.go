@@ -106,10 +106,10 @@ type EngineOptions struct {
 	LimitimerBroadcast4 bool   `long:"limitimer-broadcast-timer4" description:"Broadcast limitimer program 4 to other clocks as timer 4"`
 	LimitimerBroadcast5 bool   `long:"limitimer-broadcast-timer5" description:"Broadcast limitimer active program to other clocks as timer 5"`
 
+	PicturallEnabled      bool   `long:"picturall-enabled" descriptin:"Enable picturall media info support"`
 	PicturallAddress      string `long:"picturall-address" description:"Address for picturall media server to connect to"`
 	PicturallPort         int    `long:"picturall-port" description:"Picturall telnet port" default:"11000"`
 	PicturallTimer        int    `long:"picturall-timer" description:"Timer for picturall video state" default:"7"`
-	PicturallEnabled      bool   `long:"picturall-enabled" descriptin:"Enable picturall media info support"`
 	PicturallLoops        bool   `long:"picturall-loops" description:"Show looping content"`
 	PicturallTimeout      int    `long:"picturall-timeout" description:"Timeout for communication, the display will be blanked after this time, in milliseconds" default:"1000"`
 	PicturallMediaName    bool   `long:"picturall-media-name" description:"Show picturall media name as clock text"`
@@ -118,6 +118,20 @@ type EngineOptions struct {
 	PicturallStreams      bool   `long:"picturall-streams" description:"Show streaming content"`
 	PicturallMediaColor   string `long:"picturall-media-color" description:"CSS color for picturall media name" default:"#FF8000"`
 	PicturallMediaBG      string `long:"picturall-media-bg" description:"CSS color for picturall media name background" default:"#101010"`
+
+	VmixEnabled        bool   `long:"vmix-enabled" description:"Enable vMix integration"`
+	VmixAddress        string `long:"vmix-address" description:"vMix IP address"`
+	VmixPort           int    `long:"vmix-port" description:"vMmix http port" default:"8088"`
+	VmixTimer          int    `long:"vmix-timer" description:"Timer for vMix video state" default:"6"`
+	VmixLoops          bool   `long:"vmix-loops" description:"vMix show looping media"`
+	VmixPGMOnly        bool   `long:"vmix-pgm-only" description:"Only show PGM media information, ignore all overlays"`
+	VmixPVM            bool   `long:"vmix-show-pvm" description:"Do not ingore media playing in vMix preview"`
+	VmixIgnoreOverlays string `long:"vmix-ignore-overlays" description:"vMix: Comma separated list of overlay numbers to ignore"`
+	VmixMediaName      bool   `long:"vmix-media-name" description:"Show vMix media name as clock text"`
+	VmixMediaColor     string `long:"vmix-media-color" description:"CSS color for vMix media name" default:"#FF8000"`
+	VmixMediaBG        string `long:"vmix-media-bg" description:"CSS color for vMix media name background" default:"#101010"`
+	VmixInterval       int    `long:"vmix-interval" description:"vMix polling interval, in milliseconds" default:"200"`
+	VmixTimeout        int    `long:"vmix-timeout" description:"Timeout for vMix communication, in milliseconds" default:"1000"`
 
 	Source1 *SourceOptions `group:"1st clock display source" namespace:"source1"`
 	Source2 *SourceOptions `group:"2nd clock display source" namespace:"source2"`
@@ -187,6 +201,7 @@ type Engine struct {
 	mittiCounter        *Counter
 	milluminCounter     *Counter
 	picturall           picturallState
+	vmix                vmixState
 	background          int
 	info                string // Version, ip address etc
 	showInfo            bool
