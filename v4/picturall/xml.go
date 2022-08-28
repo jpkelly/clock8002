@@ -68,7 +68,7 @@ func parseXML(x []byte) (*MediaCollections, error) {
 	mc := &MediaCollections{}
 	err := xml.Unmarshal(x[:len(x)-1], mc)
 	if err != nil {
-		return nil, fmt.Errorf("Picturall: UTF16 decode error: %w", err)
+		return nil, fmt.Errorf("Picturall: parseXML error: %w", err)
 	}
 	return mc, nil
 }
