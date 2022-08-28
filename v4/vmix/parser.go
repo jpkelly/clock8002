@@ -38,12 +38,20 @@ type input struct {
 	Duration   int      `xml:"duration,attr"`
 	Loop       vmixBool `xml:"loop,attr"`
 	Content    string   `xml:",chardata"`
+	Selected   int      `xml:"selectedIndex,attr"`
+	Items      []item   `xml:"list>item"`
 }
 
 type overlay struct {
 	XMLName xml.Name `xml:"overlay"`
 	Number  int      `xml:"number,attr"`
 	Input   string   `xml:",chardata"`
+}
+
+type item struct {
+	XMLName  xml.Name `xml:"item"`
+	Selected bool     `xml:"selected,attr"`
+	File     string   `xml:",chardata"`
 }
 
 // State converts the raw parsed xml to a State message
@@ -78,6 +86,10 @@ func (s status) State() *State {
 			}
 			if o, ok := overlays[i.Number]; ok {
 				v.Overlay = o
+			}
+
+			if i.Type == "VideoList" {
+				v.Name = fmt.Sprintf("%d/%d %s", i.Selected, len(i.Items), i.Content)
 			}
 			state.Videos = append(state.Videos, v)
 		}
