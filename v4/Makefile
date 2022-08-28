@@ -18,7 +18,7 @@ lint: ## Lint the files
 	@golint -set_exit_status ./...
 
 test: ## Run unittests
-	@go test -short ./clock ./picturall
+	@go test -short ./clock ./picturall ./vmix
 
 race: dep ## Run data race detector
 	@go test -race -short ./...
