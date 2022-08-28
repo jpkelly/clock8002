@@ -115,17 +115,7 @@ type clockOptions struct {
 
 	CountdownTarget string `long:"countdown-target" default:"2020-12-24 00:00:00"`
 
-	SecA           string `long:"gpio-seconds-a-pin" description:"Seconds alternating pin" default:"5"`
-	SecPulse       string `long:"gpio-seconds-pulse-pin" description:"Seconds pulsing pin" default:"6"`
-	SecTrigger     string `long:"gpio-seconds-trigger" description:"Seconds trigger pin" default:"17"`
-	MinA           string `long:"gpio-minutes-a-pin" description:"Minutes alternating pin" default:"13"`
-	MinPulse       string `long:"gpio-minutes-pulse-pin" description:"Minutes pulsing pin" default:"19"`
-	MinTrigger     string `long:"gpio-minutes-trigger" description:"Minutes triggering pin" default:"27"`
-	HourA          string `long:"gpio-hours-a-pin" description:"Hours alternating pin" default:"26"`
-	HourPulse      string `long:"gpio-hours-pulse-pin" description:"Hours pulsing pin" default:"20"`
-	HourTrigger    string `long:"gpio-hours-trigger" description:"Hours triggering pin" default:"22"`
-	PulseDuration  int    `long:"gpio-pulse-duration" description:"Pulse duration, in milliseconds" default:"300"`
-	InvertPolarity bool   `long:"gpio-invert-polarity" description:"Invert pulse polarity"`
+	gpioOptions
 
 	Raspberry bool   // Is the host a raspberry pi
 	ConfigTxt string // /boot/config.txt contents
@@ -140,6 +130,21 @@ type clockOptions struct {
 	Errors     htmlTemplate.HTML // For passing errors to the html template
 	Fonts      []string          // For passing list of font files to html template
 	Timezones  []string
+}
+
+type gpioOptions struct {
+	GpioEnabled    bool   `long:"gpio-enabled" description:"Enable GPIO pulses based on ToD"`
+	SecA           string `long:"gpio-seconds-a-pin" description:"Seconds alternating pin" default:"5"`
+	SecPulse       string `long:"gpio-seconds-pulse-pin" description:"Seconds pulsing pin" default:"6"`
+	SecTrigger     string `long:"gpio-seconds-trigger" description:"Seconds trigger pin" default:"17"`
+	MinA           string `long:"gpio-minutes-a-pin" description:"Minutes alternating pin" default:"13"`
+	MinPulse       string `long:"gpio-minutes-pulse-pin" description:"Minutes pulsing pin" default:"19"`
+	MinTrigger     string `long:"gpio-minutes-trigger" description:"Minutes triggering pin" default:"27"`
+	HourA          string `long:"gpio-hours-a-pin" description:"Hours alternating pin" default:"26"`
+	HourPulse      string `long:"gpio-hours-pulse-pin" description:"Hours pulsing pin" default:"20"`
+	HourTrigger    string `long:"gpio-hours-trigger" description:"Hours triggering pin" default:"22"`
+	PulseDuration  int    `long:"gpio-pulse-duration" description:"Pulse duration, in milliseconds" default:"300"`
+	InvertPolarity bool   `long:"gpio-invert-polarity" description:"Invert pulse polarity"`
 }
 
 var options clockOptions

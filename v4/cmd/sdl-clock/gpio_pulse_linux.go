@@ -16,11 +16,13 @@ const denoise = 50 * time.Millisecond
 const debounce = 30 * time.Millisecond
 
 type gpioPulser struct {
+	enabled  bool
 	secPins  *gpioPins
 	minPins  *gpioPins
 	hourPins *gpioPins
 	duration time.Duration
 	polarity gpio.Level
+	loc      *time.Location
 }
 
 type gpioPins struct {
@@ -50,6 +52,10 @@ func init() {
 }
 
 func (p *gpioPulser) Options() {
+	p.enabled = options.GpioEnabled
+	if !p.enabled {
+		return
+	}
 	p.duration = time.Duration(options.PulseDuration) * time.Millisecond
 	p.polarity = gpio.Level(options.InvertPolarity)
 
@@ -81,6 +87,13 @@ func (p *gpioPulser) Options() {
 
 	if err := p.hourPins.init(p.polarity); err != nil {
 		log.Printf("Error initializing hour pulse pins: %v", err)
+	}
+
+	var err error
+	p.loc, err = time.LoadLocation(options.EngineOptions.Source1.TimeZone)
+	if err != nil {
+		log.Printf("GPIO Pulser: Error loading time location: %v", err)
+		p.enabled = false
 	}
 }
 
@@ -162,6 +175,10 @@ func (p *gpioPulser) hourTrigger() {
 
 // Run is executed as goroutine for output module
 func (p *gpioPulser) Run() {
+	if !p.enabled {
+		return
+	}
+
 	secTimer := time.NewTimer(secondDuration())
 	minTimer := time.NewTimer(minuteDuration())
 	hourTimer := time.NewTimer(hourDuration())
@@ -195,13 +212,13 @@ func (p *gpioPulser) Run() {
 func (p *gpioPulser) Update(state *clock.State) {}
 
 func secondDuration() time.Duration {
-	return time.Until(time.Now().Truncate(time.Second).Add(time.Second))
+	return time.Until(time.Now().In(pulser.loc).Truncate(time.Second).Add(time.Second))
 }
 
 func minuteDuration() time.Duration {
-	return time.Until(time.Now().Truncate(time.Minute).Add(time.Minute))
+	return time.Until(time.Now().In(pulser.loc).Truncate(time.Minute).Add(time.Minute))
 }
 
 func hourDuration() time.Duration {
-	return time.Until(time.Now().Truncate(time.Hour).Add(time.Hour))
+	return time.Until(time.Now().In(pulser.loc).Truncate(time.Hour).Add(time.Hour))
 }
