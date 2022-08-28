@@ -222,7 +222,7 @@ func (p *Msg) parseCollection() {
 	debug.Printf("Picturall: Parsing media collection message: %s", p.Content)
 
 	m := make(map[string]string)
-	attrs := collectionRe.FindAllStringSubmatch(p.Content, -1)
+	attrs := attrRe.FindAllStringSubmatch(p.Content, -1)
 	for _, a := range attrs {
 		if a[2] != "" {
 			m[a[1]] = a[2]
@@ -242,7 +242,7 @@ func (p *Msg) parseCollection() {
 			log.Printf("Picturall: Error parsing collection %s - %v", v, err)
 		}
 	} else {
-		log.Printf("Picturall: Error media collection message has no collection info")
+		log.Printf("Picturall: Error media collection message has no collection info: %v", p.Content)
 	}
 
 	if v, ok := m["slot"]; ok {
@@ -251,7 +251,7 @@ func (p *Msg) parseCollection() {
 			log.Printf("Picturall: Error parsing slot %s - %v", v, err)
 		}
 	} else {
-		log.Printf("Picturall: Error media collection message has no slot info")
+		log.Printf("Picturall: Error media collection message has no slot info: %v", p.Content)
 	}
 
 	if v, ok := m["default_play_mode"]; ok {
@@ -261,7 +261,7 @@ func (p *Msg) parseCollection() {
 		}
 		state.telnetHasDefaultPlayMode = true
 	} else {
-		debug.Printf("Picturall: Error media collection message has no default play mode info")
+		debug.Printf("Picturall: Error media collection message has no default play mode info: %v", p.Content)
 	}
 
 	if state.mcTelnet[collection] == nil {
