@@ -112,7 +112,7 @@ func (s *status) Live(input int) bool {
 
 // File returns true if the input is a file
 func (i *input) File() bool {
-	return i.Type == "Video"
+	return i.Type == "Video" || i.Type == "VideoList"
 }
 
 // Playing returns true if the input is playing
