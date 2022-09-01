@@ -82,9 +82,15 @@ func (engine *Engine) vmixListen(c chan *vmix.State) {
 			}
 			video := engine.vmixSelect(s)
 			if video != nil {
+				// Video data to show
 				engine.vmixSet(video)
+				t.Reset(engine.vmix.timeout)
+			} else {
+				// No playing video matching the current filter
+				engine.vmix.counter.ResetMedia()
 			}
 		case <-t.C:
+			// Timeout on communications, reset the output
 			engine.vmix.counter.ResetMedia()
 		}
 	}
