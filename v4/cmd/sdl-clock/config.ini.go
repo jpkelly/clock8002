@@ -399,4 +399,19 @@ LTCSeconds={{.EngineOptions.LTCSeconds}}
 
 # Continue on internal clock if LTC signal is lost. If unset display will blank when signal is gone.
 LTCFollow={{.EngineOptions.LTCFollow}}
+
+# GPIO Pulser, raspberry pi only
+# Sends out pulses on pins each second, minute and hour.
+gpio-enabled={{.GpioEnabled}}
+gpio-seconds-a-pin={{.SecA}}
+gpio-seconds-pulse-pin={{.SecPulse}}
+gpio-seconds-trigger={{.SecTrigger}}
+gpio-minutes-a-pin={{.MinA}}
+gpio-minutes-pulse-pin={{.MinPulse}}
+gpio-minutes-trigger={{.MinTrigger}}
+gpio-hours-a-pin={{.HourA}}
+gpio-hours-pulse-pin={{.HourPulse}}
+gpio-hours-trigger={{.HourTrigger}}
+gpio-pulse-duration={{.PulseDuration}}
+gpio-invert-polarity={{.InvertPolarity}}
 `

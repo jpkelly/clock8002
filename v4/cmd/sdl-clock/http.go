@@ -39,7 +39,29 @@ func runHTTP() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := htmlTemplate.New("config.html").Parse(configHTML)
+	t := htmlTemplate.New("config.html")
+
+	t.Funcs(
+		template.FuncMap{
+			"checkbox": func(id string, label string, value bool) htmlTemplate.HTML {
+				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"checkbox\" id=\"%s\" name=\"%s\" ", id, label, id, id)
+				if value {
+					ret += " checked "
+				}
+				ret += "/></label>"
+				return htmlTemplate.HTML(ret)
+			},
+			"number": func(id string, label string, value int) htmlTemplate.HTML {
+				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"number\" id=\"%s\" name=\"%s\" value=\"%d\" /></label>", id, label, id, id, value)
+				return htmlTemplate.HTML(ret)
+			},
+			"text": func(id string, label string, value string) htmlTemplate.HTML {
+				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"text\" id=\"%s\" name=\"%s\" value=\"%s\" /></label>", id, label, id, id, value)
+				return htmlTemplate.HTML(ret)
+			},
+		})
+	tmpl, err := t.Parse(configHTML)
+
 	if err != nil {
 		panic(err)
 	}
@@ -238,6 +260,23 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 
 	newOptions.HTTPPort = r.FormValue("HTTPPort")
 	errors += util.ValidateAddr(newOptions.HTTPPort, "HTTP config interface address")
+
+	// GPIO pulser
+	newOptions.GpioEnabled = r.FormValue("gpio-enabled") != ""
+	newOptions.SecA = r.FormValue("gpio-seconds-a-pin")
+	newOptions.SecPulse = r.FormValue("gpio-seconds-pulse-pin")
+	newOptions.SecTrigger = r.FormValue("gpio-seconds-trigger")
+	newOptions.MinA = r.FormValue("gpio-minutes-a-pin")
+	newOptions.MinPulse = r.FormValue("gpio-minutes-pulse-pin")
+	newOptions.MinTrigger = r.FormValue("gpio-minutes-trigger")
+	newOptions.HourA = r.FormValue("gpio-hours-a-pin")
+	newOptions.HourPulse = r.FormValue("gpio-hours-pulse-pin")
+	newOptions.HourTrigger = r.FormValue("gpio-hours-trigger")
+	newOptions.InvertPolarity = r.FormValue("gpio-invert-polarity") != ""
+
+	pulseDuration, err := strconv.Atoi(r.FormValue("gpio-pulse-duration"))
+	errors += util.ValidateNumber(err, "GPIO pulse duration")
+	newOptions.PulseDuration = pulseDuration
 
 	if errors != "" {
 		tmpl, err := htmlTemplate.New("config.html").Parse(configHTML)
