@@ -42,7 +42,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	t := htmlTemplate.New("config.html")
 
 	t.Funcs(
-		template.FuncMap{
+		htmlTemplate.FuncMap{
 			"checkbox": func(id string, label string, value bool) htmlTemplate.HTML {
 				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"checkbox\" id=\"%s\" name=\"%s\" ", id, label, id, id)
 				if value {
@@ -57,6 +57,14 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			},
 			"text": func(id string, label string, value string) htmlTemplate.HTML {
 				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"text\" id=\"%s\" name=\"%s\" value=\"%s\" /></label>", id, label, id, id, value)
+				return htmlTemplate.HTML(ret)
+			},
+			"color": func(id string, label string, value string) htmlTemplate.HTML {
+				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"color\" id=\"%s\" name=\"%s\" value=\"%s\" /></label>", id, label, id, id, value)
+				return htmlTemplate.HTML(ret)
+			},
+			"counter": func(id string, label string, value int) htmlTemplate.HTML {
+				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"number\" min=\"0\" max=\"9\" id=\"%s\" name=\"%s\" value=\"%d\" /></label>", id, label, id, id, value)
 				return htmlTemplate.HTML(ret)
 			},
 		})

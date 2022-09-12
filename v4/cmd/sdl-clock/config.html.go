@@ -53,11 +53,8 @@ const configHTML = `
 					</label>
 
 					{{checkbox "Format12h" "Use 12 hour format for time-of-day display" .EngineOptions.Format12h }}
-
 					{{checkbox "NoARCorrection" "Disable detection of official raspberry pi display for aspect ratio correction" .NoARCorrection}}
-
 					{{checkbox "FullScreen" "Start in full screen mode (ignored on raspberry pi images)" .FullScreen }}
-
 					{{checkbox "Debug" "Output verbose debug information. This will impact performance" .Debug}}
 
 					<label for="Font">
@@ -168,16 +165,11 @@ const configHTML = `
 					{{checkbox "source1-ltc" "Enable LTC input on this source" .EngineOptions.Source1.LTC}}
 					{{checkbox "source1-timer" "Enable input from the associated timer" .EngineOptions.Source1.Timer}}
 					{{checkbox "source1-timer-target" "Display timer end time, if available, instead of the time remaining" .EngineOptions.Source1.TimerTarget}}
-
-					<label for="source1-counter">
-						<span>Timer number to use (0-9)</span>
-						<input type="number" min="0" max="9" id="source1-counter" name="source1-counter" value="{{.EngineOptions.Source1.Counter}}" />
-					</label>
-
+					{{counter "source1-counter" "Timer number to use (0-9)." .EngineOptions.Source1.Counter}}
 					{{checkbox "source1-tod" "Enable time of day input on this source" .EngineOptions.Source1.Tod}}
 
 					<label for="source1-timezone">
-						<span>Timezone for the time of day input</span>
+						<span>Timezone for the time of day input</span>x
 						{{$selected := .EngineOptions.Source1.TimeZone}}
 						<select id="source1-timezone" name="source1-timezone" >
 							{{ range $tz := .Timezones }}
@@ -187,12 +179,7 @@ const configHTML = `
 					</label>
 
 					{{checkbox "source1-hidden" "Initially hide this source. Can be toggled by OSC on runtime." .EngineOptions.Source1.Hidden}}
-
-					<label for="source1-overtime-color">
-						<span>Background color for overtime countdowns</span>
-						<input type="color" id="source1-overtime-color" name="source1-overtime-color" value="{{.EngineOptions.Source1.OvertimeColor}}" />
-					</label>
-
+					{{color "source1-overtime-color" "Background color for overtime countdowns." .EngineOptions.Source1.OvertimeColor}}
 				</fieldset>
 				<fieldset>
 					<legend>Source 2</legend>
@@ -205,12 +192,7 @@ const configHTML = `
 					{{checkbox "source2-ltc" "Enable LTC input on this source" .EngineOptions.Source2.LTC}}
 					{{checkbox "source2-timer" "Enable input from the associated timer" .EngineOptions.Source2.Timer}}
 					{{checkbox "source2-timer-target" "Display timer end time, if available, instead of the time remaining" .EngineOptions.Source2.TimerTarget}}
-
-					<label for="source2-counter">
-						<span>Timer number to use (0-9)</span>
-						<input type="number" min="0" max="9" id="source2-counter" name="source2-counter" value="{{.EngineOptions.Source2.Counter}}" />
-					</label>
-
+					{{counter "source2-counter" "Timer number to use (0-9)." .EngineOptions.Source2.Counter}}
 					{{checkbox "source2-tod" "Enable time of day input on this source" .EngineOptions.Source2.Tod}}
 
 					<label for="source2-timezone">
@@ -224,11 +206,7 @@ const configHTML = `
 					</label>
 
 					{{checkbox "source2-hidden" "Initially hide this source. Can be toggled by OSC on runtime." .EngineOptions.Source2.Hidden}}
-
-					<label for="source2-overtime-color">
-						<span>Background color for overtime countdowns</span>
-						<input type="color" id="source2-overtime-color" name="source2-overtime-color" value="{{.EngineOptions.Source2.OvertimeColor}}" />
-					</label>
+					{{color "source2-overtime-color" "Background color for overtime countdowns." .EngineOptions.Source2.OvertimeColor}}
 				</fieldset>
 				<fieldset>
 					<legend>Source 3</legend>
@@ -241,12 +219,7 @@ const configHTML = `
 					{{checkbox "source3-ltc" "Enable LTC input on this source" .EngineOptions.Source3.LTC}}
 					{{checkbox "source3-timer" "Enable input from the associated timer" .EngineOptions.Source3.Timer}}
 					{{checkbox "source3-timer-target" "Display timer end time, if available, instead of the time remaining" .EngineOptions.Source3.TimerTarget}}
-
-					<label for="source3-counter">
-						<span>Timer number to use (0-9)</span>
-						<input type="number" min="0" max="9" id="source3-counter" name="source3-counter" value="{{.EngineOptions.Source3.Counter}}" />
-					</label>
-
+					{{counter "source3-counter" "Timer number to use (0-9)." .EngineOptions.Source3.Counter}}
 					{{checkbox "source3-tod" "Enable time of day input on this source" .EngineOptions.Source3.Tod}}
 
 					<label for="source3-timezone">
@@ -260,11 +233,7 @@ const configHTML = `
 					</label>
 
 					{{checkbox "source3-hidden" "Initially hide this source. Can be toggled by OSC on runtime." .EngineOptions.Source3.Hidden}}
-
-					<label for="source3-overtime-color">
-						<span>Background color for overtime countdowns</span>
-						<input type="color" id="source3-overtime-color" name="source3-overtime-color" value="{{.EngineOptions.Source3.OvertimeColor}}" />
-					</label>
+					{{color "source3-overtime-color" "Background color for overtime countdowns." .EngineOptions.Source3.OvertimeColor}}
 				</fieldset>
 				<fieldset>
 					<legend>Source 4</legend>
@@ -277,12 +246,7 @@ const configHTML = `
 					{{checkbox "source4-ltc" "Enable LTC input on this source" .EngineOptions.Source4.LTC}}
 					{{checkbox "source4-timer" "Enable input from the associated timer" .EngineOptions.Source4.Timer}}
 					{{checkbox "source4-timer-target" "Display timer end time, if available, instead of the time remaining" .EngineOptions.Source4.TimerTarget}}
-
-					<label for="source4-counter">
-						<span>Timer number to use (0-9)</span>
-						<input type="number" min="0" max="9" id="source4-counter" name="source4-counter" value="{{.EngineOptions.Source4.Counter}}" />
-					</label>
-
+					{{counter "source4-counter" "Timer number to use (0-9)." .EngineOptions.Source4.Counter}}
 					{{checkbox "source4-tod" "Enable time of day input on this source" .EngineOptions.Source4.Tod}}
 
 					<label for="source4-timezone">
@@ -296,11 +260,7 @@ const configHTML = `
 					</label>
 
 					{{checkbox "source4-hidden" "Initially hide this source. Can be toggled by OSC on runtime." .EngineOptions.Source4.Hidden}}
-
-					<label for="source4-overtime-color">
-						<span>Background color for overtime countdowns</span>
-						<input type="color" id="source4-overtime-color" name="source4-overtime-color" value="{{.EngineOptions.Source4.OvertimeColor}}" />
-					</label>
+					{{color "source4-overtime-color" "Background color for overtime countdowns." .EngineOptions.Source4.OvertimeColor}}
 				</fieldset>
 			</fieldset>
 
@@ -377,29 +337,17 @@ const configHTML = `
 				</label>
 
 
-				{{ checkbox "signal-hw-follow" "Hardware signal follows source 1 color." .SignalFollow}}
-				{{ checkbox "SignalToBG" "Use hardware signal color as clock background." .SignalToBG}}
+				{{checkbox "signal-hw-follow" "Hardware signal follows source 1 color." .SignalFollow}}
+				{{checkbox "SignalToBG" "Use hardware signal color as clock background." .SignalToBG}}
 			</fieldset>
 
 
 			<fieldset>
 				<legend>Mitti and Millumin</legend>
 
-				<label for="mitti">
-					<span>Timer number for OSC feedback from Mitti</span>
-					<input type="number" min="0" max="9" id="mitti" name="mitti" value="{{.EngineOptions.Mitti}}" />
-				</label>
-
-				<label for="millumin">
-					<span>Timer number for OSC feedback from Millumin</span>
-					<input type="number" min="0" max="9" id="millumin" name="millumin" value="{{.EngineOptions.Millumin}}" />
-				</label>
-
-
-				<label for="millumin-ignore">
-					<span>Regexp for ignoring media layers from the Millumin OSC feedback</span>
-					<input type="text" id="millumin-ignore" name="millumin-ignore" value="{{.EngineOptions.Ignore}}" />
-				</label>
+				{{counter "mitti" "Timer number for OSC feedback from Mitti" .EngineOptions.Mitti}}
+				{{counter "millumin" "Timer number for OSC feedback from Millumin" .EngineOptions.Millumin}}
+				{{text "millumin-ignore" "Regexp for ignoring media layers from the Millumin OSC feedback" .EngineOptions.Ignore}}
 			</fieldset>
 
 			<fieldset>
@@ -412,45 +360,17 @@ const configHTML = `
 				<p>A known caveat is that the media default playmode changes are updated every 10 seconds so loop
 				detection may be erronous just after changes to the settings.</p>
 
-				{{ checkbox "picturall-enabled" "Enable Picturalll integration." .EngineOptions.PicturallEnabled}}
-
-				<label for="picturall-address">
-					<span>Address to connect to. Leave blank for autodiscovery. Autodiscovery will use the first picturall that responds.</span>
-					<input type="text" id="picturall-address" name="picturall-address" value="{{.EngineOptions.PicturallAddress}}" />
-				</label>
-
-				<label for="picturall-port">
-					<span>Port to connect to</span>
-					<input type="number" id="picturall-port" name="picturall-port" value="{{.EngineOptions.PicturallPort}}" />
-				</label>
-
-				<label for="picturall-timer">
-					<span>Timer number for feedback from Picturall</span>
-					<input type="number" min="0" max="9" id="picturall-timer" name="picturall-timer" value="{{.EngineOptions.PicturallTimer}}" />
-				</label>
-
-				{{ checkbox "picturall-loops" "Show looping media." .EngineOptions.PicturallLoops}}
-				{{ checkbox "picturall-streams" "Show streaming media." .EngineOptions.PicturallStreams}}
-				{{ checkbox "picturall-media-name" "Show media name as tally message on the clock." .EngineOptions.PicturallMediaName}}
-
-				<label for="picturall-timeout">
-					<span>Message timeout for clearing the clock display, in milliseconds</span>
-					<input type="number" id="picturall-timeout" name="picturall-timeout" value="{{.EngineOptions.PicturallTimeout}}" />
-				</label>
-
-				<label for="picturall-ignore-layers">
-					<span>List of layer numbers to ignore, comma separated</span>
-					<input type="text" id="picturall-ignore-layers" name="picturall-ignore-layers" value="{{.EngineOptions.PicturallIgnoreLayers}}" />
-				</label>
-
-				<label for="picturall-media-color">
-					<span>Media name text color</span>
-					<input type="color" id="picturall-media-color" name="picturall-media-color" value="{{.EngineOptions.PicturallMediaColor}}" />
-				</label>
-				<label for="picturall-media-bg">
-					<span>Media name background color</span>
-					<input type="color" id="picturall-media-bg" name="picturall-media-bg" value="{{.EngineOptions.PicturallMediaBG}}" />
-				</label>
+				{{checkbox "picturall-enabled" "Enable Picturalll integration." .EngineOptions.PicturallEnabled}}
+				{{text "picturall-address" "Address to connect to. Leave blank for autodiscovery. Autodiscovery will use the first picturall that responds." .EngineOptions.PicturallAddress}}
+				{{number "picturall-port" "Port to connect to." .EngineOptions.PicturallPort}}
+				{{counter "picturall-timer" "Timer number for feedback from Picturall" .EngineOptions.PicturallTimer}}
+				{{checkbox "picturall-loops" "Show looping media." .EngineOptions.PicturallLoops}}
+				{{checkbox "picturall-streams" "Show streaming media." .EngineOptions.PicturallStreams}}
+				{{checkbox "picturall-media-name" "Show media name as tally message on the clock." .EngineOptions.PicturallMediaName}}
+				{{number "picturall-timeout" "Message timeout for clearing the clock display, in milliseconds." .EngineOptions.PicturallTimeout}}
+				{{text "picturall-ignore-layers" "List of layer numbers to ignore, comma separated." .EngineOptions.PicturallIgnoreLayers}}
+				{{color "picturall-media-color" "Media name text color." .EngineOptions.PicturallMediaColor}}
+				{{color "picturall-media-bg" "Media name background color." .EngineOptions.PicturallMediaBG}}
 			</fieldset>
 
 			<fieldset>
@@ -458,7 +378,7 @@ const configHTML = `
 				<p>By default the clock displays the data about the first video found in list PGM - overlay 8... overlay 1.<p>
 
 
-				{{ checkbox "vmix-enabled" "Enable vMix integration." .EngineOptions.VmixEnabled}}
+				{{checkbox "vmix-enabled" "Enable vMix integration." .EngineOptions.VmixEnabled}}
 
 				<label for="vmix-address">
 					<span>Address to connect to.</span>
@@ -475,16 +395,16 @@ const configHTML = `
 					<input type="number" min="0" max="9" id="vmix-timer" name="vmix-timer" value="{{.EngineOptions.VmixTimer}}" />
 				</label>
 
-				{{ checkbox "vmix-loops" "Show looping media" .EngineOptions.VmixLoops}}
-				{{ checkbox "vmix-pgm-only" "Show only PGM media (no overlays)." .EngineOptions.VmixPGMOnly}}
-				{{ checkbox "vmix-show-pvm" "Show media in preview." .EngineOptions.VmixPVM}}
+				{{checkbox "vmix-loops" "Show looping media" .EngineOptions.VmixLoops}}
+				{{checkbox "vmix-pgm-only" "Show only PGM media (no overlays)." .EngineOptions.VmixPGMOnly}}
+				{{checkbox "vmix-show-pvm" "Show media in preview." .EngineOptions.VmixPVM}}
 
 				<label for="vmix-ignore-overlays">
 					<span>List of overlay numbers to ignore, comma separated</span>
 					<input type="text" id="vmix-ignore-overlays" name="vmix-ignore-overlays" value="{{.EngineOptions.VmixIgnoreOverlays}}" />
 				</label>
 
-				{{ checkbox "vmix-media-name" "Show media name as tally message on the clock." .EngineOptions.VmixMediaName}}
+				{{checkbox "vmix-media-name" "Show media name as tally message on the clock." .EngineOptions.VmixMediaName}}
 
 				<label for="vmix-media-color">
 					<span>Media name text color</span>
@@ -684,72 +604,52 @@ const configHTML = `
 			<fieldset>
 				<legend>OSC</legend>
 
-				{{ checkbox "DisableOSC" "Disable remote OSC commands." .EngineOptions.DisableOSC}}
-				{{ checkbox "DisableFeedback" "Disable sendinf of OSC state feedback." .EngineOptions.DisableFeedback}}
-
-
-				<label for="ListenAddr">
-					<span>Address and port to listen for osc commands. 0.0.0.0 defaults to all network interfaces</span>
-					<input type="text" id="ListenAddr" name="ListenAddr" value="{{.EngineOptions.ListenAddr}}" />
-				</label>
-
-				<label for="Connect">
-					<span>Address and port to send OSC feedback to. 255.255.255.255 broadcasts to all network interfaces</span>
-					<input type="text" id="Connect" name="Connect" value="{{.EngineOptions.Connect}}" />
-				</label>
+				{{checkbox "DisableOSC" "Disable remote OSC commands." .EngineOptions.DisableOSC}}
+				{{checkbox "DisableFeedback" "Disable sendinf of OSC state feedback." .EngineOptions.DisableFeedback}}
+				{{text "ListenAddr" "Address and port to listen for osc commands. 0.0.0.0 defaults to all network interfaces." .EngineOptions.ListenAddr}}
+				{{text "Connect" "Address and port to send OSC feedback to. 255.255.255.255 broadcasts to all network interfaces" .EngineOptions.Connect}}
 			</fieldset>
 			<fieldset>
 				<legend>Config interface</legend>
 
-				<label for="HTTPUser">
-					<span>Username for the web configuration interface</span>
-					<input type="text" id="HTTPUser" name="HTTPUser" value="{{.HTTPUser}}" />
-				</label>
-
-				<label for="HTTPUser">
-					<span>Password for the web configuration interface</span>
-					<input type="text" id="HTTPPassword" name="HTTPPassword" value="{{.HTTPPassword}}" />
-				</label>
-
-				{{ checkbox "DisableHTTP" "Disable this web configuration interface. Undoing this needs editing of the config.ini file." .DisableHTTP}}
-
-				<label for="HTTPPort">
-					<span>Port to listen for the web configuration. Needs to be in format of ":1234"</span>
-					<input type="text" id="HTTPPort" name="HTTPPort" value="{{.HTTPPort}}" />
-				</label>
+				{{text "HTTPUser" "Username for web configuration interface." .HTTPUser}}
+				{{text "HTTPPassword" "Password for web configuration interface." .HTTPPassword}}
+				{{checkbox "DisableHTTP" "Disable this web configuration interface. Undoing this needs editing of the config.ini file." .DisableHTTP}}
+				{{text "HTTPPort" "Port to listen for the web configuration. Needs to be in format of \":1234\"" .HTTPPort}}
 			</fieldset>
 			<fieldset>
 				<legend>LTC</legend>
 
-				{{ checkbox "DisableLTC" "Disable LTC display and reception." .EngineOptions.DisableLTC}}
-				{{ checkbox "LTCSeconds" "Controls what is displayed on the clock ring in LTC mode, unchecked = frames, checked = seconds" .EngineOptions.LTCSeconds}}
-				{{ checkbox "LTCFollow" "Continue on internal clock if LTC signal is lost. If unset display will blank when signal is gone." .EngineOptions.LTCFollow}}
+				{{checkbox "DisableLTC" "Disable LTC display and reception." .EngineOptions.DisableLTC}}
+				{{checkbox "LTCSeconds" "Controls what is displayed on the clock ring in LTC mode, unchecked = frames, checked = seconds" .EngineOptions.LTCSeconds}}
+				{{checkbox "LTCFollow" "Continue on internal clock if LTC signal is lost. If unset display will blank when signal is gone." .EngineOptions.LTCFollow}}
 			</fieldset>
 			<fieldset>
 				<legend>GPIO Pulser, raspberry pi only.</legend>
+
 				<p>Provides pulses on GPIO pins every second, minute and hour, and
 				alternating polarity on another pin. Suitable for acting as central clock.<\p>
 
 				<p>Pins are given as raspberry pi GPIO numbers, which are not the same as pin numbers
 				on the gpio connector.</p>
 
-				{{ checkbox "gpio-enabled" "Enable GPIO pulses based on time-of-day." .GpioEnabled}}
+				{{checkbox "gpio-enabled" "Enable GPIO pulses based on time-of-day." .GpioEnabled}}
 
-				{{ text "gpio-seconds-a-pin" "Seconds alternating pin." .SecA}}
-				{{ text "gpio-seconds-pulse-pin" "Seconds pulse pin." .SecPulse}}
-				{{ text "gpio-seconds-trigger" "Seconds manual advance trigger pin." .SecTrigger}}
+				{{text "gpio-seconds-a-pin" "Seconds alternating pin." .SecA}}
+				{{text "gpio-seconds-pulse-pin" "Seconds pulse pin." .SecPulse}}
+				{{text "gpio-seconds-trigger" "Seconds manual advance trigger pin." .SecTrigger}}
 
-				{{ text "gpio-minutes-a-pin" "Minutes alternating pin." .MinA}}
-				{{ text "gpio-minutes-pulse-pin" "Minutes pulse pin." .MinPulse}}
-				{{ text "gpio-minutes-trigger" "Minutes manual advance trigger pin." .MinTrigger}}
+				{{text "gpio-minutes-a-pin" "Minutes alternating pin." .MinA}}
+				{{text "gpio-minutes-pulse-pin" "Minutes pulse pin." .MinPulse}}
+				{{text "gpio-minutes-trigger" "Minutes manual advance trigger pin." .MinTrigger}}
 
-				{{ text "gpio-hours-a-pin" "Hours alternating pin." .HourA}}
-				{{ text "gpio-hours-pulse-pin" "Hours pulse pin." .HourPulse}}
-				{{ text "gpio-hours-trigger" "Hours manual advance trigger pin." .HourTrigger}}
+				{{text "gpio-hours-a-pin" "Hours alternating pin." .HourA}}
+				{{text "gpio-hours-pulse-pin" "Hours pulse pin." .HourPulse}}
+				{{text "gpio-hours-trigger" "Hours manual advance trigger pin." .HourTrigger}}
 
-				{{ number "gpio-pulse-duration" "Pulse duration, in milliseoncds." .PulseDuration}}
+				{{number "gpio-pulse-duration" "Pulse duration, in milliseoncds." .PulseDuration}}
 
-				{{ checkbox "gpio-invert-polarity" "Invert the pulse pin polarity." .InvertPolarity}}
+				{{checkbox "gpio-invert-polarity" "Invert the pulse pin polarity." .InvertPolarity}}
 			</fieldset>
 
 
