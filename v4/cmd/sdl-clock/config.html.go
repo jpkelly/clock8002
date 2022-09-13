@@ -57,10 +57,7 @@ const configHTML = `
 					{{checkbox "FullScreen" "Start in full screen mode (ignored on raspberry pi images)" .FullScreen }}
 					{{checkbox "Debug" "Output verbose debug information. This will impact performance" .Debug}}
 
-					<label for="Font">
-						<span>Font filename for round clocks</span>
-						<input type="text" id="Font" name="Font" value="{{.Font}}" />
-					</label>
+					{{text "Font" "Font filename for round clocks." .Font}}
 
 					<datalist id="FontList">
 						{{ range $font := .Fonts }}
@@ -83,57 +80,27 @@ const configHTML = `
 						<input list="FontList" type="text" id="IconFont" name="IconFont" value="{{.IconFont}}" />
 					</label>
 
-					<label for="Flash">
-						<span>Flashing interval in milliseconds for ellapsed countdowns</span>
-						<input type="number" min="0" id="Flash" name="Flash" value="{{.EngineOptions.Flash}}" />
-					</label>
+					{{number "Flash" "Flashing interval in milliseconds for ellapsed countdowns." .EngineOptions.Flash}}
+					{{number "Timeout" "Timeout for clearing OSC text display messages, in milliseconds." .EngineOptions.Timeout}}
+					{{number "ShowInfo" "Time to show clock information on startup, in seconds." .EngineOptions.ShowInfo}}
+					{{text "Background" "Background image filename." .Background}}
 
-					<label for="Timeout">
-						<span>Timeout for clearing OSC text display messages, milliseconds</span>
-						<input type="number" min="0" id="Timeout" name="Timeout" value="{{.EngineOptions.Timeout}}" />
-					</label>
-
-					<label for="ShowInfo">
-						<span>Time to show clock information on startup, seconds</span>
-						<input type="number" min="0" id="ShowInfo" name="ShowInfo" value="{{.EngineOptions.ShowInfo}}" />
-					</label>
-
-					<label for="Background">
-						<span>Background image filename</span>
-						<input type="text" id="Background" name="Background" value="{{.Background}}" />
-					</label>
 					<p>The image needs to be in the correct resolution and either png or jpeg file. Place the
 					image in the fat partition and refer to it as /boot/imagename.png</p>
 
-					<label for="BackgroundPath">
-						<span>Path for OSC selectable background images</span>
-						<input type="text" id="BackgroundPath" name="BackgroundPath" value="{{.BackgroundPath}}" />
-					</label>
+					{{text "BackgroundPath" "Path for OSC selectable background images" .BackgroundPath}}
+
 					<p>The OSC command /clock/background/ can be used to select a numbered background image from this path.
 					Files should be named with the number (eg 1.png or 01.jpeg). Supported filetypes are BMP, PNG and JPEG.</p>
 
-
-					<label for="BackgroundColor">
-						<span>Background color, used if no background image is provided</span>
-						<input type="color" id="BackgroundColor" name="BackgroundColor" value="{{.BackgroundColor}}" />
-					</label>
+					{{color "BackgroundColor" "Background color, used if no background image is provided." .BackgroundColor}}
 
 					{{checkbox "AudioEnabled" "Enable audio cues for expiring countdown timers." .AudioEnabled}}
-
 					{{checkbox "VoiceEnabled" "Enable voice cues for expiring countdown timers and media durations." .VoiceEnabled}}
-
-					<label for="VoiceDir">
-						<span>Directory to load the voice samples from. Files should be named 1234.wav where 1234 is the time in seconds to trigger the sample.</span>
-						<input type="text" id="VoiceDir" name="VoiceDir" value="{{.VoiceDir}}"/>
-					</label>
+					{{text "VoiceDir" "Directory to load the voice samples from. Files should be named 1234.wav where 1234 is the time in seconds to trigger the sample." .VoiceDir}}
 
 					{{checkbox "TODBeep" "Enable audio cues for time of day displays on each full hour." .TODBeep}}
-
-					<label for="CountdownTarget">
-						<span>Target for the countdown clock face (YYYY-MM-DD HH:MM:SS)</span>
-						<input type="text" id="CountdownTarget" name="CountdownTarget" value="{{.CountdownTarget}}" />
-					</label>
-
+					{{text "CountdownTarget" "Target for the countdown clock face (YYYY-MM-DD HH:MM:SS)" .CountdownTarget}}
 					{{checkbox "Countup" "Countdown face counts up instead." .Countup}}
 
 				</fieldset>
@@ -291,32 +258,11 @@ const configHTML = `
 
 				{{checkbox "auto-signals" "Automatically set signal color per timer state." .EngineOptions.AutoSignals}}
 				{{checkbox "signal-start" "In automation mode, set a color on timer start." .EngineOptions.SignalStart}}
-
-				<label for="signal-color-start">
-					<span>Start signal color</span>
-					<input type="color" id="signal-color-start" name="signal-color-start" value="{{.EngineOptions.SignalColorStart}}" />
-				</label>
-
-				<label for="signal-threshold-warning">
-					<span>Time threshold for warning color, in seconds. Set to 0 to disable.</span>
-					<input type="number" min="0" id="signal-threshold-warning" name="signal-threshold-warning" value="{{.EngineOptions.SignalThresholdWarning}}" />
-				</label>
-
-
-				<label for="signal-color-warning">
-					<span>Warning signal color</span>
-					<input type="color" id="signal-color-warning" name="signal-color-warning" value="{{.EngineOptions.SignalColorWarning}}" />
-				</label>
-
-				<label for="signal-threshold-end">
-					<span>Time threshold for end color, in seconds.</span>
-					<input type="number" min="0" id="signal-threshold-end" name="signal-threshold-end" value="{{.EngineOptions.SignalThresholdEnd}}" />
-				</label>
-
-				<label for="signal-color-end">
-					<span>End signal color</span>
-					<input type="color" id="signal-color-end" name="signal-color-end" value="{{.EngineOptions.SignalColorEnd}}" />
-				</label>
+				{{color "signal-color-start" "Timer start signal color." .EngineOptions.SignalColorStart}}
+				{{number "signal-threshold-warning" "Time threshold for warning color, in seconds. Set to 0 to disable." .EngineOptions.SignalThresholdWarning}}
+				{{color "signal-color-warning" "Color for warning signals." .EngineOptions.SignalColorWarning}}
+				{{number "signal-threshold-end" "Time threshold for end color, in seconds." .EngineOptions.SignalThresholdEnd}}
+				{{color "signal-color-end" "End signal color." .EngineOptions.SignalColorEnd}}
 
 				<label for="signal-hw-type">
 						<span>Signal hardware type</span>
@@ -326,17 +272,8 @@ const configHTML = `
 					</select><br />
 				</label>
 
-				<label for="signal-hw-group">
-					<span>Hardware signal group</span>
-					<input type="number" min="0" id="signal-hw-group" name="signal-hw-group" value="{{.EngineOptions.SignalHardware}}" />
-				</label>
-
-				<label for="signal-hw-brightness">
-					<span>Hardware signal master brightness, 0 = off, 255 = maximum brightness</span>
-					<input type="number" min="0" max="255" id="signal-hw-brightness" name="signal-hw-brightness" value="{{.SignalBrightness}}" />
-				</label>
-
-
+				{{number "signal-hw-group" "Hardware signal group." .EngineOptions.SignalHardware}}
+				{{byte "signal-hw-brightness" "ardware signal master brightness, 0 = off, 255 = maximum brightness." .SignalBrightness}}
 				{{checkbox "signal-hw-follow" "Hardware signal follows source 1 color." .SignalFollow}}
 				{{checkbox "SignalToBG" "Use hardware signal color as clock background." .SignalToBG}}
 			</fieldset>
@@ -377,54 +314,19 @@ const configHTML = `
 				<legend>vMix integration</legend>
 				<p>By default the clock displays the data about the first video found in list PGM - overlay 8... overlay 1.<p>
 
-
 				{{checkbox "vmix-enabled" "Enable vMix integration." .EngineOptions.VmixEnabled}}
-
-				<label for="vmix-address">
-					<span>Address to connect to.</span>
-					<input type="text" id="vmix-address" name="vmix-address" value="{{.EngineOptions.VmixAddress}}" />
-				</label>
-
-				<label for="vmix-port">
-					<span>Port to connect to</span>
-					<input type="number" id="vmix-port" name="vmix-port" value="{{.EngineOptions.VmixPort}}" />
-				</label>
-
-				<label for="vmix-timer">
-					<span>Timer number for feedback from vmix</span>
-					<input type="number" min="0" max="9" id="vmix-timer" name="vmix-timer" value="{{.EngineOptions.VmixTimer}}" />
-				</label>
-
+				{{text "vmix-address" "Address to connect to." .EngineOptions.VmixAddress}}
+				{{number "vmix-port" "Port to connect to" .EngineOptions.VmixPort}}
+				{{counter "vmix-timer" "Timer number for feedback from vMix." .EngineOptions.VmixTimer}}
 				{{checkbox "vmix-loops" "Show looping media" .EngineOptions.VmixLoops}}
 				{{checkbox "vmix-pgm-only" "Show only PGM media (no overlays)." .EngineOptions.VmixPGMOnly}}
 				{{checkbox "vmix-show-pvm" "Show media in preview." .EngineOptions.VmixPVM}}
-
-				<label for="vmix-ignore-overlays">
-					<span>List of overlay numbers to ignore, comma separated</span>
-					<input type="text" id="vmix-ignore-overlays" name="vmix-ignore-overlays" value="{{.EngineOptions.VmixIgnoreOverlays}}" />
-				</label>
-
+				{{text "vmix-ignore-overlays" "List of overlay numbers to ignore, comma separated." .EngineOptions.VmixIgnoreOverlays}}
 				{{checkbox "vmix-media-name" "Show media name as tally message on the clock." .EngineOptions.VmixMediaName}}
-
-				<label for="vmix-media-color">
-					<span>Media name text color</span>
-					<input type="color" id="vmix-media-color" name="vmix-media-color" value="{{.EngineOptions.VmixMediaColor}}" />
-				</label>
-
-				<label for="vmix-media-bg">
-					<span>Media name background color</span>
-					<input type="color" id="vmix-media-bg" name="vmix-media-bg" value="{{.EngineOptions.VmixMediaBG}}" />
-				</label>
-
-				<label for="vmix-interval">
-					<span>Polling interval, in milliseconds. Adjust if the clock causes too high load on the vMix machine or if you need better accuracy.</span>
-					<input type="number" id="vmix-interval" name="vmix-interval" value="{{.EngineOptions.VmixInterval}}" />
-				</label>
-
-				<label for="vmix-timeout">
-					<span>Message timeout for clearing the clock display, in milliseconds.</span>
-					<input type="number" id="vmix-timeout" name="vmix-timeout" value="{{.EngineOptions.VmixTimeout}}" />
-				</label>
+				{{color "vmix-media-color" "Media name text color." .EngineOptions.VmixMediaColor}}
+				{{color "vmix-media-bg" "Media name background color" .EngineOptions.VmixMediaBG}}
+				{{number "vmix-interval" "Polling interval, in milliseconds. Adjust if the clock causes too high load on the vMix machine or if you need better accuracy." .EngineOptions.VmixInterval}}
+				{{number "vmix-timeout" "Message timeout for clearing the clock display, in milliseconds." .EngineOptions.VmixTimeout}}
 			</fieldset>
 
 			<fieldset>
@@ -439,10 +341,7 @@ const configHTML = `
 						</select>
 				</label>
 
-				<label for="limitimer-serial">
-					<span>Serial device for limitimer communication</span>
-					<input type="text" id="limitimer-serial" name="limitimer-serial" value="{{.EngineOptions.LimitimerSerial}}" />
-				</label>
+				{{text "limitimer-serial" "Serial device for limitimer communication." .EngineOptions.LimitimerSerial}}
 
 				<p>RS-485 reception and OSC broadcast controls for individual limitimer source programs:</p>
 				<table>
@@ -492,15 +391,8 @@ const configHTML = `
 						</select>
 				</label>
 
-				<label for="upd-timer-1">
-					<span>Timer number for StageTimer2 UDP timer 1 from port 36700</span>
-					<input type="number" min="0" max="9" id="udp-timer-1" name="udp-timer-1" value="{{.EngineOptions.UDPTimer1}}" />
-				</label>
-
-				<label for="upd-timer-2">
-					<span>Timer number for StageTimer2 UDP timer 2 from port 36701</span>
-					<input type="number" min="0" max="9" id="udp-timer-2" name="udp-timer-2" value="{{.EngineOptions.UDPTimer2}}" />
-				</label>
+				{{counter "udp-timer-1" "Timer number for StageTimer2 UDP timer 1 from port 36700" .EngineOptions.UDPTimer1}}
+				{{counter "udp-timer-2" "Timer number for StageTimer2 UDP timer 2 from port 36701" .EngineOptions.UDPTimer2}}
 			</fieldset>
 			<fieldset>
 				<legend>Colors</legend>
@@ -508,97 +400,35 @@ const configHTML = `
 				<fieldset>
 					<legend>Round clocks</legend>
 
-					<label for="TextColor">
-						<span>Color for text</span>
-						<input type="color" id="TextColor" name="TextColor" value="{{.TextColor}}" />
-					</label>
-
-					<label for="SecColor">
-						<span>Color for second ring circles</span>
-						<input type="color" id="SecColor" name="SecColor" value="{{.SecondColor}}" />
-					</label>
-
-					<label for="StaticColor">
-						<span>Color for 12 static "hour" markers</span>
-						<input type="color" id="StaticColor" name="StaticColor" value="{{.StaticColor}}" />
-					</label>
-
-					<label for="CountdownColor">
-						<span>Color for secondary countdown display</span>
-						<input type="color" id="CountdownColor" name="CountdownColor" value="{{.CountdownColor}}" />
-					</label>
+					{{color "TextColor" "Color for text." .TextColor}}
+					{{color "SecColor" "Color for the second ring circles." .SecondColor}}
+					{{color "StaticColor" "Color for 12 static \"hour\" markers." .StaticColor}}
+					{{color "CountdownColor" "Color for secondary countdown display." .CountdownColor}}
 				</fieldset>
 				<fieldset>
 					<legend>Text clock</legend>
 
-					<label for="Row1Color">
-						<span>Color timer row 1</span>
-						<input type="color" id="Row1Color" name="Row1Color" value="{{.Row1Color}}" />
-					</label>
+					{{color "Row1Color" "Color for timer row 1." .Row1Color}}
+					{{uint8 "row1-alpha" "Alpha for timer row 1." .Row1Alpha}}
 
-					<label for="row1-alpha">
-						<span>Alpha for timer row 1</span>
-						<input type="number" min="0" max="255" id="row1-alpha" name="row1-alpha" value="{{.Row1Alpha}}" />
-					</label>
+					{{color "Row2Color" "Color for timer row 2." .Row2Color}}
+					{{uint8 "row2-alpha" "Alpha for timer row 2." .Row2Alpha}}
 
-					<label for="Row2Color">
-						<span>Color timer row 2</span>
-						<input type="color" id="Row2Color" name="Row2Color" value="{{.Row2Color}}" />
-					</label>
+					{{color "Row3Color" "Color for timer row 3." .Row3Color}}
+					{{uint8 "row3-alpha" "Alpha for timer row 3." .Row3Alpha}}
 
-					<label for="row2-alpha">
-						<span>Alpha for timer row 2</span>
-						<input type="number" min="0" max="255" id="row2-alpha" name="row2-alpha" value="{{.Row2Alpha}}" />
-					</label>
-
-					<label for="Row3Color">
-						<span>Color timer row 3</span>
-						<input type="color" id="Row3Color" name="Row3Color" value="{{.Row3Color}}" />
-					</label>
-
-					<label for="row3-alpha">
-						<span>Alpha for timer row 3</span>
-						<input type="number" min="0" max="255" id="row3-alpha" name="row3-alpha" value="{{.Row3Alpha}}" />
-					</label>
-
-					<label for="LabelColor">
-						<span>Color for timer titles</span>
-						<input type="color" id="LabelColor" name="LabelColor" value="{{.LabelColor}}" />
-					</label>
-
-					<label for="label-alpha">
-						<span>Alpha for timer titles</span>
-						<input type="number" min="0" max="255" id="label-alpha" name="label-alpha" value="{{.LabelAlpha}}" />
-					</label>
-
+					{{color "LabelColor" "Color for timer titles." .LabelColor}}
+					{{uint8 "label-alpha" "Alpha for timer titles." .LabelAlpha}}
 
 					{{ checkbox "DrawBoxes" "Draw background boxes for labels and timers." .DrawBoxes}}
 
-					<label for="LabelBG">
-						<span>Background color for timer titles</span>
-						<input type="color" id="LabelBG" name="LabelBG" value="{{.LabelBG}}" />
-					</label>
+					{{color "LabelBG" "Background color for time titles." .LabelBG}}
+					{{uint8 "label-bg-alpha" "Alpha for timer title backgrounds." .LabelBGAlpha}}
 
-					<label for="label-bg-alpha">
-						<span>Alpha for timer title backgrounds</span>
-						<input type="number" min="0" max="255" id="label-bg-alpha" name="label-bg-alpha" value="{{.LabelBGAlpha}}" />
-					</label>
+					{{color "TimerBG" "Background color for timers." .TimerBG}}
+					{{uint8 "timer-bg-alpha" "Alpha for timer backgrounds." .TimerBGAlpha}}
 
-					<label for="TimerBG">
-						<span>Background color for timers</span>
-						<input type="color" id="TimerBG" name="TimerBG" value="{{.TimerBG}}" />
-					</label>
-
-					<label for="timer-bg-alpha">
-						<span>Alpha for timer backgrounds</span>
-						<input type="number" min="0" max="255" id="timer-bg-alpha" name="timer-bg-alpha" value="{{.TimerBGAlpha}}" />
-					</label>
-
-					<label for="NumberFontSize">
-						<span>Size used to render number text, higher results in smoother letters, but going too high will crash on the rpi</span>
-						<input type="number" min="0" id="NumberFontSize" name="NumberFontSize" value="{{.NumberFontSize}}" />
-					</label>
-
+					{{number "NumberFontSize" "Size used to render number tect, higher results in smoother letters, but going too high will crash on the rpi." .NumberFontSize}}
 				</fieldset>
 			</fieldset>
 			<fieldset>

@@ -67,6 +67,14 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"number\" min=\"0\" max=\"9\" id=\"%s\" name=\"%s\" value=\"%d\" /></label>", id, label, id, id, value)
 				return htmlTemplate.HTML(ret)
 			},
+			"byte": func(id string, label string, value int) htmlTemplate.HTML {
+				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"number\" min=\"0\" max=\"255\" id=\"%s\" name=\"%s\" value=\"%d\" /></label>", id, label, id, id, value)
+				return htmlTemplate.HTML(ret)
+			},
+			"uint8": func(id string, label string, value uint8) htmlTemplate.HTML {
+				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"number\" min=\"0\" max=\"255\" id=\"%s\" name=\"%s\" value=\"%d\" /></label>", id, label, id, id, value)
+				return htmlTemplate.HTML(ret)
+			},
 		})
 	tmpl, err := t.Parse(configHTML)
 
