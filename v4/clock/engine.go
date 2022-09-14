@@ -99,6 +99,7 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 
 	engine.initPicturall(options)
 	engine.initVmix(options)
+	engine.initTricaster(options)
 	engine.initUDPTime(options)
 	engine.initLimitimer(options)
 

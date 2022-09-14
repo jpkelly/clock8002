@@ -236,5 +236,28 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	eo.VmixMediaBG = r.FormValue("vmix-media-bg")
 	errors += ValidateColor(eo.VmixMediaBG, "vMix media background color")
 
+	// Tricaster
+	eo.TricasterEnabled = r.FormValue("tricaster-enabled") != ""
+	eo.TricasterAddress = r.FormValue("tricaster-address")
+	eo.TricasterUser = r.FormValue("tricaster-username")
+	eo.TricasterPassword = r.FormValue("tricaster-password")
+	eo.TricasterTimer, err = strconv.Atoi(r.FormValue("tricaster-timer"))
+	errors += ValidateNumber(err, "Tricaster destination timer")
+	errors += ValidateTimer(eo.TricasterTimer, "Tricaster destination timer")
+	eo.TricasterEventTimer, err = strconv.Atoi(r.FormValue("tricaster-event-timer"))
+	errors += ValidateNumber(err, "Tricaster event destination timer")
+	errors += ValidateTimer(eo.TricasterEventTimer, "Tricaster event destination timer")
+	eo.TricasterMediaName = r.FormValue("tricaster-media-name") != ""
+	eo.TricasterPVM = r.FormValue("tricaster-show-pvm") != ""
+	eo.TricasterMediaColor = r.FormValue("tricaster-media-color")
+	errors += ValidateColor(eo.TricasterMediaColor, "Tricaster media text color")
+	eo.TricasterMediaBG = r.FormValue("tricaster-media-bg")
+	errors += ValidateColor(eo.TricasterMediaBG, "Tricaster media background color")
+	eo.TricasterInterval, err = strconv.Atoi(r.FormValue("tricaster-interval"))
+	errors += ValidateNumber(err, "Tricaster polling interval")
+	eo.TricasterTimeout, err = strconv.Atoi(r.FormValue("tricaster-timeout"))
+	errors += ValidateNumber(err, "Tricaster timeout")
+	eo.TricasterEvent = r.FormValue("tricaster-event-enabled") != ""
+
 	return eo, errors
 }

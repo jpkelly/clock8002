@@ -330,6 +330,29 @@ const configHTML = `
 			</fieldset>
 
 			<fieldset>
+				<legend>Tricaster integration</legend>
+				<p>Show data from the first live DDR with media on a tricaster system.
+				By default only PGM and overlays are considered. For playlists
+				the shown time left is the total playlist remaining time.</p>
+
+				<p>Caveats: Tricaster doesn't provide play/pause or loop information in the
+				API.</p>
+
+				{{checkbox "tricaster-enabled" "Enable tricaster integration." .EngineOptions.TricasterEnabled}}
+				{{text "tricaster-address" "Address to connect to" .EngineOptions.TricasterAddress}}
+				{{text "tricaster-username" "Username for the tricaster system, default: admin." .EngineOptions.TricasterUser}}
+				{{text "tricaster-password" "Password for the tricaster system, default: admin." .EngineOptions.TricasterPassword}}
+				{{counter "tricaster-timer" "Timer number for feedback from tricaster." .EngineOptions.TricasterTimer}}
+				{{checkbox "tricaster-show-pvm" "Show media playing in preview also." .EngineOptions.TricasterPVM}}
+				{{checkbox "tricaster-event-enabled" "Show time until next tricaster event on a timer." .EngineOptions.TricasterEvent}}
+				{{counter "tricaster-event-timer" "Timer number for the event timer." .EngineOptions.TricasterEventTimer}}
+				{{checkbox "tricaster-media-name" "Show media name as tally message on the clock." .EngineOptions.TricasterMediaName}}
+				{{color "tricaster-media-color" "Media name text color." .EngineOptions.TricasterMediaColor}}
+				{{color "tricaster-media-bg" "Media name background color" .EngineOptions.TricasterMediaBG}}
+				{{number "tricaster-interval" "Polling interval, in milliseconds. Adjust if the clock causes too high load on the tricaster or if you need better accuracy." .EngineOptions.TricasterInterval}}
+				{{number "tricaster-timeout" "Message timeout for clearing the clock display, in milliseconds." .EngineOptions.TricasterTimeout}}
+			</fieldset>
+			<fieldset>
 				<legend>DSAN Limitimer</legend>
 				<p>See <a href="https://gitlab.com/clock-8001/clock-8001/-/blob/master/limitimer.md">https://gitlab.com/Depili/clock-8001/-/blob/master/limitimer.md</a> for documentation.</p>
 				<label for="limitimer-mode">

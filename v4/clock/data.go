@@ -133,6 +133,8 @@ type EngineOptions struct {
 	VmixInterval       int    `long:"vmix-interval" description:"vMix polling interval, in milliseconds" default:"200"`
 	VmixTimeout        int    `long:"vmix-timeout" description:"Timeout for vMix communication, in milliseconds" default:"1000"`
 
+	TricasterOptions
+
 	Source1 *SourceOptions `group:"1st clock display source" namespace:"source1"`
 	Source2 *SourceOptions `group:"2nd clock display source" namespace:"source2"`
 	Source3 *SourceOptions `group:"3rd clock display source" namespace:"source3"`
@@ -202,6 +204,7 @@ type Engine struct {
 	milluminCounter     *Counter
 	picturall           picturallState
 	vmix                vmixState
+	tricaster           tricasterState
 	background          int
 	info                string // Version, ip address etc
 	showInfo            bool

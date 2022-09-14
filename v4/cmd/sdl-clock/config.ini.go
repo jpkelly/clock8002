@@ -272,6 +272,35 @@ vmix-interval={{.EngineOptions.VmixInterval}}
 # Communication timeout
 vmix-timeout={{.EngineOptions.VmixTimeout}}
 
+# Tricaster
+
+# Set to true to enable tricaster integration
+tricaster-enabled={{.EngineOptions.TricasterEnabled}}
+# Tricaster address
+tricaster-address={{.EngineOptions.TricasterAddress}}
+# Tricaster username and password for the API, defaults are admin/admin
+tricaster-username={{.EngineOptions.TricasterUser}}
+tricaster-password={{.EngineOptions.TricasterPassword}}
+# Tricaster timer number for the feedback
+tricaster-timer={{.EngineOptions.TricasterTimer}}
+# Set to true to also show content playing in preview
+tricaster-show-pvm={{.EngineOptions.TricasterPVM}}
+# Set to true to show time until next tricaster event on a timer
+tricaster-event-enabled={{.EngineOptions.TricasterEvent}}
+# Timer number to use
+tricaster-event-timer={{.EngineOptions.TricasterEventTimer}}
+# Show playing media name as clock tally message
+tricaster-media-name={{.EngineOptions.TricasterMediaName}}
+# Tricaster media name color and background, html colors
+tricaster-media-color={{.EngineOptions.TricasterMediaColor}}
+tricaster-media-bg={{.EngineOptions.TricasterMediaBG}}
+# Tricaster timers, in milliseconds:
+# Polling interval, adjust if there is excessive load on the tricaster.
+tricaster-interval={{.EngineOptions.TricasterInterval}}
+# Communication timeout
+tricaster-timeout={{.EngineOptions.TricasterTimeout}}
+
+
 # Limitimer
 # see https://gitlab.com/clock-8001/clock-8001/-/blob/master/limitimer.md
 
