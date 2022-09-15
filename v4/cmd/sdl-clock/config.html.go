@@ -136,7 +136,7 @@ const configHTML = `
 					{{checkbox "source1-tod" "Enable time of day input on this source" .EngineOptions.Source1.Tod}}
 
 					<label for="source1-timezone">
-						<span>Timezone for the time of day input</span>x
+						<span>Timezone for the time of day input</span>
 						{{$selected := .EngineOptions.Source1.TimeZone}}
 						<select id="source1-timezone" name="source1-timezone" >
 							{{ range $tz := .Timezones }}
