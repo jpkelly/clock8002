@@ -1,3 +1,20 @@
+## Version 4.14.0
+* New features:
+  * vMix integration
+    * The clock can now show time remaining on videos playing in vMix
+  * Tricaster integration
+    * The clock can show DDR playback information and event timer info
+    * Caveats: tricaster doesn't provide play/pause nor loop info on the API
+  * GPIO output module for driving pulse per second/minute clocks
+    * Uses two pins per pulse, meant for relays to create the alternating polarity pulses for clocks.
+* Bugfixes:
+  * Picturall: Additional work on the message parsers
+    * Deal with literal \n sequences in text fields
+    * Capture floating point values and negative numeric values
+  * Window handling improvements:
+    * Do not create too large intial window when running on windows
+    * Do not exit fullscreen on focus loss
+
 ## Version 4.13.3
 * Picturall: Better parsers for the messages
   * Previous parsers didn't cope with filenames with spaces (among other things)
