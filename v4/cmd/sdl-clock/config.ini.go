@@ -11,6 +11,12 @@ Face={{.Face}}
 HTTPUser={{.HTTPUser}}
 HTTPPassword={{.HTTPPassword}}
 
+# Only show minutes and seconds on the countdowns on the text clock
+hide-hours={{.HideHours}}
+
+# Do not show icons on the text clocks
+disable-icons={{.IconsDisable}}
+
 # Set to true to use 12 hour format for time-of-day display.
 Format12h={{.EngineOptions.Format12h}}
 

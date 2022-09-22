@@ -11,6 +11,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type outputLine struct {
@@ -101,11 +102,16 @@ func drawTextClock(state *clock.State) {
 		}
 
 		text := clk.Text
+		if options.HideHours && clk.Mode != clock.Normal {
+			parts := strings.Split(text, ":")
+			if len(parts) == 3 {
+				text = parts[1] + ":" + parts[2]
+			}
+		}
+
 		if clk.Expired && clk.Mode == clock.Countdown {
 			if !state.Flash {
 				text = " "
-			} else {
-				text = clk.Text
 			}
 		}
 
@@ -117,7 +123,9 @@ func drawTextClock(state *clock.State) {
 			}
 		}
 		renderLabel(i, fmt.Sprintf("%.10s", clk.Label), titleColor)
-		renderIcon(i, clk.Icon, colors.row[i])
+		if !options.IconsDisable {
+			renderIcon(i, clk.Icon, colors.row[i])
+		}
 		renderSignal(i, clk.SignalColor)
 	}
 

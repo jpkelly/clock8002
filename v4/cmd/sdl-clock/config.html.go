@@ -52,6 +52,8 @@ const configHTML = `
 						</select><br />
 					</label>
 
+					{{checkbox "hide-hours" "Only show minutes and seconds for countdowns on the text clocks" .HideHours}}
+					{{checkbox "disable-icons" "Do not show icons on the text clocks" .IconsDisable}}
 					{{checkbox "Format12h" "Use 12 hour format for time-of-day display" .EngineOptions.Format12h }}
 					{{checkbox "NoARCorrection" "Disable detection of official raspberry pi display for aspect ratio correction" .NoARCorrection}}
 					{{checkbox "FullScreen" "Start in full screen mode (ignored on raspberry pi images)" .FullScreen }}

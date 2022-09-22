@@ -113,6 +113,8 @@ type clockOptions struct {
 	VoiceEnabled bool   `long:"voice" description:"Load and play samples according to countdown or media state"`
 	VoiceDir     string `long:"voice-dir" description:"Directory to load voice samples from" default:"voices/us"`
 
+	IconsDisable    bool   `long:"disable-icons" description:"Do not show timer icons"`
+	HideHours       bool   `long:"hide-hours" description:"Only show minutes and seconds on counters"`
 	CountdownTarget string `long:"countdown-target" default:"2020-12-24 00:00:00"`
 
 	gpioOptions
