@@ -147,6 +147,11 @@ func drawSingleLineClock(state *clock.State) {
 	numberBox := sdl.Rect{X: 25, Y: 290, H: 440, W: 1920 - 50}
 	iconR := sdl.Rect{X: 25, Y: 290, H: 440, W: 300}
 	textR := sdl.Rect{X: 375, Y: 290, H: 440, W: 1920 - 425}
+
+	if options.IconsDisable {
+		textR = numberBox
+	}
+
 	signalR := sdl.Rect{X: 1920 - 170, Y: 115, H: 150, W: 150}
 
 	if options.DrawBoxes {
@@ -190,6 +195,9 @@ func draw3TextClocks(state *clock.State) {
 		x = 530
 		numberBox := sdl.Rect{X: x, Y: y, W: 1380, H: 300}
 		textR := sdl.Rect{X: x + 300, Y: y, W: 1380 - 300, H: 300}
+		if options.IconsDisable {
+			textR = numberBox
+		}
 		iconR := sdl.Rect{X: x, Y: y, W: 300, H: 300}
 		x = 10
 		labelR := sdl.Rect{X: x, Y: y, W: 500, H: 100}
