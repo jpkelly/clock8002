@@ -1,3 +1,8 @@
+## Version 4.15.0
+* New features:
+  * Ability to hide hours field on text clock timers
+  * Ability to hide icons on text clock timers
+
 ## Version 4.14.0
 * New features:
   * vMix integration
