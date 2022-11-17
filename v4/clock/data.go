@@ -49,6 +49,9 @@ const (
 	colorEnd     = 2
 )
 
+const mediaTimeout = 1000 * time.Millisecond
+const mediaTickRate = 50 * time.Millisecond
+
 // SourceOptions contains all options for clock display sources.
 type SourceOptions struct {
 	Text          string `long:"text" description:"Title text for the time source"`

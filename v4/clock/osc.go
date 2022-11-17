@@ -27,6 +27,9 @@ func (engine *Engine) listen() {
 	ltcTimer := timer.NewTimer(engine.timeout)
 	ltcTimer.Stop() // Needed to prevent a timeout at the start
 
+	mediaTimeouts := make([]*time.Time, numCounters)
+	mediaTicker := time.NewTicker(mediaTickRate)
+
 	mittiTimer := timer.NewTimer(updateTimeout)
 	milluminTimer := timer.NewTimer(updateTimeout)
 	stateTicker := time.NewTicker(stateTimer)
@@ -56,6 +59,14 @@ func (engine *Engine) listen() {
 				engine.PauseCounter(message.Counter)
 			case "timerResume":
 				engine.ResumeCounter(message.Counter)
+			case "timerMedia":
+				m := message.MediaMessage
+				engine.Counters[message.Counter].SetMedia(m.hours, m.minutes, m.seconds, m.frames, time.Duration(m.remaining)*time.Second, float64(m.progress), m.paused, m.looping)
+				t := time.Now().Add(mediaTimeout)
+				mediaTimeouts[message.Counter] = &t
+			case "timerResetMedia":
+				engine.Counters[message.Counter].ResetMedia()
+				mediaTimeouts[message.Counter] = nil
 			case "display":
 				msg := message.DisplayMessage
 				log.Printf("Setting tally message to: %s", msg.Text)
@@ -127,14 +138,14 @@ func (engine *Engine) listen() {
 				mittiTimer.Reset(updateTimeout)
 
 				m := message.MediaMessage
-				engine.mittiCounter.SetMedia(m.hours, m.minutes, m.seconds, m.frames, time.Duration(m.remaining)*time.Second, m.progress, m.paused, m.looping)
+				engine.mittiCounter.SetMedia(m.hours, m.minutes, m.seconds, m.frames, time.Duration(m.remaining)*time.Second, float64(m.progress), m.paused, m.looping)
 			case "mittiReset":
 				engine.mittiCounter.ResetMedia()
 			case "millumin:":
 				milluminTimer.Reset(updateTimeout)
 
 				m := message.MediaMessage
-				engine.milluminCounter.SetMedia(m.hours, m.minutes, m.seconds, m.frames, time.Duration(m.remaining)*time.Second, m.progress, m.paused, m.looping)
+				engine.milluminCounter.SetMedia(m.hours, m.minutes, m.seconds, m.frames, time.Duration(m.remaining)*time.Second, float64(m.progress), m.paused, m.looping)
 			case "milluminReset":
 				engine.milluminCounter.ResetMedia()
 			case "background":
@@ -217,6 +228,13 @@ func (engine *Engine) listen() {
 			}
 		case <-udpTicker.C:
 			engine.sendUDPTimers()
+		case <-mediaTicker.C:
+			for i := range mediaTimeouts {
+				if t := mediaTimeouts[i]; t != nil && time.Now().After(*t) {
+					engine.Counters[i].ResetMedia()
+					mediaTimeouts[i] = nil
+				}
+			}
 		}
 	}
 }

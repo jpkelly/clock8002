@@ -403,6 +403,9 @@ func (server *Server) handleMedia(msg *osc.Message) {
 		message.Type = "mitti"
 	} else if msg.Address == "/clock/media/millumin" {
 		message.Type = "millumin"
+	} else if matches := server.timerRegexp.FindStringSubmatch(msg.Address); len(matches) == 2 {
+		message.Counter, _ = strconv.Atoi(matches[1])
+		message.Type = "timerMedia"
 	} else {
 		log.Printf("Unknown media message: %v", msg)
 		return
@@ -436,6 +439,9 @@ func (server *Server) handleResetMedia(msg *osc.Message) {
 		message.Type = "mittiReset"
 	} else if msg.Address == "/clock/resetmedia/millumin" {
 		message.Type = "milluminReset"
+	} else if matches := server.timerRegexp.FindStringSubmatch(msg.Address); len(matches) == 2 {
+		message.Counter, _ = strconv.Atoi(matches[1])
+		message.Type = "timerResetMedia"
 	} else {
 		log.Printf("Unknown resetMedia message: %v", msg)
 		return
@@ -692,6 +698,8 @@ func (server *Server) setupDispatch(d *oscutil.RegexpDispatcher) {
 	registerHandler(d, "^/clock/timer/*/stop", server.handleTimerStop)
 	registerHandler(d, "^/clock/timer/*/pause", server.handleTimerPause)
 	registerHandler(d, "^/clock/timer/*/resume", server.handleTimerResume)
+	registerHandler(d, "^/clock/timer/*/media", server.handleMedia)
+	registerHandler(d, "^/clock/timer/*/resetmedia", server.handleResetMedia)
 	registerHandler(d, "^/clock/pause", server.handlePause)
 	registerHandler(d, "^/clock/resume", server.handleResume)
 	registerHandler(d, "^/clock/limitimer/*", server.handleLimitimer)

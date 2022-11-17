@@ -575,7 +575,6 @@ func (counter *Counter) ResetSlave() {
 // SetMedia sets the counter state from a playing media file
 func (counter *Counter) SetMedia(hours, minutes, seconds, frames int32, remaining time.Duration, progress float64, paused bool, looping bool) {
 	// FIXME: .truncate(time.Second) and mitti timers cause blinking on second changes!
-	fmt.Printf("Foobar\n")
 	m := mediaState{
 		hours:     hours,
 		minutes:   minutes,
