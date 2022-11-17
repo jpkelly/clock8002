@@ -70,6 +70,17 @@ type TimerOptions struct {
 	ListenPort        int  `long:"port" description:"Port to listen to for mitti and millumin osc messages"`
 	MittiBroadcast    bool `long:"mitti-broadcast" description:"Broadcast received mitti state to other clocks"`
 	MilluminBroadcast bool `long:"millumin-broadcast" description:"Broadcast received millumin state to other clocks"`
+
+	VmixEnabled        bool   `long:"vmix-enabled" description:"Enable vMix integration"`
+	VmixAddress        string `long:"vmix-address" description:"vMix IP address"`
+	VmixPort           int    `long:"vmix-port" description:"vMmix http port" default:"8088"`
+	VmixLoops          bool   `long:"vmix-loops" description:"vMix show looping media"`
+	VmixPGMOnly        bool   `long:"vmix-pgm-only" description:"Only show PGM media information, ignore all overlays"`
+	VmixPVM            bool   `long:"vmix-show-pvm" description:"Do not ingore media playing in vMix preview"`
+	VmixIgnoreOverlays string `long:"vmix-ignore-overlays" description:"vMix: Comma separated list of overlay numbers to ignore"`
+	VmixMediaName      bool   `long:"vmix-media-name" description:"Show vMix media name as clock text"`
+	VmixMediaColor     string `long:"vmix-media-color" description:"CSS color for vMix media name" default:"#FF8000"`
+	VmixMediaBG        string `long:"vmix-media-bg" description:"CSS color for vMix media name background" default:"#101010"`
 }
 
 // EngineOptions contains all common options for clock.Engines
@@ -129,17 +140,17 @@ type EngineOptions struct {
 	PicturallMediaColor   string `long:"picturall-media-color" description:"CSS color for picturall media name" default:"#FF8000"`
 	PicturallMediaBG      string `long:"picturall-media-bg" description:"CSS color for picturall media name background" default:"#101010"`
 
-	VmixEnabled        bool   `long:"vmix-enabled" description:"Enable vMix integration"`
-	VmixAddress        string `long:"vmix-address" description:"vMix IP address"`
-	VmixPort           int    `long:"vmix-port" description:"vMmix http port" default:"8088"`
-	VmixTimer          int    `long:"vmix-timer" description:"Timer for vMix video state" default:"6"`
-	VmixLoops          bool   `long:"vmix-loops" description:"vMix show looping media"`
-	VmixPGMOnly        bool   `long:"vmix-pgm-only" description:"Only show PGM media information, ignore all overlays"`
-	VmixPVM            bool   `long:"vmix-show-pvm" description:"Do not ingore media playing in vMix preview"`
-	VmixIgnoreOverlays string `long:"vmix-ignore-overlays" description:"vMix: Comma separated list of overlay numbers to ignore"`
-	VmixMediaName      bool   `long:"vmix-media-name" description:"Show vMix media name as clock text"`
-	VmixMediaColor     string `long:"vmix-media-color" description:"CSS color for vMix media name" default:"#FF8000"`
-	VmixMediaBG        string `long:"vmix-media-bg" description:"CSS color for vMix media name background" default:"#101010"`
+	VmixEnabled        bool   `long:"vmix-enabled" description:"Enable vMix integration" hidden:"true"`
+	VmixAddress        string `long:"vmix-address" description:"vMix IP address" hidden:"true"`
+	VmixPort           int    `long:"vmix-port" description:"vMmix http port" default:"8088" hidden:"true"`
+	VmixTimer          int    `long:"vmix-timer" description:"Timer for vMix video state" default:"6" hidden:"true"`
+	VmixLoops          bool   `long:"vmix-loops" description:"vMix show looping media" hidden:"true"`
+	VmixPGMOnly        bool   `long:"vmix-pgm-only" description:"Only show PGM media information, ignore all overlays" hidden:"true"`
+	VmixPVM            bool   `long:"vmix-show-pvm" description:"Do not ingore media playing in vMix preview" hidden:"true"`
+	VmixIgnoreOverlays string `long:"vmix-ignore-overlays" description:"vMix: Comma separated list of overlay numbers to ignore" hidden:"true"`
+	VmixMediaName      bool   `long:"vmix-media-name" description:"Show vMix media name as clock text" hidden:"true"`
+	VmixMediaColor     string `long:"vmix-media-color" description:"CSS color for vMix media name" default:"#FF8000" hidden:"true"`
+	VmixMediaBG        string `long:"vmix-media-bg" description:"CSS color for vMix media name background" default:"#101010" hidden:"true"`
 	VmixInterval       int    `long:"vmix-interval" description:"vMix polling interval, in milliseconds" default:"200"`
 	VmixTimeout        int    `long:"vmix-timeout" description:"Timeout for vMix communication, in milliseconds" default:"1000"`
 
@@ -226,7 +237,7 @@ type Engine struct {
 	mittiCounter        *Counter
 	milluminCounter     *Counter
 	picturall           picturallState
-	vmix                vmixState
+	vmix                []*vmixState
 	tricaster           tricasterState
 	background          int
 	info                string // Version, ip address etc

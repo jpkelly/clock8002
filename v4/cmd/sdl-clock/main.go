@@ -395,13 +395,28 @@ func computeDerivedOptions() {
 		defaultSourceConfig()
 	}
 
+	if options.Debug {
+		debug.Enabled = true
+	}
+
+	o := options.EngineOptions
+	if len(o.TimerOptions) != 10 {
+		o.TimerOptions = make([]*clock.TimerOptions, 10)
+		o.TimerOptions[0] = o.Timer0
+		o.TimerOptions[1] = o.Timer1
+		o.TimerOptions[2] = o.Timer2
+		o.TimerOptions[3] = o.Timer3
+		o.TimerOptions[4] = o.Timer4
+		o.TimerOptions[5] = o.Timer5
+		o.TimerOptions[6] = o.Timer6
+		o.TimerOptions[7] = o.Timer7
+		o.TimerOptions[8] = o.Timer8
+		o.TimerOptions[9] = o.Timer9
+	}
+
 	// Dump the current config to stdout
 	if options.DumpConfig {
 		dumpConfig()
-	}
-
-	if options.Debug {
-		debug.Enabled = true
 	}
 }
 

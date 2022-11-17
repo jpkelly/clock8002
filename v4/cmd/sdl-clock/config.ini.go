@@ -152,6 +152,18 @@ timer{{$i}}.port={{$timer.ListenPort}}
 timer{{$i}}.mitti-broadcast={{$timer.MittiBroadcast}}
 timer{{$i}}.millumin-broadcast={{$timer.MilluminBroadcast}}
 
+
+# vMix
+timer{{$i}}.vmix-enabled={{$timer.VmixEnabled}}
+timer{{$i}}.vmix-address={{$timer.VmixAddress}}
+timer{{$i}}.vmix-port={{$timer.VmixPort}}
+timer{{$i}}.vmix-loops={{$timer.VmixLoops}}
+timer{{$i}}.vmix-pgm-only={{$timer.VmixPGMOnly}}
+timer{{$i}}.vmix-show-pvm={{$timer.VmixPVM}}
+timer{{$i}}.vmix-ignore-overlays={{$timer.VmixIgnoreOverlays}}
+timer{{$i}}.vmix-media-name={{$timer.VmixMediaName}}
+timer{{$i}}.vmix-media-color={{$timer.VmixMediaColor}}
+timer{{$i}}.vmix-media-bg={{$timer.VmixMediaBG}}
 {{end}}
 
 # Overtime behaviour
@@ -251,40 +263,8 @@ picturall-ignore-layers={{.EngineOptions.PicturallIgnoreLayers}}
 picturall-media-color={{.EngineOptions.PicturallMediaColor}}
 picturall-media-bg={{.EngineOptions.PicturallMediaBG}}
 
-# Vmix
-
-# Set to true to enable vMix integration
-vmix-enabled={{.EngineOptions.VmixEnabled}}
-
-# vMix ip address
-vmix-address={{.EngineOptions.VmixAddress}}
-
-# vMix http port
-vmix-port={{.EngineOptions.VmixPort}}
-
-# vMix timer number to use
-vmix-timer={{.EngineOptions.VmixTimer}}
-
-# vMix show looping media
-vmix-loops={{.EngineOptions.VmixLoops}}
-
-# vMix only show media in PGM, no overlays
-vmix-pgm-only={{.EngineOptions.VmixPGMOnly}}
-
-# vMix also show media on preview
-vmix-show-pvm={{.EngineOptions.VmixPVM}}
-
-# vMix ignore media on given overlays, comma separated list of overlay numbers, eg. 1,4,6
-vmix-ignore-overlays={{.EngineOptions.VmixIgnoreOverlays}}
-
-# vMix show playing media name as clock tally message
-vmix-media-name={{.EngineOptions.VmixMediaName}}
-
-# vMix media name color and background, html colors
-vmix-media-color={{.EngineOptions.VmixMediaColor}}
-vmix-media-bg={{.EngineOptions.VmixMediaBG}}
-
 # vMix timers, in milliseconds:
+
 # Polling interval, adjust if there is excessive load on the vMix machine.
 vmix-interval={{.EngineOptions.VmixInterval}}
 # Communication timeout

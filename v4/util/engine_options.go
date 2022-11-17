@@ -68,12 +68,6 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	eo.PicturallStreams = r.FormValue("picturall-streams") != ""
 	eo.PicturallMediaName = r.FormValue("picturall-media-name") != ""
 
-	eo.VmixEnabled = r.FormValue("vmix-enabled") != ""
-	eo.VmixLoops = r.FormValue("vmix-loops") != ""
-	eo.VmixPGMOnly = r.FormValue("vmix-pgm-only") != ""
-	eo.VmixPVM = r.FormValue("vmix-show-pvm") != ""
-	eo.VmixMediaName = r.FormValue("vmix-media-name") != ""
-
 	eo.AutoSignals = r.FormValue("auto-signals") != ""
 	eo.SignalStart = r.FormValue("signal-start") != ""
 
@@ -86,8 +80,6 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	eo.LimitimerSerial = r.FormValue("limitimer-serial")
 
 	eo.PicturallAddress = r.FormValue("picturall-address")
-
-	eo.VmixAddress = r.FormValue("vmix-address")
 
 	// Limitimer mode
 	eo.LimitimerMode = r.FormValue("limitimer-mode")
@@ -185,29 +177,12 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	eo.PicturallTimeout, err = strconv.Atoi(r.FormValue("picturall-timeout"))
 	errors += ValidateNumber(err, "Picturall timeout")
 
-	eo.VmixPort, err = strconv.Atoi(r.FormValue("vmix-port"))
-	errors += ValidateNumber(err, "vMix port")
-	eo.VmixTimer, err = strconv.Atoi(r.FormValue("vmix-timer"))
-	errors += ValidateNumber(err, "vMix timer")
-	eo.VmixInterval, err = strconv.Atoi(r.FormValue("vmix-interval"))
-	errors += ValidateNumber(err, "vMix interval")
-	eo.VmixTimeout, err = strconv.Atoi(r.FormValue("vmix-timeout"))
-	errors += ValidateNumber(err, "vMix timeout")
-
 	// Picturall ignore layers
 	picturallIgnoreLayers := r.FormValue("picturall-ignore-layers")
 	if ok, err := regexp.MatchString(`^(?:\d+,?)+$`, picturallIgnoreLayers); len(picturallIgnoreLayers) == 0 || (ok && err == nil) {
 		eo.PicturallIgnoreLayers = picturallIgnoreLayers
 	} else {
 		errors += "<li>Picturall layer ignore list is not valid</li>"
-	}
-
-	// vMix ignore overlays
-	vmixIgnoreOverlays := r.FormValue("vmix-ignore-overlays")
-	if ok, err := regexp.MatchString(`^(?:\d+,?)+$`, vmixIgnoreOverlays); len(vmixIgnoreOverlays) == 0 || (ok && err == nil) {
-		eo.VmixIgnoreOverlays = vmixIgnoreOverlays
-	} else {
-		errors += "<li>vMix overlay ignore list is not valid</li>"
 	}
 
 	eo.SignalColorStart = r.FormValue("signal-color-start")
@@ -230,11 +205,6 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	errors += ValidateColor(eo.PicturallMediaColor, "Picturall media text color")
 	eo.PicturallMediaBG = r.FormValue("picturall-media-bg")
 	errors += ValidateColor(eo.PicturallMediaBG, "Picturall media background color")
-
-	eo.VmixMediaColor = r.FormValue("vmix-media-color")
-	errors += ValidateColor(eo.VmixMediaColor, "vMix media text color")
-	eo.VmixMediaBG = r.FormValue("vmix-media-bg")
-	errors += ValidateColor(eo.VmixMediaBG, "vMix media background color")
 
 	// Tricaster
 	eo.TricasterEnabled = r.FormValue("tricaster-enabled") != ""
@@ -259,6 +229,12 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	errors += ValidateNumber(err, "Tricaster timeout")
 	eo.TricasterEvent = r.FormValue("tricaster-event-enabled") != ""
 
+	// vMix global options
+	eo.VmixInterval, err = strconv.Atoi(r.FormValue("vmix-interval"))
+	errors += ValidateNumber(err, "vMix interval")
+	eo.VmixTimeout, err = strconv.Atoi(r.FormValue("vmix-timeout"))
+	errors += ValidateNumber(err, "vMix timeout")
+
 	// Timer options
 	eo.TimerOptions = make([]*clock.TimerOptions, 10)
 	for i := range eo.TimerOptions {
@@ -270,6 +246,29 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 
 		o.MittiBroadcast = r.FormValue(base+"mitti-broadcast") != ""
 		o.MilluminBroadcast = r.FormValue(base+"millumin-broadcast") != ""
+
+		// vMix
+		o.VmixEnabled = r.FormValue(base+"vmix-enabled") != ""
+		o.VmixLoops = r.FormValue(base+"vmix-loops") != ""
+		o.VmixPGMOnly = r.FormValue(base+"vmix-pgm-only") != ""
+		o.VmixPVM = r.FormValue(base+"vmix-show-pvm") != ""
+		o.VmixMediaName = r.FormValue(base+"vmix-media-name") != ""
+		o.VmixAddress = r.FormValue(base + "vmix-address")
+
+		o.VmixPort, err = strconv.Atoi(r.FormValue(base + "vmix-port"))
+		errors += ValidateNumber(err, errorName+"vMix port")
+
+		vmixIgnoreOverlays := r.FormValue(base + "vmix-ignore-overlays")
+		if ok, err := regexp.MatchString(`^(?:\d+,?)+$`, vmixIgnoreOverlays); len(vmixIgnoreOverlays) == 0 || (ok && err == nil) {
+			o.VmixIgnoreOverlays = vmixIgnoreOverlays
+		} else {
+			errors += "<li>" + errorName + "vMix overlay ignore list is not valid</li>"
+		}
+		o.VmixMediaColor = r.FormValue(base + "vmix-media-color")
+		errors += ValidateColor(o.VmixMediaColor, errorName+"vMix media text color")
+		o.VmixMediaBG = r.FormValue(base + "vmix-media-bg")
+		errors += ValidateColor(o.VmixMediaBG, errorName+"vMix media background color")
+
 		eo.TimerOptions[i] = &o
 	}
 

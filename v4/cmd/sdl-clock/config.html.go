@@ -243,9 +243,26 @@ const configHTML = `
 				{{range $i, $timer := .EngineOptions.TimerOptions }}
 					<fieldset>
 						<legend>Timer {{$i}}</legend>
-						{{number (printf "timer%d-port" $i) "Mitti and Millumin OSC port" $timer.ListenPort}}
-						{{checkbox (printf "timer%d-mitti-broadcast" $i) "Rebroadcast received Mitti state" $timer.MittiBroadcast}}
+
+						<h3>Millumin & Mitti</h3>
+
+						{{number (printf "timer%d-port" $i) "Millumin and Mitti OSC port, 0 disables" $timer.ListenPort}}
 						{{checkbox (printf "timer%d-millumin-broadcast" $i) "Rebroadcast received Millumin state" $timer.MilluminBroadcast}}
+						{{checkbox (printf "timer%d-mitti-broadcast" $i) "Rebroadcast received Mitti state" $timer.MittiBroadcast}}
+
+						<h3>vMix<h3>
+
+						{{checkbox (printf "timer%d-vmix-enabled" $i) "Enable vMix integration." $timer.VmixEnabled}}
+						{{text (printf "timer%d-vmix-address" $i) "Address to connect to." $timer.VmixAddress}}
+						{{number (printf "timer%d-vmix-port" $i) "Port to connect to" $timer.VmixPort}}
+						{{checkbox (printf "timer%d-vmix-loops" $i) "Show looping media" $timer.VmixLoops}}
+						{{checkbox (printf "timer%d-vmix-pgm-only" $i) "Show only PGM media (no overlays)." $timer.VmixPGMOnly}}
+						{{checkbox (printf "timer%d-vmix-show-pvm" $i) "Show media in preview." $timer.VmixPVM}}
+						{{text (printf "timer%d-vmix-ignore-overlays" $i) "List of overlay numbers to ignore, comma separated." $timer.VmixIgnoreOverlays}}
+						{{checkbox (printf "timer%d-vmix-media-name" $i) "Show media name as tally message on the clock." $timer.VmixMediaName}}
+						{{color (printf "timer%d-vmix-media-color" $i) "Media name text color." $timer.VmixMediaColor}}
+						{{color (printf "timer%d-vmix-media-bg" $i) "Media name background color" $timer.VmixMediaBG}}
+
 					</fieldset>
 				{{end}}
 			</fieldset>
@@ -342,17 +359,6 @@ const configHTML = `
 				<legend>vMix integration</legend>
 				<p>By default the clock displays the data about the first video found in list PGM - overlay 8... overlay 1.<p>
 
-				{{checkbox "vmix-enabled" "Enable vMix integration." .EngineOptions.VmixEnabled}}
-				{{text "vmix-address" "Address to connect to." .EngineOptions.VmixAddress}}
-				{{number "vmix-port" "Port to connect to" .EngineOptions.VmixPort}}
-				{{counter "vmix-timer" "Timer number for feedback from vMix." .EngineOptions.VmixTimer}}
-				{{checkbox "vmix-loops" "Show looping media" .EngineOptions.VmixLoops}}
-				{{checkbox "vmix-pgm-only" "Show only PGM media (no overlays)." .EngineOptions.VmixPGMOnly}}
-				{{checkbox "vmix-show-pvm" "Show media in preview." .EngineOptions.VmixPVM}}
-				{{text "vmix-ignore-overlays" "List of overlay numbers to ignore, comma separated." .EngineOptions.VmixIgnoreOverlays}}
-				{{checkbox "vmix-media-name" "Show media name as tally message on the clock." .EngineOptions.VmixMediaName}}
-				{{color "vmix-media-color" "Media name text color." .EngineOptions.VmixMediaColor}}
-				{{color "vmix-media-bg" "Media name background color" .EngineOptions.VmixMediaBG}}
 				{{number "vmix-interval" "Polling interval, in milliseconds. Adjust if the clock causes too high load on the vMix machine or if you need better accuracy." .EngineOptions.VmixInterval}}
 				{{number "vmix-timeout" "Message timeout for clearing the clock display, in milliseconds." .EngineOptions.VmixTimeout}}
 			</fieldset>
@@ -623,7 +629,7 @@ const configHTML = `
 			-moz-box-shadow: inset 0px 0px 15px #FFE5E5;
 			-webkit-box-shadow: inset 0px 0px 15px #FFE5E5;
 		}
-		.config-form fieldset legend{
+		.config-form fieldset legend {
 			color: #FFA0C9;
 			border-top: 1px solid #FFD2D2;
 			border-left: 1px solid #FFD2D2;
@@ -638,6 +644,9 @@ const configHTML = `
 			-webkit-box-shadow:-0px -1px 2px #F1F1F1;
 			font-weight: normal;
 			font-size: 12px;
+		}
+		.config-form h3{
+			color: #F072A9;
 		}
 		.config-form textarea{
 			width:250px;

@@ -69,20 +69,6 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	sources[2] = options.Source3
 	sources[3] = options.Source4
 
-	if len(options.TimerOptions) != 10 {
-		options.TimerOptions = make([]*TimerOptions, 10)
-		options.TimerOptions[0] = options.Timer0
-		options.TimerOptions[1] = options.Timer1
-		options.TimerOptions[2] = options.Timer2
-		options.TimerOptions[3] = options.Timer3
-		options.TimerOptions[4] = options.Timer4
-		options.TimerOptions[5] = options.Timer5
-		options.TimerOptions[6] = options.Timer6
-		options.TimerOptions[7] = options.Timer7
-		options.TimerOptions[8] = options.Timer8
-		options.TimerOptions[9] = options.Timer9
-	}
-
 	if err := engine.initSources(sources); err != nil {
 		log.Printf("Error initializing engine clock sources: %v", err)
 		return nil, err
@@ -374,6 +360,20 @@ func (engine *Engine) printVersion() {
 
 // initCounters initializes the countdown and count up timers
 func (engine *Engine) initCounters(options *EngineOptions) (err error) {
+	if len(options.TimerOptions) != 10 {
+		options.TimerOptions = make([]*TimerOptions, 10)
+		options.TimerOptions[0] = options.Timer0
+		options.TimerOptions[1] = options.Timer1
+		options.TimerOptions[2] = options.Timer2
+		options.TimerOptions[3] = options.Timer3
+		options.TimerOptions[4] = options.Timer4
+		options.TimerOptions[5] = options.Timer5
+		options.TimerOptions[6] = options.Timer6
+		options.TimerOptions[7] = options.Timer7
+		options.TimerOptions[8] = options.Timer8
+		options.TimerOptions[9] = options.Timer9
+	}
+
 	engine.Counters = make([]*Counter, numCounters)
 	for i := 0; i < numCounters; i++ {
 		engine.Counters[i] = &Counter{
