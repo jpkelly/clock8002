@@ -103,6 +103,14 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	engine.initUDPTime(options)
 	engine.initLimitimer(options)
 
+	port := 5000
+
+	for i := range engine.Counters {
+		addr := fmt.Sprintf("0.0.0.0:%d", port)
+		engine.mittiListen(addr, i, false)
+		port++
+	}
+
 	return &engine, nil
 }
 
@@ -165,34 +173,6 @@ func (engine *Engine) infoTimeout() {
 	}
 }
 
-func (engine *Engine) runOSC() {
-	engine.wg.Add(1)
-	defer engine.wg.Done()
-
-	err := engine.oscBridge()
-	if err != nil {
-		panic(err)
-	}
-
-	for {
-		err = engine.oscServer.ListenAndServe()
-		if err != nil {
-			if e, ok := err.(*net.OpError); ok {
-				if e.Temporary() {
-					log.Printf("OSC-listen: Temporary error: %v. Retrying", e)
-				} else {
-					log.Printf("OSC-listen fatal error: %v. Giving up", e)
-					return
-				}
-			} else {
-				log.Printf("OSC-listen error: %T %v", err, err)
-				log.Printf("Retrying...")
-			}
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-}
-
 // Listen for OSC messages
 func (engine *Engine) listen() {
 	engine.wg.Add(1)
@@ -213,10 +193,6 @@ func (engine *Engine) listen() {
 		select {
 		case <-engine.ctx.Done():
 			log.Printf("engine.listen() quitting")
-			err := engine.oscServer.Close()
-			if err != nil {
-				log.Printf("-> error: %v", err)
-			}
 			return
 		case message := <-oscChan:
 			// New OSC message received
@@ -965,32 +941,42 @@ func (engine *Engine) initSources(sources []*SourceOptions) error {
 
 // initOSC Sets up the OSC listener and feedback
 func (engine *Engine) initOSC(options *EngineOptions) {
-	if !options.DisableOSC {
-		engine.oscDispatcher = oscutil.NewRegexpDispatcher()
-		engine.oscServer = osc.Server{
-			Addr:    options.ListenAddr,
-			Handler: engine.oscDispatcher.Dispatch,
-		}
-		engine.clockServer = MakeServer(&engine.oscServer, engine.oscDispatcher, engine.uuid)
-		log.Printf("OSC control: listening on %v", engine.oscServer.Addr)
-
-		go engine.runOSC()
-
-		// process osc commands
-		go engine.listen()
-
-		if options.DisableFeedback {
-			engine.oscDests = nil
-			log.Printf("OSC feedback disabled")
-		} else {
-			// OSC feedback
-			engine.oscDests = initFeedback(engine.ctx, options.Connect)
-		}
-	} else {
-		log.Printf("OSC control and feedback disabled.\n")
-	}
+	// OSC feedback channel and processor
+	// We start this every time to consume the data even with
+	// OSC feedback disabled
 	engine.oscSendChan = make(chan []byte)
 	go engine.oscSender()
+
+	if options.DisableOSC {
+		log.Printf("OSC control and feedback disabled.\n")
+		return
+	}
+
+	engine.oscDispatcher = oscutil.NewRegexpDispatcher()
+	engine.oscServer = osc.Server{
+		Addr:    options.ListenAddr,
+		Handler: engine.oscDispatcher.Dispatch,
+	}
+	engine.clockServer = MakeServer(&engine.oscServer, engine.oscDispatcher, engine.uuid)
+	log.Printf("OSC control: listening on %v", engine.oscServer.Addr)
+
+	go engine.clockServer.run(engine.ctx, engine.wg)
+
+	err := engine.oscBridge(engine.clockServer.dispatcher)
+	if err != nil {
+		panic(err)
+	}
+
+	// process osc commands
+	go engine.listen()
+
+	if options.DisableFeedback {
+		log.Printf("OSC feedback disabled")
+		return
+	}
+
+	// OSC feedback destinations
+	engine.oscDests = initFeedback(engine.ctx, options.Connect)
 }
 
 func (engine *Engine) oscSender() {

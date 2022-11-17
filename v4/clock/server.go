@@ -6,10 +6,13 @@ import (
 	// "gitlab.com/Depili/go-osc/osc"
 	"github.com/chabad360/go-osc/osc"
 
+	"context"
 	"image/color"
 	"log"
+	"net"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -25,6 +28,8 @@ func MakeServer(oscServer *osc.Server, d *oscutil.RegexpDispatcher, uuid string)
 	var server = Server{
 		listeners:       make(map[chan Message]struct{}),
 		Debug:           false,
+		dispatcher:      d,
+		osc:             oscServer,
 		timerRegexp:     regexp.MustCompile(timerPattern),
 		sourceRegexp:    regexp.MustCompile(sourcePattern),
 		signalRegexp:    regexp.MustCompile(signalPattern),
@@ -40,12 +45,47 @@ func MakeServer(oscServer *osc.Server, d *oscutil.RegexpDispatcher, uuid string)
 type Server struct {
 	listeners       map[chan Message]struct{}
 	Debug           bool
+	dispatcher      *oscutil.RegexpDispatcher
+	osc             *osc.Server
 	timerRegexp     *regexp.Regexp
 	sourceRegexp    *regexp.Regexp
 	signalRegexp    *regexp.Regexp
 	limitimerRegexp *regexp.Regexp
 	lastMedia       time.Time
 	uuid            string
+}
+
+func (server *Server) run(ctx context.Context, wg *sync.WaitGroup) {
+	wg.Add(1)
+	defer wg.Done()
+	go server.closer(ctx)
+
+	for {
+		err := server.osc.ListenAndServe()
+		if err != nil {
+			if e, ok := err.(*net.OpError); ok {
+				if e.Temporary() {
+					log.Printf("OSC-listen: Temporary error: %v. Retrying", e)
+				} else {
+					log.Printf("OSC-listen fatal error: %v. Giving up", e)
+					return
+				}
+			} else {
+				log.Printf("OSC-listen error: %T %v", err, err)
+				log.Printf("Retrying...")
+			}
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func (server *Server) closer(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			server.osc.Close()
+		}
+	}
 }
 
 // Listen adds a new listener for the decoded incoming osc messages
