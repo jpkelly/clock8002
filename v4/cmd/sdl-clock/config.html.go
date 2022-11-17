@@ -233,6 +233,32 @@ const configHTML = `
 				</fieldset>
 			</fieldset>
 
+
+
+
+
+
+			<fieldset>
+				<legend>Timers</legend>
+				{{range $i, $timer := .EngineOptions.TimerOptions }}
+					<fieldset>
+						<legend>Timer {{$i}}</legend>
+						{{number (printf "timer%d-port" $i) "Mitti and Millumin OSC port" $timer.ListenPort}}
+						{{checkbox (printf "timer%d-mitti-broadcast" $i) "Rebroadcast received Mitti state" $timer.MittiBroadcast}}
+						{{checkbox (printf "timer%d-millumin-broadcast" $i) "Rebroadcast received Millumin state" $timer.MilluminBroadcast}}
+					</fieldset>
+				{{end}}
+			</fieldset>
+
+
+
+
+
+
+
+
+
+
 			<fieldset>
 				<legend>Overtime behaviour</legend>
 

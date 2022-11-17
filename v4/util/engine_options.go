@@ -259,5 +259,19 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	errors += ValidateNumber(err, "Tricaster timeout")
 	eo.TricasterEvent = r.FormValue("tricaster-event-enabled") != ""
 
+	// Timer options
+	eo.TimerOptions = make([]*clock.TimerOptions, 10)
+	for i := range eo.TimerOptions {
+		o := clock.TimerOptions{}
+		base := fmt.Sprintf("timer%d-", i)
+		errorName := fmt.Sprintf("Timer %d ", i)
+		o.ListenPort, err = strconv.Atoi(r.FormValue(base + "port"))
+		errors += ValidateNumber(err, errorName+"Mitti & millumin port")
+
+		o.MittiBroadcast = r.FormValue(base+"mitti-broadcast") != ""
+		o.MilluminBroadcast = r.FormValue(base+"millumin-broadcast") != ""
+		eo.TimerOptions[i] = &o
+	}
+
 	return eo, errors
 }

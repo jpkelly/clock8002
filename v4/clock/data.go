@@ -62,6 +62,12 @@ type SourceOptions struct {
 	OvertimeColor string `long:"overtime-color" description:"Background color for overtime countdowns, in HTML format #FFFFFF" default:"#FF0000"`
 }
 
+type TimerOptions struct {
+	ListenPort        int  `long:"port" description:"Port to listen to for mitti and millumin osc messages"`
+	MittiBroadcast    bool `long:"mitti-broadcast" description:"Broadcast received mitti state to other clocks"`
+	MilluminBroadcast bool `long:"millumin-broadcast" description:"Broadcast received millumin state to other clocks"`
+}
+
 // EngineOptions contains all common options for clock.Engines
 type EngineOptions struct {
 	Flash              int    `long:"flash" description:"Flashing interval when countdown reached zero (ms), 0 disables" default:"500"`
@@ -139,6 +145,19 @@ type EngineOptions struct {
 	Source2 *SourceOptions `group:"2nd clock display source" namespace:"source2"`
 	Source3 *SourceOptions `group:"3rd clock display source" namespace:"source3"`
 	Source4 *SourceOptions `group:"4th clock display source" namespace:"source4"`
+
+	Timer0 *TimerOptions `group:"Timer 0" namespace:"timer0"`
+	Timer1 *TimerOptions `group:"Timer 1" namespace:"timer1"`
+	Timer2 *TimerOptions `group:"Timer 2" namespace:"timer2"`
+	Timer3 *TimerOptions `group:"Timer 3" namespace:"timer3"`
+	Timer4 *TimerOptions `group:"Timer 4" namespace:"timer4"`
+	Timer5 *TimerOptions `group:"Timer 5" namespace:"timer5"`
+	Timer6 *TimerOptions `group:"Timer 6" namespace:"timer6"`
+	Timer7 *TimerOptions `group:"Timer 7" namespace:"timer7"`
+	Timer8 *TimerOptions `group:"Timer 8" namespace:"timer8"`
+	Timer9 *TimerOptions `group:"Timer 9" namespace:"timer9"`
+
+	TimerOptions []*TimerOptions
 }
 
 // Clock engine state constants

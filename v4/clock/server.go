@@ -68,6 +68,7 @@ func (server *Server) run(ctx context.Context, wg *sync.WaitGroup) {
 					log.Printf("OSC-listen: Temporary error: %v. Retrying", e)
 				} else {
 					log.Printf("OSC-listen fatal error: %v. Giving up", e)
+					server.osc = nil
 					return
 				}
 			} else {
@@ -80,11 +81,12 @@ func (server *Server) run(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (server *Server) closer(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			server.osc.Close()
-		}
+	<-ctx.Done()
+	if server.osc != nil {
+		log.Printf("Closing osc listener for %s", server.osc.Addr)
+		server.osc.Close()
+	} else {
+		log.Printf("Closing osc listener after fatal error")
 	}
 }
 

@@ -69,6 +69,20 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	sources[2] = options.Source3
 	sources[3] = options.Source4
 
+	if len(options.TimerOptions) != 10 {
+		options.TimerOptions = make([]*TimerOptions, 10)
+		options.TimerOptions[0] = options.Timer0
+		options.TimerOptions[1] = options.Timer1
+		options.TimerOptions[2] = options.Timer2
+		options.TimerOptions[3] = options.Timer3
+		options.TimerOptions[4] = options.Timer4
+		options.TimerOptions[5] = options.Timer5
+		options.TimerOptions[6] = options.Timer6
+		options.TimerOptions[7] = options.Timer7
+		options.TimerOptions[8] = options.Timer8
+		options.TimerOptions[9] = options.Timer9
+	}
+
 	if err := engine.initSources(sources); err != nil {
 		log.Printf("Error initializing engine clock sources: %v", err)
 		return nil, err
@@ -95,17 +109,16 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	engine.initUDPTime(options)
 	engine.initLimitimer(options)
 
-	port := 5000
+	for i, o := range options.TimerOptions {
+		if o.ListenPort != 0 {
+			addr := fmt.Sprintf("0.0.0.0:%d", o.ListenPort)
 
-	for i := range engine.Counters {
-		addr := fmt.Sprintf("0.0.0.0:%d", port)
+			server := oscListenerSetup(addr)
+			go server.run(engine.ctx, engine.wg)
 
-		server := oscListenerSetup(addr)
-		go server.run(engine.ctx, engine.wg)
-
-		engine.mittiListen(server, i, false)
-		engine.milluminListen(server, i, false)
-		port++
+			engine.mittiListen(server, i, o.MittiBroadcast)
+			engine.milluminListen(server, i, o.MilluminBroadcast)
+		}
 	}
 
 	return &engine, nil

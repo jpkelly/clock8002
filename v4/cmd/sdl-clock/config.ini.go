@@ -141,6 +141,18 @@ source4.timezone={{.EngineOptions.Source4.TimeZone}}
 source4.hidden={{.EngineOptions.Source4.Hidden}}
 source4.overtime-color={{.EngineOptions.Source4.OvertimeColor}}
 
+# Timer Options
+{{range $i, $timer := .EngineOptions.TimerOptions}}
+# Timer {{$i}}
+
+# Mitti and Millumin OSC port
+timer{{$i}}.port={{$timer.ListenPort}}
+
+# Rebroadcast received Mitti & millumin state
+timer{{$i}}.mitti-broadcast={{$timer.MittiBroadcast}}
+timer{{$i}}.millumin-broadcast={{$timer.MilluminBroadcast}}
+
+{{end}}
 
 # Overtime behaviour
 
