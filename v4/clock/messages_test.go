@@ -41,7 +41,7 @@ func TestMediaMessage(t *testing.T) {
 		seconds:   rand.Int31(),
 		frames:    rand.Int31(),
 		remaining: rand.Int31(),
-		progress:  rand.Float64(),
+		progress:  rand.Float32(),
 		paused:    rand.Intn(1) == 1,
 		looping:   rand.Intn(1) == 1,
 		timeStamp: osc.NewTimetagFromTime(time.Now()),
