@@ -62,6 +62,7 @@ type SourceOptions struct {
 	OvertimeColor string `long:"overtime-color" description:"Background color for overtime countdowns, in HTML format #FFFFFF" default:"#FF0000"`
 }
 
+// TimerOptions contains all per-timer options
 type TimerOptions struct {
 	ListenPort        int  `long:"port" description:"Port to listen to for mitti and millumin osc messages"`
 	MittiBroadcast    bool `long:"mitti-broadcast" description:"Broadcast received mitti state to other clocks"`
