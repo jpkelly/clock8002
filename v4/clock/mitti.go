@@ -4,40 +4,14 @@ import (
 	"github.com/desertbit/timer"
 	"gitlab.com/clock-8001/clock-8001/v4/debug"
 	"gitlab.com/clock-8001/clock-8001/v4/mitti"
-	// "gitlab.com/Depili/go-osc/osc"
-	"github.com/chabad360/go-osc/osc"
-	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
-
 	"log"
 	"time"
 )
 
-func (engine *Engine) mittiListen(listenAddr string, counter int, bridge bool) {
-	server := oscListenerSetup(listenAddr)
-	go server.run(engine.ctx, engine.wg)
-
-	log.Printf("Mitti listening on %s for counter %d", listenAddr, counter)
+func (engine *Engine) mittiListen(server *Server, counter int, bridge bool) {
+	log.Printf("Mitti listening on %s for counter %d", server.osc.Addr, counter)
 	var mittiListener = mitti.MakeListener(server.dispatcher)
 	go engine.runMittiClockClient(mittiListener.Listen(), engine.Counters[counter], bridge)
-}
-
-func oscListenerSetup(listenAddr string) *Server {
-	oscDispatcher := oscutil.NewRegexpDispatcher()
-	oscServer := osc.Server{
-		Addr:    listenAddr,
-		Handler: oscDispatcher.Dispatch,
-	}
-
-	// clock.Server
-	var server = Server{
-		listeners:  make(map[chan Message]struct{}),
-		Debug:      false,
-		dispatcher: oscDispatcher,
-		osc:        &oscServer,
-	}
-
-	log.Printf("OSC: listening on %v", oscServer.Addr)
-	return &server
 }
 
 func (engine *Engine) updateMittiClock(state mitti.State, mittiCounter *Counter, bridge bool) error {

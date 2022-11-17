@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+func (engine *Engine) milluminListen(server *Server, counter int, bridge bool) {
+	log.Printf("Millumin listening on %s for counter %d", server.osc.Addr, counter)
+	var milluminListener = millumin.MakeListener(server.dispatcher)
+	go engine.runMilluminClockClient(milluminListener.Listen(), engine.Counters[counter], bridge)
+}
+
 func (engine *Engine) updateMilluminClock(state millumin.State, milluminCounter *Counter, bridge bool) error {
 	var err error
 
