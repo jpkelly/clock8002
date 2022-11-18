@@ -135,42 +135,50 @@ const configHTML = `
                   </ol>
                 </p>
 
-                {{range $i, $source := .EngineOptions.SourceOptions }}
-                  {{$n := add $i 1}}
-                  <fieldset>
-                    <legend>Source {{$n}}</legend>
+                <div class="tabs">
+                  {{range $i, $source := .EngineOptions.SourceOptions }}
+                    {{$n := add $i 1}}
+                    <div class="tab">
+                      <input type="radio" id="source{{$n}}" name="sources" class="tab_ctrl">
+                      <label class="tab-label" for="source{{$n}}">Source {{$n}}</label>
+                      <div class="tab-content">
+                        <fieldset>
+                          <legend>Source {{$n}}</legend>
 
-                    <label for="source{{$n}}-text">
-                      <span>Text label for time source</span>
-                      <input type="text" id="source{{$n}}-text" name="source{{$n}}-text" value="{{$source.Text}}" />
-                    </label>
+                          <label for="source{{$n}}-text">
+                            <span>Text label for time source</span>
+                            <input type="text" id="source{{$n}}-text" name="source{{$n}}-text" value="{{$source.Text}}" />
+                          </label>
 
-                    {{checkbox (printf "source%d-ltc" $n) "Enable LTC input on this source" $source.LTC}}
-                    {{checkbox (printf "source%d-timer" $n) "Enable input from the associated timer" $source.Timer}}
-                    {{checkbox (printf "source%d-timer-target" $n) "Display timer end time, if available, instead of the time remaining" $source.TimerTarget}}
-                    {{counter (printf "source%d-counter" $n) "Timer number to use (0-9)." $source.Counter}}
-                    {{checkbox (printf "source%d-tod" $n) "Enable time of day input on this source" $source.Tod}}
+                          {{checkbox (printf "source%d-ltc" $n) "Enable LTC input on this source" $source.LTC}}
+                          {{checkbox (printf "source%d-timer" $n) "Enable input from the associated timer" $source.Timer}}
+                          {{checkbox (printf "source%d-timer-target" $n) "Display timer end time, if available, instead of the time remaining" $source.TimerTarget}}
+                          {{counter (printf "source%d-counter" $n) "Timer number to use (0-9)." $source.Counter}}
+                          {{checkbox (printf "source%d-tod" $n) "Enable time of day input on this source" $source.Tod}}
 
-                    <label for="source{{$n}}-timezone">
-                      <span>Timezone for the time of day input</span>
-                      <select id="source{{$n}}-timezone" name="source{{$n}}-timezone" >
-                        {{ range $tz := $.Timezones }}
-                          <option {{if eq $source.TimeZone $tz}} selected {{end}}>{{$tz}}</option>
-                        {{ end }}
-                      </select>
-                    </label>
+                          <label for="source{{$n}}-timezone">
+                            <span>Timezone for the time of day input</span>
+                             <select id="source{{$n}}-timezone" name="source{{$n}}-timezone" >
+                              {{ range $tz := $.Timezones }}
+                                <option {{if eq $source.TimeZone $tz}} selected {{end}}>{{$tz}}</option>
+                              {{ end }}
+                            </select>
+                          </label>
 
-                    {{checkbox (printf "source%d-hidden" $n) "Initially hide this source. Can be toggled by OSC on runtime." $source.Hidden}}
-                    {{color (printf "source%d-overtime-color" $n) "Background color for overtime countdowns." $source.OvertimeColor}}
-                  </fieldset>
-                {{end}}
+                          {{checkbox (printf "source%d-hidden" $n) "Initially hide this source. Can be toggled by OSC on runtime." $source.Hidden}}
+                          {{color (printf "source%d-overtime-color" $n) "Background color for overtime countdowns." $source.OvertimeColor}}
+                        </fieldset>
+                      </div>
+                    </div>
+                  {{end}}
+                </div>
               </fieldset>
             </div>
           </div>
 
           <div class="tab">
             <input type="checkbox" id="timers" class="tab_ctrl">
-              <label class="tab-label" for="timers">Timers</label>
+            <label class="tab-label" for="timers">Timers</label>
             <div class="tab-content">
               <fieldset>
                 <legend>Timers</legend>
