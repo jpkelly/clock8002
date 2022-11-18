@@ -161,6 +161,8 @@ type EngineOptions struct {
 	Source3 *SourceOptions `group:"3rd clock display source" namespace:"source3"`
 	Source4 *SourceOptions `group:"4th clock display source" namespace:"source4"`
 
+	SourceOptions []*SourceOptions
+
 	Timer0 *TimerOptions `group:"Timer 0" namespace:"timer0"`
 	Timer1 *TimerOptions `group:"Timer 1" namespace:"timer1"`
 	Timer2 *TimerOptions `group:"Timer 2" namespace:"timer2"`

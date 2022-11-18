@@ -400,6 +400,14 @@ func computeDerivedOptions() {
 	}
 
 	o := options.EngineOptions
+	if len(o.SourceOptions) != 4 {
+		o.SourceOptions = make([]*clock.SourceOptions, 4)
+		o.SourceOptions[0] = o.Source1
+		o.SourceOptions[1] = o.Source2
+		o.SourceOptions[2] = o.Source3
+		o.SourceOptions[3] = o.Source4
+	}
+
 	if len(o.TimerOptions) != 10 {
 		o.TimerOptions = make([]*clock.TimerOptions, 10)
 		o.TimerOptions[0] = o.Timer0

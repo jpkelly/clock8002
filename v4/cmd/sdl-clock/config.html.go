@@ -135,117 +135,35 @@ const configHTML = `
                   </ol>
                 </p>
 
-                <fieldset>
-                  <legend>Source 1</legend>
+                {{range $i, $source := .EngineOptions.SourceOptions }}
+                  {{$n := add $i 1}}
+                  <fieldset>
+                    <legend>Source {{$n}}</legend>
 
-                  <label for="source1-text">
-                    <span>Text label for time source</span>
-                    <input type="text" id="source1-text" name="source1-text" value="{{.EngineOptions.Source1.Text}}" />
-                  </label>
+                    <label for="source{{$n}}-text">
+                      <span>Text label for time source</span>
+                      <input type="text" id="source{{$n}}-text" name="source{{$n}}-text" value="{{$source.Text}}" />
+                    </label>
 
-                  {{checkbox "source1-ltc" "Enable LTC input on this source" .EngineOptions.Source1.LTC}}
-                  {{checkbox "source1-timer" "Enable input from the associated timer" .EngineOptions.Source1.Timer}}
-                  {{checkbox "source1-timer-target" "Display timer end time, if available, instead of the time remaining" .EngineOptions.Source1.TimerTarget}}
-                  {{counter "source1-counter" "Timer number to use (0-9)." .EngineOptions.Source1.Counter}}
-                  {{checkbox "source1-tod" "Enable time of day input on this source" .EngineOptions.Source1.Tod}}
+                    {{checkbox (printf "source%d-ltc" $n) "Enable LTC input on this source" $source.LTC}}
+                    {{checkbox (printf "source%d-timer" $n) "Enable input from the associated timer" $source.Timer}}
+                    {{checkbox (printf "source%d-timer-target" $n) "Display timer end time, if available, instead of the time remaining" $source.TimerTarget}}
+                    {{counter (printf "source%d-counter" $n) "Timer number to use (0-9)." $source.Counter}}
+                    {{checkbox (printf "source%d-tod" $n) "Enable time of day input on this source" $source.Tod}}
 
-                  <label for="source1-timezone">
-                    <span>Timezone for the time of day input</span>
-                    {{$selected := .EngineOptions.Source1.TimeZone}}
-                    <select id="source1-timezone" name="source1-timezone" >
-                      {{ range $tz := .Timezones }}
-                        <option {{if eq $selected $tz}} selected {{end}}>{{$tz}}</option>
-                      {{ end }}
-                    </select>
-                  </label>
+                    <label for="source{{$n}}-timezone">
+                      <span>Timezone for the time of day input</span>
+                      <select id="source{{$n}}-timezone" name="source{{$n}}-timezone" >
+                        {{ range $tz := $.Timezones }}
+                          <option {{if eq $source.TimeZone $tz}} selected {{end}}>{{$tz}}</option>
+                        {{ end }}
+                      </select>
+                    </label>
 
-                  {{checkbox "source1-hidden" "Initially hide this source. Can be toggled by OSC on runtime." .EngineOptions.Source1.Hidden}}
-                  {{color "source1-overtime-color" "Background color for overtime countdowns." .EngineOptions.Source1.OvertimeColor}}
-                </fieldset>
-
-                <fieldset>
-                  <legend>Source 2</legend>
-
-                  <label for="source2-text">
-                    <span>Text label for time source</span>
-                    <input type="text" id="source2-text" name="source2-text" value="{{.EngineOptions.Source2.Text}}" />
-                  </label>
-
-                  {{checkbox "source2-ltc" "Enable LTC input on this source" .EngineOptions.Source2.LTC}}
-                  {{checkbox "source2-timer" "Enable input from the associated timer" .EngineOptions.Source2.Timer}}
-                  {{checkbox "source2-timer-target" "Display timer end time, if available, instead of the time remaining" .EngineOptions.Source2.TimerTarget}}
-                  {{counter "source2-counter" "Timer number to use (0-9)." .EngineOptions.Source2.Counter}}
-                  {{checkbox "source2-tod" "Enable time of day input on this source" .EngineOptions.Source2.Tod}}
-
-                  <label for="source2-timezone">
-                    <span>Timezone for the time of day input</span>
-                    {{$selected = .EngineOptions.Source2.TimeZone}}
-                    <select id="source2-timezone" name="source2-timezone" >
-                      {{ range $tz := .Timezones }}
-                        <option {{if eq $selected $tz}} selected {{end}}>{{$tz}}</option>
-                      {{ end }}
-                    </select>
-                  </label>
-
-                  {{checkbox "source2-hidden" "Initially hide this source. Can be toggled by OSC on runtime." .EngineOptions.Source2.Hidden}}
-                  {{color "source2-overtime-color" "Background color for overtime countdowns." .EngineOptions.Source2.OvertimeColor}}
-                </fieldset>
-
-                <fieldset>
-                  <legend>Source 3</legend>
-
-                  <label for="source3-text">
-                    <span>Text label for time source</span>
-                    <input type="text" id="source3-text" name="source3-text" value="{{.EngineOptions.Source3.Text}}" />
-                  </label>
-
-                  {{checkbox "source3-ltc" "Enable LTC input on this source" .EngineOptions.Source3.LTC}}
-                  {{checkbox "source3-timer" "Enable input from the associated timer" .EngineOptions.Source3.Timer}}
-                  {{checkbox "source3-timer-target" "Display timer end time, if available, instead of the time remaining" .EngineOptions.Source3.TimerTarget}}
-                  {{counter "source3-counter" "Timer number to use (0-9)." .EngineOptions.Source3.Counter}}
-                  {{checkbox "source3-tod" "Enable time of day input on this source" .EngineOptions.Source3.Tod}}
-
-                  <label for="source3-timezone">
-                    <span>Timezone for the time of day input</span>
-                    {{$selected = .EngineOptions.Source3.TimeZone}}
-                    <select id="source3-timezone" name="source3-timezone" >
-                      {{ range $tz := .Timezones }}
-                        <option {{if eq $selected $tz}} selected {{end}}>{{$tz}}</option>
-                      {{ end }}
-                    </select>
-                  </label>
-
-                  {{checkbox "source3-hidden" "Initially hide this source. Can be toggled by OSC on runtime." .EngineOptions.Source3.Hidden}}
-                  {{color "source3-overtime-color" "Background color for overtime countdowns." .EngineOptions.Source3.OvertimeColor}}
-                </fieldset>
-
-                <fieldset>
-                  <legend>Source 4</legend>
-
-                  <label for="source4-text">
-                    <span>Text label for time source</span>
-                    <input type="text" id="source4-text" name="source4-text" value="{{.EngineOptions.Source4.Text}}" />
-                  </label>
-
-                  {{checkbox "source4-ltc" "Enable LTC input on this source" .EngineOptions.Source4.LTC}}
-                  {{checkbox "source4-timer" "Enable input from the associated timer" .EngineOptions.Source4.Timer}}
-                  {{checkbox "source4-timer-target" "Display timer end time, if available, instead of the time remaining" .EngineOptions.Source4.TimerTarget}}
-                  {{counter "source4-counter" "Timer number to use (0-9)." .EngineOptions.Source4.Counter}}
-                  {{checkbox "source4-tod" "Enable time of day input on this source" .EngineOptions.Source4.Tod}}
-
-                  <label for="source4-timezone">
-                    <span>Time zone for the time of day input</span>
-                    {{$selected = .EngineOptions.Source4.TimeZone}}
-                    <select id="source4-timezone" name="source4-timezone" >
-                      {{ range $tz := .Timezones }}
-                        <option {{if eq $selected $tz}} selected {{end}}>{{$tz}}</option>
-                      {{ end }}
-                    </select>
-                  </label>
-
-                  {{checkbox "source4-hidden" "Initially hide this source. Can be toggled by OSC on runtime." .EngineOptions.Source4.Hidden}}
-                  {{color "source4-overtime-color" "Background color for overtime countdowns." .EngineOptions.Source4.OvertimeColor}}
-                </fieldset>
+                    {{checkbox (printf "source%d-hidden" $n) "Initially hide this source. Can be toggled by OSC on runtime." $source.Hidden}}
+                    {{color (printf "source%d-overtime-color" $n) "Background color for overtime countdowns." $source.OvertimeColor}}
+                  </fieldset>
+                {{end}}
               </fieldset>
             </div>
           </div>
