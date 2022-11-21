@@ -75,8 +75,6 @@ type State struct {
 	telnetHasDefaultPlayMode bool
 }
 
-var state *State
-
 // Message types
 const (
 	CtrlStatus           = 13

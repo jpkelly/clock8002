@@ -41,14 +41,14 @@ func (engine *Engine) initVmix(options *EngineOptions) {
 			timeout:   time.Duration(options.VmixTimeout) * time.Millisecond,
 		}
 		var err error
-		s.mediaColor, err = parseColor(o.VmixMediaColor)
+		s.mediaColor, err = parseColor(o.MediaColor)
 		if err != nil {
-			log.Fatalf("Error parsing vMix media color: %v", err)
+			log.Fatalf("Error parsing media color: %v", err)
 		}
 
-		s.mediaBG, err = parseColor(o.VmixMediaBG)
+		s.mediaBG, err = parseColor(o.MediaBG)
 		if err != nil {
-			log.Fatalf("Error parsing vMix media background color: %v", err)
+			log.Fatalf("Error parsing media background color: %v", err)
 		}
 
 		s.ignoreOverlays = make(map[int]bool)

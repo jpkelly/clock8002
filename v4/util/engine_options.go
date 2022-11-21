@@ -63,11 +63,6 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	eo.LimitimerBroadcast4 = r.FormValue("limitimer-broadcast-timer4") != ""
 	eo.LimitimerBroadcast5 = r.FormValue("limitimer-broadcast-timer5") != ""
 
-	eo.PicturallEnabled = r.FormValue("picturall-enabled") != ""
-	eo.PicturallLoops = r.FormValue("picturall-loop") != ""
-	eo.PicturallStreams = r.FormValue("picturall-streams") != ""
-	eo.PicturallMediaName = r.FormValue("picturall-media-name") != ""
-
 	eo.AutoSignals = r.FormValue("auto-signals") != ""
 	eo.SignalStart = r.FormValue("signal-start") != ""
 
@@ -78,8 +73,6 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	eo.Source4.Text = r.FormValue("source4-text")
 
 	eo.LimitimerSerial = r.FormValue("limitimer-serial")
-
-	eo.PicturallAddress = r.FormValue("picturall-address")
 
 	// Limitimer mode
 	eo.LimitimerMode = r.FormValue("limitimer-mode")
@@ -170,21 +163,6 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	eo.SignalHardware, err = strconv.Atoi(r.FormValue("signal-hw-group"))
 	errors += ValidateNumber(err, "Signal hardware group")
 
-	eo.PicturallPort, err = strconv.Atoi(r.FormValue("picturall-port"))
-	errors += ValidateNumber(err, "Picturall port")
-	eo.PicturallTimer, err = strconv.Atoi(r.FormValue("picturall-timer"))
-	errors += ValidateNumber(err, "Picturall timer")
-	eo.PicturallTimeout, err = strconv.Atoi(r.FormValue("picturall-timeout"))
-	errors += ValidateNumber(err, "Picturall timeout")
-
-	// Picturall ignore layers
-	picturallIgnoreLayers := r.FormValue("picturall-ignore-layers")
-	if ok, err := regexp.MatchString(`^(?:\d+,?)+$`, picturallIgnoreLayers); len(picturallIgnoreLayers) == 0 || (ok && err == nil) {
-		eo.PicturallIgnoreLayers = picturallIgnoreLayers
-	} else {
-		errors += "<li>Picturall layer ignore list is not valid</li>"
-	}
-
 	eo.SignalColorStart = r.FormValue("signal-color-start")
 	errors += ValidateColor(eo.SignalColorStart, "Signal color: start")
 	eo.SignalColorWarning = r.FormValue("signal-color-warning")
@@ -200,11 +178,6 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	errors += ValidateColor(eo.Source3.OvertimeColor, "Source3 overtime color")
 	eo.Source4.OvertimeColor = r.FormValue("source4-overtime-color")
 	errors += ValidateColor(eo.Source4.OvertimeColor, "Source4 overtime color")
-
-	eo.PicturallMediaColor = r.FormValue("picturall-media-color")
-	errors += ValidateColor(eo.PicturallMediaColor, "Picturall media text color")
-	eo.PicturallMediaBG = r.FormValue("picturall-media-bg")
-	errors += ValidateColor(eo.PicturallMediaBG, "Picturall media background color")
 
 	// Tricaster
 	eo.TricasterEnabled = r.FormValue("tricaster-enabled") != ""
@@ -235,6 +208,10 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	eo.VmixTimeout, err = strconv.Atoi(r.FormValue("vmix-timeout"))
 	errors += ValidateNumber(err, "vMix timeout")
 
+	// Picturall global options
+	eo.PicturallTimeout, err = strconv.Atoi(r.FormValue("picturall-timeout"))
+	errors += ValidateNumber(err, "Picturall timeout")
+
 	// Timer options
 	eo.TimerOptions = make([]*clock.TimerOptions, 10)
 	for i := range eo.TimerOptions {
@@ -264,10 +241,29 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 		} else {
 			errors += "<li>" + errorName + "vMix overlay ignore list is not valid</li>"
 		}
-		o.VmixMediaColor = r.FormValue(base + "vmix-media-color")
-		errors += ValidateColor(o.VmixMediaColor, errorName+"vMix media text color")
-		o.VmixMediaBG = r.FormValue(base + "vmix-media-bg")
-		errors += ValidateColor(o.VmixMediaBG, errorName+"vMix media background color")
+
+		// Picturall
+		o.PicturallEnabled = r.FormValue(base+"picturall-enabled") != ""
+		o.PicturallAddress = r.FormValue(base + "picturall-address")
+		o.PicturallLoops = r.FormValue(base+"picturall-loop") != ""
+		o.PicturallStreams = r.FormValue(base+"picturall-streams") != ""
+		o.PicturallMediaName = r.FormValue(base+"picturall-media-name") != ""
+
+		o.PicturallPort, err = strconv.Atoi(r.FormValue(base + "picturall-port"))
+		errors += ValidateNumber(err, errorName+"Picturall port")
+
+		// Picturall ignore layers
+		picturallIgnoreLayers := r.FormValue(base + "picturall-ignore-layers")
+		if ok, err := regexp.MatchString(`^(?:\d+,?)+$`, picturallIgnoreLayers); len(picturallIgnoreLayers) == 0 || (ok && err == nil) {
+			eo.PicturallIgnoreLayers = picturallIgnoreLayers
+		} else {
+			errors += "<li>" + errorName + "Picturall layer ignore list is not valid</li>"
+		}
+
+		o.MediaColor = r.FormValue(base + "media-color")
+		errors += ValidateColor(o.MediaColor, errorName+"Media text color")
+		o.MediaBG = r.FormValue(base + "media-bg")
+		errors += ValidateColor(o.MediaBG, errorName+"Media background color")
 
 		eo.TimerOptions[i] = &o
 	}

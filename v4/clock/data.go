@@ -67,6 +67,9 @@ type SourceOptions struct {
 
 // TimerOptions contains all per-timer options
 type TimerOptions struct {
+	MediaColor string `long:"media-color" description:"CSS color for media name" default:"#FF8000"`
+	MediaBG    string `long:"media-bg" description:"CSS color for media name background" default:"#101010"`
+
 	ListenPort        int  `long:"port" description:"Port to listen to for mitti and millumin osc messages"`
 	MittiBroadcast    bool `long:"mitti-broadcast" description:"Broadcast received mitti state to other clocks"`
 	MilluminBroadcast bool `long:"millumin-broadcast" description:"Broadcast received millumin state to other clocks"`
@@ -79,8 +82,15 @@ type TimerOptions struct {
 	VmixPVM            bool   `long:"vmix-show-pvm" description:"Do not ingore media playing in vMix preview"`
 	VmixIgnoreOverlays string `long:"vmix-ignore-overlays" description:"vMix: Comma separated list of overlay numbers to ignore"`
 	VmixMediaName      bool   `long:"vmix-media-name" description:"Show vMix media name as clock text"`
-	VmixMediaColor     string `long:"vmix-media-color" description:"CSS color for vMix media name" default:"#FF8000"`
-	VmixMediaBG        string `long:"vmix-media-bg" description:"CSS color for vMix media name background" default:"#101010"`
+
+	PicturallEnabled      bool   `long:"picturall-enabled" descriptin:"Enable picturall media info support"`
+	PicturallAddress      string `long:"picturall-address" description:"Address for picturall media server to connect to"`
+	PicturallPort         int    `long:"picturall-port" description:"Picturall telnet port" default:"11000"`
+	PicturallTimer        int    `long:"picturall-timer" description:"Timer for picturall video state" default:"7"`
+	PicturallLoops        bool   `long:"picturall-loops" description:"Show looping content"`
+	PicturallMediaName    bool   `long:"picturall-media-name" description:"Show picturall media name as clock text"`
+	PicturallIgnoreLayers string `long:"picturall-ignore-layers" description:"Comma separated list of layers to ignore"`
+	PicturallStreams      bool   `long:"picturall-streams" description:"Show streaming content"`
 }
 
 // EngineOptions contains all common options for clock.Engines
@@ -127,32 +137,11 @@ type EngineOptions struct {
 	LimitimerBroadcast4 bool   `long:"limitimer-broadcast-timer4" description:"Broadcast limitimer program 4 to other clocks as timer 4"`
 	LimitimerBroadcast5 bool   `long:"limitimer-broadcast-timer5" description:"Broadcast limitimer active program to other clocks as timer 5"`
 
-	PicturallEnabled      bool   `long:"picturall-enabled" descriptin:"Enable picturall media info support"`
-	PicturallAddress      string `long:"picturall-address" description:"Address for picturall media server to connect to"`
-	PicturallPort         int    `long:"picturall-port" description:"Picturall telnet port" default:"11000"`
-	PicturallTimer        int    `long:"picturall-timer" description:"Timer for picturall video state" default:"7"`
-	PicturallLoops        bool   `long:"picturall-loops" description:"Show looping content"`
-	PicturallTimeout      int    `long:"picturall-timeout" description:"Timeout for communication, the display will be blanked after this time, in milliseconds" default:"1000"`
-	PicturallMediaName    bool   `long:"picturall-media-name" description:"Show picturall media name as clock text"`
-	PicturallIgnoreLayers string `long:"picturall-ignore-layers" description:"Comma separated list of layers to ignore"`
-	PicturallDebug        bool   `long:"picturall-debug" description:"Write picturall traffic to a logfile"`
-	PicturallStreams      bool   `long:"picturall-streams" description:"Show streaming content"`
-	PicturallMediaColor   string `long:"picturall-media-color" description:"CSS color for picturall media name" default:"#FF8000"`
-	PicturallMediaBG      string `long:"picturall-media-bg" description:"CSS color for picturall media name background" default:"#101010"`
+	PicturallTimeout int  `long:"picturall-timeout" description:"Timeout for communication, the display will be blanked after this time, in milliseconds" default:"1000"`
+	PicturallDebug   bool `long:"picturall-debug" description:"Write picturall traffic to a logfile"`
 
-	VmixEnabled        bool   `long:"vmix-enabled" description:"Enable vMix integration" hidden:"true"`
-	VmixAddress        string `long:"vmix-address" description:"vMix IP address" hidden:"true"`
-	VmixPort           int    `long:"vmix-port" description:"vMmix http port" default:"8088" hidden:"true"`
-	VmixTimer          int    `long:"vmix-timer" description:"Timer for vMix video state" default:"6" hidden:"true"`
-	VmixLoops          bool   `long:"vmix-loops" description:"vMix show looping media" hidden:"true"`
-	VmixPGMOnly        bool   `long:"vmix-pgm-only" description:"Only show PGM media information, ignore all overlays" hidden:"true"`
-	VmixPVM            bool   `long:"vmix-show-pvm" description:"Do not ingore media playing in vMix preview" hidden:"true"`
-	VmixIgnoreOverlays string `long:"vmix-ignore-overlays" description:"vMix: Comma separated list of overlay numbers to ignore" hidden:"true"`
-	VmixMediaName      bool   `long:"vmix-media-name" description:"Show vMix media name as clock text" hidden:"true"`
-	VmixMediaColor     string `long:"vmix-media-color" description:"CSS color for vMix media name" default:"#FF8000" hidden:"true"`
-	VmixMediaBG        string `long:"vmix-media-bg" description:"CSS color for vMix media name background" default:"#101010" hidden:"true"`
-	VmixInterval       int    `long:"vmix-interval" description:"vMix polling interval, in milliseconds" default:"200"`
-	VmixTimeout        int    `long:"vmix-timeout" description:"Timeout for vMix communication, in milliseconds" default:"1000"`
+	VmixInterval int `long:"vmix-interval" description:"vMix polling interval, in milliseconds" default:"200"`
+	VmixTimeout  int `long:"vmix-timeout" description:"Timeout for vMix communication, in milliseconds" default:"1000"`
 
 	TricasterOptions
 
@@ -175,6 +164,29 @@ type EngineOptions struct {
 	Timer9 *TimerOptions `group:"Timer 9" namespace:"timer9"`
 
 	TimerOptions []*TimerOptions
+
+	// Deprecated options, to be removed on next major release
+	VmixEnabled           bool   `long:"vmix-enabled" description:"Enable vMix integration" hidden:"true"`
+	VmixAddress           string `long:"vmix-address" description:"vMix IP address" hidden:"true"`
+	VmixPort              int    `long:"vmix-port" description:"vMmix http port" default:"8088" hidden:"true"`
+	VmixTimer             int    `long:"vmix-timer" description:"Timer for vMix video state" default:"6" hidden:"true"`
+	VmixLoops             bool   `long:"vmix-loops" description:"vMix show looping media" hidden:"true"`
+	VmixPGMOnly           bool   `long:"vmix-pgm-only" description:"Only show PGM media information, ignore all overlays" hidden:"true"`
+	VmixPVM               bool   `long:"vmix-show-pvm" description:"Do not ingore media playing in vMix preview" hidden:"true"`
+	VmixIgnoreOverlays    string `long:"vmix-ignore-overlays" description:"vMix: Comma separated list of overlay numbers to ignore" hidden:"true"`
+	VmixMediaName         bool   `long:"vmix-media-name" description:"Show vMix media name as clock text" hidden:"true"`
+	VmixMediaColor        string `long:"vmix-media-color" description:"CSS color for vMix media name" default:"#FF8000" hidden:"true"`
+	VmixMediaBG           string `long:"vmix-media-bg" description:"CSS color for vMix media name background" default:"#101010" hidden:"true"`
+	PicturallEnabled      bool   `long:"picturall-enabled" descriptin:"Enable picturall media info support" hidden:"true"`
+	PicturallAddress      string `long:"picturall-address" description:"Address for picturall media server to connect to" hidden:"true"`
+	PicturallPort         int    `long:"picturall-port" description:"Picturall telnet port" default:"11000" hidden:"true"`
+	PicturallTimer        int    `long:"picturall-timer" description:"Timer for picturall video state" default:"7" hidden:"true"`
+	PicturallLoops        bool   `long:"picturall-loops" description:"Show looping content" hidden:"true"`
+	PicturallMediaName    bool   `long:"picturall-media-name" description:"Show picturall media name as clock text" hidden:"true"`
+	PicturallIgnoreLayers string `long:"picturall-ignore-layers" description:"Comma separated list of layers to ignore" hidden:"true"`
+	PicturallStreams      bool   `long:"picturall-streams" description:"Show streaming content" hidden:"true"`
+	PicturallMediaColor   string `long:"picturall-media-color" description:"CSS color for picturall media name" default:"#FF8000" hidden:"true"`
+	PicturallMediaBG      string `long:"picturall-media-bg" description:"CSS color for picturall media name background" default:"#101010" hidden:"true"`
 }
 
 // Clock engine state constants
@@ -238,7 +250,7 @@ type Engine struct {
 	ignoreRegexp        *regexp.Regexp
 	mittiCounter        *Counter
 	milluminCounter     *Counter
-	picturall           picturallState
+	picturall           []*picturallState
 	vmix                []*vmixState
 	tricaster           tricasterState
 	background          int
@@ -259,19 +271,6 @@ type Engine struct {
 	cancelFunc          context.CancelFunc
 	wg                  *sync.WaitGroup
 	overtimeVisibility  string
-}
-
-type picturallState struct {
-	counter      *Counter
-	noLoop       bool
-	noStreams    bool
-	timeout      time.Duration
-	mediaName    bool
-	mediaColor   *color.RGBA
-	mediaBG      *color.RGBA
-	ignoreLayers map[int]bool
-	lastLayer    int
-	lastHead     map[int]time.Duration
 }
 
 // Clock contains the state of a single component clock / timer

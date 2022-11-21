@@ -2,9 +2,9 @@ package main
 
 const configHTML = `
 <html>
-<head>
-  <title>Clock-8001 configuration</title>
-</head>
+  <head>
+    <title>Clock-8001 configuration</title>
+  </head>
   <body>
     <h1>Clock configuration editor</h1>
     {{if .Errors}}
@@ -207,8 +207,30 @@ const configHTML = `
                           {{checkbox (printf "timer%d-vmix-show-pvm" $i) "Show media in preview." $timer.VmixPVM}}
                           {{text (printf "timer%d-vmix-ignore-overlays" $i) "List of overlay numbers to ignore, comma separated." $timer.VmixIgnoreOverlays}}
                           {{checkbox (printf "timer%d-vmix-media-name" $i) "Show media name as tally message on the clock." $timer.VmixMediaName}}
-                          {{color (printf "timer%d-vmix-media-color" $i) "Media name text color." $timer.VmixMediaColor}}
-                          {{color (printf "timer%d-vmix-media-bg" $i) "Media name background color" $timer.VmixMediaBG}}
+
+                          <h3>Analog Way Picturall</h3>
+
+                          <p>Picturall integration connects to a single picturall per timer in local network. Tested against
+                          picturall pro mk2 with software version 3.4.1.</p>
+
+                          <p>By default the media information from the highest playing layer is displayed and
+                          looping and streaming media is ignored.</p>
+
+                          <p>A known caveat is that the media default playmode changes are updated every 10 seconds so loop
+                          detection may be erronous just after changes to the settings.</p>
+
+                          {{checkbox (printf "timer%d-picturall-enabled" $i) "Enable Picturall integration." $timer.PicturallEnabled}}
+                          {{text (printf "timer%d-picturall-address" $i) "Address to connect to. Leave blank for autodiscovery. Autodiscovery will use the first picturall that responds." $timer.PicturallAddress}}
+                          {{number (printf "timer%d-picturall-port" $i) "Port to connect to." $timer.PicturallPort}}
+                          {{checkbox (printf "timer%d-picturall-loops" $i) "Show looping media." $timer.PicturallLoops}}
+                          {{checkbox (printf "timer%d-picturall-streams" $i) "Show streaming media." $timer.PicturallStreams}}
+                          {{checkbox (printf "timer%d-picturall-media-name" $i) "Show media name as tally message on the clock." $timer.PicturallMediaName}}
+                          {{text (printf "timer%d-picturall-ignore-layers" $i) "List of layer numbers to ignore, comma separated." $timer.PicturallIgnoreLayers}}
+
+                          <h3>Common</h3>
+
+                          {{color (printf "timer%d-media-color" $i) "Media name text color." $timer.MediaColor}}
+                          {{color (printf "timer%d-media-bg" $i) "Media name background color" $timer.MediaBG}}
                         </fieldset>
                       </div>
                     </div>
@@ -285,6 +307,8 @@ const configHTML = `
 
               <fieldset>
                 <legend>Mitti and Millumin</legend>
+                <p>Legacy settings for listening for mitti and millumin on the general OSC port.
+                For finer control use the timer config and per timer OSC ports.</p>
 
                 {{counter "mitti" "Timer number for OSC feedback from Mitti" .EngineOptions.Mitti}}
                 {{counter "millumin" "Timer number for OSC feedback from Millumin" .EngineOptions.Millumin}}
@@ -294,24 +318,10 @@ const configHTML = `
               <fieldset>
                 <legend>Analog Way Picturall</legend>
 
-                <p>Picturall integration connects to a single picturall in local network. Tested against
-                picturall pro mk2 with software version 3.4.1.</p>
-                <p>By default the media information from the highest playing layer is displayed and
-                looping and streaming media is ignored.</p>
-                <p>A known caveat is that the media default playmode changes are updated every 10 seconds so loop
-                detection may be erronous just after changes to the settings.</p>
+                <p>General picturall settings. See also the timer settings for per
+                timer options on connecting to Picturall media servers.</p>
 
-                {{checkbox "picturall-enabled" "Enable Picturalll integration." .EngineOptions.PicturallEnabled}}
-                {{text "picturall-address" "Address to connect to. Leave blank for autodiscovery. Autodiscovery will use the first picturall that responds." .EngineOptions.PicturallAddress}}
-                {{number "picturall-port" "Port to connect to." .EngineOptions.PicturallPort}}
-                {{counter "picturall-timer" "Timer number for feedback from Picturall" .EngineOptions.PicturallTimer}}
-                {{checkbox "picturall-loops" "Show looping media." .EngineOptions.PicturallLoops}}
-                {{checkbox "picturall-streams" "Show streaming media." .EngineOptions.PicturallStreams}}
-                {{checkbox "picturall-media-name" "Show media name as tally message on the clock." .EngineOptions.PicturallMediaName}}
                 {{number "picturall-timeout" "Message timeout for clearing the clock display, in milliseconds." .EngineOptions.PicturallTimeout}}
-                {{text "picturall-ignore-layers" "List of layer numbers to ignore, comma separated." .EngineOptions.PicturallIgnoreLayers}}
-                {{color "picturall-media-color" "Media name text color." .EngineOptions.PicturallMediaColor}}
-                {{color "picturall-media-bg" "Media name background color." .EngineOptions.PicturallMediaBG}}
               </fieldset>
 
               <fieldset>

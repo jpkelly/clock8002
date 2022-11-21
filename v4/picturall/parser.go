@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func (m *Media) combineSource(source string) {
+func (m *Media) combineSource(source string, state *State) {
 	m.DefaultPlayMode = -100
 	m.MediaEndAction = -100
 	m.Layer = -1

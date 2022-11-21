@@ -17,17 +17,17 @@ import (
 // ip is a combination of host and port
 func Connect(ctx context.Context, ip string) chan *Media {
 	mainChan := make(chan *Media)
-	state = &State{
+	s := &State{
 		sources: make(map[string]*Source),
 		enums:   make(map[int]string),
 		ctx:     ctx,
 	}
-	go openConnection(ip, mainChan)
+	go s.openConnection(ip, mainChan)
 
 	return mainChan
 }
 
-func openConnection(ip string, mainChan chan *Media) {
+func (state *State) openConnection(ip string, mainChan chan *Media) {
 	defer log.Printf("Picturall listener exiting on request...")
 	var err error
 
@@ -60,7 +60,7 @@ func openConnection(ip string, mainChan chan *Media) {
 			continue
 		}
 
-		go listen()
+		go state.listen()
 
 		err = state.initConnection()
 		if err != nil {
@@ -104,7 +104,7 @@ func resolveAddr(ip string) (addr string) {
 	return
 }
 
-func listen() {
+func (state *State) listen() {
 	defer close(state.mediaChan)
 
 	var buffer bytes.Buffer
@@ -139,7 +139,7 @@ func listen() {
 
 		str := buffer.String()
 		buffer.Reset()
-		p := parseMsg(str)
+		p := state.parseMsg(str)
 
 		if DumpTraffic {
 			logFile.WriteString(str)
@@ -147,13 +147,13 @@ func listen() {
 		}
 
 		if p != nil {
-			if s := p.ParseSource(); s != nil {
+			if s := p.ParseSource(state); s != nil {
 				state.sources[s.Name] = s
 				if m := s.Media; m != nil {
 					debug.Printf("Picturall got media: %s", m.String())
 					c <- m
 				}
-			} else if m := p.ParseMedia(); m != nil {
+			} else if m := p.ParseMedia(state); m != nil {
 				// We got a media playback message, but can't really
 				// do too much with it alone, as it lacks information on
 				// media play mode.
@@ -172,7 +172,7 @@ func listen() {
 				// fmt.Printf("-> Parsed: %s\n", p.String())
 				state.enums = p.ParseEnum()
 			} else if p.collectionMsg() {
-				p.parseCollection()
+				p.parseCollection(state)
 			} else {
 				//fmt.Printf("Unkown: %s\n", p.String())
 			}

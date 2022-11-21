@@ -162,8 +162,19 @@ timer{{$i}}.vmix-pgm-only={{$timer.VmixPGMOnly}}
 timer{{$i}}.vmix-show-pvm={{$timer.VmixPVM}}
 timer{{$i}}.vmix-ignore-overlays={{$timer.VmixIgnoreOverlays}}
 timer{{$i}}.vmix-media-name={{$timer.VmixMediaName}}
-timer{{$i}}.vmix-media-color={{$timer.VmixMediaColor}}
-timer{{$i}}.vmix-media-bg={{$timer.VmixMediaBG}}
+
+# Picturall
+timer{{$i}}.picturall-enabled={{$timer.PicturallEnabled}}
+timer{{$i}}.picturall-address={{$timer.PicturallAddress}}
+timer{{$i}}.picturall-port={{$timer.PicturallPort}}
+timer{{$i}}.picturall-loops={{$timer.PicturallLoops}}
+timer{{$i}}.picturall-streams={{$timer.PicturallStreams}}
+timer{{$i}}.picturall-media-name={{$timer.PicturallMediaName}}
+timer{{$i}}.picturall-ignore-layers={{$timer.PicturallIgnoreLayers}}
+
+# Common
+timer{{$i}}.media-color={{$timer.MediaColor}}
+timer{{$i}}.media-bg={{$timer.MediaBG}}
 {{end}}
 
 # Overtime behaviour
@@ -230,38 +241,8 @@ millumin={{.EngineOptions.Millumin}}
 # Millumin layer ignore regexp
 millumin-ignore-layer={{.EngineOptions.Ignore}}
 
-# Picturall
-
-# Enable picturall integration
-picturall-enabled={{.EngineOptions.PicturallEnabled}}
-
-# Picturall address. Leave blank for autodiscovery. Autodiscovery will use the first instance that responds.
-picturall-address={{.EngineOptions.PicturallAddress}}
-
-# Picturall port
-picturall-port={{.EngineOptions.PicturallPort}}
-
-# Pictural destination timer
-picturall-timer={{.EngineOptions.PicturallTimer}}
-
-# Picturall show looping media
-picturall-loops={{.EngineOptions.PicturallLoops}}
-
-# Picturall show streaming media
-picturall-streams={{.EngineOptions.PicturallStreams}}
-
-# Picturall show media name as tally message
-picturall-media-name={{.EngineOptions.PicturallMediaName}}
-
 # Picturall message timeout, in milliseconds
 picturall-timeout={{.EngineOptions.PicturallTimeout}}
-
-# Picturall layer ignore list, comma separated
-picturall-ignore-layers={{.EngineOptions.PicturallIgnoreLayers}}
-
-# Picturall media name color & background
-picturall-media-color={{.EngineOptions.PicturallMediaColor}}
-picturall-media-bg={{.EngineOptions.PicturallMediaBG}}
 
 # vMix timers, in milliseconds:
 

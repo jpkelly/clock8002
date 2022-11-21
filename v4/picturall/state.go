@@ -8,7 +8,7 @@ import (
 
 // haveEnums returns true if Picturall object enums list has been retrie
 func (s *State) haveEnums() bool {
-	return len(state.enums) != 0
+	return len(s.enums) != 0
 }
 
 // reset the internal picturall state
@@ -60,7 +60,7 @@ func (s *State) keepAlive() {
 			return
 		}
 
-		if !state.telnetHasDefaultPlayMode {
+		if !s.telnetHasDefaultPlayMode {
 			// Request saving of the media XML to a file
 			_, err := s.conn.Write([]byte("save_media_db /picturall/media/media_collection.xml\n"))
 			if err != nil {
@@ -72,11 +72,11 @@ func (s *State) keepAlive() {
 			time.Sleep(500 * time.Millisecond)
 
 			// Try to fetch the media XML
-			mc, err := FetchMedia(state.ip)
+			mc, err := FetchMedia(s.ip)
 			if err != nil {
 				log.Printf("Picturall error getting media collection: %v", err)
 			} else {
-				state.mc = mc
+				s.mc = mc
 			}
 		}
 
