@@ -293,7 +293,7 @@ const configHTML = `
                 </label>
 
                 {{number "signal-hw-group" "Hardware signal group." .EngineOptions.SignalHardware}}
-                {{byte "signal-hw-brightness" "ardware signal master brightness, 0 = off, 255 = maximum brightness." .SignalBrightness}}
+                {{byte "signal-hw-brightness" "Hardware signal master brightness, 0 = off, 255 = maximum brightness." .SignalBrightness}}
                 {{checkbox "signal-hw-follow" "Hardware signal follows source 1 color." .SignalFollow}}
                 {{checkbox "SignalToBG" "Use hardware signal color as clock background." .SignalToBG}}
               </fieldset>
@@ -547,9 +547,14 @@ const configHTML = `
         <input type="submit" value="Save config and restart clock" />
       </form>
     </div>
+
     {{$color := "#8E1047"}}
     {{$oldColor := "F072A9"}}
     {{$background := "#FFF4F4"}}
+    {{$tabInactive := "#EB3383"}}
+    {{$tabActive := "#E3166F"}}
+    {{$tabText := "white"}}
+
     <style type="text/css">
     h1 {
       color: {{$color}};
@@ -667,10 +672,10 @@ const configHTML = `
     }
     .config-form  input[type=submit],
     .config-form  input[type=button]{
-      background: #F066A2;
+      background: {{$tabInactive}};
       border: 1px solid #C94A81;
       padding: 5px 15px 5px 15px;
-      color: black;
+      color: {{$tabText}};
       box-shadow: inset -1px -1px 3px #FF62A7;
       -moz-box-shadow: inset -1px -1px 3px #FF62A7;
       -webkit-box-shadow: inset -1px -1px 3px #FF62A7;
@@ -685,7 +690,7 @@ const configHTML = `
     }
     .config-form input[type=submit]:hover,
     .config-form input[type=button]:hover{
-      background: #F693BE;
+      background: {{$tabActive}};
     }
     .config-form table th{
       text-align: right;
@@ -722,20 +727,20 @@ const configHTML = `
 
     .tab {
       width: 100%;
-      color: black;
+      color: {{$tabText}};
       overflow: hidden;
     }
     label.tab-label {
       display: flex;
       justify-content: space-between;
       padding: 1em;
-      background: #F066A2;
+      background: {{$tabInactive}};
       font-weight: bold;
       cursor: pointer;
       /* Icon */
     }
     .tab-label:hover {
-      background: #F693BE;
+      background: {{$tabActive}};
     }
     .tab-label::after {
       content: "❯";
@@ -764,7 +769,7 @@ const configHTML = `
     }
 
     input:checked + .tab-label {
-      background: #F693BE;
+      background: {{$tabActive}};
     }
     input:checked + .tab-label::after {
       transform: rotate(90deg);
