@@ -547,10 +547,12 @@ const configHTML = `
         <input type="submit" value="Save config and restart clock" />
       </form>
     </div>
-
+    {{$color := "#8E1047"}}
+    {{$oldColor := "F072A9"}}
+    {{$background := "#FFF4F4"}}
     <style type="text/css">
     h1 {
-      color: F072A9;
+      color: {{$color}};
       font-weight: bold;
       text-shadow: 1px 1px 1px #fff;
     }
@@ -573,7 +575,7 @@ const configHTML = `
       font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
     }
     p{
-      color: #F072A9;
+      color: {{$color}};
       font-weight: bold;
       font-size: 13px;
       text-shadow: 1px 1px 1px #fff;
@@ -585,7 +587,7 @@ const configHTML = `
       text-shadow: 1px 1px 1px #fff;
     }
     .config-form li{
-      color: #F072A9;
+      color: {{$color}};
       font-weight: bold;
       font-size: 13px;
       text-shadow: 1px 1px 1px #fff;
@@ -604,7 +606,7 @@ const configHTML = `
     .config-form label > span{
       float: left;
       width: 300px;
-      color: #F072A9;
+      color: {{$color}};
       font-weight: bold;
       font-size: 13px;
       text-shadow: 1px 1px 1px #fff;
@@ -622,7 +624,7 @@ const configHTML = `
       -webkit-box-shadow: inset 0px 0px 15px #FFE5E5;
     }
     .config-form fieldset legend {
-      color: #FFA0C9;
+      color: {{$color}};
       border-top: 1px solid #FFD2D2;
       border-left: 1px solid #FFD2D2;
       border-right: 1px solid #FFD2D2;
@@ -638,7 +640,7 @@ const configHTML = `
       font-size: 12px;
     }
     .config-form h3{
-      color: #F072A9;
+      color: {{$color}};
     }
     .config-form textarea{
       width:250px;
@@ -652,7 +654,7 @@ const configHTML = `
       -moz-border-radius: 3px;
       border: 1px solid #FFC2DC;
       outline: none;
-      color: #F072A9;
+      color: {{$color}};
       padding: 5px 8px 5px 8px;
       box-shadow: inset 1px 1px 4px #FFD5E7;
       -moz-box-shadow: inset 1px 1px 4px #FFD5E7;
@@ -665,10 +667,10 @@ const configHTML = `
     }
     .config-form  input[type=submit],
     .config-form  input[type=button]{
-      background: #EB3B88;
+      background: #F066A2;
       border: 1px solid #C94A81;
       padding: 5px 15px 5px 15px;
-      color: #FFCBE2;
+      color: black;
       box-shadow: inset -1px -1px 3px #FF62A7;
       -moz-box-shadow: inset -1px -1px 3px #FF62A7;
       -webkit-box-shadow: inset -1px -1px 3px #FF62A7;
@@ -679,17 +681,22 @@ const configHTML = `
       font-weight: bold;
       max-width: 800px;
       width: 100%;
+      cursor: pointer;
+    }
+    .config-form input[type=submit]:hover,
+    .config-form input[type=button]:hover{
+      background: #F693BE;
     }
     .config-form table th{
       text-align: right;
-      color: #F072A9;
+      color: {{$color}};
       font-weight: bold;
       font-size: 13px;
       text-shadow: 1px 1px 1px #fff;
       padding-right: 2em;
     }
     .config-form table td{
-      color: #F072A9;
+      color: {{$color}};
       font-weight: normal;
       font-size: 13px;
       text-shadow: 1px 1px 1px #fff;
@@ -715,20 +722,20 @@ const configHTML = `
 
     .tab {
       width: 100%;
-      color: white;
+      color: black;
       overflow: hidden;
     }
     label.tab-label {
       display: flex;
       justify-content: space-between;
       padding: 1em;
-      background: #F072A9;
+      background: #F066A2;
       font-weight: bold;
       cursor: pointer;
       /* Icon */
     }
     .tab-label:hover {
-      background: #eb448d;
+      background: #F693BE;
     }
     .tab-label::after {
       content: "❯";
@@ -757,7 +764,7 @@ const configHTML = `
     }
 
     input:checked + .tab-label {
-      background: #eb448d;
+      background: #F693BE;
     }
     input:checked + .tab-label::after {
       transform: rotate(90deg);
