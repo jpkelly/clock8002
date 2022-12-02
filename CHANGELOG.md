@@ -1,3 +1,11 @@
+## Version 4.16.0
+* New features:
+  * Mitti, Millumin, vMix and Pictural integrations are now per timer.
+    * This means you can get the state from multiple players
+* Config page overhaul
+  * Better UI widgets to make the page more manageable
+  * More contrast between the text and the background
+
 ## Version 4.15.0
 * New features:
   * Ability to hide hours field on text clock timers
