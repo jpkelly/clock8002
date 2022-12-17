@@ -12,11 +12,11 @@ func TestLimitimerMessage(t *testing.T) {
 		Total:     rand.Int31(),
 		Sumup:     rand.Int31(),
 		Elapsed:   rand.Int31(),
-		Minutes:   rand.Intn(1) == 1,
-		Countdown: rand.Intn(1) == 1,
-		Run:       rand.Intn(1) == 1,
-		Blink:     rand.Intn(1) == 1,
-		Beep:      rand.Intn(1) == 1,
+		Minutes:   rand.Intn(2) == 1,
+		Countdown: rand.Intn(2) == 1,
+		Run:       rand.Intn(2) == 1,
+		Blink:     rand.Intn(2) == 1,
+		Beep:      rand.Intn(2) == 1,
 		UUID:      "loremIpsum",
 	}
 
@@ -42,8 +42,8 @@ func TestMediaMessage(t *testing.T) {
 		frames:    rand.Int31(),
 		remaining: rand.Int31(),
 		progress:  rand.Float32(),
-		paused:    rand.Intn(1) == 1,
-		looping:   rand.Intn(1) == 1,
+		paused:    rand.Intn(2) == 1,
+		looping:   rand.Intn(2) == 1,
 		timeStamp: osc.NewTimetagFromTime(time.Now()),
 		uuid:      "loremIpsum",
 	}
