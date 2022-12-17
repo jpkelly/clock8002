@@ -29,7 +29,7 @@ func (state LayerState) Remaining() float32 {
 // String prints the layer information
 func (state *LayerState) String() string {
 	return fmt.Sprintf("Layer %s updated %.2fs ago: playing=%v info={index=%v name=%v duration=%f} duration=%f paused=%v time=%f",
-		state.Layer, time.Now().Sub(state.Updated).Seconds(),
+		state.Layer, time.Since(state.Updated).Seconds(),
 		state.Playing,
 		state.Info.Index, state.Info.Name, state.Info.Duration,
 		state.Duration, state.Paused, state.Time,

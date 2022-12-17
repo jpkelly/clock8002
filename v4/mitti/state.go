@@ -23,7 +23,7 @@ type State struct {
 
 func (state *State) String() string {
 	return fmt.Sprintf("Mitti state updated %.2fs ago: left=%d elapsed=%d paused=%v loop=%v",
-		time.Now().Sub(state.Updated).Seconds(),
+		time.Since(state.Updated).Seconds(),
 		state.Remaining,
 		state.Elapsed,
 		state.Paused,

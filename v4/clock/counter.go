@@ -543,7 +543,7 @@ func (counter *Counter) Start(countdown bool, timer time.Duration) {
 
 // Target sets the target date and time for a counter
 func (counter *Counter) Target(target time.Time) {
-	timer := target.Sub(time.Now())
+	timer := time.Until(target)
 	fmt.Printf("target: %v timer: %v\n", target, timer)
 	if timer < 0 {
 		counter.Start(false, timer)

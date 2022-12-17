@@ -95,24 +95,27 @@ type TimerOptions struct {
 
 // EngineOptions contains all common options for clock.Engines
 type EngineOptions struct {
-	Flash              int    `long:"flash" description:"Flashing interval when countdown reached zero (ms), 0 disables" default:"500"`
-	ListenAddr         string `long:"osc-listen" description:"Address to listen for incoming osc messages" default:"0.0.0.0:1245"`
-	Timeout            int    `short:"d" long:"timeout" description:"Timeout for OSC message updates in milliseconds" default:"1000"`
-	Connect            string `short:"o" long:"osc-dest" description:"Address to send OSC feedback to" default:"255.255.255.255:1245"`
-	DisableOSC         bool   `long:"disable-osc" description:"Disable OSC control and feedback"`
-	DisableFeedback    bool   `long:"disable-feedback" description:"Disable OSC feedback"`
-	DisableLTC         bool   `long:"disable-ltc" description:"Disable LTC display mode"`
-	LTCSeconds         bool   `long:"ltc-seconds" description:"Show seconds on the ring in LTC mode"`
-	UDPTime            string `long:"udp-time" description:"Stagetimer2 UDP protocol support" choice:"off" choice:"send" choice:"receive" default:"receive"`
-	UDPTimer1          int    `long:"udp-timer-1" description:"Timer to send as UDP timer 1 (port 36700)" default:"1"`
-	UDPTimer2          int    `long:"udp-timer-2" description:"Timer to send as UDP timer 2 (port 36701)" default:"2"`
-	LTCFollow          bool   `long:"ltc-follow" description:"Continue on internal clock if LTC signal is lost. If unset display will blank when signal is gone."`
-	Format12h          bool   `long:"format-12h" description:"Use 12 hour format for time-of-day display"`
-	Mitti              int    `long:"mitti" description:"Counter number for Mitti OSC feedback" default:"8"`
-	Millumin           int    `long:"millumin" description:"Counter number for Millumin OSC feedback" default:"9"`
-	Ignore             string `long:"millumin-ignore-layer" value-name:"REGEXP" description:"Ignore matching millumin layers (case-insensitive regexp)" default:"ignore"`
-	ShowInfo           int    `long:"info-timer" description:"Show clock status for x seconds on startup" default:"30"`
-	OvertimeCountMode  string `long:"overtime-count-mode" description:"Behaviour for expired countdown timer counts" default:"zero" choice:"zero" choice:"blank" choice:"continue"`
+	Flash           int    `long:"flash" description:"Flashing interval when countdown reached zero (ms), 0 disables" default:"500"`
+	ListenAddr      string `long:"osc-listen" description:"Address to listen for incoming osc messages" default:"0.0.0.0:1245"`
+	Timeout         int    `short:"d" long:"timeout" description:"Timeout for OSC message updates in milliseconds" default:"1000"`
+	Connect         string `short:"o" long:"osc-dest" description:"Address to send OSC feedback to" default:"255.255.255.255:1245"`
+	DisableOSC      bool   `long:"disable-osc" description:"Disable OSC control and feedback"`
+	DisableFeedback bool   `long:"disable-feedback" description:"Disable OSC feedback"`
+	DisableLTC      bool   `long:"disable-ltc" description:"Disable LTC display mode"`
+	LTCSeconds      bool   `long:"ltc-seconds" description:"Show seconds on the ring in LTC mode"`
+	//lint:ignore SA5008 go-flags uses multiple choice
+	UDPTime   string `long:"udp-time" description:"Stagetimer2 UDP protocol support" choice:"off" choice:"send" choice:"receive" default:"receive"`
+	UDPTimer1 int    `long:"udp-timer-1" description:"Timer to send as UDP timer 1 (port 36700)" default:"1"`
+	UDPTimer2 int    `long:"udp-timer-2" description:"Timer to send as UDP timer 2 (port 36701)" default:"2"`
+	LTCFollow bool   `long:"ltc-follow" description:"Continue on internal clock if LTC signal is lost. If unset display will blank when signal is gone."`
+	Format12h bool   `long:"format-12h" description:"Use 12 hour format for time-of-day display"`
+	Mitti     int    `long:"mitti" description:"Counter number for Mitti OSC feedback" default:"8"`
+	Millumin  int    `long:"millumin" description:"Counter number for Millumin OSC feedback" default:"9"`
+	Ignore    string `long:"millumin-ignore-layer" value-name:"REGEXP" description:"Ignore matching millumin layers (case-insensitive regexp)" default:"ignore"`
+	ShowInfo  int    `long:"info-timer" description:"Show clock status for x seconds on startup" default:"30"`
+	//lint:ignore SA5008 go-flags uses multiple choice
+	OvertimeCountMode string `long:"overtime-count-mode" description:"Behaviour for expired countdown timer counts" default:"zero" choice:"zero" choice:"blank" choice:"continue"`
+	//lint:ignore SA5008 go-flags uses multiple choice
 	OvertimeVisibility string `long:"overtime-visibility" description:"Extra visibility for overtime timers" default:"blink" choice:"blink" choice:"background" choice:"both" choice:"none"`
 
 	AutoSignals            bool   `long:"auto-signals" description:"Automatic signal colors based on timer state"`
@@ -124,6 +127,7 @@ type EngineOptions struct {
 	SignalThresholdEnd     int    `long:"signal-threshold-end" description:"Threshold for medium color transition (seconds)" default:"60"`
 	SignalHardware         int    `long:"signal-hw-group" description:"Hardware signal group number" default:"1"`
 
+	//lint:ignore SA5008 go-flags uses multiple choice
 	LimitimerMode       string `long:"limitimer-mode" description:"Listen for limitimer messages on the serial device and update sources based on them" choice:"off" choice:"send" choice:"receive" default:"off"`
 	LimitimerSerial     string `long:"limitimer-serial" description:"Serial device for limitimer communication" default:"/dev/ttyAMA0"`
 	LimitimerReceive1   bool   `long:"limitimer-receive-timer1" description:"Receive limitimer program 1 as timer 1"`
@@ -215,7 +219,6 @@ type ltcData struct {
 	seconds int
 	frames  int
 	target  time.Time
-	timeout bool
 }
 
 // Engine contains the state machine for clock-8001

@@ -238,14 +238,6 @@ func draw3TextClocks(state *clock.State) {
 	}
 }
 
-func destroyTextures(textures []*sdl.Texture) {
-	for i := range textures {
-		if textures[i] != nil {
-			textures[i].Destroy()
-		}
-	}
-}
-
 func copyIntoRect(t *sdl.Texture, r sdl.Rect) {
 	if t == nil {
 		return
@@ -524,11 +516,4 @@ func materialIcon(icon string) string {
 		return "\ue044"
 	}
 	return ""
-}
-
-func bounded(in, max int32) int32 {
-	if in > max {
-		return max
-	}
-	return in
 }

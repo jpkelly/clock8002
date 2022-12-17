@@ -193,10 +193,7 @@ func (engine *Engine) sendUDPTimers() {
 }
 
 func (engine *Engine) flash(t time.Time) bool {
-	if t.Nanosecond() < engine.flashPeriod*1000000 {
-		return true
-	}
-	return false
+	return t.Nanosecond() < engine.flashPeriod*1000000
 }
 
 // State creates a snapshot of the clock state for display on clock faces

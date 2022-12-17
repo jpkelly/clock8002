@@ -52,12 +52,6 @@ type outputModule interface {
 
 var outputModules []outputModule = make([]outputModule, 0)
 
-type optionsColor struct {
-	R uint8 `long:"red" description:"Red component of the color"`
-	G uint8 `long:"green" description:"Green component of the color"`
-	B uint8 `long:"blue" description:"Blue component of the color"`
-}
-
 type clockOptions struct {
 	Config          func(s string) error `short:"C" long:"config" description:"read config from a file"`
 	Face            string               `long:"face" description:"Select the clock face to use" default:"round" choice:"round" choice:"dual-round" choice:"small" choice:"text" choice:"single" choice:"countdown" choice:"144" choice:"192" choice:"288x144"`

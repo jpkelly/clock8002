@@ -99,7 +99,7 @@ func UnmarshalArgument(msg *osc.Message, argIndex int, value interface{}) error 
 	}
 
 	if len(msg.Arguments) <= argIndex {
-		return fmt.Errorf("Missing argument %d", argIndex)
+		return fmt.Errorf("missing argument %d", argIndex)
 	}
 
 	var arg = msg.Arguments[argIndex]
@@ -107,7 +107,7 @@ func UnmarshalArgument(msg *osc.Message, argIndex int, value interface{}) error 
 	var valueValue = reflect.ValueOf(value)
 
 	if argValue.Type().Kind() != valueType.Elem().Kind() {
-		return fmt.Errorf("Invalid arugment %d: expected %v, got %T: %#v", argIndex, valueType.Elem(), arg, arg)
+		return fmt.Errorf("invalid arugment %d: expected %v, got %T: %#v", argIndex, valueType.Elem(), arg, arg)
 	}
 
 	valueValue.Elem().Set(argValue)

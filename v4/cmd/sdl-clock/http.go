@@ -7,7 +7,6 @@ import (
 	"gitlab.com/clock-8001/clock-8001/v4/util"
 	htmlTemplate "html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -89,7 +88,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	if options.Raspberry {
 		// Read out various config files for editing
-		bytes, err := ioutil.ReadFile("/boot/config.txt")
+		bytes, err := os.ReadFile("/boot/config.txt")
 		if err != nil {
 			panic(err)
 		}
@@ -105,6 +104,9 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return nil
 	})
+	if err != nil {
+		log.Fatalf("Error walking fontpath: %v", err)
+	}
 
 	options.Timezones = tzList
 
@@ -135,11 +137,12 @@ func importHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("MIME Header: %+v\n", handler.Header)
 
 	dst, err := os.OpenFile(options.configFile, os.O_RDWR|os.O_CREATE, 0755)
-	defer dst.Close()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer dst.Close()
+
 	log.Printf("Writing new config ini file")
 	// Copy the uploaded file to the created file on the filesystem
 	if _, err := io.Copy(dst, file); err != nil {
@@ -356,7 +359,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		// TODO render success page
 
 		if r.FormValue("configtxt") != "" {
-			bytes, err := ioutil.ReadFile("/boot/config.txt")
+			bytes, err := os.ReadFile("/boot/config.txt")
 			check(err)
 			currentConfig := string(bytes)
 
@@ -417,31 +420,11 @@ func (options *clockOptions) writeConfig(path string) {
 		panic(err)
 	}
 	err = tmpl.Execute(f, options)
+	if err != nil {
+		panic(err)
+	}
 	f.Sync()
 	f.Close()
-}
-
-func (options *clockOptions) createHTML() {
-	tmpl, err := htmlTemplate.New("config.html").Parse(configHTML)
-	if err != nil {
-		panic(err)
-	}
-
-	options.Raspberry = util.FileExists("/boot/config.txt")
-
-	if options.Raspberry {
-		// Read out various config files for editing
-		bytes, err := ioutil.ReadFile("/boot/config.txt")
-		if err != nil {
-			panic(err)
-		}
-		options.ConfigTxt = string(bytes)
-	}
-
-	err = tmpl.Execute(os.Stdout, options)
-	if err != nil {
-		panic(err)
-	}
 }
 
 func basicAuth(handler http.HandlerFunc) http.HandlerFunc {

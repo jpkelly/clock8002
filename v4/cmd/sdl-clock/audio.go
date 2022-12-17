@@ -3,7 +3,6 @@ package main
 import (
 	_ "embed"
 	"github.com/veandco/go-sdl2/mix"
-	"github.com/veandco/go-sdl2/sdl"
 	"gitlab.com/clock-8001/clock-8001/v4/clock"
 	"log"
 	"os"
@@ -138,27 +137,5 @@ func todBeep(s *clock.State, i int) {
 			longBeep.Play(-1, 0)
 		}
 		lastBeep[i] = clk.Seconds
-	}
-}
-
-func play() {
-
-	defer mix.CloseAudio()
-
-	// Play 4 times
-	shortBeep.Play(1, 0)
-	sdl.Delay(900)
-	shortBeep.Play(1, 0)
-	sdl.Delay(900)
-	shortBeep.Play(1, 0)
-	sdl.Delay(900)
-	shortBeep.Play(1, 0)
-	sdl.Delay(900)
-	longBeep.Play(1, 0)
-	sdl.Delay(500)
-
-	// Wait until it finishes playing
-	for mix.Playing(-1) == 1 {
-		sdl.Delay(16)
 	}
 }

@@ -91,7 +91,7 @@ func server(ctx context.Context, pc net.PacketConn, ch chan *Message, wg *sync.W
 // Decode takes the raw 3 bytes from the udp time message and decodes it into Message struct
 func Decode(data []byte) (*Message, error) {
 	if len(data) != 3 {
-		return nil, errors.New("Data size is not 3 bytes")
+		return nil, errors.New("data size is not 3 bytes")
 	}
 	msg := Message{
 		Green: false,

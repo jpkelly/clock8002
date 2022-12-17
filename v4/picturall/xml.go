@@ -1,14 +1,10 @@
 package picturall
 
 import (
-	"bytes"
 	"encoding/xml"
 	"fmt"
 	"gitlab.com/clock-8001/clock-8001/v4/debug"
-	"golang.org/x/text/encoding/unicode"
-	"golang.org/x/text/transform"
 	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -46,13 +42,13 @@ func FetchMedia(ip string) (*MediaCollections, error) {
 	// Get the data
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("Picturall: Error downloading media xml: %w", err)
+		return nil, fmt.Errorf("picturall: Error downloading media xml: %w", err)
 	}
 	defer resp.Body.Close()
 
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Picturall: Error reading response body: %w", err)
+		return nil, fmt.Errorf("picturall: Error reading response body: %w", err)
 	}
 
 	mc, err := parseXML(bytes)
@@ -68,38 +64,7 @@ func parseXML(x []byte) (*MediaCollections, error) {
 	mc := &MediaCollections{}
 	err := xml.Unmarshal(x[:len(x)-1], mc)
 	if err != nil {
-		return nil, fmt.Errorf("Picturall: parseXML error: %w", err)
-	}
-	return mc, nil
-}
-
-func decodeXML(data []byte) ([]byte, error) {
-	// Make an tranformer that converts MS-Win default to UTF8:
-	utf16le := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM)
-	// Make a transformer that is like win16be, but abides by BOM:
-	utf16bom := unicode.BOMOverride(utf16le.NewDecoder())
-
-	// Make a Reader that uses utf16bom:
-	unicodeReader := transform.NewReader(bytes.NewReader(data), utf16bom)
-
-	// decode and print:
-	x, err := ioutil.ReadAll(unicodeReader)
-
-	if err != nil {
-		return nil, fmt.Errorf("Picturall: XML parsing error: %w", err)
-	}
-	return x, err
-}
-
-// parseMediaCollections takes the raw byte slice payload from port 11001 and attempts to parse it
-func parseMediaCollections(data []byte) (*MediaCollections, error) {
-	x, err := decodeXML(data)
-	if err != nil {
-		return nil, err
-	}
-	mc, err := parseXML(x)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("picturall: parseXML error: %w", err)
 	}
 	return mc, nil
 }

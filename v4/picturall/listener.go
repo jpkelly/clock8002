@@ -169,12 +169,12 @@ func (state *State) listen() {
 				}
 
 			} else if p.Type == EnumObjects {
-				// fmt.Printf("-> Parsed: %s\n", p.String())
+				debug.Printf("-> Parsed: %s\n", p.String())
 				state.enums = p.ParseEnum()
 			} else if p.collectionMsg() {
 				p.parseCollection(state)
 			} else {
-				//fmt.Printf("Unkown: %s\n", p.String())
+				debug.Printf("Unkown: %s\n", p.String())
 			}
 		} else if str != "" {
 			fmt.Printf("Picturall: failed to parse: %s\n", str)

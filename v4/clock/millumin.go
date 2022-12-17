@@ -25,7 +25,7 @@ func (engine *Engine) updateMilluminClock(state millumin.State, milluminCounter 
 		} else if engine.ignoreRegexp.MatchString(layerState.Layer) {
 			debug.Printf("Ignored layer update\n")
 			continue
-		} else if layerState.Updated.Before(time.Now().Add(-1*time.Second)) == true {
+		} else if layerState.Updated.Before(time.Now().Add(-1 * time.Second)) {
 			debug.Printf("Layer information stale, ignored")
 			continue
 		}

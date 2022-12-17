@@ -114,5 +114,5 @@ func TestTimerStateMessage(t *testing.T) {
 }
 
 func randBool() bool {
-	return rand.Intn(1) == 1
+	return rand.Intn(2) == 1
 }

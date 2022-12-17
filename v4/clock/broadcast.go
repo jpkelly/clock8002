@@ -7,7 +7,6 @@ import (
 	"log"
 	"net"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -17,7 +16,6 @@ type feedbackDestination struct {
 	udpConns []*net.UDPConn
 	address  string
 	ctx      context.Context
-	wg       *sync.WaitGroup
 }
 
 func initFeedback(ctx context.Context, address string) *feedbackDestination {
