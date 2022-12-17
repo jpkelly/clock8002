@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/desertbit/timer"
 	"github.com/jessevdk/go-flags"
@@ -9,6 +10,7 @@ import (
 	"gitlab.com/clock-8001/clock-8001/v4/debug"
 	"gitlab.com/clock-8001/clock-8001/v4/util"
 	"image/color"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -363,6 +365,58 @@ func parseOptions() {
 			if err != nil {
 				panic(err)
 			}
+		}
+	}
+
+	if runtime.GOOS == "darwin" && options.configFile == "" {
+		// Try to load a hardcoded default config file
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			log.Fatalf("Error getting user home directory: %v", err)
+		}
+		path := homeDir + "/Library/Application Support/clock-8001"
+		config := path + "/clock.ini"
+		_, err = os.Stat(config)
+		if err != nil {
+			log.Printf("User config not found, loading defaults: %v", err)
+			if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+				err := os.Mkdir(path, os.ModePerm)
+				if err != nil {
+					log.Fatalf("Error creating config path: %v", err)
+				}
+			}
+			src := "clock.ini"
+
+			_, err = os.Stat(src)
+			if err == nil {
+				in, err := os.Open(src)
+				if err != nil {
+					log.Fatalf("Error opening default config: %v", err)
+				}
+				defer in.Close()
+				out, err := os.Create(config)
+				if err != nil {
+					log.Fatalf("Error creating user config file %s: %v", config, err)
+				}
+				defer out.Close()
+
+				if _, err = io.Copy(out, in); err != nil {
+					log.Fatalf("Error copying default config to user config: %v", err)
+				}
+				err = out.Sync()
+				if err != nil {
+					log.Fatalf("Error syncing new config file: %v", err)
+				}
+			} else {
+				log.Fatalf("Default configuration file clock.ini is missing: %v", err)
+			}
+		}
+		log.Printf("Using default user config: %v", config)
+		ini := flags.NewIniParser(parser)
+		options.configFile = config
+		err = ini.ParseFile(config)
+		if err != nil {
+			panic(err)
 		}
 	}
 
