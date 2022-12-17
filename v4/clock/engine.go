@@ -345,9 +345,6 @@ func (engine *Engine) printVersion() {
 	if ok {
 		for _, mod := range clockModule.Deps {
 			log.Printf("Dep: %s: version %s", mod.Path, mod.Version)
-			if mod.Path == "gitlab.com/clock-8001/clock-8001" {
-				// gitTag = mod.Version
-			}
 		}
 	} else {
 		log.Printf("Error reading BuildInfo, version data unavailable")
