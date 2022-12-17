@@ -9,7 +9,7 @@ require (
 	github.com/husl-colors/husl-go v2.0.0+incompatible // indirect
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
-	github.com/veandco/go-sdl2 v0.4.11-0.20211101143930-102e3820d7e8
+	github.com/veandco/go-sdl2 v0.4.27
 	gitlab.com/Depili/go-osc v0.0.0-20220126123138-cdbd92c9027a
 	gitlab.com/Depili/go-rgb-led-matrix v0.0.0-20170204170814-25b63d4baf68
 	gitlab.com/Depili/limitimer v0.0.0-20220312082356-1cec6f97c270
