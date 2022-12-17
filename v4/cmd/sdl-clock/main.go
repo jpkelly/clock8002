@@ -359,65 +359,19 @@ func parseOptions() {
 		// Try to load a hardcoded default config file
 		_, err := os.Stat("clock.ini")
 		if err == nil {
-			ini := flags.NewIniParser(parser)
-			options.configFile = "clock.ini"
-			err := ini.ParseFile("clock.ini")
-			if err != nil {
-				panic(err)
-			}
+			loadDefaultConfig("clock.ini")
 		}
 	}
 
 	if runtime.GOOS == "darwin" && options.configFile == "" {
+		// Running on osx and no config file provided
+		// Assume we are running as an app
+
+		// Set working directory to app resources
+		setWD()
+
 		// Try to load a hardcoded default config file
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			log.Fatalf("Error getting user home directory: %v", err)
-		}
-		path := homeDir + "/Library/Application Support/clock-8001"
-		config := path + "/clock.ini"
-		_, err = os.Stat(config)
-		if err != nil {
-			log.Printf("User config not found, loading defaults: %v", err)
-			if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-				err := os.Mkdir(path, os.ModePerm)
-				if err != nil {
-					log.Fatalf("Error creating config path: %v", err)
-				}
-			}
-			src := "clock.ini"
-
-			_, err = os.Stat(src)
-			if err == nil {
-				in, err := os.Open(src)
-				if err != nil {
-					log.Fatalf("Error opening default config: %v", err)
-				}
-				defer in.Close()
-				out, err := os.Create(config)
-				if err != nil {
-					log.Fatalf("Error creating user config file %s: %v", config, err)
-				}
-				defer out.Close()
-
-				if _, err = io.Copy(out, in); err != nil {
-					log.Fatalf("Error copying default config to user config: %v", err)
-				}
-				err = out.Sync()
-				if err != nil {
-					log.Fatalf("Error syncing new config file: %v", err)
-				}
-			} else {
-				log.Fatalf("Default configuration file clock.ini is missing: %v", err)
-			}
-		}
-		log.Printf("Using default user config: %v", config)
-		ini := flags.NewIniParser(parser)
-		options.configFile = config
-		err = ini.ParseFile(config)
-		if err != nil {
-			panic(err)
-		}
+		loadDarwinConfig()
 	}
 
 	computeDerivedOptions()
@@ -554,6 +508,83 @@ func signalBrightness(c color.RGBA) color.RGBA {
 		G: uint8(int(c.G) * options.SignalBrightness / 255),
 		B: uint8(int(c.B) * options.SignalBrightness / 255),
 		A: 255,
+	}
+}
+
+func setWD() {
+	app, err := os.Executable()
+	appDir := filepath.Dir(app)
+	appDir = filepath.Join(appDir, "..", "Resources")
+	if err != nil {
+		log.Fatalf("Error getting application directory: %v", err)
+	}
+	err = os.Chdir(appDir)
+	if err != nil {
+		log.Fatalf("Error changing to the application directory: %v", err)
+	}
+
+}
+
+func loadDarwinConfig() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("Error getting user home directory: %v", err)
+	}
+
+	// User config location
+	path := filepath.Join(homeDir, "Library", "Application Support", "clock-8001")
+	config := filepath.Join(path, "clock.ini")
+
+	_, err = os.Stat(config)
+	if err != nil {
+		log.Printf("User config not found, loading defaults: %v", err)
+		if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+			err := os.Mkdir(path, os.ModePerm)
+			if err != nil {
+				log.Fatalf("Error creating config path: %v", err)
+			}
+		}
+		src := "clock.ini"
+
+		_, err = os.Stat(src)
+		if err == nil {
+			copyConfig(src, config)
+		} else {
+			log.Fatalf("Default configuration file clock.ini is missing: %v", err)
+		}
+	}
+	loadDefaultConfig(config)
+}
+
+func loadDefaultConfig(config string) {
+	log.Printf("Using default user config: %v", config)
+	ini := flags.NewIniParser(parser)
+	options.configFile = config
+	err := ini.ParseFile(config)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// copyConfig copies a (default) config file to a destination
+func copyConfig(src string, dst string) {
+	in, err := os.Open(src)
+	if err != nil {
+		log.Fatalf("Error opening default config: %v", err)
+	}
+	defer in.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+		log.Fatalf("Error creating user config file %s: %v", dst, err)
+	}
+	defer out.Close()
+
+	if _, err = io.Copy(out, in); err != nil {
+		log.Fatalf("Error copying default config to user config: %v", err)
+	}
+	err = out.Sync()
+	if err != nil {
+		log.Fatalf("Error syncing new config file: %v", err)
 	}
 }
 
