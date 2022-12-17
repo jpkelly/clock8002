@@ -489,6 +489,9 @@ func dumpConfig() {
 		panic(err)
 	}
 	err = tmpl.Execute(os.Stdout, options)
+	if err != nil {
+		panic(err)
+	}
 	os.Exit(0)
 }
 
