@@ -218,6 +218,30 @@ Turns the signal color automation on or off
 Parameters:
 1. bool; desired signal automation state
 
+## Cues
+
+The following commands are sent and received by the clocks. For external sources leave UUID as blank when sending the commands.
+
+### `/clock/cue/right`
+
+Shows the right arrow cue symbol, clears possible "blank" cue.
+
+Parameters:
+1. string; UUID of the sending clock
+
+### `/clock/cue/left`
+
+Shows the left arrow cue symbol, clears possible "blank" cue.
+
+Parameters:
+1. string; UUID of the sending clock
+
+### `/clock/cue/blank`
+
+Parameters:
+1. string; UUID of the sending clock
+2. Bool; state of the "blank" cue
+
 ## Internal commands
 
 These are used to bridge different state information accross multiple clocks.

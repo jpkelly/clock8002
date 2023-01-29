@@ -681,6 +681,44 @@ func (server *Server) handleDisplay(msg *osc.Message) {
 	}
 }
 
+func (server *Server) handleCue(msg *osc.Message) {
+	debug.Printf("handleCue: %v", msg)
+
+	var uuid string
+	var blank bool
+	var m Message
+
+	err := oscutil.UnmarshalArgument(msg, 0, &uuid)
+	if err != nil {
+		log.Printf("handleCue error: %v msg: %v", err, msg)
+		return
+	}
+
+	if uuid == server.uuid {
+		return
+	}
+
+	switch msg.Address {
+	case "/clock/cue/right":
+		m.Type = "cueRight"
+	case "/clock/cue/left":
+		m.Type = "cueLeft"
+	case "/clock/cue/blank":
+		err = oscutil.UnmarshalArgument(msg, 1, &blank)
+		if err != nil {
+			log.Printf("handleCue blank error: %v msg: %v", err, msg)
+			return
+		}
+		m.Type = "cueBlank"
+		m.Countdown = blank
+	default:
+		log.Printf("handleCue error: Unknown message address: %s", msg.Address)
+	}
+
+	server.update(m)
+
+}
+
 // Le huge registerHandler block
 func (server *Server) setupDispatch(d *oscutil.RegexpDispatcher) {
 	// Sync messages
@@ -723,6 +761,11 @@ func (server *Server) setupDispatch(d *oscutil.RegexpDispatcher) {
 	registerHandler(d, "^/clock/flash", server.handleFlash)
 	registerHandler(d, "^/clock/signal/*", server.handleHardwareSignal)
 	registerHandler(d, "^/clock/automation", server.handleSignalAutomation)
+
+	// Cues
+	registerHandler(d, "^/clock/cue/right", server.handleCue)
+	registerHandler(d, "^/clock/cue/left", server.handleCue)
+	registerHandler(d, "^/clock/cue/blank", server.handleCue)
 
 	// Deprecated
 	registerHandler(d, "^/clock/dual/text", server.handleDualText)

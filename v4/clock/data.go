@@ -279,6 +279,14 @@ type Engine struct {
 	cueChan             chan *cueState
 	cueState            *cueState
 	cueDuration         time.Duration
+
+	mediaTimeouts []*time.Time
+	flashTimer    *timer.Timer
+	ltcTimer      *timer.Timer
+	cueTimer      *timer.Timer
+	// FIXME: Are these used anymore?
+	mittiTimer    *timer.Timer
+	milluminTimer *timer.Timer
 }
 
 // Clock contains the state of a single component clock / timer

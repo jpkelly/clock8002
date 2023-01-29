@@ -24,20 +24,22 @@ func (engine *Engine) listen() {
 
 	oscChan := engine.clockServer.Listen()
 	engine.messageTimer.Stop()
-	ltcTimer := timer.NewTimer(engine.timeout)
-	ltcTimer.Stop() // Needed to prevent a timeout at the start
 
-	mediaTimeouts := make([]*time.Time, numCounters)
+	engine.ltcTimer = timer.NewTimer(engine.timeout)
+	engine.ltcTimer.Stop() // Needed to prevent a timeout at the start
+
+	engine.mittiTimer = timer.NewTimer(updateTimeout)
+	engine.milluminTimer = timer.NewTimer(updateTimeout)
+	engine.flashTimer = timer.NewTimer(flashDuration)
+	engine.mediaTimeouts = make([]*time.Time, numCounters)
+
+	engine.cueTimer = timer.NewTimer(engine.cueDuration)
+	engine.cueTimer.Stop()
+
 	mediaTicker := time.NewTicker(mediaTickRate)
 
-	mittiTimer := timer.NewTimer(updateTimeout)
-	milluminTimer := timer.NewTimer(updateTimeout)
 	stateTicker := time.NewTicker(stateTimer)
 	udpTicker := time.NewTicker(udpTimer)
-	flashTimer := timer.NewTimer(flashDuration)
-
-	cueTimer := timer.NewTimer(engine.cueDuration)
-	cueTimer.Stop()
 
 	for {
 		select {
@@ -46,181 +48,25 @@ func (engine *Engine) listen() {
 			return
 		case message := <-oscChan:
 			// New OSC message received
+
 			debug.Printf("Got new osc data: %v\n", message)
-			switch message.Type {
-			case "timerStart":
-				time := time.Duration(message.CountdownMessage.Seconds) * time.Second
-				engine.StartCounter(message.Counter, message.Countdown, time)
-			case "timerModify":
-				time := time.Duration(message.CountdownMessage.Seconds) * time.Second
-				engine.ModifyCounter(message.Counter, time)
-			case "timerStop":
-				engine.StopCounter(message.Counter)
-			case "timerTarget":
-				engine.TargetCounter(message.Counter, message.Data, message.Countdown)
-			case "timerPause":
-				engine.PauseCounter(message.Counter)
-			case "timerResume":
-				engine.ResumeCounter(message.Counter)
-			case "timerMedia":
-				m := message.MediaMessage
-				engine.Counters[message.Counter].SetMedia(m.hours, m.minutes, m.seconds, m.frames, time.Duration(m.remaining)*time.Second, float64(m.progress), m.paused, m.looping)
-				t := time.Now().Add(mediaTimeout)
-				mediaTimeouts[message.Counter] = &t
-			case "timerResetMedia":
-				engine.Counters[message.Counter].ResetMedia()
-				mediaTimeouts[message.Counter] = nil
-			case "display":
-				msg := message.DisplayMessage
-				log.Printf("Setting tally message to: %s", msg.Text)
 
-				engine.message = msg.Text
-				engine.messageColor = &color.RGBA{
-					R: uint8(msg.ColorRed),
-					G: uint8(msg.ColorBlue),
-					B: uint8(msg.ColorGreen),
-					A: 255,
-				}
+			engine.handleOSC(&message)
 
-				engine.messageBG = &color.RGBA{
-					R: 0,
-					G: 0,
-					B: 0,
-					A: 255,
-				}
-
-				// Mark the OSC message state as active
-				engine.oscTally = true
-
-				// Reset the timer that will clear the message when it expires
-				engine.messageTimer.Reset(engine.timeout)
-
-			case "displayText":
-				msg := message.DisplayTextMessage
-				log.Printf("Displaying text: %v", msg)
-
-				engine.message = msg.text
-				engine.messageColor = &color.RGBA{
-					R: uint8(msg.r),
-					G: uint8(msg.g),
-					B: uint8(msg.b),
-					A: uint8(msg.a),
-				}
-				engine.messageBG = &color.RGBA{
-					R: uint8(msg.bgR),
-					G: uint8(msg.bgG),
-					B: uint8(msg.bgB),
-					A: uint8(msg.bgA),
-				}
-				engine.oscTally = true
-				if msg.time != 0 {
-					engine.messageTimer.Reset(time.Duration(msg.time) * time.Second)
-				}
-			case "pause":
-				engine.Pause()
-			case "resume":
-				engine.Resume()
-			case "hideAll":
-				engine.hideAll()
-			case "showAll":
-				engine.showAll()
-			case "secondsOff":
-				engine.displaySeconds = false
-			case "secondsOn":
-				engine.displaySeconds = true
-			case "setTime":
-				engine.setTime(message.Data)
-			case "LTC":
-				if engine.ltcEnabled {
-					engine.setLTC(message.Data)
-					ltcTimer.Reset(engine.timeout)
-				}
-			case "dualText":
-				engine.message = fmt.Sprintf("%-.8s", message.Data)
-			case "mitti":
-				mittiTimer.Reset(updateTimeout)
-
-				m := message.MediaMessage
-				engine.mittiCounter.SetMedia(m.hours, m.minutes, m.seconds, m.frames, time.Duration(m.remaining)*time.Second, float64(m.progress), m.paused, m.looping)
-			case "mittiReset":
-				engine.mittiCounter.ResetMedia()
-			case "millumin:":
-				milluminTimer.Reset(updateTimeout)
-
-				m := message.MediaMessage
-				engine.milluminCounter.SetMedia(m.hours, m.minutes, m.seconds, m.frames, time.Duration(m.remaining)*time.Second, float64(m.progress), m.paused, m.looping)
-			case "milluminReset":
-				engine.milluminCounter.ResetMedia()
-			case "background":
-				// FIXME: non semantic ugliness
-				engine.background = message.Counter
-			case "sourceHide":
-				if message.Counter >= 0 &&
-					message.Counter < len(engine.sources) {
-
-					engine.sources[message.Counter].hidden = true
-				}
-			case "sourceShow":
-				if message.Counter >= 0 &&
-					message.Counter < len(engine.sources) {
-					engine.sources[message.Counter].hidden = false
-				}
-			case "sourceTitle":
-				if message.Counter >= 0 &&
-					message.Counter < len(engine.sources) {
-
-					engine.sources[message.Counter].title = message.Data
-				}
-			case "showInfo":
-				engine.showInfo = true
-				engine.infoTimer.Reset(time.Duration(message.Counter) * time.Second)
-			case "sourceColors":
-				if message.Counter >= 0 &&
-					message.Counter < len(engine.sources) &&
-					len(message.Colors) == 2 {
-
-					log.Printf("Setting source %d colors: %v - %v", message.Counter+1, message.Colors[0], message.Colors[1])
-					engine.SetSourceColors(message.Counter, message.Colors[0], message.Colors[1])
-				}
-			case "titleColors":
-				if len(message.Colors) == 2 {
-					log.Printf("Setting title colors: %v - %v", message.Colors[0], message.Colors[1])
-					engine.SetTitleColors(message.Colors[0], message.Colors[1])
-				}
-			case "screenFlash":
-				engine.screenFlash = true
-				flashTimer.Reset(flashDuration)
-			case "timerSignal":
-				if message.Counter >= 0 &&
-					message.Counter < len(engine.sources) &&
-					len(message.Colors) == 1 {
-					engine.Counters[message.Counter].signalColor = message.Colors[0]
-				}
-			case "hardwareSignal":
-				if message.Counter == engine.signalHardware && len(message.Colors) == 1 {
-					engine.signalHardwareColor = message.Colors[0]
-				}
-			case "signalAutomation":
-				for i := range engine.Counters {
-					engine.Counters[i].autoSignals = message.Countdown
-				}
-			case "limitimer":
-				engine.Counters[message.Counter].parseLimitimer(message.LimitimerMessage)
-			}
 			// We have received a osc command, so stop the version display
 			engine.initialized = true
 
-		case <-flashTimer.C:
+		case <-engine.flashTimer.C:
 			engine.screenFlash = false
-		case <-mittiTimer.C:
+		case <-engine.mittiTimer.C:
 			engine.mittiCounter.ResetMedia()
-		case <-milluminTimer.C:
+		case <-engine.milluminTimer.C:
 			engine.milluminCounter.ResetMedia()
 		case <-engine.messageTimer.C:
 			// OSC message timeout
 			engine.message = ""
 			engine.oscTally = false
-		case <-ltcTimer.C:
+		case <-engine.ltcTimer.C:
 			// LTC message timeout
 			engine.ltcTimeout = true
 		case <-stateTicker.C:
@@ -232,23 +78,208 @@ func (engine *Engine) listen() {
 		case <-udpTicker.C:
 			engine.sendUDPTimers()
 		case <-mediaTicker.C:
-			for i := range mediaTimeouts {
-				if t := mediaTimeouts[i]; t != nil && time.Now().After(*t) {
+			for i := range engine.mediaTimeouts {
+				if t := engine.mediaTimeouts[i]; t != nil && time.Now().After(*t) {
 					engine.Counters[i].ResetMedia()
-					mediaTimeouts[i] = nil
+					engine.mediaTimeouts[i] = nil
 				}
 			}
 		case cs := <-engine.cueChan:
 			cs.Show = true
 			engine.cueState = cs
 			if cs.Blank {
-				cueTimer.Stop()
+				engine.cueTimer.Stop()
 			} else {
-				cueTimer.Reset(engine.cueDuration)
+				engine.cueTimer.Reset(engine.cueDuration)
 			}
-		case <-cueTimer.C:
+			engine.sendCue(cs)
+		case <-engine.cueTimer.C:
 			engine.cueState.Show = false
 		}
+	}
+}
+
+func (engine *Engine) handleOSC(message *Message) {
+	switch message.Type {
+	case "timerStart":
+		time := time.Duration(message.CountdownMessage.Seconds) * time.Second
+		engine.StartCounter(message.Counter, message.Countdown, time)
+	case "timerModify":
+		time := time.Duration(message.CountdownMessage.Seconds) * time.Second
+		engine.ModifyCounter(message.Counter, time)
+	case "timerStop":
+		engine.StopCounter(message.Counter)
+	case "timerTarget":
+		engine.TargetCounter(message.Counter, message.Data, message.Countdown)
+	case "timerPause":
+		engine.PauseCounter(message.Counter)
+	case "timerResume":
+		engine.ResumeCounter(message.Counter)
+	case "timerMedia":
+		m := message.MediaMessage
+		engine.Counters[message.Counter].SetMedia(m.hours, m.minutes, m.seconds, m.frames, time.Duration(m.remaining)*time.Second, float64(m.progress), m.paused, m.looping)
+		t := time.Now().Add(mediaTimeout)
+		engine.mediaTimeouts[message.Counter] = &t
+	case "timerResetMedia":
+		engine.Counters[message.Counter].ResetMedia()
+		engine.mediaTimeouts[message.Counter] = nil
+	case "display":
+		msg := message.DisplayMessage
+		log.Printf("Setting tally message to: %s", msg.Text)
+
+		engine.message = msg.Text
+		engine.messageColor = &color.RGBA{
+			R: uint8(msg.ColorRed),
+			G: uint8(msg.ColorBlue),
+			B: uint8(msg.ColorGreen),
+			A: 255,
+		}
+
+		engine.messageBG = &color.RGBA{
+			R: 0,
+			G: 0,
+			B: 0,
+			A: 255,
+		}
+
+		// Mark the OSC message state as active
+		engine.oscTally = true
+
+		// Reset the timer that will clear the message when it expires
+		engine.messageTimer.Reset(engine.timeout)
+
+	case "displayText":
+		msg := message.DisplayTextMessage
+		log.Printf("Displaying text: %v", msg)
+
+		engine.message = msg.text
+		engine.messageColor = &color.RGBA{
+			R: uint8(msg.r),
+			G: uint8(msg.g),
+			B: uint8(msg.b),
+			A: uint8(msg.a),
+		}
+		engine.messageBG = &color.RGBA{
+			R: uint8(msg.bgR),
+			G: uint8(msg.bgG),
+			B: uint8(msg.bgB),
+			A: uint8(msg.bgA),
+		}
+		engine.oscTally = true
+		if msg.time != 0 {
+			engine.messageTimer.Reset(time.Duration(msg.time) * time.Second)
+		}
+	case "pause":
+		engine.Pause()
+	case "resume":
+		engine.Resume()
+	case "hideAll":
+		engine.hideAll()
+	case "showAll":
+		engine.showAll()
+	case "secondsOff":
+		engine.displaySeconds = false
+	case "secondsOn":
+		engine.displaySeconds = true
+	case "setTime":
+		engine.setTime(message.Data)
+	case "LTC":
+		if engine.ltcEnabled {
+			engine.setLTC(message.Data)
+			engine.ltcTimer.Reset(engine.timeout)
+		}
+	case "dualText":
+		engine.message = fmt.Sprintf("%-.8s", message.Data)
+	case "mitti":
+		engine.mittiTimer.Reset(updateTimeout)
+
+		m := message.MediaMessage
+		engine.mittiCounter.SetMedia(m.hours, m.minutes, m.seconds, m.frames, time.Duration(m.remaining)*time.Second, float64(m.progress), m.paused, m.looping)
+	case "mittiReset":
+		engine.mittiCounter.ResetMedia()
+	case "millumin:":
+		engine.milluminTimer.Reset(updateTimeout)
+
+		m := message.MediaMessage
+		engine.milluminCounter.SetMedia(m.hours, m.minutes, m.seconds, m.frames, time.Duration(m.remaining)*time.Second, float64(m.progress), m.paused, m.looping)
+	case "milluminReset":
+		engine.milluminCounter.ResetMedia()
+	case "background":
+		// FIXME: non semantic ugliness
+		engine.background = message.Counter
+	case "sourceHide":
+		if message.Counter >= 0 &&
+			message.Counter < len(engine.sources) {
+
+			engine.sources[message.Counter].hidden = true
+		}
+	case "sourceShow":
+		if message.Counter >= 0 &&
+			message.Counter < len(engine.sources) {
+			engine.sources[message.Counter].hidden = false
+		}
+	case "sourceTitle":
+		if message.Counter >= 0 &&
+			message.Counter < len(engine.sources) {
+
+			engine.sources[message.Counter].title = message.Data
+		}
+	case "showInfo":
+		engine.showInfo = true
+		engine.infoTimer.Reset(time.Duration(message.Counter) * time.Second)
+	case "sourceColors":
+		if message.Counter >= 0 &&
+			message.Counter < len(engine.sources) &&
+			len(message.Colors) == 2 {
+
+			log.Printf("Setting source %d colors: %v - %v", message.Counter+1, message.Colors[0], message.Colors[1])
+			engine.SetSourceColors(message.Counter, message.Colors[0], message.Colors[1])
+		}
+	case "titleColors":
+		if len(message.Colors) == 2 {
+			log.Printf("Setting title colors: %v - %v", message.Colors[0], message.Colors[1])
+			engine.SetTitleColors(message.Colors[0], message.Colors[1])
+		}
+	case "screenFlash":
+		engine.screenFlash = true
+		engine.flashTimer.Reset(flashDuration)
+	case "timerSignal":
+		if message.Counter >= 0 &&
+			message.Counter < len(engine.sources) &&
+			len(message.Colors) == 1 {
+			engine.Counters[message.Counter].signalColor = message.Colors[0]
+		}
+	case "hardwareSignal":
+		if message.Counter == engine.signalHardware && len(message.Colors) == 1 {
+			engine.signalHardwareColor = message.Colors[0]
+		}
+	case "signalAutomation":
+		for i := range engine.Counters {
+			engine.Counters[i].autoSignals = message.Countdown
+		}
+	case "limitimer":
+		engine.Counters[message.Counter].parseLimitimer(message.LimitimerMessage)
+	case "cueRight":
+		cs := cueState{
+			RightArrow: true,
+			Show:       true,
+		}
+		engine.cueState = &cs
+		engine.cueTimer.Reset(engine.cueDuration)
+	case "cueLeft":
+		cs := cueState{
+			LeftArrow: true,
+			Show:      true,
+		}
+		engine.cueState = &cs
+		engine.cueTimer.Reset(engine.cueDuration)
+	case "cueBlank":
+		cs := cueState{
+			Blank: message.Countdown,
+			Show:  message.Countdown,
+		}
+		engine.cueState = &cs
+		engine.cueTimer.Stop()
 	}
 }
 
@@ -279,8 +310,6 @@ func (engine *Engine) sendState(state *State) error {
 		packet := state.MarshalOSC(addr)
 		bundle.Append(packet)
 	}
-
-	// TODO: send cue state
 
 	data, err := bundle.MarshalBinary()
 	if err != nil {
@@ -328,6 +357,27 @@ func (engine *Engine) sendLegacyState(state *State) error {
 	engine.oscSendChan <- data
 
 	return nil
+}
+
+// sendCue sends the engine cue events as OSC messages
+func (engine *Engine) sendCue(cs *cueState) {
+	var msg *osc.Message
+
+	if cs.RightArrow {
+		msg = osc.NewMessage("/clock/cue/right", engine.uuid)
+	} else if cs.LeftArrow {
+		msg = osc.NewMessage("/clock/cue/left", engine.uuid)
+	} else {
+		msg = osc.NewMessage("/clock/cue/blank", engine.uuid, cs.Blank)
+	}
+
+	data, err := msg.MarshalBinary()
+	if err != nil {
+		log.Printf("sendCue: error marshalling osc message: %v", err)
+		return
+	}
+
+	engine.oscSendChan <- data
 }
 
 /*
