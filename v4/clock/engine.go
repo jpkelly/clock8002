@@ -94,6 +94,7 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	engine.initTricaster(options)
 	engine.initUDPTime(options)
 	engine.initLimitimer(options)
+	engine.initPerfectCue(options)
 
 	for i, o := range options.TimerOptions {
 		if o.ListenPort != 0 {
@@ -238,6 +239,10 @@ func (engine *Engine) State() *State {
 		TitleBGColor:        engine.titleBGColor,
 		ScreenFlash:         engine.screenFlash,
 		HardwareSignalColor: engine.signalHardwareColor,
+		CueRight:            engine.cueState.RightArrow,
+		CueLeft:             engine.cueState.LeftArrow,
+		CueBlank:            engine.cueState.Blank,
+		CueShow:             engine.cueState.Show,
 	}
 
 	if engine.showInfo {

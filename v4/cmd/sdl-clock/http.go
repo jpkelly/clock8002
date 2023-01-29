@@ -183,6 +183,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.FullScreen = r.FormValue("FullScreen") != ""
 	newOptions.HideHours = r.FormValue("hide-hours") != ""
 	newOptions.IconsDisable = r.FormValue("disable-icons") != ""
+	newOptions.CueFullScreen = r.FormValue("cue-fullscreen") != ""
 
 	// Strings, will not be validated
 	newOptions.HTTPUser = r.FormValue("HTTPUser")

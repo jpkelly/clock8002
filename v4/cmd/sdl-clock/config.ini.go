@@ -312,6 +312,11 @@ limitimer-broadcast-timer4={{.EngineOptions.LimitimerBroadcast4}}
 # Send program selected on controller as timer 5 to other clocks via OSC
 limitimer-broadcast-timer5={{.EngineOptions.LimitimerBroadcast5}}
 
+# Perfect Cue
+cue-enabled={{.EngineOptions.CueEnabled}}
+cue-serial={{.EngineOptions.CueSerial}}
+cue-duration={{.EngineOptions.CueDuration}}
+cue-fullscreen={{.CueFullScreen}}
 
 # Font to use
 Font={{.Font}}

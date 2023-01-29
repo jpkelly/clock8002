@@ -40,6 +40,8 @@ var clockTextures []*sdl.Texture
 var infoTexture *sdl.Texture
 var infoFont *ttf.Font
 
+var cueTexture *sdl.Texture
+
 // initSDL initializes the SDL library, creates a window and a hw accelerated renderer
 func initSDL() {
 	var err error
@@ -215,6 +217,11 @@ func initTextures() {
 			}
 		}
 	}
+
+	cueTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 500, 500)
+	check(err)
+	err = cueTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
+	check(err)
 
 	err = renderer.SetRenderTarget(nil)
 	check(err)

@@ -248,6 +248,11 @@ func main() {
 				drawInfoScreen()
 			}
 
+			updateCue(state)
+			if state.CueShow {
+				drawCue()
+			}
+
 			// Update the canvas
 			renderer.Present()
 			// debug.Printf("Frame time: %d ms\n", time.Now().Sub(startTime).Milliseconds())

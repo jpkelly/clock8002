@@ -36,6 +36,9 @@ func (engine *Engine) listen() {
 	udpTicker := time.NewTicker(udpTimer)
 	flashTimer := timer.NewTimer(flashDuration)
 
+	cueTimer := timer.NewTimer(engine.cueDuration)
+	cueTimer.Stop()
+
 	for {
 		select {
 		case <-engine.ctx.Done():
@@ -235,6 +238,16 @@ func (engine *Engine) listen() {
 					mediaTimeouts[i] = nil
 				}
 			}
+		case cs := <-engine.cueChan:
+			cs.Show = true
+			engine.cueState = cs
+			if cs.Blank {
+				cueTimer.Stop()
+			} else {
+				cueTimer.Reset(engine.cueDuration)
+			}
+		case <-cueTimer.C:
+			engine.cueState.Show = false
 		}
 	}
 }
@@ -266,6 +279,8 @@ func (engine *Engine) sendState(state *State) error {
 		packet := state.MarshalOSC(addr)
 		bundle.Append(packet)
 	}
+
+	// TODO: send cue state
 
 	data, err := bundle.MarshalBinary()
 	if err != nil {

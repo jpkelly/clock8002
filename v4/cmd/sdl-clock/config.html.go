@@ -409,6 +409,16 @@ const configHTML = `
               </fieldset>
 
               <fieldset>
+                <legend>DSAN Perfect Cue</legend>
+                <p>See the documentation in perfectcue.md for required hardware.</p>
+
+                {{checkbox "cue-enabled" "Enable Perfect Cue integration" .EngineOptions.CueEnabled}}
+                {{text "cue-serial" "Serial port for communication with the Perfect Cue" .EngineOptions.CueSerial}}
+                {{number "cue-duration" "Time to show the cue marks on screen, in seconds" .EngineOptions.CueDuration}}
+                {{checkbox "cue-fullscreen" "Show the cue information as full screen icons" .CueFullScreen}}
+              </fieldset>
+
+              <fieldset>
                 <legend>InterSpace Industries Countdown2 UDP</legend>
 
                 <p>StageTimer2 and Irisdown also support sending data with this protocol.</p>

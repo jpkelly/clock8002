@@ -212,6 +212,12 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	eo.PicturallTimeout, err = strconv.Atoi(r.FormValue("picturall-timeout"))
 	errors += ValidateNumber(err, "Picturall timeout")
 
+	// DSAN Perfect Cue
+	eo.CueEnabled = r.FormValue("cue-enabled") != ""
+	eo.CueDuration, err = strconv.Atoi(r.FormValue("cue-duration"))
+	errors += ValidateNumber(err, "Perfect Cue Duration")
+	eo.CueSerial = r.FormValue("cue-serial")
+
 	// Timer options
 	eo.TimerOptions = make([]*clock.TimerOptions, 10)
 	for i := range eo.TimerOptions {

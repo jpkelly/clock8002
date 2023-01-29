@@ -169,6 +169,8 @@ type EngineOptions struct {
 
 	TimerOptions []*TimerOptions
 
+	cueOptions
+
 	// Deprecated options, to be removed on next major release
 	VmixEnabled           bool   `long:"vmix-enabled" description:"Enable vMix integration" hidden:"true"`
 	VmixAddress           string `long:"vmix-address" description:"vMix IP address" hidden:"true"`
@@ -274,6 +276,9 @@ type Engine struct {
 	cancelFunc          context.CancelFunc
 	wg                  *sync.WaitGroup
 	overtimeVisibility  string
+	cueChan             chan *cueState
+	cueState            *cueState
+	cueDuration         time.Duration
 }
 
 // Clock contains the state of a single component clock / timer
@@ -312,4 +317,9 @@ type State struct {
 	TitleBGColor        color.RGBA  // Background color for clock title text
 	ScreenFlash         bool        // Set to true if the screen should be flashed white
 	HardwareSignalColor color.RGBA
+
+	CueRight bool
+	CueLeft  bool
+	CueBlank bool
+	CueShow  bool
 }
