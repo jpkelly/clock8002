@@ -14,6 +14,8 @@ The XLR and RJ45 connectors in the perfect cue follow the same general pinout as
 
 It is suggested to first try with connecting to a RS-485 adapter or hat like one would with a limitimer system. If that doesn't work try connecting perfect cue A signal to A on the RS-485 adapter and perfect cue GND to B on the adapter.
 
+So first try with connecting A from Perfect Cue to A on the RS-485 receiver and B to B on the receiver. If this doesn't work connect DSAN A to receiber A and DSAN GND to receiver B.
+
 The complete RS-485 differential pair signal is only available on the rj-45 (ethernet) connectors from perfect cue. The pinout of the connector is as follows:
 
 1. +12V
