@@ -1,3 +1,7 @@
+## Version 4.17.0
+* New feature:
+  * Added support for DSAN Perfect Cue, see v4/perfectcue.md
+
 ## Version 4.16.0
 * New features:
   * Mitti, Millumin, vMix and Pictural integrations are now per timer.
