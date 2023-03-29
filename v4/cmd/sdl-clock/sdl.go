@@ -45,6 +45,9 @@ var cueTexture *sdl.Texture
 // initSDL initializes the SDL library, creates a window and a hw accelerated renderer
 func initSDL() {
 	var err error
+	sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "best")
+	sdl.SetHint(sdl.HINT_APP_NAME, "clock-8001")
+
 	if err = sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		log.Fatalf("Failed to initialize SDL: %s\n", err)
 	}
