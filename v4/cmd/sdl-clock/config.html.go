@@ -50,6 +50,7 @@ const configHTML = `
                     <option value="dual-round" {{if eq .Face "dual-round"}} selected {{end}}>Dual round clocks</option>
                     <option value="text" {{if eq .Face "text"}} selected {{end}}>Text clock with 3 timers</option>
                     <option value="single" {{if eq .Face "single"}} selected {{end}}>Text clock with 1 timer</option>
+                    <option value="max" {{if eq .Face "max"}} selected {{end}}>Text clock with maximal size. Recommend disabling hours. Doesn't include icons or signal colors.</option>
                     <option value="192" {{if eq .Face "192"}} selected {{end}}>Small 192x192px round clock</option>
                     <option value="144" {{if eq .Face "144"}} selected {{end}}>Small 144x144px round clock</option>
                     <option value="288x144" {{if eq .Face "288x144"}} selected {{end}}>Small 288x144px text clock</option>

@@ -132,13 +132,28 @@ func drawTextClock(state *clock.State) {
 	// Clear output and setup background
 	prepareCanvas()
 
-	if options.singleLine && !state.Clocks[0].Hidden {
+	if options.Face == "max" {
+		drawMaxClock(state)
+	} else if options.singleLine && !state.Clocks[0].Hidden {
 		drawSingleLineClock(state)
 	} else if !options.singleLine {
 		draw3TextClocks(state)
 	}
 
 	drawTally(state)
+}
+
+func drawMaxClock(state *clock.State) {
+	labelR := sdl.Rect{X: 25, Y: 25, H: 150, W: 900}
+	textR := sdl.Rect{H: 1080 - 25, W: 1920 - 50, X: 25, Y: 25}
+
+	if options.DrawBoxes {
+		renderer.SetDrawColor(colors.labelBG.R, colors.labelBG.G, colors.labelBG.B, colors.labelBG.A)
+		renderer.FillRect(&labelR)
+	}
+
+	copyIntoRect(textClock.r[0].labelTex, labelR)
+	copyIntoRect(textClock.r[0].textTex, textR)
 }
 
 func drawSingleLineClock(state *clock.State) {

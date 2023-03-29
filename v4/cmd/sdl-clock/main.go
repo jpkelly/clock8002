@@ -35,6 +35,7 @@ const updateTime = time.Second / 30
 func main() {
 	var err error
 	var info string
+
 	log.SetFlags(log.Lmicroseconds)
 
 	parseOptions()
@@ -125,6 +126,7 @@ func main() {
 			os.Exit(1)
 		case <-confChan:
 			log.Printf("Reloading config!")
+
 			engine.Close()
 			log.Printf("Clock engine closed")
 			newOptions.configFile = options.configFile
@@ -377,6 +379,9 @@ func parseOptions() {
 
 		// Try to load a hardcoded default config file
 		loadDarwinConfig()
+
+		env := os.Environ()
+		log.Printf("Environment: \n%s", env)
 	}
 
 	computeDerivedOptions()
@@ -384,6 +389,8 @@ func parseOptions() {
 
 func computeDerivedOptions() {
 	switch options.Face {
+	case "max":
+		options.textClock = true
 	case "round":
 	case "dual-round":
 		options.dualClock = true
@@ -525,7 +532,7 @@ func setWD() {
 	}
 	err = os.Chdir(appDir)
 	if err != nil {
-		log.Fatalf("Error changing to the application directory: %v", err)
+		log.Printf("Error changing to the application directory: %v", err)
 	}
 
 }
@@ -539,6 +546,13 @@ func loadDarwinConfig() {
 	// User config location
 	path := filepath.Join(homeDir, "Library", "Application Support", "clock-8001")
 	config := filepath.Join(path, "clock.ini")
+
+	f, err := os.OpenFile(filepath.Join(path, "clock.log"), os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+
+	log.SetOutput(f)
 
 	_, err = os.Stat(config)
 	if err != nil {
