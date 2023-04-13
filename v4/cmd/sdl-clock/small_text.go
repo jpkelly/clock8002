@@ -188,4 +188,33 @@ func drawSmallTextClock(state *clock.State) {
 
 		gridStartY += smallTextLineSpacing + smallTextH
 	}
+
+	// Get the last line coordinates, undoing the last addition in loop
+	gridStartY -= smallTextLineSpacing + smallTextH
+
+	if state.Tally != "" {
+		tallyColor := sdl.Color{
+			R: state.TallyColor.R,
+			G: state.TallyColor.G,
+			B: state.TallyColor.B,
+			A: state.TallyColor.A,
+		}
+
+		bgColor := sdl.Color{
+			R: state.TallyBG.R,
+			G: state.TallyBG.G,
+			B: state.TallyBG.B,
+			A: state.TallyBG.A,
+		}
+
+		h := int32(12*3 + 2)
+
+		gfx.BoxColor(renderer,
+			0, gridStartY-1,
+			288, gridStartY+h,
+			bgColor)
+
+		tallyBitmap := font.TextBitmap(state.Tally)
+		drawBitmask(tallyBitmap, tallyColor, 0, 0)
+	}
 }
