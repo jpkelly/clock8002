@@ -6,6 +6,8 @@ MAINTAINER Vesa-Pekka Palmu <vpalmu@depili.fi>
 ENV GOPATH /go
 ENV PATH ${GOPATH}/bin:$PATH
 RUN go get -u golang.org/x/lint/golint
+RUN go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.28.0
+
 
 # Add apt key for LLVM repository
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
