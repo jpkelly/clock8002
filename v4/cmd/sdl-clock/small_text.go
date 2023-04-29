@@ -47,6 +47,7 @@ func initSmallTextClock() {
 func drawSmallTextClock(state *clock.State) {
 	colors.labelBG = toSDLColor(state.TitleBGColor)
 	font := smallTextClock.font
+	// A circle
 	signalBitmap := [][]bool{
 		{false, false, false, false, false, false, false},
 		{false, false, false, false, false, false, false},
@@ -60,6 +61,8 @@ func drawSmallTextClock(state *clock.State) {
 		{false, false, true, true, true, true, false},
 		{false, false, false, false, false, false, false},
 	}
+
+	// Ugly global variables for the bitmap drawing functions
 	gridStartY = smallTextTop
 	gridStartX = 1
 
@@ -73,72 +76,19 @@ func drawSmallTextClock(state *clock.State) {
 		}
 
 		colors.rowBG[i] = toSDLColor(clk.BGColor)
+		labelColor := toSDLColor(state.TitleColor)
+		labelBG := toSDLColor(state.TitleBGColor)
+		textColor := toSDLColor(clk.TextColor)
 
-		ltc := ""
-		hours := ""
-		minutes := ""
-		seconds := ""
+		ltc, hours, minutes, seconds := normalizeFields(clk, state)
 
-		// Normalize timers over 100 hours
-		if clk.Hours > 99 {
-			clk.Hours = 99
-			clk.Minutes = 59
-			clk.Seconds = 59
-		}
-
-		if clk.Text != "" {
-			if clk.Mode == clock.LTC {
-				ltc = fmt.Sprintf(" %02d", clk.Hours)
-				hours = fmt.Sprintf("%02d", clk.Minutes)
-				minutes = fmt.Sprintf("%02d", clk.Seconds)
-				seconds = fmt.Sprintf("%02d", clk.Frames)
-
-			} else {
-				// Non-LTC clocks
-				hours = fmt.Sprintf("%02d", clk.Hours)
-
-				minutes = fmt.Sprintf("%02d", clk.Minutes)
-				seconds = fmt.Sprintf("%02d", clk.Seconds)
-
-				if clk.HideSeconds && clk.Mode == clock.Normal {
-					seconds = ""
-				}
-
-				if clk.Mode == clock.Countdown ||
-					clk.Mode == clock.Media {
-					if clk.Expired {
-						// TODO: Multiple different options of expired timers?
-						if !state.Flash {
-							hours = ""
-							minutes = ""
-							seconds = ""
-						}
-					}
-				} else if clk.Mode == clock.Countup {
-					if clk.Expired {
-						hours = "00"
-						minutes = "00"
-						seconds = "00"
-					}
-				}
-			}
-		}
-
+		// Generate the text bitmaps
 		labelBitmap := font.TextBitmap(fmt.Sprintf("%.4s", clk.Label))
 		hourBitmap := font.TextBitmap(hours)
 		minuteBitmap := font.TextBitmap(minutes)
 		secondBitmap := font.TextBitmap(seconds)
 		ltcBitmap := font.TextBitmap(ltc)
 		iconBitmap := font.TextBitmap(clk.Icon)
-
-		titleColor := toSDLColor(state.TitleColor)
-		if colors.label != titleColor {
-			for row := range textClock.r {
-				textClock.r[row].label = ""
-			}
-		}
-
-		textColor := toSDLColor(clk.TextColor)
 
 		if options.DrawBoxes {
 			h := int32(12*3 + 2)
@@ -152,7 +102,7 @@ func drawSmallTextClock(state *clock.State) {
 			gfx.BoxColor(renderer,
 				gridStartX-2, gridStartY-1,
 				gridStartX+titleW, gridStartY+h,
-				colors.labelBG)
+				labelBG)
 
 			gfx.BoxColor(renderer,
 				numX-2, gridStartY-1,
@@ -160,7 +110,7 @@ func drawSmallTextClock(state *clock.State) {
 				colors.rowBG[i])
 		}
 
-		drawBitmask(labelBitmap, colors.label, 0, 0)
+		drawBitmask(labelBitmap, labelColor, 0, 0)
 		drawBitmask(hourBitmap, textColor, 0, smallTextClockY)
 		drawBitmask(minuteBitmap, textColor, 0, smallTextClockY+14+3)
 		drawBitmask(secondBitmap, textColor, 0, smallTextClockY+28+6)
@@ -193,19 +143,8 @@ func drawSmallTextClock(state *clock.State) {
 	gridStartY -= smallTextLineSpacing + smallTextH
 
 	if state.Tally != "" {
-		tallyColor := sdl.Color{
-			R: state.TallyColor.R,
-			G: state.TallyColor.G,
-			B: state.TallyColor.B,
-			A: state.TallyColor.A,
-		}
-
-		bgColor := sdl.Color{
-			R: state.TallyBG.R,
-			G: state.TallyBG.G,
-			B: state.TallyBG.B,
-			A: state.TallyBG.A,
-		}
+		tallyColor := toSDLColor(*state.TallyColor)
+		bgColor := toSDLColor(*state.TallyBG)
 
 		h := int32(12*3 + 2)
 
@@ -217,4 +156,53 @@ func drawSmallTextClock(state *clock.State) {
 		tallyBitmap := font.TextBitmap(state.Tally)
 		drawBitmask(tallyBitmap, tallyColor, 0, 0)
 	}
+}
+
+// Get the string representation of all the clock fields, normalizing fields over 99 to 99
+func normalizeFields(clk *clock.Clock, state *clock.State) (ltc string, hours string, minutes string, seconds string) {
+	// Normalize timers over 100 hours
+	if clk.Hours > 99 {
+		clk.Hours = 99
+		clk.Minutes = 59
+		clk.Seconds = 59
+	}
+
+	if clk.Text != "" {
+		if clk.Mode == clock.LTC {
+			ltc = fmt.Sprintf(" %02d", clk.Hours)
+			hours = fmt.Sprintf("%02d", clk.Minutes)
+			minutes = fmt.Sprintf("%02d", clk.Seconds)
+			seconds = fmt.Sprintf("%02d", clk.Frames)
+
+		} else {
+			// Non-LTC clocks
+			hours = fmt.Sprintf("%02d", clk.Hours)
+
+			minutes = fmt.Sprintf("%02d", clk.Minutes)
+			seconds = fmt.Sprintf("%02d", clk.Seconds)
+
+			if clk.HideSeconds && clk.Mode == clock.Normal {
+				seconds = ""
+			}
+
+			if clk.Mode == clock.Countdown ||
+				clk.Mode == clock.Media {
+				if clk.Expired {
+					// TODO: Multiple different options of expired timers?
+					if !state.Flash {
+						hours = ""
+						minutes = ""
+						seconds = ""
+					}
+				}
+			} else if clk.Mode == clock.Countup {
+				if clk.Expired {
+					hours = "00"
+					minutes = "00"
+					seconds = "00"
+				}
+			}
+		}
+	}
+	return
 }
