@@ -577,16 +577,23 @@ func linuxLoadConfig() {
 
 func darwinSetWD() {
 	app, err := os.Executable()
-	appDir := filepath.Dir(app)
-	appDir = filepath.Join(appDir, "..", "Resources")
 	if err != nil {
 		log.Fatalf("Error getting application directory: %v", err)
 	}
+
+	appDir := filepath.Dir(app)
+	appDir = filepath.Join(appDir, "..", "Resources")
+
+	// If not running inside a bundle (and the ../Resources does not exist)
+	// just silently give up
+	if _, err := os.Stat(appDir); errors.Is(err, os.ErrNotExist) {
+		return
+	}
+
 	err = os.Chdir(appDir)
 	if err != nil {
 		log.Printf("Error changing to the application directory: %v", err)
 	}
-
 }
 
 func darwinLoadConfig() {
