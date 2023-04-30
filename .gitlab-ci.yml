@@ -16,6 +16,7 @@ cache:
 stages:
   - test
   - build
+  - package
   - deploy
 
 # before_script:
@@ -110,13 +111,11 @@ build_v4:
   script:
     - cd v4
     - make build
-    - make debian_armhf
   artifacts:
      paths:
       - v4/sdl-clock
       - v4/clock_port80.ini
       - v4/clock_port8080.ini
-      - v4/clock-8001_*.deb
 
 build_v4_windows:
   stage: build
@@ -138,10 +137,22 @@ build_macos:
       paths:
         - v4/sdl-clock_amd64_darwin
 
+package_v4_debian_armhf:
+  stage: package
+  script:
+    - cd v4
+    - touch sdl-clock
+    - touch clock_port8080.ini
+    - make debian_armhf
+  artifacts:
+    paths:
+      - v4/clock-8001_*.deb
+
 deploy_latest:
     stage: deploy
     before_script: []
     script:
+        - make debian_armhf
         - apt-get update -qq && apt-get install -y -qq sshpass
         - cd v4
         - ls
