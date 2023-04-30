@@ -533,6 +533,14 @@ func copyAndLoadConfig(path string) {
 	// User config location
 	config := filepath.Join(path, "clock.ini")
 
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(path, os.ModePerm)
+		if err != nil {
+			log.Fatalf("Error creating config path: %v", err)
+		}
+	}
+
+	// Create a log file
 	f, err := os.OpenFile(filepath.Join(path, "clock.log"), os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatalf("error opening log file: %v", err)
@@ -543,12 +551,6 @@ func copyAndLoadConfig(path string) {
 	_, err = os.Stat(config)
 	if err != nil {
 		log.Printf("User config not found, loading defaults: %v", err)
-		if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-			err := os.Mkdir(path, os.ModePerm)
-			if err != nil {
-				log.Fatalf("Error creating config path: %v", err)
-			}
-		}
 		src := "clock.ini"
 
 		_, err = os.Stat(src)
