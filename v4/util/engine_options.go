@@ -13,6 +13,7 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	var err error
 	eo := &clock.EngineOptions{}
 	errors := ""
+	layerRegexp := regexp.MustCompile(`^(?:\d+,?)+$`)
 
 	eo.Source1 = &clock.SourceOptions{}
 	eo.Source2 = &clock.SourceOptions{}
@@ -242,7 +243,7 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 		errors += ValidateNumber(err, errorName+"vMix port")
 
 		vmixIgnoreOverlays := r.FormValue(base + "vmix-ignore-overlays")
-		if ok, err := regexp.MatchString(`^(?:\d+,?)+$`, vmixIgnoreOverlays); len(vmixIgnoreOverlays) == 0 || (ok && err == nil) {
+		if ok := layerRegexp.MatchString(vmixIgnoreOverlays); len(vmixIgnoreOverlays) == 0 || (ok) {
 			o.VmixIgnoreOverlays = vmixIgnoreOverlays
 		} else {
 			errors += "<li>" + errorName + "vMix overlay ignore list is not valid</li>"
@@ -260,7 +261,7 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 
 		// Picturall ignore layers
 		picturallIgnoreLayers := r.FormValue(base + "picturall-ignore-layers")
-		if ok, err := regexp.MatchString(`^(?:\d+,?)+$`, picturallIgnoreLayers); len(picturallIgnoreLayers) == 0 || (ok && err == nil) {
+		if ok := layerRegexp.MatchString(picturallIgnoreLayers); len(picturallIgnoreLayers) == 0 || (ok) {
 			eo.PicturallIgnoreLayers = picturallIgnoreLayers
 		} else {
 			errors += "<li>" + errorName + "Picturall layer ignore list is not valid</li>"
