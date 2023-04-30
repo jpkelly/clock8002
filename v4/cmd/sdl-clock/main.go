@@ -375,10 +375,10 @@ func parseOptions() {
 		// Assume we are running as an app
 
 		// Set working directory to app resources
-		setWD()
+		darwinSetWD()
 
 		// Try to load a hardcoded default config file
-		loadDarwinConfig()
+		darwinLoadConfig()
 
 		env := os.Environ()
 		log.Printf("Environment: \n%s", env)
@@ -523,7 +523,7 @@ func signalBrightness(c color.RGBA) color.RGBA {
 	}
 }
 
-func setWD() {
+func darwinSetWD() {
 	app, err := os.Executable()
 	appDir := filepath.Dir(app)
 	appDir = filepath.Join(appDir, "..", "Resources")
@@ -537,7 +537,7 @@ func setWD() {
 
 }
 
-func loadDarwinConfig() {
+func darwinLoadConfig() {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatalf("Error getting user home directory: %v", err)
