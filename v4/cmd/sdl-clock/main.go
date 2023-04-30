@@ -362,6 +362,12 @@ func parseOptions() {
 		}
 	}
 
+	// Load the platform specific default config files unless one is
+	// given on command line
+	if runtime.GOOS == "linux" && options.configFile == "" {
+
+	}
+
 	if runtime.GOOS == "windows" && options.configFile == "" {
 		// Try to load a hardcoded default config file
 		_, err := os.Stat("clock.ini")
@@ -523,33 +529,13 @@ func signalBrightness(c color.RGBA) color.RGBA {
 	}
 }
 
-func darwinSetWD() {
-	app, err := os.Executable()
-	appDir := filepath.Dir(app)
-	appDir = filepath.Join(appDir, "..", "Resources")
-	if err != nil {
-		log.Fatalf("Error getting application directory: %v", err)
-	}
-	err = os.Chdir(appDir)
-	if err != nil {
-		log.Printf("Error changing to the application directory: %v", err)
-	}
-
-}
-
-func darwinLoadConfig() {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatalf("Error getting user home directory: %v", err)
-	}
-
+func copyAndLoadConfig(path string) {
 	// User config location
-	path := filepath.Join(homeDir, "Library", "Application Support", "clock-8001")
 	config := filepath.Join(path, "clock.ini")
 
 	f, err := os.OpenFile(filepath.Join(path, "clock.log"), os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
-		log.Fatalf("error opening file: %v", err)
+		log.Fatalf("error opening log file: %v", err)
 	}
 
 	log.SetOutput(f)
@@ -573,6 +559,42 @@ func darwinLoadConfig() {
 		}
 	}
 	loadDefaultConfig(config)
+
+}
+
+func linuxLoadConfig() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("Error getting user home directory: %v", err)
+	}
+
+	path := filepath.Join(homeDir, ".config", "clock-8001")
+
+	copyAndLoadConfig(path)
+}
+
+func darwinSetWD() {
+	app, err := os.Executable()
+	appDir := filepath.Dir(app)
+	appDir = filepath.Join(appDir, "..", "Resources")
+	if err != nil {
+		log.Fatalf("Error getting application directory: %v", err)
+	}
+	err = os.Chdir(appDir)
+	if err != nil {
+		log.Printf("Error changing to the application directory: %v", err)
+	}
+
+}
+
+func darwinLoadConfig() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("Error getting user home directory: %v", err)
+	}
+
+	path := filepath.Join(homeDir, "Library", "Application Support", "clock-8001")
+	copyAndLoadConfig(path)
 }
 
 func loadDefaultConfig(config string) {
