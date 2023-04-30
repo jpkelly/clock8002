@@ -364,11 +364,11 @@ func parseOptions() {
 
 	// Load the platform specific default config files unless one is
 	// given on command line
-	if runtime.GOOS == "linux" && options.configFile == "" {
+	if runtime.GOOS == "linux" && options.configFile == "" && !options.DumpConfig {
 		linuxLoadConfig()
 	}
 
-	if runtime.GOOS == "windows" && options.configFile == "" {
+	if runtime.GOOS == "windows" && options.configFile == "" && !options.DumpConfig {
 		// Try to load a hardcoded default config file
 		_, err := os.Stat("clock.ini")
 		if err == nil {
@@ -376,7 +376,7 @@ func parseOptions() {
 		}
 	}
 
-	if runtime.GOOS == "darwin" && options.configFile == "" {
+	if runtime.GOOS == "darwin" && options.configFile == "" && !options.DumpConfig {
 		// Running on osx and no config file provided
 		// Assume we are running as an app
 
