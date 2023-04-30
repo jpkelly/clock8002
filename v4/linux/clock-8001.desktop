@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Type=Application
+Terminal=false
+Exec=/usr/bin/sdl-clock
+Path=/usr/share/clock-8001
+Name=clock-8001
+Icon=/usr/share/clock-8001/icon.png
+Categories=Utility;Clock;

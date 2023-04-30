@@ -84,5 +84,8 @@ osxcross:
 	@echo Building tag $(GIT_TAG) commit $(GIT_COMMIT) for macos via osxcross
 	$(shell export CGO_ENABLED=1; export export CC=x86_64-apple-darwin18-clang; export GOOS=darwin; export GOARCH=amd64; go build -tags static -ldflags "-s -w -X $(VERSION_PKG).gitCommit=$(GIT_COMMIT) -X $(VERSION_PKG).gitTag=$(GIT_TAG)" -o sdl-clock_amd64_darwin gitlab.com/clock-8001/clock-8001/v4/cmd/sdl-clock)
 
+debian_armhf: clock_port8080.ini sdl-clock
+	@export GIT_TAG=$(GIT_TAG); export NFPM_ARCH=armhf; nfpm pkg --packager deb
+
 help: ## Display this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

@@ -1,0 +1,37 @@
+# nfpm example configuration file
+#
+# check https://nfpm.goreleaser.com/configuration for detailed usage
+#
+name: "clock-8001"
+arch: ${NFPM_ARCH}
+platform: "linux"
+version: ${GIT_TAG}
+section: "default"
+priority: "extra"
+depends:
+- libsdl2-2.0-0
+- libsdl2-gfx-1.0-0
+- libsdl2-image-2.0-0
+- libsdl2-ttf-2.0-0
+- libsdl2-mixer-2.0-0
+maintainer: "Vesa-Pekka Palmu <vpalmu@depili.fi>"
+description: |
+  A OSC controlled stage and production timer
+vendor: "Vesa-Pekka Palmu"
+homepage: "https://gitlbab.com/clock-8001/clock-8001"
+license: "GPL2"
+contents:
+- src: ./sdl-clock
+  dst: /usr/bin/sdl-clock
+- src: ./fonts
+  dst: /usr/share/clock-8001/fonts
+- src: ./ttf_fonts
+  dst: /usr/share/clock-8001/
+- src: ./voices
+  dst: /usr/share/clock-8001/voices
+- src: ./clock_port8080.ini
+  dst: /usr/share/clock-8001/clock.ini
+- src: ./osx/icon256.png
+  dst: /usr/share/clock-8001/icon.png
+- src: ./linux/clock-8001.desktop
+  dst: /usr/share/applications/
