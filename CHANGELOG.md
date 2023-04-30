@@ -1,3 +1,14 @@
+## Version 4.18.0
+* New features:
+  * Build .deb packages for debian based linux distros
+    * Currently building armhf (for raspberry pi's) and amd64 packages
+    * use 'sudo apt install ./clock-800_1.2.3_arch.deb' to install
+    * Icon to start the clock should be in "Accessories" on your window manager
+      start menu
+  * Added the "max" clock face.
+* Bugfixes:
+  * Tally messages not being shown on 288x144 clock face
+
 ## Version 4.17.0
 * New feature:
   * Added support for DSAN Perfect Cue, see v4/perfectcue.md
