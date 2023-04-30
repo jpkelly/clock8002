@@ -426,6 +426,9 @@ func (out *CounterOutput) blank() {
 	out.Icon = ""
 	out.Text = ""
 	out.Compact = ""
+	out.Hours = 0
+	out.Minutes = 0
+	out.Seconds = 0
 }
 
 func (out *CounterOutput) zero() {
@@ -440,6 +443,9 @@ func (out *CounterOutput) zero() {
 		out.Text = "00:00:00:00"
 	}
 	out.Compact = fmt.Sprintf("%s%s", out.Icon, secsToCompact(0))
+	out.Hours = 0
+	out.Minutes = 0
+	out.Seconds = 0
 }
 
 func (counter *Counter) normalOutput(t time.Time) *CounterOutput {
