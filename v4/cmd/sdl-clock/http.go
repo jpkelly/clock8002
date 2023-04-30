@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -84,7 +85,10 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	options.Raspberry = util.FileExists("/boot/config.txt")
+	currentUser, err := user.Current()
+	if err == nil && currentUser.Name == "root" {
+		options.Raspberry = util.FileExists("/boot/config.txt")
+	}
 
 	if options.Raspberry {
 		// Read out various config files for editing
