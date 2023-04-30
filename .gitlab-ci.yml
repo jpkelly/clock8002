@@ -117,6 +117,19 @@ build_v4:
       - v4/clock_port80.ini
       - v4/clock_port8080.ini
 
+# Build the linux amd64 variant
+build_v4_amd64_linux:
+  stage: build
+  script:
+    - cd v4
+    - make build
+    - mv sdl-clock sdl-clock_amd64_linux
+  artifacts:
+     paths:
+      - v4/sdl-clock_amd64_linux
+      - v4/clock_port80.ini
+      - v4/clock_port8080.ini
+
 build_v4_windows:
   stage: build
   script:
@@ -137,13 +150,16 @@ build_macos:
       paths:
         - v4/sdl-clock_amd64_darwin
 
-package_v4_debian_armhf:
+package_v4_debian:
   stage: package
   script:
     - cd v4
     - touch sdl-clock
     - touch clock_port8080.ini
     - make debian_armhf
+    - mv sdl-clock_amd64_linux sdl-clock
+    - touch clock_port8080.ini
+    - make debian_amd64
   artifacts:
     paths:
       - v4/clock-8001_*.deb
