@@ -168,7 +168,6 @@ deploy_latest:
     stage: deploy
     before_script: []
     script:
-        - make debian_armhf
         - apt-get update -qq && apt-get install -y -qq sshpass
         - cd v4
         - ls
