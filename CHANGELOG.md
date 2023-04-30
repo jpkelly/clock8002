@@ -1,3 +1,8 @@
+## Version 4.18.1
+* Bugfixes:
+  * udptime and overtime countdowns
+    * We now respect the overtime count mode for sending the time.
+
 ## Version 4.18.0
 * New features:
   * Build .deb packages for debian based linux distros
