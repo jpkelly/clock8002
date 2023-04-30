@@ -87,5 +87,8 @@ osxcross:
 debian_armhf: clock_port8080.ini sdl-clock
 	@export GIT_TAG=$(GIT_TAG); export NFPM_ARCH=armhf; nfpm pkg --packager deb
 
+debian_amd64: clock_port8080.ini sdl-clock
+	@export GIT_TAG=$(GIT_TAG); export NFPM_ARCH=amd64; nfpm pkg --packager deb
+
 help: ## Display this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
