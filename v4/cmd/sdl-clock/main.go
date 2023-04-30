@@ -365,7 +365,7 @@ func parseOptions() {
 	// Load the platform specific default config files unless one is
 	// given on command line
 	if runtime.GOOS == "linux" && options.configFile == "" {
-
+		linuxLoadConfig()
 	}
 
 	if runtime.GOOS == "windows" && options.configFile == "" {
