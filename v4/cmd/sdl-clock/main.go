@@ -364,30 +364,29 @@ func parseOptions() {
 
 	// Load the platform specific default config files unless one is
 	// given on command line
-	if runtime.GOOS == "linux" && options.configFile == "" && !options.DumpConfig {
-		linuxLoadConfig()
-	}
+	if options.configFile == "" && !options.DumpConfig {
+		switch runtime.GOOS {
+		case "darwin":
+			// Running on osx and no config file provided
+			// Assume we are running as an app
 
-	if runtime.GOOS == "windows" && options.configFile == "" && !options.DumpConfig {
-		// Try to load a hardcoded default config file
-		_, err := os.Stat("clock.ini")
-		if err == nil {
-			loadDefaultConfig("clock.ini")
+			// Set working directory to app resources
+			darwinSetWD()
+
+			// Try to load a hardcoded default config file
+			darwinLoadConfig()
+
+			env := os.Environ()
+			log.Printf("Environment: \n%s", env)
+		case "linux":
+			linuxLoadConfig()
+		case "windows":
+			// Try to load a hardcoded default config file
+			_, err := os.Stat("clock.ini")
+			if err == nil {
+				loadDefaultConfig("clock.ini")
+			}
 		}
-	}
-
-	if runtime.GOOS == "darwin" && options.configFile == "" && !options.DumpConfig {
-		// Running on osx and no config file provided
-		// Assume we are running as an app
-
-		// Set working directory to app resources
-		darwinSetWD()
-
-		// Try to load a hardcoded default config file
-		darwinLoadConfig()
-
-		env := os.Environ()
-		log.Printf("Environment: \n%s", env)
 	}
 
 	computeDerivedOptions()
