@@ -19,7 +19,20 @@ The clock can be controlled with the depili-clock-8001 companion module: https:/
 
 Features and configuration in greated detail can be found in the [getting started guide in wiki](https://gitlab.com/clock-8001/clock-8001/-/wikis/Getting-started-on-clock-8001-version-4).
 
-Developed in co-operation with Daniel Richert and with a grant from FUUG - Finnish Unix User Group.
+Developed in co-operation with Daniel Richert and with grants from FUUG - Finnish Unix User Group.
+
+## Platforms supported
+
+The main target is a custom hardened linux image for raspberry pi 2 & 3 single board computers. It has been made to be as fault tolerant as possible.
+
+Currently the clock is also available on macos Vetura, linux and windows as precompiled installation packages. Compiling from the source should be possible on many other variants.
+
+The installation files are available on https://kissa.depili.fi/clock-8001/releases/
+
+* .msi files are Microsoft installer files for Windows, tested on windows 10 64bit
+* .deb files are debian / ubuntu linux packages, currently x86 64bit (amd64) and armhf (raspberry pi os 32bit) packages are being generated. Packages have been tested on raspberry pi os bullseye on rpi 3b+ and rpi4 and on ubuntu 22.4 jammy 64bit.
+  * Best way to install the package is to use 'sudo apt install ./clock-8001_1.2.3_arch.deb' command, as it will automatically pull all the dependencies.
+* .zip files contain Macos .app files. The earlier unsigned intel releases should work on big sur onwards on x86 macs, the later signed universal releases are for ventura.
 
 ## Ready made raspberry pi images
 
