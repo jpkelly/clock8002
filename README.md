@@ -34,6 +34,14 @@ The installation files are available on https://kissa.depili.fi/clock-8001/relea
   * Best way to install the package is to use 'sudo apt install ./clock-8001_1.2.3_arch.deb' command, as it will automatically pull all the dependencies.
 * .zip files contain Macos .app files. The earlier unsigned intel releases should work on big sur onwards on x86 macs, the later signed universal releases are for ventura.
 
+## Web configuration interface
+
+The new unified images have a web configuration interface for the clock settings. You can access this interface by pointing your browser to the address of the clock. The default username is `admin` and the default password is `clockwork`. You should change them from the interface or the clock.ini file.
+
+On the raspberry pi images the config interface runs on port 80, on the installable versions on macos, linux and windows the default port is 8080.
+
+You can open a browser pointing to the configuration interface by pressing 'c' key while the clock is running.
+
 ## Ready made raspberry pi images
 
 SD-card images for raspberry pi can be found at https://kissa.depili.fi/clock-8001/images
@@ -71,10 +79,6 @@ For the rectangular display you need to also modify `clock_cmd.sh` to contain:
 /root/sdl-clock -C /boot/clock.ini
 ```
 So that the display is initialized on boot.
-
-### Web configuration interface
-
-The new unified images have a web configuration interface for the clock settings. You can access this interface by pointing your browser to the address of the clock. The default username is `admin` and the default password is `clockwork`. You should change them from the interface or the clock.ini file.
 
 ## sdl-clock - Output the clock to hdmi on the raspberry pi
 
