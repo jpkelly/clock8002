@@ -102,6 +102,15 @@ type mediaState struct {
 	target    time.Time
 }
 
+type mediaUpdate interface {
+	Remaining() time.Duration
+	Duration() time.Duration
+	Play() bool
+	Loop() bool
+	Record() bool
+	MediaName() string
+}
+
 func (m *mediaState) output() *CounterOutput {
 	var icon string
 	var seconds int64
@@ -688,4 +697,16 @@ func abs(i int) int {
 		return -i
 	}
 	return i
+}
+
+func SplitTime(m mediaUpdate) (hours, minutes, seconds int32) {
+	diff := m.Remaining()
+	seconds = int32(diff.Seconds()) % 60
+	minutes = int32(diff.Minutes()) % 60
+	hours = int32(diff.Hours())
+	return
+}
+
+func Progress(m mediaUpdate) float64 {
+	return 1 - (m.Remaining().Seconds() / m.Duration().Seconds())
 }
