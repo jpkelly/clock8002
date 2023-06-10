@@ -148,6 +148,7 @@ type EngineOptions struct {
 	VmixTimeout  int `long:"vmix-timeout" description:"Timeout for vMix communication, in milliseconds" default:"1000"`
 
 	TricasterOptions
+	HyperdeckOptions
 
 	Source1 *SourceOptions `group:"1st clock display source" namespace:"source1"`
 	Source2 *SourceOptions `group:"2nd clock display source" namespace:"source2"`
@@ -258,6 +259,7 @@ type Engine struct {
 	picturall           []*picturallState
 	vmix                []*vmixState
 	tricaster           tricasterState
+	hyperdeck           hyperdeckState
 	background          int
 	info                string // Version, ip address etc
 	showInfo            bool

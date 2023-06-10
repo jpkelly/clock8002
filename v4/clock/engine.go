@@ -95,6 +95,7 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	engine.initUDPTime(options)
 	engine.initLimitimer(options)
 	engine.initPerfectCue(options)
+	engine.hyperdeckInit(options)
 
 	for i, o := range options.TimerOptions {
 		if o.ListenPort != 0 {

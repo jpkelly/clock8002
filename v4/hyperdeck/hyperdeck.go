@@ -68,13 +68,15 @@ type clip struct {
 
 // Media is the transport data to outside world
 type Media struct {
-	Name           string
-	Head           time.Duration
-	Length         time.Duration
-	Loop           bool
-	SingleClip     bool
-	TimeLineLength time.Duration
-	TimeLineHead   time.Duration
+	name        string
+	remaining   time.Duration
+	length      time.Duration
+	loop        bool
+	pause       bool
+	record      bool
+	singleClip  bool
+	currentClip int
+	totalClips  int
 }
 
 type message struct {
@@ -325,7 +327,76 @@ func (s *state) sender() {
 }
 
 func (s *state) sendMedia() {
-	log.Printf("%v", s.String())
+	var name string
+
+	if s.status == "stopped" {
+		return
+	}
+
+	current_clip := s.clipID - 1
+
+	if current_clip < 0 {
+		// Special case for recording...
+		current_clip = 0
+	}
+
+	if len(s.clips) > current_clip {
+		name = s.clips[current_clip].name
+	}
+
+	length := s.playlistLength
+
+	m := Media{
+		name:        name,
+		remaining:   length - s.timecode,
+		length:      length,
+		loop:        s.loop,
+		singleClip:  s.singleClip,
+		currentClip: s.clipID,
+		totalClips:  len(s.clips),
+	}
+
+	switch s.status {
+	case "record":
+		m.remaining = s.recordingTime
+		m.length = s.recordingTime
+		m.record = true
+	case "playing":
+	case "preview":
+		m.pause = true
+	}
+
+	s.mediaChan <- &m
+}
+
+func (h *Media) Remaining() time.Duration {
+	return h.remaining
+}
+
+func (h *Media) Duration() time.Duration {
+	return h.length
+}
+
+func (h *Media) Play() bool {
+	return !h.pause
+}
+
+func (h *Media) Loop() bool {
+	return h.loop
+}
+
+func (h *Media) Record() bool {
+	return h.record
+}
+
+func (h *Media) MediaName() string {
+	name := ""
+	if h.totalClips < 2 {
+		name = h.name
+	} else {
+		name = fmt.Sprintf("%d/%d %s", h.currentClip, h.totalClips, h.name)
+	}
+	return name
 }
 
 /*
@@ -423,7 +494,7 @@ func (s *state) parseSlot(m *message) {
 	// So filter out any that aren't the current active slot
 	if val, ok := m.params["slot id"]; ok {
 		slot, err := strconv.Atoi(val)
-		if err != nil || slot != s.slotId {
+		if err != nil || slot != s.slotID {
 			return
 		}
 	} else {
@@ -463,9 +534,7 @@ func (s *state) parseTransport(m *message) {
 	}
 
 	if val, ok := m.params["display timecode"]; ok {
-		log.Printf("asd: %v", val)
 		s.displayTimecode = parseDuration(val)
-		log.Printf("adsfas: %v", s.displayTimecode)
 	}
 
 	if val, ok := m.params["timecode"]; ok {
