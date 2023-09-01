@@ -91,6 +91,8 @@ type TimerOptions struct {
 	PicturallMediaName    bool   `long:"picturall-media-name" description:"Show picturall media name as clock text"`
 	PicturallIgnoreLayers string `long:"picturall-ignore-layers" description:"Comma separated list of layers to ignore"`
 	PicturallStreams      bool   `long:"picturall-streams" description:"Show streaming content"`
+
+	DisguiseTimerOptions
 }
 
 // EngineOptions contains all common options for clock.Engines
@@ -149,6 +151,7 @@ type EngineOptions struct {
 
 	TricasterOptions
 	HyperdeckOptions
+	DisguiseOptions
 
 	Source1 *SourceOptions `group:"1st clock display source" namespace:"source1"`
 	Source2 *SourceOptions `group:"2nd clock display source" namespace:"source2"`
@@ -260,6 +263,7 @@ type Engine struct {
 	vmix                []*vmixState
 	tricaster           tricasterState
 	hyperdeck           hyperdeckState
+	disguise            disguiseState
 	background          int
 	info                string // Version, ip address etc
 	showInfo            bool

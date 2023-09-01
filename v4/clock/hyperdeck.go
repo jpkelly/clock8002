@@ -81,8 +81,8 @@ func (engine *Engine) hyperdeckListen() {
 					engine.hyperdeck.counter.ResetMedia()
 					break
 				}
-				hours, minutes, seconds := SplitTime(s)
-				progress := Progress(s)
+				hours, minutes, seconds := splitTime(s)
+				progress := progress(s)
 
 				frames := int32(0)
 				engine.hyperdeck.counter.SetMedia(hours, minutes, seconds, frames, s.Remaining(), progress, !s.Play(), s.Loop())

@@ -172,6 +172,14 @@ timer{{$i}}.picturall-streams={{$timer.PicturallStreams}}
 timer{{$i}}.picturall-media-name={{$timer.PicturallMediaName}}
 timer{{$i}}.picturall-ignore-layers={{$timer.PicturallIgnoreLayers}}
 
+# Disguise
+timer{{$i}}.disguise-enabled={{$timer.DisguiseEnabled}}
+timer{{$i}}.disguise-port={{$timer.DisguisePort}}
+timer{{$i}}.disguise-loops={{$timer.DisguiseLoops}}
+timer{{$i}}.disguise-paused={{$timer.DisguisePaused}}
+timer{{$i}}.disguise-next-name={{$timer.DisguiseNextName}}
+timer{{$i}}.disguise-media-name={{$timer.DisguiseMediaName}}
+
 # Common
 timer{{$i}}.media-color={{$timer.MediaColor}}
 timer{{$i}}.media-bg={{$timer.MediaBG}}
@@ -317,6 +325,9 @@ cue-enabled={{.EngineOptions.CueEnabled}}
 cue-serial={{.EngineOptions.CueSerial}}
 cue-duration={{.EngineOptions.CueDuration}}
 cue-fullscreen={{.CueFullScreen}}
+
+# Disguise common options
+disguise-timeout={{.EngineOptions.DisguiseTimeout}}
 
 # Font to use
 Font={{.Font}}

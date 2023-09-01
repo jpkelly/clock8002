@@ -701,7 +701,8 @@ func abs(i int) int {
 	return i
 }
 
-func SplitTime(m mediaUpdate) (hours, minutes, seconds int32) {
+// splitTime splits the time in a mediaUpdate to components
+func splitTime(m mediaUpdate) (hours, minutes, seconds int32) {
 	diff := m.Remaining()
 	seconds = int32(diff.Seconds()) % 60
 	minutes = int32(diff.Minutes()) % 60
@@ -709,6 +710,7 @@ func SplitTime(m mediaUpdate) (hours, minutes, seconds int32) {
 	return
 }
 
-func Progress(m mediaUpdate) float64 {
+// progress calculates the playhead progress as 0 - 1.0 float
+func progress(m mediaUpdate) float64 {
 	return 1 - (m.Remaining().Seconds() / m.Duration().Seconds())
 }

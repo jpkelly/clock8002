@@ -228,6 +228,17 @@ const configHTML = `
                           {{checkbox (printf "timer%d-picturall-media-name" $i) "Show media name as tally message on the clock." $timer.PicturallMediaName}}
                           {{text (printf "timer%d-picturall-ignore-layers" $i) "List of layer numbers to ignore, comma separated." $timer.PicturallIgnoreLayers}}
 
+                          <h3>Disguise</h3>
+
+                          <p>See also Disguise common options in integrations section.</p>
+
+                          {{checkbox (printf "timer%d-disguise-enabled" $i) "Enable Disguise integration." $timer.DisguiseEnabled}}
+                          {{number (printf "timer%d-disguise-port" $i) "Port to connect to." $timer.DisguisePort}}
+                          {{checkbox (printf "timer%d-disguise-loops" $i) "Show looping media." $timer.DisguiseLoops}}
+                          {{checkbox (printf "timer%d-disguise-paused" $i) "Show paused media." $timer.DisguisePaused}}
+                          {{checkbox (printf "timer%d-disguise-next-name" $i) "Show name of next cue instead of current cue." $timer.DisguiseNextName}}
+                          {{checkbox (printf "timer%d-disguise-media-name" $i) "Show cue names." $timer.DisguiseMediaName}}
+
                           <h3>Common</h3>
 
                           {{color (printf "timer%d-media-color" $i) "Media name text color." $timer.MediaColor}}
@@ -357,6 +368,12 @@ const configHTML = `
                 {{color "tricaster-media-bg" "Media name background color" .EngineOptions.TricasterMediaBG}}
                 {{number "tricaster-interval" "Polling interval, in milliseconds. Adjust if the clock causes too high load on the tricaster or if you need better accuracy." .EngineOptions.TricasterInterval}}
                 {{number "tricaster-timeout" "Message timeout for clearing the clock display, in milliseconds." .EngineOptions.TricasterTimeout}}
+              </fieldset>
+
+              <fieldset>
+                <legend>Disguise common options</legend>
+
+                {{number "disguise-timeout" "Message timeout for clearing the clock display, in milliseconds." .EngineOptions.DisguiseTimeout}}
               </fieldset>
 
               <fieldset>

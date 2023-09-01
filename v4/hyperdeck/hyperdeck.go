@@ -333,15 +333,15 @@ func (s *state) sendMedia() {
 		return
 	}
 
-	current_clip := s.clipID - 1
+	currentClip := s.clipID - 1
 
-	if current_clip < 0 {
+	if currentClip < 0 {
 		// Special case for recording...
-		current_clip = 0
+		currentClip = 0
 	}
 
-	if len(s.clips) > current_clip {
-		name = s.clips[current_clip].name
+	if len(s.clips) > currentClip {
+		name = s.clips[currentClip].name
 	}
 
 	length := s.playlistLength
@@ -369,26 +369,32 @@ func (s *state) sendMedia() {
 	s.mediaChan <- &m
 }
 
+// Remaining tells the remaining time of the playing clip or space for recording
 func (h *Media) Remaining() time.Duration {
 	return h.remaining
 }
 
+// Duration gives the total clip duration
 func (h *Media) Duration() time.Duration {
 	return h.length
 }
 
+// Play tells if the media is playing
 func (h *Media) Play() bool {
 	return !h.pause
 }
 
+// Loop tells if the media is looping
 func (h *Media) Loop() bool {
 	return h.loop
 }
 
+// Record tells if the hyperdeck is recording
 func (h *Media) Record() bool {
 	return h.record
 }
 
+// MediaName gives the current media name
 func (h *Media) MediaName() string {
 	name := ""
 	if h.totalClips < 2 {

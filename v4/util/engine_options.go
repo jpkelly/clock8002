@@ -219,6 +219,10 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	errors += ValidateNumber(err, "Perfect Cue Duration")
 	eo.CueSerial = r.FormValue("cue-serial")
 
+	// Disguise common options
+	eo.DisguiseTimeout, err = strconv.Atoi(r.FormValue("disguise-timeout"))
+	errors += ValidateNumber(err, "Disguise timeout")
+
 	// Timer options
 	eo.TimerOptions = make([]*clock.TimerOptions, 10)
 	for i := range eo.TimerOptions {
@@ -266,6 +270,17 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 		} else {
 			errors += "<li>" + errorName + "Picturall layer ignore list is not valid</li>"
 		}
+
+		// Disguise
+		o.DisguiseEnabled = r.FormValue(base+"disguise-enabled") != ""
+		o.DisguisePort, err = strconv.Atoi(r.FormValue(base + "disguise-port"))
+		errors += ValidateNumber(err, errorName+"Disguise port")
+		o.DisguiseLoops = r.FormValue(base+"disguise-loop") != ""
+		o.DisguisePaused = r.FormValue(base+"disguise-paused") != ""
+		o.DisguiseNextName = r.FormValue(base+"disguise-next-name") != ""
+		o.DisguiseMediaName = r.FormValue(base+"disguise-media-name") != ""
+
+		// Common
 
 		o.MediaColor = r.FormValue(base + "media-color")
 		errors += ValidateColor(o.MediaColor, errorName+"Media text color")

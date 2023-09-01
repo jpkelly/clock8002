@@ -517,6 +517,17 @@ func defaultSourceConfig() {
 		TimeZone:      "Europe/Helsinki",
 		OvertimeColor: "#FF0000",
 	}
+
+	options.EngineOptions.Timer0.DisguisePort = 7400
+	options.EngineOptions.Timer1.DisguisePort = 7401
+	options.EngineOptions.Timer2.DisguisePort = 7402
+	options.EngineOptions.Timer3.DisguisePort = 7403
+	options.EngineOptions.Timer4.DisguisePort = 7404
+	options.EngineOptions.Timer5.DisguisePort = 7405
+	options.EngineOptions.Timer6.DisguisePort = 7406
+	options.EngineOptions.Timer7.DisguisePort = 7407
+	options.EngineOptions.Timer8.DisguisePort = 7408
+	options.EngineOptions.Timer9.DisguisePort = 7409
 }
 
 func signalBrightness(c color.RGBA) color.RGBA {
