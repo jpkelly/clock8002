@@ -385,6 +385,15 @@ func (engine *Engine) initCounters(options *EngineOptions) (err error) {
 			endThreshold:     time.Duration(options.SignalThresholdEnd) * time.Second,
 			overtimeMode:     options.OvertimeCountMode,
 		}
+
+		engine.Counters[i].mediaColor, err = parseColor(options.TimerOptions[i].MediaColor)
+		if err != nil {
+			log.Printf("Error parsing media color for timer %d: %v", i, err)
+		}
+		engine.Counters[i].mediaBG, err = parseColor(options.TimerOptions[i].MediaBG)
+		if err != nil {
+			log.Printf("Error parsing media background color for timer %d: %v", i, err)
+		}
 	}
 
 	for i, s := range []string{options.SignalColorStart, options.SignalColorWarning, options.SignalColorEnd} {

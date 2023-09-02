@@ -34,6 +34,8 @@ type Counter struct {
 	signalStart      bool
 	autoSignals      bool
 	overtimeMode     string
+	mediaColor       *color.RGBA
+	mediaBG          *color.RGBA
 }
 
 const (
