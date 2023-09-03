@@ -66,6 +66,7 @@ func (server *Server) run(ctx context.Context, wg *sync.WaitGroup) {
 			if e, ok := err.(*net.OpError); ok {
 				if e.Temporary() {
 					log.Printf("OSC-listen: Temporary error: %v. Retrying", e)
+					server.osc.Close()
 				} else {
 					log.Printf("OSC-listen fatal error: %v. Giving up", e)
 					server.osc = nil
