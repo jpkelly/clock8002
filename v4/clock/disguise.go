@@ -7,10 +7,12 @@ import (
 	"time"
 )
 
+// DisguiseOptions contains the common options
 type DisguiseOptions struct {
 	DisguiseTimeout int `long:"disguise-timeout" description:"Hyperdeck communication timeout, in milliseconds" default:"1000"`
 }
 
+// DisguiseTimerOptions contains the per timer options
 type DisguiseTimerOptions struct {
 	DisguiseEnabled   bool `long:"disguise-enabled" description:"Enable Disguise OSC integration"`
 	DisguisePort      int  `long:"disguise-port" description:"Disguise: port number to listen for this timer"`
@@ -79,6 +81,7 @@ func (engine *Engine) disguiseListen(o *TimerOptions, i int) {
 				progress := progress(m)
 				frames := int32(0)
 				engine.Counters[i].SetMedia(hours, minutes, seconds, frames, m.Remaining(), progress, !m.Play(), m.Loop())
+				t.Reset(engine.disguise.timeout)
 
 				if o.DisguiseMediaName {
 					engine.message = m.MediaName()
