@@ -307,7 +307,6 @@ func validateSourceCounters(counters string, source int) string {
 
 	if ok := sourceCounterRegexp.MatchString(counters); len(counters) == 0 || (ok) {
 		return ""
-	} else {
-		return fmt.Sprintf("<li>Source %d: Timer list is invalid, should be list of numbers separated by ,", source)
 	}
+	return fmt.Sprintf("<li>Source %d: Timer list is invalid, should be list of numbers separated by ,", source)
 }
