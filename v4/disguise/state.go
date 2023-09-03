@@ -23,28 +23,28 @@ func init() {
 }
 
 type state struct {
-	ctx         context.Context
-	ipFilter    *regexp.Regexp
-	server      *osc.Server
-	d           *oscutil.RegexpDispatcher
-	c           chan *Media
-	playMode    string
-	head        time.Duration
-	remaining   time.Duration
-	sectionName string
-	noteName    string
-	nextNote    string
-	wg          *sync.WaitGroup
-	nextName    bool
+	ctx             context.Context
+	ipFilter        *regexp.Regexp
+	server          *osc.Server
+	d               *oscutil.RegexpDispatcher
+	c               chan *Media
+	playMode        string
+	head            time.Duration
+	remaining       time.Duration
+	sectionName     string
+	nextSectionName string
+	noteName        string
+	nextNote        string
+	wg              *sync.WaitGroup
+	nextName        bool
 }
 
 func (s *state) setup(addr string) {
 	s.d = oscutil.NewRegexpDispatcher()
 	s.registerHandler("^/d3/showcontrol/sectionhint$", s.handleSectionHint)
 	s.registerHandler("^/d3/showcontrol/currentsectionname$", s.handleSectionName)
+	s.registerHandler("^/d3/showcontrol/nextsectionname$", s.handleNextSectionName)
 	s.registerHandler("^/d3/showcontrol/playmode$", s.handlePlayMode)
-	// The unit I had access to defaulted the playmode message to buggy address
-	s.registerHandler("^d3/showcontrol/playmode$", s.handlePlayMode)
 
 	s.server = &osc.Server{
 		Addr:    addr,
@@ -126,6 +126,7 @@ func (s *state) sendUpdate() {
 	}
 
 	if s.nextName {
+		m.sectionName = s.nextSectionName
 		m.note = s.nextNote
 	}
 
@@ -142,6 +143,18 @@ func (s *state) handleSectionName(msg *osc.Message) {
 	}
 
 	s.sectionName = name
+}
+
+func (s *state) handleNextSectionName(msg *osc.Message) {
+	debug.Printf("Disguise: handleNextSectionName: %v", msg)
+	var name string
+	err := oscutil.UnmarshalArguments(msg, &name)
+	if err != nil {
+		log.Printf("Disguise: handleNextSectionName error: %v", err)
+		return
+	}
+
+	s.nextSectionName = name
 }
 
 func (s *state) handlePlayMode(msg *osc.Message) {
