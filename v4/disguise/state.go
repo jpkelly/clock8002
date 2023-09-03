@@ -24,7 +24,6 @@ func init() {
 
 type state struct {
 	ctx             context.Context
-	ipFilter        *regexp.Regexp
 	server          *osc.Server
 	d               *oscutil.RegexpDispatcher
 	c               chan *Media
@@ -100,7 +99,7 @@ func (s *state) handleSectionHint(msg *osc.Message) {
 		return
 	}
 
-	if matches := sectionHintRe.FindStringSubmatch(payload); matches != nil && len(matches) == 5 {
+	if matches := sectionHintRe.FindStringSubmatch(payload); len(matches) == 5 {
 		currentNote := strings.TrimSpace(matches[1])
 		head := parseTime(matches[2])
 		nextNote := strings.TrimSpace(matches[3])
