@@ -66,8 +66,10 @@ func (s *state) run() {
 					s.server.Close()
 				} else {
 					log.Printf("Disguise: Fatal error: %v. Giving up", e)
-					s.server.Close()
-					s.server = nil
+					if s.server != nil {
+						s.server.Close()
+						s.server = nil
+					}
 					return
 				}
 			} else {
