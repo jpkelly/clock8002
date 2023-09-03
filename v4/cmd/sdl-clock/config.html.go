@@ -154,7 +154,7 @@ const configHTML = `
                           {{checkbox (printf "source%d-ltc" $n) "Enable LTC input on this source" $source.LTC}}
                           {{checkbox (printf "source%d-timer" $n) "Enable input from the associated timer" $source.Timer}}
                           {{checkbox (printf "source%d-timer-target" $n) "Display timer end time, if available, instead of the time remaining" $source.TimerTarget}}
-                          {{counter (printf "source%d-counter" $n) "Timer number to use (0-9)." $source.Counter}}
+                          {{text (printf "source%d-counter" $n) "Timer numbers to use (0-9), comma separated list." $source.Counter}}
                           {{checkbox (printf "source%d-tod" $n) "Enable time of day input on this source" $source.Tod}}
 
                           <label for="source{{$n}}-timezone">

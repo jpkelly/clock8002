@@ -9,9 +9,9 @@ import (
 const ()
 
 type source struct {
-	counter *Counter       // timer
-	title   string         // title displayed on the screen if possible
-	tz      *time.Location // timezone to use
+	counters []*Counter     // timer
+	title    string         // title displayed on the screen if possible
+	tz       *time.Location // timezone to use
 
 	// Booleans controlling what might be displayed by this clock data source
 	ltc         bool // LTC timecode decoded from sound input

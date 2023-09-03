@@ -127,18 +127,6 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	errors += ValidateNumber(err, "Flash time")
 	eo.Timeout, err = strconv.Atoi(r.FormValue("Timeout"))
 	errors += ValidateNumber(err, "Tally message timeout")
-	eo.Source1.Counter, err = strconv.Atoi(r.FormValue("source1-counter"))
-	errors += ValidateNumber(err, "Source 1 timer")
-	errors += ValidateTimer(eo.Source1.Counter, "Source 1 timer")
-	eo.Source2.Counter, err = strconv.Atoi(r.FormValue("source2-counter"))
-	errors += ValidateNumber(err, "Source 2 timer")
-	errors += ValidateTimer(eo.Source2.Counter, "Source 2 timer")
-	eo.Source3.Counter, err = strconv.Atoi(r.FormValue("source3-counter"))
-	errors += ValidateNumber(err, "Source 3 timer")
-	errors += ValidateTimer(eo.Source3.Counter, "Source 3 timer")
-	eo.Source4.Counter, err = strconv.Atoi(r.FormValue("source4-counter"))
-	errors += ValidateNumber(err, "Source 4 timer")
-	errors += ValidateTimer(eo.Source4.Counter, "Source 4 timer")
 	eo.Mitti, err = strconv.Atoi(r.FormValue("mitti"))
 	errors += ValidateNumber(err, "Mitti destination timer")
 	errors += ValidateTimer(eo.Mitti, "Mitti destination timer")
@@ -179,6 +167,16 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	errors += ValidateColor(eo.Source3.OvertimeColor, "Source3 overtime color")
 	eo.Source4.OvertimeColor = r.FormValue("source4-overtime-color")
 	errors += ValidateColor(eo.Source4.OvertimeColor, "Source4 overtime color")
+
+	// Counter lists
+	eo.Source1.Counter = r.FormValue("source1-counter")
+	errors += validateSourceCounters(eo.Source1.Counter, 1)
+	eo.Source2.Counter = r.FormValue("source2-counter")
+	errors += validateSourceCounters(eo.Source2.Counter, 2)
+	eo.Source3.Counter = r.FormValue("source3-counter")
+	errors += validateSourceCounters(eo.Source3.Counter, 3)
+	eo.Source4.Counter = r.FormValue("source4-counter")
+	errors += validateSourceCounters(eo.Source4.Counter, 4)
 
 	// Tricaster
 	eo.TricasterEnabled = r.FormValue("tricaster-enabled") != ""
@@ -302,4 +300,14 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	}
 
 	return eo, errors
+}
+
+func validateSourceCounters(counters string, source int) string {
+	sourceCounterRegexp := regexp.MustCompile(`^\d(?:,\d)*$`)
+
+	if ok := sourceCounterRegexp.MatchString(counters); len(counters) == 0 || (ok) {
+		return ""
+	} else {
+		return fmt.Sprintf("<li>Source %d: Timer list is invalid, should be list of numbers separated by ,", source)
+	}
 }

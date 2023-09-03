@@ -12,6 +12,8 @@ import (
 	"log"
 	"regexp"
 	db "runtime/debug"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -218,15 +220,29 @@ func (engine *Engine) State() *State {
 		}
 
 		if s.timer {
-			c.SignalColor = s.counter.signalColor
+			for _, ctr := range s.counters {
+				if ctr.active {
+					c.SignalColor = ctr.signalColor
+				}
+			}
 		}
 
 		if s.ltc && engine.ltcActive {
 			engine.ltcState(&c, s)
-		} else if out := s.counter.Output(t); s.timer && out.Active {
-			engine.timerState(&c, s, out)
-		} else if s.tod {
-			engine.todState(&c, s, t)
+		} else if s.timer {
+			var out *CounterOutput
+
+			for _, ctr := range s.counters {
+				if ctr.active {
+					out = ctr.Output((t))
+					break
+				}
+			}
+			if out != nil {
+				engine.timerState(&c, s, out)
+			} else if s.tod {
+				engine.todState(&c, s, t)
+			}
 		}
 
 		clocks = append(clocks, &c)
@@ -476,7 +492,7 @@ func (engine *Engine) initSources(sources []*SourceOptions) error {
 		}
 
 		engine.sources[i] = &source{
-			counter:     engine.Counters[s.Counter],
+			counters:    make([]*Counter, 0),
 			tod:         s.Tod,
 			timer:       s.Timer,
 			ltc:         s.LTC,
@@ -486,6 +502,16 @@ func (engine *Engine) initSources(sources []*SourceOptions) error {
 			overtime:    c,
 			timerTarget: s.TimerTarget,
 		}
+
+		re := regexp.MustCompile(`^\d(?:,\d)*$`)
+		if re.MatchString(s.Counter) {
+			counters := strings.Split(s.Counter, ",")
+			for _, l := range counters {
+				n, _ := strconv.Atoi(l)
+				engine.sources[i].counters = append(engine.sources[i].counters, engine.Counters[n])
+			}
+		}
+
 	}
 	log.Printf("Initialized %d clock display sources", len(engine.sources))
 	return nil
@@ -541,8 +567,10 @@ func (engine *Engine) oscSender() {
 
 func (engine *Engine) activateSourceByCounter(c int) {
 	for _, s := range engine.sources {
-		if s.counter == engine.Counters[c] {
-			s.hidden = false
+		for _, ctr := range s.counters {
+			if ctr == engine.Counters[c] {
+				s.hidden = false
+			}
 		}
 	}
 }
