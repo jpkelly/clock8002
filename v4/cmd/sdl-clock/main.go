@@ -170,6 +170,7 @@ func main() {
 			e := sdl.PollEvent()
 			switch t := e.(type) {
 			case *sdl.QuitEvent:
+				engine.Close()
 				os.Exit(0)
 			case *sdl.KeyboardEvent:
 				key := t.Keysym.Sym
