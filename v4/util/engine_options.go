@@ -284,7 +284,7 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 		o.DisguiseEnabled = r.FormValue(base+"disguise-enabled") != ""
 		o.DisguisePort, err = strconv.Atoi(r.FormValue(base + "disguise-port"))
 		errors += ValidateNumber(err, errorName+"Disguise port")
-		o.DisguiseLoops = r.FormValue(base+"disguise-loop") != ""
+		o.DisguiseLoops = r.FormValue(base+"disguise-loops") != ""
 		o.DisguisePaused = r.FormValue(base+"disguise-paused") != ""
 		o.DisguiseNextName = r.FormValue(base+"disguise-next-name") != ""
 		o.DisguiseMediaName = r.FormValue(base+"disguise-media-name") != ""
