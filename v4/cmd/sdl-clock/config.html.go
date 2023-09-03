@@ -230,7 +230,7 @@ const configHTML = `
 
                           <h3>Disguise</h3>
 
-                          <p>See also Disguise common options in integrations section.</p>
+                          <p>Caveats: On some versions of disguise the default for 'playmode' message address is 'd3/showcontrol/playmode'. If so it needs to be changed to the correct value of '/d3/showcontrol/playmode' in the oscTransport object settings.</p>
 
                           {{checkbox (printf "timer%d-disguise-enabled" $i) "Enable Disguise integration." $timer.DisguiseEnabled}}
                           {{number (printf "timer%d-disguise-port" $i) "Port to connect to." $timer.DisguisePort}}
