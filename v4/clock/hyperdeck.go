@@ -17,20 +17,6 @@ type HyperdeckOptions struct {
 	HyperdeckTimeout   int    `long:"hyperdeck-timeout" description:"Hyperdeck communication timeout, in milliseconds" default:"1000"`
 }
 
-type hyperdeckUpdate struct {
-	head             time.Duration
-	duration         time.Duration
-	playlistHead     time.Duration
-	playlistDuration time.Duration
-	name             string
-	play             bool
-	loop             bool
-	record           bool
-	playlist         bool
-	currentClip      int
-	totalClips       int
-}
-
 type hyperdeckState struct {
 	ip        string
 	relay     bool
