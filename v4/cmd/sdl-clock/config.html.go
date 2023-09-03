@@ -371,6 +371,20 @@ const configHTML = `
               </fieldset>
 
               <fieldset>
+                <legend>Hyperdeck</legend>
+
+                <p>Caveats: The hyperdeck supports only a single connection to itself. To get around this the clock can act as a command relay. This has been tested with the companion module, but it may cause issues with other integrations.</p>
+                <p>For the relay make companion or other control software connect to the clock IP. Allow incoming connections on firewall in windows and macos.</p>
+
+                {{checkbox "hyperdeck-enabled" "Enable hyperdeck integration." .EngineOptions.HyperdeckEnabled}}
+                {{text "hyperdeck-address" "Address to connect to" .EngineOptions.HyperdeckAddress}}
+                {{checkbox "hyperdeck-relay" "Relay hyperdeck control connection via the clock." .EngineOptions.HyperdeckRelay}}
+                {{counter "hyperdeck-timer" "Timer number for feedback from hyperdeck." .EngineOptions.HyperdeckTimer}}
+                {{checkbox "hyperdeck-media-name" "Show media name as tally message on the clock." .EngineOptions.HyperdeckMediaName}}
+                {{number "hyperdeck-timeout" "Message timeout for clearing the clock display, in milliseconds." .EngineOptions.HyperdeckTimeout}}
+              </fieldset>
+
+              <fieldset>
                 <legend>Disguise common options</legend>
 
                 {{number "disguise-timeout" "Message timeout for clearing the clock display, in milliseconds." .EngineOptions.DisguiseTimeout}}

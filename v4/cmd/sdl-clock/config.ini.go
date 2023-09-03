@@ -326,6 +326,14 @@ cue-serial={{.EngineOptions.CueSerial}}
 cue-duration={{.EngineOptions.CueDuration}}
 cue-fullscreen={{.CueFullScreen}}
 
+# Hyperdeck
+hyperdeck-enabled={{.EngineOptions.HyperdeckEnabled}}
+hyperdeck-address={{.EngineOptions.HyperdeckAddress}}
+hyperdeck-relay={{.EngineOptions.HyperdeckRelay}}
+hyperdeck-timer={{.EngineOptions.HyperdeckTimer}}
+hyperdeck-media-name={{.EngineOptions.HyperdeckMediaName}}
+hyperdeck-timeout={{.EngineOptions.HyperdeckTimeout}}
+
 # Disguise common options
 disguise-timeout={{.EngineOptions.DisguiseTimeout}}
 

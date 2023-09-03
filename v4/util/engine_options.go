@@ -223,6 +223,17 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	eo.DisguiseTimeout, err = strconv.Atoi(r.FormValue("disguise-timeout"))
 	errors += ValidateNumber(err, "Disguise timeout")
 
+	// Hyperdeck
+	eo.HyperdeckEnabled = r.FormValue("hyperdeck-enabled") != ""
+	eo.HyperdeckAddress = r.FormValue("hyperdeck-address")
+	eo.HyperdeckRelay = r.FormValue("hyperdeck-relay") != ""
+	eo.HyperdeckTimer, err = strconv.Atoi(r.FormValue("hyperdeck-timer"))
+	errors += ValidateNumber(err, "Hyperdeck destination timer")
+	errors += ValidateTimer(eo.HyperdeckTimer, "Hyperdeck destination timer")
+	eo.HyperdeckMediaName = r.FormValue("hyperdeck-media-name") != ""
+	eo.HyperdeckTimeout, err = strconv.Atoi(r.FormValue("hyperdeck-timeout"))
+	errors += ValidateNumber(err, "Hyperdeck timeout")
+
 	// Timer options
 	eo.TimerOptions = make([]*clock.TimerOptions, 10)
 	for i := range eo.TimerOptions {
