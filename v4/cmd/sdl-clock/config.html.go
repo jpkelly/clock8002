@@ -207,7 +207,7 @@ const configHTML = `
                           {{checkbox (printf "timer%d-vmix-pgm-only" $i) "Show only PGM media (no overlays)." $timer.VmixPGMOnly}}
                           {{checkbox (printf "timer%d-vmix-show-pvm" $i) "Show media in preview." $timer.VmixPVM}}
                           {{text (printf "timer%d-vmix-ignore-overlays" $i) "List of overlay numbers to ignore, comma separated." $timer.VmixIgnoreOverlays}}
-                          {{checkbox (printf "timer%d-vmix-media-name" $i) "Show media name as tally message on the clock." $timer.VmixMediaName}}
+                          {{checkbox (printf "timer%d-vmix-media-name" $i) "Show media name as tally message on the clock. This covers up the 3rd source in the 3 timer layouts." $timer.VmixMediaName}}
 
                           <h3>Analog Way Picturall</h3>
 
@@ -225,7 +225,7 @@ const configHTML = `
                           {{number (printf "timer%d-picturall-port" $i) "Port to connect to." $timer.PicturallPort}}
                           {{checkbox (printf "timer%d-picturall-loops" $i) "Show looping media." $timer.PicturallLoops}}
                           {{checkbox (printf "timer%d-picturall-streams" $i) "Show streaming media." $timer.PicturallStreams}}
-                          {{checkbox (printf "timer%d-picturall-media-name" $i) "Show media name as tally message on the clock." $timer.PicturallMediaName}}
+                          {{checkbox (printf "timer%d-picturall-media-name" $i) "Show media name as tally message on the clock. This covers up the 3rd source in the 3 timer layouts." $timer.PicturallMediaName}}
                           {{text (printf "timer%d-picturall-ignore-layers" $i) "List of layer numbers to ignore, comma separated." $timer.PicturallIgnoreLayers}}
 
                           <h3>Disguise</h3>
@@ -237,7 +237,7 @@ const configHTML = `
                           {{checkbox (printf "timer%d-disguise-loops" $i) "Show looping media." $timer.DisguiseLoops}}
                           {{checkbox (printf "timer%d-disguise-paused" $i) "Show paused media." $timer.DisguisePaused}}
                           {{checkbox (printf "timer%d-disguise-next-name" $i) "Show name of next cue instead of current cue." $timer.DisguiseNextName}}
-                          {{checkbox (printf "timer%d-disguise-media-name" $i) "Show cue names." $timer.DisguiseMediaName}}
+                          {{checkbox (printf "timer%d-disguise-media-name" $i) "Show media name as tally message on the clock. This covers up the 3rd source in the 3 timer layouts." $timer.DisguiseMediaName}}
 
                           <h3>Common</h3>
 
@@ -363,7 +363,7 @@ const configHTML = `
                 {{checkbox "tricaster-show-pvm" "Show media playing in preview also." .EngineOptions.TricasterPVM}}
                 {{checkbox "tricaster-event-enabled" "Show time until next tricaster event on a timer." .EngineOptions.TricasterEvent}}
                 {{counter "tricaster-event-timer" "Timer number for the event timer." .EngineOptions.TricasterEventTimer}}
-                {{checkbox "tricaster-media-name" "Show media name as tally message on the clock." .EngineOptions.TricasterMediaName}}
+                {{checkbox "tricaster-media-name" "Show media name as tally message on the clock. This covers up the 3rd source in the 3 timer layouts." .EngineOptions.TricasterMediaName}}
                 {{color "tricaster-media-color" "Media name text color." .EngineOptions.TricasterMediaColor}}
                 {{color "tricaster-media-bg" "Media name background color" .EngineOptions.TricasterMediaBG}}
                 {{number "tricaster-interval" "Polling interval, in milliseconds. Adjust if the clock causes too high load on the tricaster or if you need better accuracy." .EngineOptions.TricasterInterval}}
@@ -380,7 +380,7 @@ const configHTML = `
                 {{text "hyperdeck-address" "Address to connect to" .EngineOptions.HyperdeckAddress}}
                 {{checkbox "hyperdeck-relay" "Relay hyperdeck control connection via the clock." .EngineOptions.HyperdeckRelay}}
                 {{counter "hyperdeck-timer" "Timer number for feedback from hyperdeck." .EngineOptions.HyperdeckTimer}}
-                {{checkbox "hyperdeck-media-name" "Show media name as tally message on the clock." .EngineOptions.HyperdeckMediaName}}
+                {{checkbox "hyperdeck-media-name" "Show media name as tally message on the clock. This covers up the 3rd source in the 3 timer layouts." .EngineOptions.HyperdeckMediaName}}
                 {{number "hyperdeck-timeout" "Message timeout for clearing the clock display, in milliseconds." .EngineOptions.HyperdeckTimeout}}
               </fieldset>
 
