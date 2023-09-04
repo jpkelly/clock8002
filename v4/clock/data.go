@@ -41,6 +41,10 @@ const (
 	IconCountup = "↑"
 	// Icon for countdown target times
 	IconTarget = "⇒"
+	// Icon for record
+	IconRecord = "⏺"
+	// Icon for PlayPause, used when playback ends after one cue
+	IconPlayPause = "⏯"
 )
 
 const (

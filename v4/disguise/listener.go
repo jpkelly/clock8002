@@ -71,6 +71,14 @@ func (m *Media) MediaName() string {
 	return m.note
 }
 
+// IconOverride returns an alternative play icon if playing just a single section
+func (m *Media) IconOverride() string {
+	if m.playMode == "PlaySection" {
+		return "⏯"
+	}
+	return ""
+}
+
 func (m *Media) String() string {
 	return fmt.Sprintf("Disguise: -%s (%s) Play: %v Loop: %v MediaName: %v", m.Remaining(), m.Duration(), m.Play(), m.Loop(), m.MediaName())
 }

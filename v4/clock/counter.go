@@ -102,22 +102,27 @@ type mediaState struct {
 	progress  float64
 	remaining time.Duration
 	target    time.Time
+	icon      string
 }
 
-type mediaUpdate interface {
+// MediaUpdate is the interface for updating external media player state
+type MediaUpdate interface {
 	Remaining() time.Duration
 	Duration() time.Duration
 	Play() bool
 	Loop() bool
 	Record() bool
 	MediaName() string
+	IconOverride() string
 }
 
 func (m *mediaState) output() *CounterOutput {
 	var icon string
 	var seconds int64
 
-	if m.paused {
+	if m.icon != "" {
+		icon = m.icon
+	} else if m.paused {
 		icon = IconPaused
 	} else if m.looping {
 		icon = IconLooping
@@ -607,6 +612,30 @@ func (counter *Counter) SetMedia(hours, minutes, seconds, frames int32, remainin
 	counter.active = true
 }
 
+func (counter *Counter) mediaUpdate(m MediaUpdate) {
+	hours, minutes, seconds := splitTime(m)
+	progress := progress(m)
+	frames := int32(0)
+
+	ms := mediaState{
+		hours:     hours,
+		minutes:   minutes,
+		seconds:   seconds,
+		frames:    frames,
+		paused:    !m.Play(),
+		looping:   m.Loop(),
+		progress:  progress,
+		remaining: m.Remaining(),
+		target:    time.Now().Add(m.Remaining()),
+	}
+
+	if m.IconOverride() != "" {
+		ms.icon = m.IconOverride()
+	}
+	counter.setExternal(&ms)
+	counter.active = true
+}
+
 // ResetMedia removes the media state from a counter
 func (counter *Counter) ResetMedia() {
 	if _, ok := counter.externalState.(*mediaState); ok {
@@ -702,7 +731,7 @@ func abs(i int) int {
 }
 
 // splitTime splits the time in a mediaUpdate to components
-func splitTime(m mediaUpdate) (hours, minutes, seconds int32) {
+func splitTime(m MediaUpdate) (hours, minutes, seconds int32) {
 	diff := m.Remaining()
 	seconds = int32(diff.Seconds()) % 60
 	minutes = int32(diff.Minutes()) % 60
@@ -711,6 +740,6 @@ func splitTime(m mediaUpdate) (hours, minutes, seconds int32) {
 }
 
 // progress calculates the playhead progress as 0 - 1.0 float
-func progress(m mediaUpdate) float64 {
+func progress(m MediaUpdate) float64 {
 	return 1 - (m.Remaining().Seconds() / m.Duration().Seconds())
 }

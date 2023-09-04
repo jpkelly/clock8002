@@ -77,19 +77,9 @@ func (engine *Engine) disguiseListen(o *TimerOptions, i int) {
 					continue
 				}
 
-				hours, minutes, seconds := splitTime(m)
-				progress := progress(m)
-				frames := int32(0)
-				engine.Counters[i].SetMedia(hours, minutes, seconds, frames, m.Remaining(), progress, !m.Play(), m.Loop())
+				engine.Counters[i].mediaUpdate(m)
+				engine.mediaName(m, engine.Counters[i], o.DisguiseMediaName, engine.disguise.timeout)
 				t.Reset(engine.disguise.timeout)
-
-				if o.DisguiseMediaName {
-					engine.message = m.MediaName()
-					engine.messageColor = engine.Counters[i].mediaColor
-					engine.messageBG = engine.Counters[i].mediaBG
-					engine.oscTally = true
-					engine.messageTimer.Reset(engine.disguise.timeout)
-				}
 			}
 		}
 	}

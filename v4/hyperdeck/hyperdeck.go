@@ -405,6 +405,14 @@ func (h *Media) MediaName() string {
 	return name
 }
 
+// IconOverride sets the recording icon
+func (h *Media) IconOverride() string {
+	if h.Record() {
+		return "⏺"
+	}
+	return ""
+}
+
 /*
 clip count: 5
 1: Capture0000.mov 00:00:00;00 00:00:10;06

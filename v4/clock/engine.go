@@ -586,3 +586,13 @@ func (engine *Engine) SetTitleColors(text, bg color.RGBA) {
 	engine.titleTextColor = text
 	engine.titleBGColor = bg
 }
+
+func (engine *Engine) mediaName(m MediaUpdate, counter *Counter, mediaName bool, timeout time.Duration) {
+	if mediaName {
+		engine.message = m.MediaName()
+		engine.messageColor = counter.mediaColor
+		engine.messageBG = counter.mediaBG
+		engine.oscTally = true
+		engine.messageTimer.Reset(timeout)
+	}
+}

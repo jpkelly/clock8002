@@ -67,20 +67,9 @@ func (engine *Engine) hyperdeckListen() {
 					engine.hyperdeck.counter.ResetMedia()
 					break
 				}
-				hours, minutes, seconds := splitTime(s)
-				progress := progress(s)
 
-				frames := int32(0)
-				engine.hyperdeck.counter.SetMedia(hours, minutes, seconds, frames, s.Remaining(), progress, !s.Play(), s.Loop())
-
-				if engine.hyperdeck.mediaName {
-					engine.message = s.MediaName()
-					engine.messageColor = engine.hyperdeck.counter.mediaColor
-					engine.messageBG = engine.hyperdeck.counter.mediaBG
-					engine.oscTally = true
-					engine.messageTimer.Reset(engine.hyperdeck.timeout)
-				}
-
+				engine.hyperdeck.counter.mediaUpdate(s)
+				engine.mediaName(s, engine.hyperdeck.counter, engine.hyperdeck.mediaName, engine.hyperdeck.timeout)
 				t.Reset(engine.hyperdeck.timeout)
 			case <-t.C:
 				engine.hyperdeck.counter.ResetMedia()
