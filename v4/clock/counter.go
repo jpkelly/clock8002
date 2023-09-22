@@ -19,6 +19,13 @@ const (
 	autoColorEnd   = iota
 )
 
+const (
+	priorityNormal    = 0
+	priorityLimitimer = iota
+	priorityMedia     = iota
+	prioritySlave     = iota
+)
+
 // Counter abstracts a generic counter counting up or down
 type Counter struct {
 	state            *counterState
@@ -38,12 +45,27 @@ type Counter struct {
 	mediaBG          *color.RGBA
 }
 
-const (
-	priorityNormal    = 0
-	priorityLimitimer = iota
-	priorityMedia     = iota
-	prioritySlave     = iota
-)
+// CounterOutput the data structure returned by Counter.Output() and contains the static state of the counter at that time
+type CounterOutput struct {
+	Active      bool          // True if the counter is active
+	Media       bool          // True if counter represents a playing media file
+	Countdown   bool          // True if counting down, false if counting up
+	Paused      bool          // True if counter has been paused
+	Looping     bool          // True if the playing media is looping in the player
+	Expired     bool          // Has the countdown timer expired?
+	Hours       int           // Hour part of the timer
+	Minutes     int           // Minutes of the timer, 0-60
+	Seconds     int           // Seconds of the timer, 0-60
+	Text        string        // HH:MM:SS string representation
+	Icon        string        // Single unicode glyph to use as an icon for the timer
+	Compact     string        // Compact 4-character output
+	Progress    float64       // Percentage of total time elapsed of the countdown, 0-1
+	Diff        time.Duration // raw difference
+	Duration    time.Duration // Total duration of the count, if available
+	SignalColor color.RGBA
+	Mode        string
+	Target      *time.Time // End time for counter, if available
+}
 
 type externalState interface {
 	output() *CounterOutput
@@ -56,6 +78,53 @@ type slaveState struct {
 	seconds   int
 	icon      string
 	hideHours bool
+}
+
+type mediaState struct {
+	paused    bool
+	looping   bool
+	hours     int32
+	minutes   int32
+	seconds   int32
+	frames    int32
+	progress  float64
+	remaining time.Duration
+	target    time.Time
+	icon      string
+}
+
+// MediaUpdate is the interface for updating external media player state
+type MediaUpdate interface {
+	Remaining() time.Duration
+	Duration() time.Duration
+	Play() bool
+	Loop() bool
+	Record() bool
+	MediaName() string
+	IconOverride() string
+}
+
+type counterState struct {
+	target   time.Time     // Target timestamp for main countdown
+	duration time.Duration // Total duration of main countdown, used to scale the leds
+	left     time.Duration // Duration left when paused
+}
+
+type limitimerState struct {
+	hours      int
+	minutes    int
+	seconds    int
+	duration   time.Duration
+	elapsed    time.Duration
+	icon       string
+	blink      bool
+	led        int
+	paused     bool
+	expired    bool
+	warning    bool
+	minuteMode bool
+	countdown  bool
+	target     time.Time
 }
 
 func (slave *slaveState) output() *CounterOutput {
@@ -90,30 +159,6 @@ func (slave *slaveState) output() *CounterOutput {
 
 func (slave *slaveState) priority() int {
 	return prioritySlave
-}
-
-type mediaState struct {
-	paused    bool
-	looping   bool
-	hours     int32
-	minutes   int32
-	seconds   int32
-	frames    int32
-	progress  float64
-	remaining time.Duration
-	target    time.Time
-	icon      string
-}
-
-// MediaUpdate is the interface for updating external media player state
-type MediaUpdate interface {
-	Remaining() time.Duration
-	Duration() time.Duration
-	Play() bool
-	Loop() bool
-	Record() bool
-	MediaName() string
-	IconOverride() string
 }
 
 func (m *mediaState) output() *CounterOutput {
@@ -163,29 +208,6 @@ func (m *mediaState) output() *CounterOutput {
 
 func (m *mediaState) priority() int {
 	return priorityMedia
-}
-
-type counterState struct {
-	target   time.Time     // Target timestamp for main countdown
-	duration time.Duration // Total duration of main countdown, used to scale the leds
-	left     time.Duration // Duration left when paused
-}
-
-type limitimerState struct {
-	hours      int
-	minutes    int
-	seconds    int
-	duration   time.Duration
-	elapsed    time.Duration
-	icon       string
-	blink      bool
-	led        int
-	paused     bool
-	expired    bool
-	warning    bool
-	minuteMode bool
-	countdown  bool
-	target     time.Time
 }
 
 func (lt *limitimerState) output() *CounterOutput {
@@ -365,28 +387,6 @@ func (counter *Counter) setExternal(ext externalState) {
 	} else {
 		counter.externalState = ext
 	}
-}
-
-// CounterOutput the data structure returned by Counter.Output() and contains the static state of the counter at that time
-type CounterOutput struct {
-	Active      bool          // True if the counter is active
-	Media       bool          // True if counter represents a playing media file
-	Countdown   bool          // True if counting down, false if counting up
-	Paused      bool          // True if counter has been paused
-	Looping     bool          // True if the playing media is looping in the player
-	Expired     bool          // Has the countdown timer expired?
-	Hours       int           // Hour part of the timer
-	Minutes     int           // Minutes of the timer, 0-60
-	Seconds     int           // Seconds of the timer, 0-60
-	Text        string        // HH:MM:SS string representation
-	Icon        string        // Single unicode glyph to use as an icon for the timer
-	Compact     string        // Compact 4-character output
-	Progress    float64       // Percentage of total time elapsed of the countdown, 0-1
-	Diff        time.Duration // raw difference
-	Duration    time.Duration // Total duration of the count, if available
-	SignalColor color.RGBA
-	Mode        string
-	Target      *time.Time // End time for counter, if available
 }
 
 // Output generates the static output of the counter for use in clock displays
