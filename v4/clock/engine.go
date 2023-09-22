@@ -225,12 +225,11 @@ func (engine *Engine) State() *State {
 		if s.ltc && engine.ltcActive {
 			engine.ltcState(&c, s)
 		} else if s.timer {
-			log.Printf("FOOBAR: counter has %d counters", len(s.counters))
 			for _, ctr := range s.counters {
-				if ctr.active {
-					log.Printf("FOOBAR: found active counter, breaking out")
+				o := ctr.Output(t)
+				if o.Active {
 					c.SignalColor = ctr.signalColor
-					out = ctr.Output((t))
+					out = o
 					break
 				}
 			}
