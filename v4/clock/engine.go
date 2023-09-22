@@ -205,7 +205,10 @@ func (engine *Engine) flash(t time.Time) bool {
 func (engine *Engine) State() *State {
 	t := time.Now()
 	var clocks []*Clock
+
 	for _, s := range engine.sources {
+		var out *CounterOutput
+
 		c := Clock{
 			Text:        "",
 			Compact:     "",
@@ -219,30 +222,24 @@ func (engine *Engine) State() *State {
 			SignalColor: color.RGBA{R: 0, G: 0, B: 0, A: 0},
 		}
 
-		if s.timer {
-			for _, ctr := range s.counters {
-				if ctr.active {
-					c.SignalColor = ctr.signalColor
-				}
-			}
-		}
-
 		if s.ltc && engine.ltcActive {
 			engine.ltcState(&c, s)
 		} else if s.timer {
-			var out *CounterOutput
-
+			log.Printf("FOOBAR: counter has %d counters", len(s.counters))
 			for _, ctr := range s.counters {
 				if ctr.active {
+					log.Printf("FOOBAR: found active counter, breaking out")
+					c.SignalColor = ctr.signalColor
 					out = ctr.Output((t))
 					break
 				}
 			}
-			if out != nil {
-				engine.timerState(&c, s, out)
-			} else if s.tod {
-				engine.todState(&c, s, t)
-			}
+		}
+
+		if out != nil {
+			engine.timerState(&c, s, out)
+		} else if s.tod {
+			engine.todState(&c, s, t)
 		}
 
 		clocks = append(clocks, &c)
