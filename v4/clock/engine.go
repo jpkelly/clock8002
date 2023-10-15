@@ -228,7 +228,7 @@ func (engine *Engine) State() *State {
 			for _, ctr := range s.counters {
 				o := ctr.Output(t)
 				if o.Active {
-					c.SignalColor = ctr.signalColor
+					c.SignalColor = o.SignalColor
 					out = o
 					break
 				}
