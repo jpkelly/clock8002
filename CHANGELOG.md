@@ -1,3 +1,21 @@
+## Version 4.19.0
+* New features:
+  * Support multiple timers per source
+    * Supplied as comma separated list, ie. "3,1,4"
+    * First active timer on the list is displayed on the clock
+    * This allows for example configuring a primary and backup playout on same source
+    * Thank you for Creative Techonlogy Finland for sponsoring this
+  * Disguise d3 integration
+    * Thank you to Creative Technology Finland for sponsoring this
+  * Hyperdeck integration
+    * Caveats: Hyperdeck only allows one incoming connection, but the clock can
+      act as a relay for other software. This limits the clock to connecting to a
+      single hyperdeck.
+* Bugfixes:
+  * Cleaner shutdown on OSX to avoid leaving ports reserved
+  * Cleaner closing of OSC listeners on config reload
+  * Updated raspberry-pi firmware to fix issues on some rpi3b+ boards
+
 ## Version 4.18.1
 * Bugfixes:
   * udptime and overtime countdowns
