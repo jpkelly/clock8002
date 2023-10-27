@@ -39,7 +39,7 @@ type MediaMessage struct {
 	seconds   int32
 	frames    int32
 	remaining int32
-	progress  float32
+	progress  float64
 	paused    bool
 	looping   bool
 	timeStamp osc.Timetag
