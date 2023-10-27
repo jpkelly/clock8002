@@ -41,7 +41,19 @@ func (engine *Engine) sendMedia(player string, hours, minutes, seconds, frames, 
 		return nil
 	}
 	address := fmt.Sprintf("/clock/media/%s", player)
-	packet := osc.NewMessage(address, hours, minutes, seconds, frames, remaining, progress, paused, looping, osc.NewTimetagFromTime(time.Now()), engine.uuid)
+	m := MediaMessage{
+		hours:     hours,
+		minutes:   minutes,
+		seconds:   seconds,
+		frames:    frames,
+		remaining: remaining,
+		progress:  float32(progress),
+		paused:    paused,
+		looping:   looping,
+		timeStamp: osc.NewTimetagFromTime(time.Now()),
+		uuid:      engine.uuid,
+	}
+	packet := m.MarshalOSC(address)
 
 	data, err := packet.MarshalBinary()
 	if err != nil {
