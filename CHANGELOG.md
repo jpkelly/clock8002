@@ -1,3 +1,8 @@
+## Version 4.19.1
+* Bugfixes:
+  * Clock bridging was using wrong encoding for the /clock/media OSC message, this caused
+    excessive logging and weird delays in mitti and millumin timers.
+
 ## Version 4.19.0
 * New features:
   * Support multiple timers per source
