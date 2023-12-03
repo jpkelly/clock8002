@@ -136,17 +136,8 @@ func (engine *Engine) vmixSelect(s *vmix.State, i int) *vmix.Video {
 }
 
 func (engine *Engine) vmixSet(video *vmix.Video, i int) {
-	diff := video.Length - video.Head
-	if diff < 0 {
-		diff = -diff
-	}
 
-	hours := int32(diff.Truncate(time.Hour).Hours())
-	minutes := int32(diff.Truncate(time.Minute).Minutes()) - (hours * 60)
-	seconds := int32(diff.Truncate(time.Second).Seconds()) - (((hours * 60) + minutes) * 60)
-	progress := video.Head.Seconds() / video.Length.Seconds()
-	frames := int32(0)
-	engine.Counters[i].SetMedia(hours, minutes, seconds, frames, diff, progress, !video.Playing, video.Looping)
+	engine.Counters[i].mediaUpdate(video)
 
 	if engine.vmix[i].mediaName {
 		engine.message = video.Name

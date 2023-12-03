@@ -88,3 +88,38 @@ func listen(ctx context.Context, url string, timeout time.Duration, c chan *Stat
 		}
 	}
 }
+
+// Remaining gets the time remaining on a video
+func (v *Video) Remaining() time.Duration {
+	return v.Length - v.Head
+}
+
+// Duration is the full lenght of a video
+func (v *Video) Duration() time.Duration {
+	return v.Length
+}
+
+// Play tells if the video is currently playing
+func (v *Video) Play() bool {
+	return v.Playing
+}
+
+// Loop tells if the video is looping
+func (v *Video) Loop() bool {
+	return v.Looping
+}
+
+// Record is always false with vmix
+func (v *Video) Record() bool {
+	return false
+}
+
+// MediaName is the name of the video
+func (v *Video) MediaName() string {
+	return v.Name
+}
+
+// IconOverride is always empty on vmix
+func (v *Video) IconOverride() string {
+	return ""
+}
