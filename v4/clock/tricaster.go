@@ -1,7 +1,6 @@
 package clock
 
 import (
-	"fmt"
 	"github.com/desertbit/timer"
 	"gitlab.com/clock-8001/clock-8001/v4/debug"
 	"gitlab.com/clock-8001/clock-8001/v4/tricaster"
@@ -135,25 +134,10 @@ func (engine *Engine) tricasterListen(c chan *tricaster.Status) {
 }
 
 func (engine *Engine) tricasterSet(playing *tricaster.DDR) {
-	diff := playing.Remaining
-	length := playing.Length
-	if playing.ClipIndex != 0 {
-		diff = playing.PlaylistRemaining
-		length = playing.PlaylistLength
-	}
-
-	hours := int32(diff.Truncate(time.Hour).Hours())
-	minutes := int32(diff.Truncate(time.Minute).Minutes()) - (hours * 60)
-	seconds := int32(diff.Truncate(time.Second).Seconds()) - (((hours * 60) + minutes) * 60)
-	progress := 1 - diff.Seconds()/length.Seconds()
-	frames := int32(0)
-	engine.tricaster.counter.SetMedia(hours, minutes, seconds, frames, diff, progress, false, false)
+	engine.tricaster.counter.mediaUpdate(playing)
 
 	if engine.tricaster.mediaName {
-		name := playing.Name
-		if playing.ClipIndex != 0 {
-			name = fmt.Sprintf("%d/%d %s", playing.ClipIndex, playing.Clips, playing.Name)
-		}
+		name := playing.MediaName()
 		if name == "" {
 			return
 		}

@@ -36,7 +36,7 @@ type Status struct {
 // DDR contains the state of one tricaster video player
 type DDR struct {
 	Name              string
-	Remaining         time.Duration
+	Left              time.Duration
 	Length            time.Duration
 	PlaylistRemaining time.Duration
 	PlaylistLength    time.Duration
@@ -47,11 +47,55 @@ type DDR struct {
 	Static            bool
 }
 
+// Remaining is the time remaining on the clip or playlist, if active
+func (d *DDR) Remaining() time.Duration {
+	if d.ClipIndex == 0 {
+		return d.Left
+	}
+	return d.PlaylistRemaining
+}
+
+// Duration is the duration of the clip or playlist, if active
+func (d *DDR) Duration() time.Duration {
+	if d.ClipIndex == 0 {
+		return d.Length
+	}
+	return d.PlaylistRemaining
+}
+
+// Play is always true for tricaster
+func (d *DDR) Play() bool {
+	return true
+}
+
+// Loop is always false for tricaster
+func (d *DDR) Loop() bool {
+	return false
+}
+
+// Record is always false for tricaster
+func (d *DDR) Record() bool {
+	return false
+}
+
+// MediaName is the name of the clip
+func (d *DDR) MediaName() string {
+	if d.ClipIndex == 0 {
+		return d.Name
+	}
+	return fmt.Sprintf("%d/%d %s", d.ClipIndex, d.Clips, d.Name)
+}
+
+// IconOverride is always none for tricaster
+func (d *DDR) IconOverride() string {
+	return ""
+}
+
 func (s *Status) String() string {
 	ret := fmt.Sprintf("Tricaster state:\n -> Next event: %s\n -> In: %s\n", s.NextEventName, s.NextEventTime)
 	ret += fmt.Sprintf(" -> DDRs: %d\n", len(s.DDR))
 	for i, d := range s.DDR {
-		ret += fmt.Sprintf(" -> DDR%d Live: %v Name: %s Remaining: %s (%s)\n", i+1, d.Live, d.Name, d.Remaining, d.Length)
+		ret += fmt.Sprintf(" -> DDR%d Live: %v Name: %s Remaining: %s (%s)\n", i+1, d.Live, d.Name, d.Left, d.Length)
 		ret += fmt.Sprintf("  -> Playlist: %d/%d Remaining: %s (%s)\n", d.ClipIndex, d.Clips, d.PlaylistRemaining, d.PlaylistLength)
 	}
 	return ret
@@ -109,7 +153,7 @@ func listen() {
 					Live:              sw.live(n),
 					Preview:           sw.preview(n),
 					Name:              dl.alias(i + 1),
-					Remaining:         time.Duration(ddrtc.Remaining) * time.Second,
+					Left:              time.Duration(ddrtc.Remaining) * time.Second,
 					Length:            time.Duration(ddrtc.Duration) * time.Second,
 					ClipIndex:         ddrtc.ClipIndex,
 					Clips:             ddrtc.Clips,
