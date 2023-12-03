@@ -15,9 +15,9 @@ func MakeListener(d *oscutil.RegexpDispatcher) *Listener {
 		listeners: make(map[chan State]struct{}),
 	}
 	var state State
-	state.Paused = true
-	state.Loop = false
-	state.Remaining = 0
+	state.paused = true
+	state.loop = false
+	state.remaining = 0
 	listener.state = &state
 	listener.setup(d)
 	return &listener
@@ -40,6 +40,11 @@ func (listener *Listener) Listen() chan State {
 
 func (listener *Listener) update() {
 	state := listener.state.Copy()
+
+	if state.remaining < 0 {
+		log.Printf("mitti state update: negative remaining time, skipping")
+		return
+	}
 
 	for listenChan := range listener.listeners {
 		listenChan <- state
@@ -90,6 +95,16 @@ func (listener *Listener) handleCueTimeElapsed(msg *osc.Message) {
 	listener.state.CueTimeElapsed(cueTimeElapsed)
 }
 
+func (listener *Listener) handleCueName(msg *osc.Message) {
+	var cueName string
+	if err := oscutil.UnmarshalArgument(msg, 0, &cueName); err != nil {
+		log.Printf("mitti cueName unmarshal: %v: %v", msg, err)
+	}
+
+	listener.state.mediaName = cueName
+	debug.Printf("mitti Got cue name: %v", cueName)
+}
+
 func registerHandler(d *oscutil.RegexpDispatcher, addr string, handler osc.MethodFunc) {
 	if err := d.AddMsgHandler(addr, handler); err != nil {
 		panic(err)
@@ -102,4 +117,5 @@ func (listener *Listener) setup(d *oscutil.RegexpDispatcher) {
 	registerHandler(d, "/mitti/togglePlay", listener.handleTogglePlay)
 	registerHandler(d, "/mitti/toggleLoop", listener.handleToggleLoop)
 	registerHandler(d, "/mitti/current/toggleLoop", listener.handleToggleLoop)
+	registerHandler(d, "/mitti/current/CueName", listener.handleCueName)
 }

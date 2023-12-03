@@ -5,7 +5,6 @@ import (
 	"gitlab.com/clock-8001/clock-8001/v4/debug"
 	"gitlab.com/clock-8001/clock-8001/v4/mitti"
 	"log"
-	"time"
 )
 
 func (engine *Engine) mittiListen(server *Server, counter int, bridge bool) {
@@ -16,21 +15,15 @@ func (engine *Engine) mittiListen(server *Server, counter int, bridge bool) {
 
 func (engine *Engine) updateMittiClock(state mitti.State, mittiCounter *Counter, bridge bool) error {
 	// FIXME: need to fudge this by one second to get the displays to agree?
-	remaining := time.Duration(state.Remaining) * time.Second
-	total := remaining + (time.Duration(state.Elapsed) * time.Second)
-	progress := float64(remaining) / float64(total)
 
-	hours := int32(state.Hours)
-	minutes := int32(state.Minutes)
-	seconds := int32(state.Seconds)
-	frames := int32(state.Frames)
+	hours, minutes, seconds := splitTime(&state)
 
-	log.Printf("Mitti update, remaining: %v total: %v\n", remaining.Seconds(), total.Seconds())
+	debug.Printf("Mitti update, remaining: %v total: %v\n", state.Remaining(), state.Duration())
+	debug.Printf(" -> update state: %02d:%02d:%02d", hours, minutes, seconds)
 
-	log.Printf(" -> update state: %02d:%02d:%02d", state.Hours, state.Minutes, state.Seconds)
-	mittiCounter.SetMedia(hours, minutes, seconds, frames, remaining, progress, state.Paused, state.Loop)
+	mittiCounter.mediaUpdate(&state)
 	if bridge {
-		engine.sendMedia("mitti", hours, minutes, seconds, frames, int32(state.Remaining), progress, state.Paused, state.Loop)
+		engine.sendMedia("mitti", hours, minutes, seconds, 0, int32(state.Remaining().Seconds()), progress(&state), !state.Play(), !state.Loop())
 	}
 
 	// TODO: cue name

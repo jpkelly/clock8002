@@ -9,25 +9,61 @@ import (
 
 // State is the Mitti playback state from osc messages
 type State struct {
-	Remaining int
-	Elapsed   int
-	Hours     int
-	Minutes   int
-	Seconds   int
-	Frames    int
-	Progress  float64
-	Paused    bool
-	Loop      bool
-	Updated   time.Time
+	remaining int
+	elapsed   int
+	hours     int
+	minutes   int
+	seconds   int
+	frames    int
+	progress  float64
+	paused    bool
+	loop      bool
+	updated   time.Time
+	mediaName string
+}
+
+// Remaining tells the remaining time on the cue being played
+func (state *State) Remaining() time.Duration {
+	return time.Duration(state.remaining) * time.Second
+}
+
+// Duration gives the total cue duration
+func (state *State) Duration() time.Duration {
+	return time.Duration(state.remaining+state.elapsed) * time.Second
+}
+
+// Play tells if the cue is playing
+func (state *State) Play() bool {
+	return !state.paused
+}
+
+// Loop tells if the cue is looping
+func (state *State) Loop() bool {
+	return state.loop
+}
+
+// Record is always false for Mitti
+func (state *State) Record() bool {
+	return false
+}
+
+// MediaName is the cue name
+func (state *State) MediaName() string {
+	return state.mediaName
+}
+
+// IconOverride is always empty
+func (state *State) IconOverride() string {
+	return ""
 }
 
 func (state *State) String() string {
 	return fmt.Sprintf("Mitti state updated %.2fs ago: left=%d elapsed=%d paused=%v loop=%v",
-		time.Since(state.Updated).Seconds(),
-		state.Remaining,
-		state.Elapsed,
-		state.Paused,
-		state.Loop,
+		time.Since(state.updated).Seconds(),
+		state.remaining,
+		state.elapsed,
+		state.paused,
+		state.loop,
 	)
 }
 
@@ -41,16 +77,16 @@ func (state *State) CueTimeLeft(cueTimeLeft string) {
 		return
 	}
 
-	state.Hours = hours
-	state.Minutes = min
-	state.Seconds = sec
-	state.Updated = time.Now()
+	state.hours = hours
+	state.minutes = min
+	state.seconds = sec
+	state.updated = time.Now()
 
 	min += hours * 60
 	sec += min * 60
 	cs += sec * 100
 
-	state.Remaining = sec
+	state.remaining = sec
 }
 
 // CueTimeElapsed gets the elapsed time on current Mitti cue
@@ -67,18 +103,18 @@ func (state *State) CueTimeElapsed(cueTimeElapsed string) {
 	sec += min * 60
 	cs += sec * 100
 
-	state.Updated = time.Now()
-	state.Elapsed = sec
-	debug.Printf("Mitti: elpased: %v\n", state.Elapsed)
+	state.updated = time.Now()
+	state.elapsed = sec
+	debug.Printf("Mitti: elpased: %v\n", state.elapsed)
 }
 
 // TogglePlay toggles the play/pause state
 func (state *State) TogglePlay(i int32) {
-	state.Updated = time.Now()
+	state.updated = time.Now()
 	if i == 0 {
-		state.Paused = true
+		state.paused = true
 	} else {
-		state.Paused = false
+		state.paused = false
 	}
 
 	debug.Printf("Mitti: togglePlay: %d", i)
@@ -86,11 +122,11 @@ func (state *State) TogglePlay(i int32) {
 
 // ToggleLoop toggles the loop state
 func (state *State) ToggleLoop(i int32) {
-	state.Updated = time.Now()
+	state.updated = time.Now()
 	if i == 0 {
-		state.Loop = false
+		state.loop = false
 	} else {
-		state.Loop = true
+		state.loop = true
 	}
 
 	debug.Printf("Mitti: toggleLoop: %d", i)
@@ -99,16 +135,17 @@ func (state *State) ToggleLoop(i int32) {
 // Copy creates a new copy of the Mitti state
 func (state *State) Copy() State {
 	s := State{
-		Remaining: state.Remaining,
-		Elapsed:   state.Elapsed,
-		Hours:     state.Hours,
-		Minutes:   state.Minutes,
-		Seconds:   state.Seconds,
-		Frames:    state.Frames,
-		Progress:  state.Progress,
-		Paused:    state.Paused,
-		Updated:   state.Updated,
-		Loop:      state.Loop,
+		remaining: state.remaining,
+		elapsed:   state.elapsed,
+		hours:     state.hours,
+		minutes:   state.minutes,
+		seconds:   state.seconds,
+		frames:    state.frames,
+		progress:  state.progress,
+		paused:    state.paused,
+		updated:   state.updated,
+		loop:      state.loop,
+		mediaName: state.mediaName,
 	}
 
 	return s
