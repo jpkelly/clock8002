@@ -3,9 +3,10 @@ package clock
 import (
 	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
 	// "gitlab.com/Depili/go-osc/osc"
+	"fmt"
 	"github.com/chabad360/go-osc/osc"
-
 	"image/color"
+	"strings"
 )
 
 var clockUnits = []struct {
@@ -349,6 +350,10 @@ func sourceStateMessageFromClock(s *Clock, uuid string) *SourceStateMessage {
 		Label:    s.Label,
 		Mode:     int32(s.Mode),
 	}
+	if strings.Count(state.Text, ":") < 2 {
+		state.Text = fmt.Sprintf("%02d:%02d:%02d", s.Hours, s.Minutes, s.Seconds)
+	}
+
 	return &state
 }
 
@@ -405,5 +410,10 @@ func timerStateMessageFromOutput(out *CounterOutput, uuid string) *TimerStateMes
 		Expired:  out.Expired,
 		Paused:   out.Paused,
 	}
+
+	if strings.Count(state.Text, ":") < 3 {
+		state.Text = fmt.Sprintf("%02d:%02d:%02d", out.Hours, out.Minutes, out.Seconds)
+	}
+
 	return &state
 }
