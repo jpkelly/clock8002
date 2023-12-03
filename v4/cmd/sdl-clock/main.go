@@ -532,7 +532,7 @@ func copyAndLoadConfig(path string) {
 	}
 
 	// Create a log file
-	f, err := os.OpenFile(filepath.Join(path, "clock.log"), os.O_RDWR|os.O_CREATE, 0666)
+	f, err := os.OpenFile(filepath.Join(path, "clock.log"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		log.Fatalf("error opening log file: %v", err)
 	}
