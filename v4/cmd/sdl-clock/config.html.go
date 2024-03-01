@@ -101,6 +101,12 @@ const configHTML = `
                 <p>The OSC command /clock/background/ can be used to select a numbered background image from this path.
                 Files should be named with the number (eg 1.png or 01.jpeg). Supported filetypes are BMP, PNG and JPEG.</p>
 
+                <p>Directories named timer<N> (eg. timer1/) will be searched for dynamic background images for running timers.
+                Image with a filename of 'default' will be used when the timer is running and files named with a number will be activated
+                once a countdown timer reaches that amount of seconds remaining (eg file 60.jpg will be shown when there is one minute left.).</p>
+
+                <p>Care should be taken with raspberry pi's, as they can't load a huge number of backgrounds (under 15 in total should be safe).</p>
+
                 {{color "BackgroundColor" "Background color, used if no background image is provided." .BackgroundColor}}
 
                 {{checkbox "AudioEnabled" "Enable audio cues for expiring countdown timers." .AudioEnabled}}

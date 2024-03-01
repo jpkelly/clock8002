@@ -229,6 +229,7 @@ func (engine *Engine) State() *State {
 				o := ctr.Output(t)
 				if o.Active {
 					c.SignalColor = o.SignalColor
+					c.ActiveTimer = ctr.number
 					out = o
 					break
 				}
@@ -397,6 +398,7 @@ func (engine *Engine) initCounters(options *EngineOptions) (err error) {
 			warningThreshold: time.Duration(options.SignalThresholdWarning) * time.Second,
 			endThreshold:     time.Duration(options.SignalThresholdEnd) * time.Second,
 			overtimeMode:     options.OvertimeCountMode,
+			number:           i,
 		}
 
 		engine.Counters[i].mediaColor, err = parseColor(options.TimerOptions[i].MediaColor)

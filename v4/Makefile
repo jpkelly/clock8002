@@ -74,6 +74,17 @@ windows: dep clock_port8080.ini ## Build the binary file
 	@cp clock_port8080.ini windows/clock.ini
 	@cp sdl-clock.exe windows/
 	@cp -r voices windows/
+	@mkdir windows/bg
+	@mkdir windows/bg/timer0
+	@mkdir windows/bg/timer1
+	@mkdir windows/bg/timer2
+	@mkdir windows/bg/timer3
+	@mkdir windows/bg/timer4
+	@mkdir windows/bg/timer5
+	@mkdir windows/bg/timer6
+	@mkdir windows/bg/timer7
+	@mkdir windows/bg/timer8
+	@mkdir windows/bg/timer9
 	@msi-packager windows/ clock-8001.msi -l -n clock-8001 -v $(WIN_VERSION) -a x86 -u 28bebbbc-0430-4ab0-a322-1660d5824663 -e "sdl-clock.exe" -m Depili -i cmd/sdl-clock/winres/icon.ico
 
 macos:

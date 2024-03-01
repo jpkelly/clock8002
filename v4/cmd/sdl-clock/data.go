@@ -113,6 +113,8 @@ type clockOptions struct {
 
 	CueFullScreen bool `long:"cue-fullscreen" description:"Show cue changes as full screen icons"`
 
+	DynamicBG bool `long:"dynamic-bg"`
+
 	gpioOptions
 
 	Raspberry bool   // Is the host a raspberry pi

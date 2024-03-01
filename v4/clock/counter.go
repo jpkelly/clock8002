@@ -43,6 +43,7 @@ type Counter struct {
 	overtimeMode     string
 	mediaColor       *color.RGBA
 	mediaBG          *color.RGBA
+	number           int
 }
 
 // CounterOutput the data structure returned by Counter.Output() and contains the static state of the counter at that time

@@ -318,6 +318,7 @@ type Clock struct {
 	BGColor     color.RGBA // Background color
 	HideHours   bool       // Should the hour field of the time be displayed for this clock.
 	HideSeconds bool       // Should seconds be shown for this clock
+	ActiveTimer int        // If a timer is active, give its number, -1 otherwise
 	SignalColor color.RGBA
 }
 

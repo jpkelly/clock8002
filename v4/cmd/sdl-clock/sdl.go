@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/veandco/go-sdl2/gfx"
-	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 	"image/color"
@@ -377,31 +376,6 @@ func drawBitmask(bitmask [][]bool, color sdl.Color, r int, c int) {
 			}
 		}
 	}
-}
-
-// loadBackground loads and processes the background image into sdl.Texture
-func loadBackground(file string) {
-	var err error
-	backgroundImage, err := img.Load(file)
-	if err == nil {
-		if backgroundTexture != nil {
-			backgroundTexture.Destroy()
-		}
-		// Create texture from surface
-		backgroundTexture, err = renderer.CreateTextureFromSurface(backgroundImage)
-		backgroundImage.Free()
-		check(err)
-
-		err = backgroundTexture.SetBlendMode(sdl.BLENDMODE_NONE)
-		check(err)
-		showBackground = true
-		return
-	}
-	backgroundImage.Free()
-	// Failed to load background image, continue without it
-	log.Printf("Error loading background image: %v %v\n", options.Background, err)
-	log.Printf("Disabling background image.")
-	showBackground = false
 }
 
 // clearCanvas fills the whole SDL window with black

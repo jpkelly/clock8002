@@ -82,6 +82,7 @@ func main() {
 	initColors()
 	initTextures()
 	initAudio()
+	initBackgrounds()
 
 	if options.textClock {
 		initTextClock()
@@ -225,6 +226,8 @@ func main() {
 				drawWhiteScreen()
 			} else {
 				checkBackgroundUpdate(state)
+				checkDynamicBG(state)
+
 				if options.textClock {
 					drawTextClock(state)
 				} else if options.Face == "288x144" {
@@ -322,29 +325,6 @@ func drawInfoScreen() {
 	renderer.SetRenderTarget(nil)
 	err := renderer.Copy(infoTexture, nil, &sdl.Rect{X: 0, Y: 0, H: texH, W: texW})
 	check(err)
-}
-
-func checkBackgroundUpdate(state *clock.State) {
-	// Check for background changes
-	if backgroundNumber != state.Background {
-		backgroundNumber = state.Background
-		p := make([]string, 3)
-		filemask := fmt.Sprintf("%d.*", state.Background)
-		path := options.BackgroundPath
-		p[0] = filepath.Join(path, filemask)
-		p[1] = filepath.Join(path, "0"+filemask)
-		p[2] = filepath.Join(path, "00"+filemask)
-		for _, pattern := range p {
-			files, _ := filepath.Glob(pattern)
-			if files != nil {
-				log.Printf("Loading background: %s", files[0])
-				loadBackground(files[0])
-				return
-			}
-		}
-		log.Printf("Couldn't find background for number: %d", backgroundNumber)
-		showBackground = false
-	}
 }
 
 // parseOptions parses the command line options and provided ini file
