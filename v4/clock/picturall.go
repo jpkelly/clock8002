@@ -33,7 +33,7 @@ type picturallState struct {
 func (engine *Engine) initPicturall(options *EngineOptions) {
 	var err error
 
-	engine.picturall = make([]*picturallState, numCounters)
+	engine.picturall = make([]*picturallState, NumCounters)
 
 	if options.PicturallDebug {
 		picturall.DumpTraffic = true

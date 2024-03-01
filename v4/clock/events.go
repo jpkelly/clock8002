@@ -31,7 +31,7 @@ func (engine *Engine) listen() {
 	engine.mittiTimer = timer.NewTimer(updateTimeout)
 	engine.milluminTimer = timer.NewTimer(updateTimeout)
 	engine.flashTimer = timer.NewTimer(flashDuration)
-	engine.mediaTimeouts = make([]*time.Time, numCounters)
+	engine.mediaTimeouts = make([]*time.Time, NumCounters)
 
 	engine.cueTimer = timer.NewTimer(engine.cueDuration)
 	engine.cueTimer.Stop()
@@ -386,8 +386,8 @@ func (engine *Engine) sendCue(cs *cueState) {
 
 // StartCounter starts a counter
 func (engine *Engine) StartCounter(counter int, countdown bool, timer time.Duration) {
-	if counter < 0 || counter >= numCounters {
-		log.Printf("engine.StartCounter: illegal counter number %d (have %d counters)\n", counter, numCounters)
+	if counter < 0 || counter >= NumCounters {
+		log.Printf("engine.StartCounter: illegal counter number %d (have %d counters)\n", counter, NumCounters)
 	}
 
 	engine.Counters[counter].Start(countdown, timer)
@@ -396,8 +396,8 @@ func (engine *Engine) StartCounter(counter int, countdown bool, timer time.Durat
 
 // ModifyCounter adds or removes time from a counter
 func (engine *Engine) ModifyCounter(counter int, delta time.Duration) {
-	if counter < 0 || counter >= numCounters {
-		log.Printf("engine.StartCounter: illegal counter number %d (have %d counters)\n", counter, numCounters)
+	if counter < 0 || counter >= NumCounters {
+		log.Printf("engine.StartCounter: illegal counter number %d (have %d counters)\n", counter, NumCounters)
 	}
 
 	engine.Counters[counter].Modify(delta)
@@ -405,8 +405,8 @@ func (engine *Engine) ModifyCounter(counter int, delta time.Duration) {
 
 // StopCounter stops a given counter
 func (engine *Engine) StopCounter(counter int) {
-	if counter < 0 || counter >= numCounters {
-		log.Printf("engine.StartCounter: illegal counter number %d (have %d counters)\n", counter, numCounters)
+	if counter < 0 || counter >= NumCounters {
+		log.Printf("engine.StartCounter: illegal counter number %d (have %d counters)\n", counter, NumCounters)
 	}
 
 	engine.Counters[counter].Stop()
@@ -417,24 +417,24 @@ func (engine *Engine) StopCounter(counter int) {
 
 // PauseCounter pauses a given counter
 func (engine *Engine) PauseCounter(counter int) {
-	if counter < 0 || counter >= numCounters {
-		log.Printf("engine.StartCounter: illegal counter number %d (have %d counters)\n", counter, numCounters)
+	if counter < 0 || counter >= NumCounters {
+		log.Printf("engine.StartCounter: illegal counter number %d (have %d counters)\n", counter, NumCounters)
 	}
 	engine.Counters[counter].Pause()
 }
 
 // ResumeCounter resumes a paused counter
 func (engine *Engine) ResumeCounter(counter int) {
-	if counter < 0 || counter >= numCounters {
-		log.Printf("engine.StartCounter: illegal counter number %d (have %d counters)\n", counter, numCounters)
+	if counter < 0 || counter >= NumCounters {
+		log.Printf("engine.StartCounter: illegal counter number %d (have %d counters)\n", counter, NumCounters)
 	}
 	engine.Counters[counter].Resume()
 }
 
 // TargetCounter sets the target time and date for a counter
 func (engine *Engine) TargetCounter(counter int, target string, countdown bool) {
-	if counter < 0 || counter >= numCounters {
-		log.Printf("engine.TargetCounter: illegal counter number %d (have %d counters)\n", counter, numCounters)
+	if counter < 0 || counter >= NumCounters {
+		log.Printf("engine.TargetCounter: illegal counter number %d (have %d counters)\n", counter, NumCounters)
 	}
 
 	match, err := regexp.MatchString("^([0-1]?[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$", target)

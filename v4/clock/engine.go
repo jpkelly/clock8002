@@ -387,8 +387,8 @@ func (engine *Engine) initCounters(options *EngineOptions) (err error) {
 		options.TimerOptions[9] = options.Timer9
 	}
 
-	engine.Counters = make([]*Counter, numCounters)
-	for i := 0; i < numCounters; i++ {
+	engine.Counters = make([]*Counter, NumCounters)
+	for i := 0; i < NumCounters; i++ {
 		engine.Counters[i] = &Counter{
 			active:           false,
 			state:            &counterState{},

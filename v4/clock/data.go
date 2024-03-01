@@ -217,8 +217,8 @@ const (
 
 // Misc constants
 const (
-	numCounters      = 10 // Number of distinct counters to initialize
-	numSources       = 4
+	NumCounters      = 10 // Number of distinct counters to initialize
+	NumSources       = 4
 	PrimaryCounter   = 0 // Main counter that replaces the ToD display on the round clock when active
 	SecondaryCounter = 1 // Secondary counter that is displayed in the tally message space on the round clock
 )

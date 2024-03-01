@@ -25,7 +25,7 @@ type vmixState struct {
 }
 
 func (engine *Engine) initVmix(options *EngineOptions) {
-	engine.vmix = make([]*vmixState, numCounters)
+	engine.vmix = make([]*vmixState, NumCounters)
 
 	for i, o := range options.TimerOptions {
 		if !o.VmixEnabled {
