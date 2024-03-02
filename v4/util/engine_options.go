@@ -238,8 +238,27 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 		o := clock.TimerOptions{}
 		base := fmt.Sprintf("timer%d-", i)
 		errorName := fmt.Sprintf("Timer %d ", i)
+
+		o.Mute = r.FormValue(base+"mute") != ""
+
 		o.ListenPort, err = strconv.Atoi(r.FormValue(base + "port"))
 		errors += ValidateNumber(err, errorName+"Mitti & millumin port")
+
+		o.EndAction = r.FormValue(base + "end-action")
+
+		o.RestartTarget, err = strconv.Atoi(r.FormValue(base + "restart-target"))
+		errors += ValidateNumber(err, errorName+"Restart target timer")
+		errors += ValidateTimer(o.RestartTarget, errorName+"restart target timer")
+
+		o.OSC.IP = r.FormValue(base + "osc-ip")
+		o.OSC.Port = r.FormValue(base + "osc-port")
+		o.OSC.Command = r.FormValue(base + "osc-command")
+		o.OSC.Params = r.FormValue(base + "osc-params")
+
+		o.Duration, err = strconv.Atoi(r.FormValue(base + "duration"))
+		errors += ValidateNumber(err, errorName+"duration")
+
+		o.Countup = r.FormValue(base+"countup") != ""
 
 		o.MittiBroadcast = r.FormValue(base+"mitti-broadcast") != ""
 		o.MilluminBroadcast = r.FormValue(base+"millumin-broadcast") != ""

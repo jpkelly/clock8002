@@ -107,6 +107,8 @@ const configHTML = `
 
                 <p>Care should be taken with raspberry pi's, as they can't load a huge number of backgrounds (under 15 in total should be safe).</p>
 
+                {{checkbox "DynamicBG" "Enable dynamic backgrounds based on first displayed timer" .DynamicBG}}
+
                 {{color "BackgroundColor" "Background color, used if no background image is provided." .BackgroundColor}}
 
                 {{checkbox "AudioEnabled" "Enable audio cues for expiring countdown timers." .AudioEnabled}}
@@ -198,6 +200,38 @@ const configHTML = `
                       <div class="tab-content">
                         <fieldset>
                           <legend>Timer {{$i}}</legend>
+                          <h3>Sound</h3>
+
+                          {{checkbox (printf "timer%d-mute" $i) "Mute sound cues for this timer" $timer.Mute}}
+
+                          <h3>End Actions</h3>
+
+                          <label for="{{printf "timer%d-end-action" $i}}">
+                            <span>Action to take at the end of a countdown</span>
+                            <select name="{{printf "timer%d-end-action" $i}}" id="{{printf "timer%d-end-action" $i}}">
+                              <option value="none" {{if eq $timer.EndAction "none"}} selected {{end}}>None</option>
+                              <option value="restart" {{if eq $timer.EndAction "restart"}} selected {{end}}>Restart selected timer</option>
+                              <option value="osc" {{if eq $timer.EndAction "osc"}} selected {{end}}>Send OSC message</option>
+                            </select>
+                          </label>
+
+                          {{counter (printf "timer%d-restart-target" $i) "Timer number to restart" $timer.RestartTarget}}
+                          {{text (printf "timer%d-osc-ip" $i) "OSC message target IP" $timer.OSC.IP}}
+                          {{text (printf "timer%d-osc-port" $i) "OSC message target port" $timer.OSC.Port}}
+                          {{text (printf "timer%d-osc-command" $i) "OSC command to send" $timer.OSC.Command}}
+                          {{text (printf "timer%d-osc-params" $i) "OSC message parameters" $timer.OSC.Params}}
+
+                          <p>The message parameters can be given as: i 123 for integer, f 1.23 for float, d 1.23 for double
+                          s "test string" for a string, b true or b false for boolean values. For example "i 255 i 255 i 255 s Message"
+                          would set parameters to three integers and a string.</p>
+
+                          <h3>Defaults for timer restarts</h3>
+
+                          <p>The defaults will get updated each time a countdown / countup is started or modified.</p>
+
+                          {{number (printf "timer%d-duration" $i) "Default timer duration" $timer.Duration }}
+                          {{checkbox (printf "timer%d-countup" $i) "Default to countup timer" $timer.Countup }}
+
                           <h3>Millumin & Mitti</h3>
 
                           {{number (printf "timer%d-port" $i) "Millumin and Mitti OSC port, 0 disables" $timer.ListenPort}}

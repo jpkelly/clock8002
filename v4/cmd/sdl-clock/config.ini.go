@@ -36,6 +36,9 @@ BackgroundPath={{.BackgroundPath}}
 # Background color, used if no image is provided
 BackgroundColor={{.BackgroundColor}}
 
+# Dynamic backgrounds per active timers
+DynamicBG={{.DynamicBG}}
+
 # Truetype fonts for the text clock face
 
 # Font for numbers
@@ -144,6 +147,25 @@ source4.overtime-color={{.EngineOptions.Source4.OvertimeColor}}
 # Timer Options
 {{range $i, $timer := .EngineOptions.TimerOptions}}
 # Timer {{$i}}
+
+# Mute audio cues for this timer
+timer{{$i}}.mute={{$timer.Mute}}
+
+# End action
+timer{{$i}}.end-action={{$timer.EndAction}}
+
+# End timer restart target timer number
+timer{{$i}}.restart-target={{$timer.RestartTarget}}
+
+# OSC message to send
+timer{{$i}}.osc-ip={{$timer.OSC.IP}}
+timer{{$i}}.osc-port={{$timer.OSC.Port}}
+timer{{$i}}.osc-command={{$timer.OSC.Command}}
+timer{{$i}}.osc-params={{$timer.OSC.Params}}
+
+# Defaults for restarts, will be overriden by last started timer
+timer{{$i}}.duration={{$timer.Duration}}
+timer{{$i}}.countup={{$timer.Countup}}
 
 # Mitti and Millumin OSC port
 timer{{$i}}.port={{$timer.ListenPort}}
