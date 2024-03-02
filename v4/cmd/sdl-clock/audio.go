@@ -112,7 +112,7 @@ func checkVoice(s *clock.State, i int) {
 		if clk.Expired && secs != 0 {
 			return
 		}
-		if lastVoice[i] > secs {
+		if lastVoice[i] > secs || lastVoice[i] < secs {
 			// Seconds has been lowered
 			if chunk, ok := clips[secs]; ok {
 				chunk.Play(-1, 0)
