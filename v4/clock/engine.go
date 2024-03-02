@@ -231,6 +231,7 @@ func (engine *Engine) State() *State {
 					c.SignalColor = o.SignalColor
 					c.ActiveTimer = ctr.number
 					out = o
+					c.Mute = ctr.mute
 					break
 				}
 			}
@@ -399,6 +400,7 @@ func (engine *Engine) initCounters(options *EngineOptions) (err error) {
 			endThreshold:     time.Duration(options.SignalThresholdEnd) * time.Second,
 			overtimeMode:     options.OvertimeCountMode,
 			number:           i,
+			mute:             options.TimerOptions[i].Mute,
 		}
 
 		engine.Counters[i].mediaColor, err = parseColor(options.TimerOptions[i].MediaColor)

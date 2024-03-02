@@ -97,6 +97,8 @@ type TimerOptions struct {
 	PicturallStreams      bool   `long:"picturall-streams" description:"Show streaming content"`
 
 	DisguiseTimerOptions
+
+	Mute bool `long:"mute" description:"Ignore this timer for audio cues"`
 }
 
 // EngineOptions contains all common options for clock.Engines
@@ -320,6 +322,7 @@ type Clock struct {
 	HideSeconds bool       // Should seconds be shown for this clock
 	ActiveTimer int        // If a timer is active, give its number, -1 otherwise
 	SignalColor color.RGBA
+	Mute        bool
 }
 
 // State is a snapshot of the clock representation on the time State() was called

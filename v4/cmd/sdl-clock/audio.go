@@ -88,6 +88,9 @@ func checkBeep(s *clock.State, i int) {
 		return
 	}
 	clk := s.Clocks[i]
+	if clk.Mute {
+		return
+	}
 	if clk.Mode == clock.Countdown {
 		if clk.Hours == 0 && clk.Minutes == 0 {
 			if clk.Seconds <= 5 && lastBeep[i] > clk.Seconds {
@@ -107,6 +110,9 @@ func checkVoice(s *clock.State, i int) {
 		return
 	}
 	clk := s.Clocks[i]
+	if clk.Mute {
+		return
+	}
 	if clk.Mode == clock.Countdown || clk.Mode == clock.Media {
 		secs := (clk.Hours * 3600) + (clk.Minutes * 60) + clk.Seconds
 		if clk.Expired && secs != 0 {

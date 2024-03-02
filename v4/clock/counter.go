@@ -44,6 +44,7 @@ type Counter struct {
 	mediaColor       *color.RGBA
 	mediaBG          *color.RGBA
 	number           int
+	mute             bool
 }
 
 // CounterOutput the data structure returned by Counter.Output() and contains the static state of the counter at that time
