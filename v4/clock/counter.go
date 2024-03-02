@@ -44,7 +44,24 @@ type Counter struct {
 	mediaColor       *color.RGBA
 	mediaBG          *color.RGBA
 	number           int
+	previous         *counterSetting
+	endAction        *counterAction
 	mute             bool
+}
+
+type counterSetting struct {
+	countdown bool
+	duration  time.Duration
+}
+
+type counterAction struct {
+	action  string
+	counter int
+	done    bool
+	ip      string
+	port    string
+	command string
+	params  string
 }
 
 // CounterOutput the data structure returned by Counter.Output() and contains the static state of the counter at that time
@@ -543,6 +560,11 @@ func secsToCompact(rawSecs int64) string {
 	return "+++"
 }
 
+// Restart starts the counter with the previous duration and type
+func (counter *Counter) Restart() {
+	counter.Start(counter.previous.countdown, counter.previous.duration)
+}
+
 // Start begins counting time up or down
 func (counter *Counter) Start(countdown bool, timer time.Duration) {
 	s := counterState{
@@ -552,7 +574,15 @@ func (counter *Counter) Start(countdown bool, timer time.Duration) {
 	}
 	counter.state = &s
 
+	p := counterSetting{
+		countdown: countdown,
+		duration:  timer,
+	}
+	counter.previous = &p
+
 	counter.countdown = countdown
+
+	counter.endAction.done = false
 
 	t := time.Now()
 
@@ -651,6 +681,9 @@ func (counter *Counter) Modify(delta time.Duration) {
 	if !counter.active {
 		return
 	}
+
+	counter.previous.duration += delta
+
 	if !counter.countdown {
 		// Invert delta if counting up
 		delta = -delta

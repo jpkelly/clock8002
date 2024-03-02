@@ -98,7 +98,22 @@ type TimerOptions struct {
 
 	DisguiseTimerOptions
 
+	EndAction     string `long:"end-action" description:"Action to take at the end of the countdown" choice:"none" choice:"restart" choice:"osc" default:"none"`
+	RestartTarget int    `long:"restart-target" description:"Timer target for the end action"`
+	OSC           OSCOptions
+
+	Duration int  `long:"duration" description:"Default duration, in seconds" default:"600"`
+	Countup  bool `long:"countup" description:"Default to countup instead of countdown"`
+
 	Mute bool `long:"mute" description:"Ignore this timer for audio cues"`
+}
+
+// OSCOptions contains the options for a osc message target
+type OSCOptions struct {
+	IP      string `long:"osc-ip" description:"IP address to send a OSC message to"`
+	Port    string `long:"osc-port" description:"Port for the OSC message"`
+	Command string `long:"osc-command" description:"OSC command to send"`
+	Params  string `long:"osc-params" description:"Parameter list, i for integer, b for bool, s for string, f for float (eg. s test i 123 f 1.23 b true)"`
 }
 
 // EngineOptions contains all common options for clock.Engines

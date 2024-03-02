@@ -10,6 +10,7 @@ import (
 	"gitlab.com/clock-8001/clock-8001/v4/udptime"
 	"image/color"
 	"log"
+	"net"
 	"regexp"
 	db "runtime/debug"
 	"strconv"
@@ -197,6 +198,63 @@ func (engine *Engine) sendUDPTimers() {
 	}
 }
 
+// Check and execute the timer end actions
+func (engine *Engine) timerActions(t time.Time) {
+	for _, ctr := range engine.Counters {
+		o := ctr.Output(t.Add(-time.Second))
+		if o.Active && o.Countdown && o.Expired && !ctr.endAction.done {
+			ctr.endAction.done = true
+			switch ctr.endAction.action {
+			case "none":
+				continue
+			case "restart":
+				ctr.Stop()
+				engine.Counters[ctr.endAction.counter].Restart()
+			case "osc":
+				go sendOSC(ctr)
+			}
+		}
+	}
+}
+
+func sendOSC(ctr *Counter) {
+	ip := ctr.endAction.ip
+	port := ctr.endAction.port
+	command := ctr.endAction.command
+	params := ctr.endAction.params
+
+	if len(ip) == 0 || len(port) == 0 || len(command) == 0 {
+		log.Printf("Timer %d end action: ignoring OSC due to missing configuration.", ctr.number)
+		return
+	}
+
+	msg := osc.NewMessage(command)
+	err := oscutil.ParseParams(msg, params)
+	if err != nil {
+		log.Printf("Timer %d end action: Failed to parse OSC params: %v", ctr.number, err)
+		return
+	}
+
+	addr := fmt.Sprintf("%s:%s", ip, port)
+	udpAddr, err := net.ResolveUDPAddr("udp", addr)
+	if err != nil {
+		log.Printf("Timer %d end action: Failed to resolve %s: %v", ctr.number, addr, err)
+		return
+	}
+	conn, err := net.DialUDP("udp", nil, udpAddr)
+	if err != nil {
+		log.Printf("Timer %d end action: Failed to open %s: %v", ctr.number, addr, err)
+		return
+	}
+	b, err := msg.MarshalBinary()
+	if err != nil {
+		log.Printf("Timer %d end action: Failed to marshal: %v", ctr.number, err)
+		return
+	}
+	conn.Write(b)
+	conn.Close()
+}
+
 func (engine *Engine) flash(t time.Time) bool {
 	return t.Nanosecond() < engine.flashPeriod*1000000
 }
@@ -205,6 +263,8 @@ func (engine *Engine) flash(t time.Time) bool {
 func (engine *Engine) State() *State {
 	t := time.Now()
 	var clocks []*Clock
+
+	engine.timerActions(t)
 
 	for _, s := range engine.sources {
 		var out *CounterOutput
@@ -401,6 +461,20 @@ func (engine *Engine) initCounters(options *EngineOptions) (err error) {
 			overtimeMode:     options.OvertimeCountMode,
 			number:           i,
 			mute:             options.TimerOptions[i].Mute,
+		}
+
+		engine.Counters[i].previous = &counterSetting{
+			countdown: !options.TimerOptions[i].Countup,
+			duration:  time.Duration(options.TimerOptions[i].Duration) * time.Second,
+		}
+
+		engine.Counters[i].endAction = &counterAction{
+			action:  options.TimerOptions[i].EndAction,
+			counter: options.TimerOptions[i].RestartTarget,
+			ip:      options.TimerOptions[i].OSC.IP,
+			port:    options.TimerOptions[i].OSC.Port,
+			command: options.TimerOptions[i].OSC.Command,
+			params:  options.TimerOptions[i].OSC.Params,
 		}
 
 		engine.Counters[i].mediaColor, err = parseColor(options.TimerOptions[i].MediaColor)

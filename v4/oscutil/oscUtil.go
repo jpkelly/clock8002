@@ -4,12 +4,19 @@ import (
 	"fmt"
 	"gitlab.com/clock-8001/clock-8001/v4/debug"
 	// "gitlab.com/Depili/go-osc/osc"
+	"errors"
 	"github.com/chabad360/go-osc/osc"
 	"net"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
+)
+
+const (
+	// ParamRE is a regexp for validating ParseParams arguments
+	ParamRE = `^(?: ?i \d+| ?[fd] \d+(?:.\d+)?| ?s (?:\".*?\"|\S+)| ?b (?:true|false))+ *$`
 )
 
 // RegexpDispatcher is a dispatcher for OSC packets. It handles the dispatching of
@@ -88,6 +95,77 @@ func (s *RegexpDispatcher) Dispatch(packet osc.Packet, a net.Addr) {
 			}
 		}()
 	}
+}
+
+// ParseParams parses a string for OSC message arguments
+func ParseParams(msg *osc.Message, params string) error {
+	re := regexp.MustCompile(ParamRE)
+
+	if !re.MatchString(params) {
+		return errors.New("Invalid parameter format")
+	}
+
+	state := "seek"
+	buffer := ""
+	quote := false
+
+	params += " "
+
+	for _, c := range params {
+		if len(buffer) == 0 && c == ' ' {
+			continue
+		}
+		switch state {
+		case "seek":
+			switch c {
+			case 'i':
+				state = "int"
+			case 'f':
+				state = "float"
+			case 'd':
+				state = "double"
+			case 's':
+				state = "string"
+			case 'b':
+				state = "bool"
+			}
+			buffer = ""
+			continue
+		case "int":
+			if c == ' ' {
+				val, _ := strconv.Atoi(buffer)
+				msg.Append(int32(val))
+				state = "seek"
+			}
+		case "float", "double":
+			if c == ' ' {
+				val, _ := strconv.ParseFloat(buffer, 64)
+				if state == "float" {
+					msg.Append(float32(val))
+				} else {
+					msg.Append(float64(val))
+				}
+				state = "seek"
+			}
+		case "string":
+			if !quote && c == ' ' {
+				msg.Append(buffer)
+				state = "seek"
+			} else if c == '"' {
+				if len(buffer) == 0 || buffer[len(buffer)-1:] != "\\" {
+					quote = !quote
+					continue
+				}
+			}
+		case "bool":
+			if c == ' ' {
+				msg.Append(strings.ToLower(buffer) == "true")
+				state = "seek"
+			}
+		}
+		buffer += string(c)
+	}
+	return nil
 }
 
 // UnmarshalArgument tries to parse a given value from the osc message arguments at given index
