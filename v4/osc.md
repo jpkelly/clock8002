@@ -69,6 +69,10 @@ Parameters:
 
 Pauses the given timer.
 
+## `/clock/timer/*/restart`
+
+Restarts the timer with the last used duration and count type. The initial defaults can be set in the configuration.
+
 ### `/clock/timer/*/resume`
 
 Resumes a paused timer.

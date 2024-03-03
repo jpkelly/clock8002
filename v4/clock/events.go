@@ -123,6 +123,8 @@ func (engine *Engine) handleOSC(message *Message) {
 	case "timerResetMedia":
 		engine.Counters[message.Counter].ResetMedia()
 		engine.mediaTimeouts[message.Counter] = nil
+	case "timerRestart":
+		engine.Counters[message.Counter].Restart()
 	case "display":
 		msg := message.DisplayMessage
 		log.Printf("Setting tally message to: %s", msg.Text)
