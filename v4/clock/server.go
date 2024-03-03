@@ -205,6 +205,11 @@ func (server *Server) sendTimerCommand(cmd string, msg *osc.Message) {
 	if matches := server.timerRegexp.FindStringSubmatch(msg.Address); len(matches) == 2 {
 		counter, _ := strconv.Atoi(matches[1])
 
+		if counter < 0 && counter > NumCounters {
+			log.Printf("sendTimerCommand: Invalid counter: %d", counter)
+			return
+		}
+
 		msg := Message{
 			Type:    cmd,
 			Counter: counter,
@@ -220,6 +225,12 @@ func (server *Server) sendTimerCommand(cmd string, msg *osc.Message) {
 func (server *Server) sendTimerMessage(cmd string, countdown bool, msg *osc.Message) {
 	if matches := server.timerRegexp.FindStringSubmatch(msg.Address); len(matches) == 2 {
 		counter, _ := strconv.Atoi(matches[1])
+
+		if counter < 0 && counter > NumCounters {
+			log.Printf("sendTimerCommand: Invalid counter: %d", counter)
+			return
+		}
+
 		var message CountdownMessage
 
 		if err := message.UnmarshalOSC(msg); err != nil {
