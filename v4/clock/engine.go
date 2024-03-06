@@ -204,13 +204,12 @@ func (engine *Engine) timerActions(t time.Time) {
 		o := ctr.Output(t.Add(-time.Second))
 		if o.Active && o.Countdown && o.Expired && !ctr.endAction.done {
 			ctr.endAction.done = true
-			switch ctr.endAction.action {
-			case "none":
-				continue
-			case "restart":
+			if ctr.endAction.restart {
 				ctr.Stop()
 				engine.Counters[ctr.endAction.counter].Restart()
-			case "osc":
+			}
+
+			if ctr.endAction.sendOSC {
 				go sendOSC(ctr)
 			}
 		}
@@ -469,7 +468,8 @@ func (engine *Engine) initCounters(options *EngineOptions) (err error) {
 		}
 
 		engine.Counters[i].endAction = &counterAction{
-			action:  options.TimerOptions[i].EndAction,
+			restart: options.TimerOptions[i].EndRestart,
+			sendOSC: options.TimerOptions[i].EndOSC,
 			counter: options.TimerOptions[i].RestartTarget,
 			ip:      options.TimerOptions[i].OSC.IP,
 			port:    options.TimerOptions[i].OSC.Port,

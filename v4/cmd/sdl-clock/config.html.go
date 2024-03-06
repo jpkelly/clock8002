@@ -206,14 +206,8 @@ const configHTML = `
 
                           <h3>End Actions</h3>
 
-                          <label for="{{printf "timer%d-end-action" $i}}">
-                            <span>Action to take at the end of a countdown</span>
-                            <select name="{{printf "timer%d-end-action" $i}}" id="{{printf "timer%d-end-action" $i}}">
-                              <option value="none" {{if eq $timer.EndAction "none"}} selected {{end}}>None</option>
-                              <option value="restart" {{if eq $timer.EndAction "restart"}} selected {{end}}>Restart selected timer</option>
-                              <option value="osc" {{if eq $timer.EndAction "osc"}} selected {{end}}>Send OSC message</option>
-                            </select>
-                          </label>
+                          {{checkbox (printf "timer%d-end-restart" $i) "Restart a timer when this timer reaches the end of its countdown." $timer.EndRestart}}
+                          {{checkbox (printf "timer%d-end-osc" $i) "Send a OSC message when this timer reaches the end of its countdown." $timer.EndOSC}}
 
                           {{counter (printf "timer%d-restart-target" $i) "Timer number to restart" $timer.RestartTarget}}
                           {{text (printf "timer%d-osc-ip" $i) "OSC message target IP" $timer.OSC.IP}}

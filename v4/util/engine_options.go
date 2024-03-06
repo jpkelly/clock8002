@@ -244,7 +244,8 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 		o.ListenPort, err = strconv.Atoi(r.FormValue(base + "port"))
 		errors += ValidateNumber(err, errorName+"Mitti & millumin port")
 
-		o.EndAction = r.FormValue(base + "end-action")
+		o.EndRestart = r.FormValue(base+"end-restart") != ""
+		o.EndOSC = r.FormValue(base+"end-osc") != ""
 
 		o.RestartTarget, err = strconv.Atoi(r.FormValue(base + "restart-target"))
 		errors += ValidateNumber(err, errorName+"Restart target timer")

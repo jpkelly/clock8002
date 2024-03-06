@@ -98,8 +98,9 @@ type TimerOptions struct {
 
 	DisguiseTimerOptions
 
-	EndAction     string `long:"end-action" description:"Action to take at the end of the countdown" choice:"none" choice:"restart" choice:"osc" default:"none"`
-	RestartTarget int    `long:"restart-target" description:"Timer target for the end action"`
+	EndRestart    bool `long:"end-restart" description:"Restart the timer specified by restart-target when this countdown reaches its end"`
+	EndOSC        bool `long:"end-osc" description:"Send a OSC message when this countdown reaches its end"`
+	RestartTarget int  `long:"restart-target" description:"Timer target for the end action"`
 	OSC           OSCOptions
 
 	Duration int  `long:"duration" description:"Default duration, in seconds" default:"600"`

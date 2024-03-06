@@ -55,7 +55,8 @@ type counterSetting struct {
 }
 
 type counterAction struct {
-	action  string
+	restart bool
+	sendOSC bool
 	counter int
 	done    bool
 	ip      string

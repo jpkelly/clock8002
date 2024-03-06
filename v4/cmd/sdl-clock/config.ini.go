@@ -151,8 +151,9 @@ source4.overtime-color={{.EngineOptions.Source4.OvertimeColor}}
 # Mute audio cues for this timer
 timer{{$i}}.mute={{$timer.Mute}}
 
-# End action
-timer{{$i}}.end-action={{$timer.EndAction}}
+# End actions
+timer{{$i}}.end-restart={{$timer.EndRestart}}
+timer{{$i}}.end-osc={{$timer.EndOSC}}
 
 # End timer restart target timer number
 timer{{$i}}.restart-target={{$timer.RestartTarget}}
