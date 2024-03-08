@@ -193,7 +193,7 @@ deploy_release:
         - sshpass -e scp -o stricthostkeychecking=no sdl-clock clock8001@kissa.depili.fi:/var/www/html/clock-8001/releases/sdl-clock-$CI_COMMIT_TAG
         - sshpass -e scp -o stricthostkeychecking=no clock-8001.msi clock8001@kissa.depili.fi:/var/www/html/clock-8001/releases/clock-8001-$CI_COMMIT_TAG.msi
         - sshpass -e scp -o stricthostkeychecking=no clock-8001_*.deb clock8001@kissa.depili.fi:/var/www/html/clock-8001/releases/
-        - curl -X POST -F token=$BR_TOKEN -F "ref=master" -F "variables[CLOCK_TAG]=$CI_COMMIT_TAG" https://gitlab.com/api/v4/projects/10763408/trigger/pipeline
+        - curl -X POST -F token=$GENIMAGE_TOKEN -F "ref=master" -F "variables[CLOCK_TAG]=$CI_COMMIT_TAG" https://gitlab.com/api/v4/projects/55687218/trigger/pipeline
     artifacts:
       paths:
         - v4/sdl-clock
