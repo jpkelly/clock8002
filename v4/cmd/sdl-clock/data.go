@@ -129,6 +129,7 @@ type clockOptions struct {
 	vertical   bool
 	Errors     htmlTemplate.HTML // For passing errors to the html template
 	Fonts      []string          // For passing list of font files to html template
+	Serials    []string
 	Timezones  []string
 }
 

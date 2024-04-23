@@ -437,6 +437,18 @@ const configHTML = `
                   </select>
                 </label>
 
+
+                {{ if .Serials }}
+                  <p>Detected serial devices:
+                    <ul>
+                      {{ range $serial := .Serials }}
+                        <li>{{$serial}}</li>
+                      {{ end }}
+                    </ul>
+                  </p>
+                {{ end }}
+
+
                 {{text "limitimer-serial" "Serial device for limitimer communication." .EngineOptions.LimitimerSerial}}
 
                 <p>RS-485 reception and OSC broadcast controls for individual limitimer source programs:</p>
@@ -479,6 +491,17 @@ const configHTML = `
                 <p>See the documentation in perfectcue.md for required hardware.</p>
 
                 {{checkbox "cue-enabled" "Enable Perfect Cue integration" .EngineOptions.CueEnabled}}
+
+                {{ if .Serials }}
+                  <p>Detected serial devices:
+                    <ul>
+                      {{ range $serial := .Serials }}
+                        <li>{{$serial}}</li>
+                      {{ end }}
+                    </ul>
+                  </p>
+                {{ end }}
+
                 {{text "cue-serial" "Serial port for communication with the Perfect Cue" .EngineOptions.CueSerial}}
                 {{number "cue-duration" "Time to show the cue marks on screen, in seconds" .EngineOptions.CueDuration}}
                 {{checkbox "cue-fullscreen" "Show the cue information as full screen icons" .CueFullScreen}}

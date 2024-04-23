@@ -112,6 +112,21 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Error walking fontpath: %v", err)
 	}
 
+	if runtime.GOOS == "linux" {
+		options.Serials = make([]string, 0, 20)
+		err = filepath.Walk("/dev/", func(path string, info os.FileInfo, err error) error {
+			if matched, err := filepath.Match("tty[AU]*", filepath.Base(path)); err != nil {
+				return err
+			} else if matched {
+				options.Serials = append(options.Serials, path)
+			}
+			return nil
+		})
+		if err != nil {
+			log.Fatalf("Error walking fontpath: %v", err)
+		}
+	}
+
 	options.Timezones = tzList
 
 	log.Printf("fonts: %v", options.Fonts)
