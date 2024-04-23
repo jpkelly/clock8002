@@ -1,3 +1,22 @@
+## Version 4.20.0
+* Features:
+  * Add support for FTDI chipset based USB serial adapters to the raspberry pi image
+    * This allows using RS485 USB adapters to connect to both limitimer and perfect cue simultaneusly. The adapters will be found as '/dev/ttyUSB0' for the first and then '/dev/ttyUSB1' etc for others.
+
+## Version 4.19.2
+* Features:
+  * Sound cues can be muted per timer
+  * Countdown timers can now trigger actions when they end
+    * Restart a given timer, can be used to chain timers
+    * Send a OSC message
+  * Timers now remmeber their last used duration for restarting
+  * Backgrounds can be now dynamically changed per the first running timer
+    * Each timer can have a default background and timed backgrounds, like the voice files
+* Bugfixes:
+  * Raspberry pi images: Firmware update in 4.19.0 caused problems with serial communications
+    like with limitimer due to renamed device tree overlay.
+    * This has been fixed by completely overhauling the image creation.
+
 ## Version 4.19.1
 * Bugfixes:
   * Clock bridging was using wrong encoding for the /clock/media OSC message, this caused
