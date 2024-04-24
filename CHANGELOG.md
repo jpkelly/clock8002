@@ -1,3 +1,6 @@
+## Version 4.21.1
+* Add a list of detected serial devices into the configuration web interface
+
 ## Version 4.20.0
 * Features:
   * Add support for FTDI chipset based USB serial adapters to the raspberry pi image
