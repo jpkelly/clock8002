@@ -201,6 +201,7 @@ func (s *state) relay() {
 	for {
 		select {
 		case <-s.ctx.Done():
+			log.Printf("hperdeck relay: context lost, closing")
 			return
 		default:
 		}
@@ -222,6 +223,7 @@ func (s *state) handleConn(conn net.Conn, tx chan string) {
 		for m := range tx {
 			_, err := conn.Write([]byte(m))
 			if err != nil {
+				log.Printf("hyperdeck handleConn() child closing on socket error")
 				return
 			}
 		}
