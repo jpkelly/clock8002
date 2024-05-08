@@ -60,11 +60,15 @@ func (engine *Engine) hyperdeckListen() {
 		addr := engine.hyperdeck.ip + ":9993"
 		c, err := hyperdeck.Listen(engine.ctx, addr, engine.hyperdeck.relay)
 		if err != nil {
-			log.Printf("Hyperdeck listen error: %v", err)
+			log.Printf("Hyperdeck: listen error: %v", err)
+			log.Printf("Hyperdeck: retrying...")
+			time.Sleep(10 * time.Second)
 			continue
 		}
 
-		for {
+		retry := false
+
+		for !retry {
 			select {
 			case <-engine.ctx.Done():
 				log.Printf("Hyperdeck: terminating listener on request")
@@ -74,12 +78,12 @@ func (engine *Engine) hyperdeckListen() {
 				if !ok {
 					log.Printf("Hyperdeck: listener channel closed, retrying")
 					engine.hyperdeck.counter.ResetMedia()
-					break
+					retry = true
+				} else {
+					engine.hyperdeck.counter.mediaUpdate(s)
+					engine.mediaName(s, engine.hyperdeck.counter, engine.hyperdeck.mediaName, engine.hyperdeck.timeout)
+					t.Reset(engine.hyperdeck.timeout)
 				}
-
-				engine.hyperdeck.counter.mediaUpdate(s)
-				engine.mediaName(s, engine.hyperdeck.counter, engine.hyperdeck.mediaName, engine.hyperdeck.timeout)
-				t.Reset(engine.hyperdeck.timeout)
 			case <-t.C:
 				engine.hyperdeck.counter.ResetMedia()
 			}
