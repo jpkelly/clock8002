@@ -44,7 +44,18 @@ func (engine *Engine) hyperdeckInit(options *EngineOptions) {
 
 func (engine *Engine) hyperdeckListen() {
 	engine.wg.Add(1)
+	defer engine.wg.Done()
+
+	t := timer.NewTimer(engine.hyperdeck.timeout)
+
 	for {
+		select {
+		case <-engine.ctx.Done():
+			log.Printf("Hyperdeck listen: quiting on request")
+			return
+		default:
+		}
+
 		log.Printf("Hyperdeck: connecting to %s relay: %v", engine.hyperdeck.ip, engine.hyperdeck.relay)
 		addr := engine.hyperdeck.ip + ":9993"
 		c, err := hyperdeck.Listen(engine.ctx, addr, engine.hyperdeck.relay)
@@ -52,8 +63,6 @@ func (engine *Engine) hyperdeckListen() {
 			log.Printf("Hyperdeck listen error: %v", err)
 			continue
 		}
-
-		t := timer.NewTimer(engine.hyperdeck.timeout)
 
 		for {
 			select {
