@@ -191,6 +191,7 @@ func (s *state) listen() {
 }
 
 func (s *state) relay() {
+	log.Printf("hyperdeck: Starting relay")
 	l, err := net.Listen("tcp", relayAddr)
 	if err != nil {
 		log.Printf("hyperdeck relay error: %v", err)
@@ -325,6 +326,10 @@ func (s *state) sender() {
 	log.Printf("Hyperdeck: listener exiting on request")
 	if s.conn != nil {
 		s.conn.Close()
+	}
+
+	if s.listenConn != nil {
+		s.listenConn.Close()
 	}
 }
 
