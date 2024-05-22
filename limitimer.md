@@ -31,7 +31,7 @@ With T-568 A colors:
 
 Or with T-568 B:
 * Green/white + green to A
-* Grange + brown/white to B.
+* Orange + brown/white to B.
 * Orange/white + Brown to +12V
 * Orange + Brown/white to GND
 
@@ -41,6 +41,10 @@ The XLR pinout is:
 3. B (D-)
 
 It is recommended to use continuity tester while building the adapter and check that the signals aren't shorted and that the 3 common signals from the ethernet and XLR connection match before turning the system on.
+
+#### RS-485 line termination resistors
+
+RS-485 spesification requires 120 ohm termination resistors at the ends of the bus. This is simply just a resistor between A and B lines. DSAN has done some additional engineering in their RS-485 receivers and limitimer itself doesn't require the terminators, but many RS-485 receivers will need them. Usually two devices on the bus is fine no matter what the devices are without termination, but after that the clock-8001 might not be able to send or receive to limitimer units without at least one end of the chain having the 120 ohm terminator resistor.
 
 ### Limitimer display settings when controlled by clock-8001
 
