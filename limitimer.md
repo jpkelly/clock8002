@@ -24,16 +24,16 @@ The complete RS-485 differential pair signal is only available on the rj-45 (eth
 8. +12V
 
 With T-568 A colors:
-* Orange/white + orange to A
+* Orange + orange/white to A
 * Green + brown/white to B.
-* Green/white + Brown to +12V
-* Green + Brown/white to GND
+* Brown + green/white to +12V
+* Blue + blue/white to GND
 
 Or with T-568 B:
-* Green/white + green to A
+* Green + green/white to A
 * Orange + brown/white to B.
-* Orange/white + Brown to +12V
-* Orange + Brown/white to GND
+* Brown + orange/white to +12V
+* Blue + blue/white to GND
 
 The XLR pinout is:
 1. +12V
