@@ -1,3 +1,15 @@
+## Version 4.22.0
+* Bugfixes
+  * Fix images for raspberry pi 2
+  * General code cleanup pass on some integrations
+    * Mitti
+    * Tricaster
+    * Vmix
+  * Always send hh:mm:ss format strings as OSC feedback
+    * This fixes the source time feedback on companion with limitimer
+  * Log file creation truncates the existing file on startup
+
+
 ## Version 4.21.1
 * Add a list of detected serial devices into the configuration web interface
 
