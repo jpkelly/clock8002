@@ -31,7 +31,6 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 		ltcShowSeconds:     options.LTCSeconds,
 		ltcFollow:          options.LTCFollow,
 		ltcEnabled:         !options.DisableLTC,
-		ltcActive:          false,
 		format12h:          options.Format12h,
 		off:                false,
 		messageColor:       &color.RGBA{255, 255, 155, 255},
@@ -282,25 +281,30 @@ func (engine *Engine) State() *State {
 			SignalColor: color.RGBA{R: 0, G: 0, B: 0, A: 0},
 		}
 
-		if s.ltc && engine.ltcActive {
-			engine.ltcState(&c, s, s.ltcChannel)
-		} else if s.timer {
-			for _, ctr := range s.counters {
-				o := ctr.Output(t)
-				if o.Active {
-					c.SignalColor = o.SignalColor
-					c.ActiveTimer = ctr.number
-					out = o
-					c.Mute = ctr.mute
-					break
-				}
-			}
-		}
+		hasLTC := s.ltc && engine.ltcActive[s.ltcChannel]
 
-		if out != nil {
-			engine.timerState(&c, s, out)
-		} else if s.tod {
-			engine.todState(&c, s, t)
+		if hasLTC {
+			engine.ltcState(&c, s, s.ltcChannel)
+		} else {
+			if s.timer {
+				for _, ctr := range s.counters {
+					o := ctr.Output(t)
+					if o.Active {
+						c.SignalColor = o.SignalColor
+						c.ActiveTimer = ctr.number
+						out = o
+						c.Mute = ctr.mute
+						break
+					}
+				}
+
+			}
+
+			if out != nil {
+				engine.timerState(&c, s, out)
+			} else if s.tod {
+				engine.todState(&c, s, t)
+			}
 		}
 
 		clocks = append(clocks, &c)

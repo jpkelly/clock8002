@@ -567,7 +567,7 @@ func (engine *Engine) setLTC(timestamp string, channel int) {
 			ltcTarget = engine.ltc[channel].target
 		}
 		engine.mode = LTC
-		engine.ltcActive = true
+		engine.ltcActive[channel] = true
 		engine.oscTally = true
 		engine.ltcTimeout[channel] = false
 		engine.ltc[channel] = &ltcData{

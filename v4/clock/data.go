@@ -276,7 +276,7 @@ type Engine struct {
 	ltcFollow           bool        // Continue on internal timer if LTC signal is lost
 	ltcEnabled          bool        // Toggle LTC mode on or off
 	ltcTimeout          [2]bool     // Set to true if LTC signal is lost by the ltc timer
-	ltcActive           bool        // Do we have a active LTC to display?
+	ltcActive           [2]bool     // Do we have a active LTC to display?
 	format12h           bool        // Use 12 hour format for time-of-day
 	off                 bool        // Is the engine output off?
 	ignoreRegexp        *regexp.Regexp
