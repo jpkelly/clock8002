@@ -160,6 +160,13 @@ const configHTML = `
                           </label>
 
                           {{checkbox (printf "source%d-ltc" $n) "Enable LTC input on this source" $source.LTC}}
+                          <label for="{{printf "source%d-ltc-channel" $n}}">
+                            <span>LTC channel</span>
+                            <select name="{{printf "source%d-ltc-channel" $n}}" id="{{printf "source%d-ltc-channel" $n}}">
+                              <option value="0" {{if eq $source.LTCChannel 0}} selected {{end}}>Left</option>
+                              <option value="1" {{if eq $source.LTCChannel 1}} selected {{end}}>Right</option>
+                            </select>
+                          </label>
                           {{checkbox (printf "source%d-timer" $n) "Enable input from the associated timer" $source.Timer}}
                           {{checkbox (printf "source%d-timer-target" $n) "Display timer end time, if available, instead of the time remaining" $source.TimerTarget}}
                           {{text (printf "source%d-counter" $n) "Timer numbers to use (0-9), comma separated list." $source.Counter}}

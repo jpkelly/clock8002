@@ -25,8 +25,10 @@ func (engine *Engine) listen() {
 	oscChan := engine.clockServer.Listen()
 	engine.messageTimer.Stop()
 
-	engine.ltcTimer = timer.NewTimer(engine.timeout)
-	engine.ltcTimer.Stop() // Needed to prevent a timeout at the start
+	engine.ltcTimer[0] = timer.NewTimer(engine.timeout)
+	engine.ltcTimer[0].Stop() // Needed to prevent a timeout at the start
+	engine.ltcTimer[1] = timer.NewTimer(engine.timeout)
+	engine.ltcTimer[1].Stop() // Needed to prevent a timeout at the start
 
 	engine.mittiTimer = timer.NewTimer(updateTimeout)
 	engine.milluminTimer = timer.NewTimer(updateTimeout)
@@ -66,9 +68,12 @@ func (engine *Engine) listen() {
 			// OSC message timeout
 			engine.message = ""
 			engine.oscTally = false
-		case <-engine.ltcTimer.C:
+		case <-engine.ltcTimer[0].C:
 			// LTC message timeout
-			engine.ltcTimeout = true
+			engine.ltcTimeout[0] = true
+		case <-engine.ltcTimer[1].C:
+			// LTC message timeout
+			engine.ltcTimeout[1] = true
 		case <-stateTicker.C:
 			// Send OSC feedback
 			state := engine.State()
@@ -187,8 +192,13 @@ func (engine *Engine) handleOSC(message *Message) {
 		engine.setTime(message.Data)
 	case "LTC":
 		if engine.ltcEnabled {
-			engine.setLTC(message.Data)
-			engine.ltcTimer.Reset(engine.timeout)
+			engine.setLTC(message.Data, 0)
+			engine.ltcTimer[0].Reset(engine.timeout)
+		}
+	case "LTC2":
+		if engine.ltcEnabled {
+			engine.setLTC(message.Data, 1)
+			engine.ltcTimer[1].Reset(engine.timeout)
 		}
 	case "dualText":
 		engine.message = fmt.Sprintf("%-.8s", message.Data)
@@ -538,7 +548,7 @@ func (engine *Engine) LtcActive() bool {
 	return engine.mode == LTC
 }
 
-func (engine *Engine) setLTC(timestamp string) {
+func (engine *Engine) setLTC(timestamp string, channel int) {
 	match, _ := regexp.MatchString("^([0-9][0-9]):([0-5][0-9]):([0-5][0-9]):([0-9][0-9])$", timestamp)
 	if match {
 		parts := strings.Split(timestamp, ":")
@@ -554,13 +564,13 @@ func (engine *Engine) setLTC(timestamp string) {
 			ltcDuration += time.Duration(seconds) * time.Second
 			ltcTarget = time.Now().Add(-ltcDuration)
 		} else {
-			ltcTarget = engine.ltc.target
+			ltcTarget = engine.ltc[channel].target
 		}
 		engine.mode = LTC
 		engine.ltcActive = true
 		engine.oscTally = true
-		engine.ltcTimeout = false
-		engine.ltc = &ltcData{
+		engine.ltcTimeout[channel] = false
+		engine.ltc[channel] = &ltcData{
 			hours:   hours,
 			minutes: minutes,
 			seconds: seconds,

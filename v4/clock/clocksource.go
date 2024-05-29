@@ -15,6 +15,7 @@ type source struct {
 
 	// Booleans controlling what might be displayed by this clock data source
 	ltc         bool // LTC timecode decoded from sound input
+	ltcChannel  int
 	timer       bool // Countdown / up timer
 	tod         bool // Time of day, lowest priority
 	hidden      bool // Master control to turn output off

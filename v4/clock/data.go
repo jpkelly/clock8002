@@ -62,6 +62,7 @@ type SourceOptions struct {
 	Counter       string `long:"counter" description:"Counter numbers to associate with this source, leave empty to disable it as a suorce" default:"0"`
 	TimerTarget   bool   `long:"timer-target" description:"Show end time of the timer instead of time remaining"`
 	LTC           bool   `long:"ltc" description:"Enable LTC as a source"`
+	LTCChannel    int    `long:"ltc-channel" description:"LTC channel" default:"0" choice:"0" choice:"1"`
 	Timer         bool   `long:"timer" description:"Enable timer counter as a source"`
 	Tod           bool   `long:"tod" description:"Enable time-of-day as a source"`
 	TimeZone      string `long:"timezone" description:"Time zone to use for ToD display" default:"Europe/Helsinki"`
@@ -269,15 +270,15 @@ type Engine struct {
 	messageTimer        *timer.Timer
 	udpDests            []*feedbackDestination // Stagetimer2 udp time destinations
 	udpCounters         []*Counter
-	initialized         bool     // Show version on startup until ntp synced or receiving OSC control
-	ltc                 *ltcData // LTC time code status
-	ltcShowSeconds      bool     // Toggles led display on LTC mode between seconds and frames
-	ltcFollow           bool     // Continue on internal timer if LTC signal is lost
-	ltcEnabled          bool     // Toggle LTC mode on or off
-	ltcTimeout          bool     // Set to true if LTC signal is lost by the ltc timer
-	ltcActive           bool     // Do we have a active LTC to display?
-	format12h           bool     // Use 12 hour format for time-of-day
-	off                 bool     // Is the engine output off?
+	initialized         bool        // Show version on startup until ntp synced or receiving OSC control
+	ltc                 [2]*ltcData // LTC time code status
+	ltcShowSeconds      bool        // Toggles led display on LTC mode between seconds and frames
+	ltcFollow           bool        // Continue on internal timer if LTC signal is lost
+	ltcEnabled          bool        // Toggle LTC mode on or off
+	ltcTimeout          [2]bool     // Set to true if LTC signal is lost by the ltc timer
+	ltcActive           bool        // Do we have a active LTC to display?
+	format12h           bool        // Use 12 hour format for time-of-day
+	off                 bool        // Is the engine output off?
 	ignoreRegexp        *regexp.Regexp
 	mittiCounter        *Counter
 	milluminCounter     *Counter
@@ -310,7 +311,7 @@ type Engine struct {
 
 	mediaTimeouts []*time.Time
 	flashTimer    *timer.Timer
-	ltcTimer      *timer.Timer
+	ltcTimer      [2]*timer.Timer
 	cueTimer      *timer.Timer
 	// FIXME: Are these used anymore?
 	mittiTimer    *timer.Timer

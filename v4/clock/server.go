@@ -483,12 +483,18 @@ func (server *Server) handleResetMedia(msg *osc.Message) {
 func (server *Server) handleLTC(msg *osc.Message) {
 	var message TimeMessage
 
+	msgType := "LTC"
+
+	if msg.Address == "/clock/ltc2" {
+		msgType = "LTC2"
+	}
+
 	if err := message.UnmarshalOSC(msg); err != nil {
 		log.Printf("Unmarshal %v: %v", msg, err)
 	} else {
 		debug.Printf("LTC: %v\n", message.Time)
 		m := Message{
-			Type: "LTC",
+			Type: msgType,
 			Data: message.Time,
 		}
 		server.update(m)
@@ -741,7 +747,7 @@ func (server *Server) setupDispatch(d *oscutil.RegexpDispatcher) {
 	// Sync messages
 	registerHandler(d, "^/clock/media/*", server.handleMedia)
 	registerHandler(d, "^/clock/resetmedia/*", server.handleResetMedia)
-	registerHandler(d, "^/clock/ltc", server.handleLTC)
+	registerHandler(d, "^/clock/ltc*", server.handleLTC)
 
 	// Timer related
 	registerHandler(d, "^/clock/timer/*/countdown/target", server.handleCountdownTarget)

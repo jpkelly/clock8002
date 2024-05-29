@@ -123,6 +123,15 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	}
 
 	// Integers
+	eo.Source1.LTCChannel, err = strconv.Atoi(r.FormValue("source1-ltc-channel"))
+	errors += ValidateNumber(err, "Source 1 LTC channel")
+	eo.Source2.LTCChannel, err = strconv.Atoi(r.FormValue("source2-ltc-channel"))
+	errors += ValidateNumber(err, "Source 2 LTC channel")
+	eo.Source3.LTCChannel, err = strconv.Atoi(r.FormValue("source3-ltc-channel"))
+	errors += ValidateNumber(err, "Source 3 LTC channel")
+	eo.Source4.LTCChannel, err = strconv.Atoi(r.FormValue("source4-ltc-channel"))
+	errors += ValidateNumber(err, "Source 4 LTC channel")
+
 	eo.Flash, err = strconv.Atoi(r.FormValue("Flash"))
 	errors += ValidateNumber(err, "Flash time")
 	eo.Timeout, err = strconv.Atoi(r.FormValue("Timeout"))

@@ -55,7 +55,8 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	log.Printf("Source4: %v", options.Source4)
 
 	ltc := ltcData{hours: 0}
-	engine.ltc = &ltc
+	engine.ltc[0] = &ltc
+	engine.ltc[1] = &ltc
 
 	engine.messageTimer = timer.NewTimer(engine.timeout)
 	engine.messageTimer.Stop()
@@ -282,7 +283,7 @@ func (engine *Engine) State() *State {
 		}
 
 		if s.ltc && engine.ltcActive {
-			engine.ltcState(&c, s)
+			engine.ltcState(&c, s, s.ltcChannel)
 		} else if s.timer {
 			for _, ctr := range s.counters {
 				o := ctr.Output(t)
@@ -353,11 +354,11 @@ func (engine *Engine) todState(c *Clock, s *source, t time.Time) {
 	}
 }
 
-func (engine *Engine) ltcState(c *Clock, s *source) {
-	c.Expired = engine.ltcTimeout
+func (engine *Engine) ltcState(c *Clock, s *source, channel int) {
+	c.Expired = engine.ltcTimeout[channel]
 	c.Mode = LTC
-	ltc := engine.ltc
-	if !engine.ltcTimeout {
+	ltc := engine.ltc[channel]
+	if !engine.ltcTimeout[channel] {
 		// We have LTC time, so display it
 		// engine.initialized = true
 		c.Text = fmt.Sprintf("%02d:%02d:%02d:%02d", ltc.hours, ltc.minutes, ltc.seconds, ltc.frames)
@@ -369,7 +370,7 @@ func (engine *Engine) ltcState(c *Clock, s *source) {
 		// Follow the LTC time when signal is lost
 		// Todo: must be easier way to print out the duration...
 		t := time.Now()
-		diff := t.Sub(engine.ltc.target)
+		diff := t.Sub(engine.ltc[channel].target)
 		c.Text = fmt.Sprintf("%s:%02d", formatDuration(diff), 0)
 		c.Hours, c.Minutes, c.Seconds = splatDuration(diff)
 	} else {
@@ -570,6 +571,7 @@ func (engine *Engine) initSources(sources []*SourceOptions) error {
 			tod:         s.Tod,
 			timer:       s.Timer,
 			ltc:         s.LTC,
+			ltcChannel:  s.LTCChannel,
 			tz:          tz,
 			title:       s.Text,
 			hidden:      s.Hidden,
