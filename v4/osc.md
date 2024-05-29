@@ -250,7 +250,7 @@ Parameters:
 
 These are used to bridge different state information accross multiple clocks.
 
-### `/clock/ltc`
+### `/clock/ltc` and `/clock/ltc2`
 
 Relays the LTC time to the clock.
 
