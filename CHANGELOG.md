@@ -1,3 +1,10 @@
+## Version 4.23.0
+* Features:
+  * Stereo LTC decoding. The raspberry pi can now decode both channels of a stereo LTC signal into different time codes and the clock can display them both. This requires a stereo capture interface. Tested with Behringer U-phoria.
+    * Caveat: Older clocks will produce glitches with two ltc streams due to bad OSC matching code
+* Bugfixes:
+  * ToD and LTC display priorities were messed up since 4.19.0
+
 ## Version 4.22.0
 * Bugfixes
   * Fix images for raspberry pi 2
