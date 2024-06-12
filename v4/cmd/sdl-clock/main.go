@@ -32,6 +32,8 @@ var confChan chan bool
 
 const updateTime = time.Second / 30
 
+var logFile *os.File
+
 func main() {
 	var err error
 	var info string
@@ -538,6 +540,13 @@ func copyAndLoadConfig(path string) {
 	}
 
 	log.SetOutput(f)
+
+	l, err := os.OpenFile(filepath.Join(path, "clock.log"), os.O_RDONLY, 0666)
+	if err != nil {
+		log.Fatalf("error opening log file: %v", err)
+	}
+
+	logFile = l
 
 	_, err = os.Stat(config)
 	if err != nil {

@@ -650,6 +650,15 @@ const configHTML = `
               {{end}}
             </div>
           </div>
+          <div class="tab">
+            <input type="checkbox" id="log" class="tab_ctrl">
+            <label class="tab-label" for="log">Log</label>
+            <div class="tab-content">
+              <pre>
+                {{log}}
+              </pre>
+            </div>
+          </div>
         </div>
         <input type="submit" value="Save config and restart clock" />
       </form>

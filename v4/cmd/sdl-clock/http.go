@@ -83,6 +83,11 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			"version": func() string {
 				return clock.VersionInfo()
 			},
+			"log": func() string {
+				logFile.Seek(0, io.SeekStart)
+				l, _ := io.ReadAll(logFile)
+				return string(l)
+			},
 		})
 	tmpl, err := t.Parse(configHTML)
 
