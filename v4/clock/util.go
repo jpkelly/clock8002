@@ -85,3 +85,8 @@ func parseColor(s string) (c *color.RGBA, err error) {
 	}
 	return
 }
+
+func VersionInfo() string {
+	version := fmt.Sprintf("Clock version %s (%s)", gitTag, gitCommit)
+	return version
+}

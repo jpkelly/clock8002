@@ -4,6 +4,7 @@ import (
 	// "fmt"
 	"crypto/subtle"
 	"fmt"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
 	"gitlab.com/clock-8001/clock-8001/v4/util"
 	htmlTemplate "html/template"
 	"io"
@@ -78,6 +79,9 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			},
 			"add": func(a int, b int) int {
 				return a + b
+			},
+			"version": func() string {
+				return clock.VersionInfo()
 			},
 		})
 	tmpl, err := t.Parse(configHTML)
