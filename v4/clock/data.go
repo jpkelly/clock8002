@@ -142,6 +142,7 @@ type EngineOptions struct {
 	OvertimeCountMode string `long:"overtime-count-mode" description:"Behaviour for expired countdown timer counts" default:"zero" choice:"zero" choice:"blank" choice:"continue"`
 	//lint:ignore SA5008 go-flags uses multiple choice
 	OvertimeVisibility string `long:"overtime-visibility" description:"Extra visibility for overtime timers" default:"blink" choice:"blink" choice:"background" choice:"both" choice:"none"`
+	ToDHideSeconds     bool   `long:"tod-hide-seconds" description:"Hide seconds on time-of-day displays"`
 
 	AutoSignals            bool   `long:"auto-signals" description:"Automatic signal colors based on timer state"`
 	SignalStart            bool   `long:"signal-start" description:"Set signal color on timer start"`

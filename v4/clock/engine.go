@@ -23,7 +23,6 @@ import (
 func MakeEngine(options *EngineOptions) (*Engine, error) {
 	var engine = Engine{
 		mode:               Normal,
-		displaySeconds:     true,
 		oscTally:           false,
 		timeout:            time.Duration(options.Timeout) * time.Millisecond,
 		initialized:        false,
@@ -32,6 +31,7 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 		ltcFollow:          options.LTCFollow,
 		ltcEnabled:         !options.DisableLTC,
 		format12h:          options.Format12h,
+		displaySeconds:     !options.ToDHideSeconds,
 		off:                false,
 		messageColor:       &color.RGBA{255, 255, 155, 255},
 		signalHardware:     options.SignalHardware,
