@@ -240,7 +240,10 @@ func setupScaling() {
 		// FIXME: rpi display scaling fix
 		// Dual clock
 		log.Printf("SDL2 output size: %v, %v", x, y)
-		if !options.vertical {
+		if options.Face == "max" {
+			// No logical size, we might have different aspect ratio
+			return
+		} else if !options.vertical {
 			err := renderer.SetLogicalSize(1920, 1080)
 			check(err)
 		} else {

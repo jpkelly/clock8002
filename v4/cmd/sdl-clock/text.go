@@ -144,8 +144,17 @@ func drawTextClock(state *clock.State) {
 }
 
 func drawMaxClock(state *clock.State) {
-	labelR := sdl.Rect{X: 25, Y: 25, H: 150, W: 900}
-	textR := sdl.Rect{H: 1080 - 25, W: 1920 - 50, X: 25, Y: 25}
+	w, h, _ := renderer.GetOutputSize()
+
+	log.Printf("drawMaxClock: h: %d, w: %d", h, w)
+
+	topMargin := h * 25 / 1080
+	rightMargin := w * 25 / 1920
+	labelH := h * 150 / 1080
+	labelW := w * 900 / 1920
+
+	labelR := sdl.Rect{X: topMargin, Y: rightMargin, H: labelH, W: labelW}
+	textR := sdl.Rect{X: topMargin, Y: rightMargin, H: h - topMargin, W: w - (rightMargin * 2)}
 
 	if options.DrawBoxes {
 		renderer.SetDrawColor(colors.labelBG.R, colors.labelBG.G, colors.labelBG.B, colors.labelBG.A)
