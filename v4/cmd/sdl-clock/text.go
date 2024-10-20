@@ -146,8 +146,6 @@ func drawTextClock(state *clock.State) {
 func drawMaxClock(state *clock.State) {
 	w, h, _ := renderer.GetOutputSize()
 
-	log.Printf("drawMaxClock: h: %d, w: %d", h, w)
-
 	topMargin := h * 25 / 1080
 	rightMargin := w * 25 / 1920
 	labelH := h * 150 / 1080
