@@ -98,16 +98,15 @@ type TimerOptions struct {
 	PicturallStreams      bool   `long:"picturall-streams" description:"Show streaming content"`
 
 	DisguiseTimerOptions
+	OSC OSCOptions
 
+	StopAtEnd     bool `long:"stop-at-end" description:"Stop the timer when it expires"`
 	EndRestart    bool `long:"end-restart" description:"Restart the timer specified by restart-target when this countdown reaches its end"`
 	EndOSC        bool `long:"end-osc" description:"Send a OSC message when this countdown reaches its end"`
 	RestartTarget int  `long:"restart-target" description:"Timer target for the end action"`
-	OSC           OSCOptions
-
-	Duration int  `long:"duration" description:"Default duration, in seconds" default:"600"`
-	Countup  bool `long:"countup" description:"Default to countup instead of countdown"`
-
-	Mute bool `long:"mute" description:"Ignore this timer for audio cues"`
+	Duration      int  `long:"duration" description:"Default duration, in seconds" default:"600"`
+	Countup       bool `long:"countup" description:"Default to countup instead of countdown"`
+	Mute          bool `long:"mute" description:"Ignore this timer for audio cues"`
 }
 
 // OSCOptions contains the options for a osc message target

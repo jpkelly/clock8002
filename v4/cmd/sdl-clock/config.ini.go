@@ -155,6 +155,9 @@ source4.overtime-color={{.EngineOptions.Source4.OvertimeColor}}
 {{range $i, $timer := .EngineOptions.TimerOptions}}
 # Timer {{$i}}
 
+# Stop the timer when it ends
+timer{{$i}}.stop-at-end={{$timer.StopAtEnd}}
+
 # Mute audio cues for this timer
 timer{{$i}}.mute={{$timer.Mute}}
 

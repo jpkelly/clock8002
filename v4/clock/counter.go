@@ -47,6 +47,7 @@ type Counter struct {
 	previous         *counterSetting
 	endAction        *counterAction
 	mute             bool
+	stopAtEnd        bool
 }
 
 type counterSetting struct {
@@ -451,6 +452,9 @@ func (counter *Counter) Output(t time.Time) *CounterOutput {
 			out.blank()
 		case "continue":
 			out.Icon = IconOvertime
+		}
+		if counter.stopAtEnd {
+			counter.Stop()
 		}
 
 	}

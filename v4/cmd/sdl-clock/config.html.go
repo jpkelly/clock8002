@@ -216,6 +216,8 @@ const configHTML = `
 
                           <h3>End Actions</h3>
 
+                          {{checkbox (printf "timer%d-stop-at-end" $i) "Stop the timer when it reaches the end" $timer.StopAtEnd}}
+
                           {{checkbox (printf "timer%d-end-restart" $i) "Restart a timer when this timer reaches the end of its countdown." $timer.EndRestart}}
                           {{checkbox (printf "timer%d-end-osc" $i) "Send a OSC message when this timer reaches the end of its countdown." $timer.EndOSC}}
 

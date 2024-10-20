@@ -250,6 +250,7 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 		errorName := fmt.Sprintf("Timer %d ", i)
 
 		o.Mute = r.FormValue(base+"mute") != ""
+		o.StopAtEnd = r.FormValue(base+"stop-at-end") != ""
 
 		o.ListenPort, err = strconv.Atoi(r.FormValue(base + "port"))
 		errors += ValidateNumber(err, errorName+"Mitti & millumin port")

@@ -465,6 +465,7 @@ func (engine *Engine) initCounters(options *EngineOptions) (err error) {
 			overtimeMode:     options.OvertimeCountMode,
 			number:           i,
 			mute:             options.TimerOptions[i].Mute,
+			stopAtEnd:        options.TimerOptions[i].StopAtEnd,
 		}
 
 		engine.Counters[i].previous = &counterSetting{
