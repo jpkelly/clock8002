@@ -115,6 +115,8 @@ type clockOptions struct {
 
 	DynamicBG bool `long:"dynamic-bg"`
 
+	VFD bool `long:"vfd-enabled"`
+
 	gpioOptions
 
 	Raspberry bool   // Is the host a raspberry pi

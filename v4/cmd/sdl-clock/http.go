@@ -214,6 +214,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.IconsDisable = r.FormValue("disable-icons") != ""
 	newOptions.CueFullScreen = r.FormValue("cue-fullscreen") != ""
 	newOptions.DynamicBG = r.FormValue("DynamicBG") != ""
+	newOptions.VFD = r.FormValue("VFD") != ""
 
 	// Strings, will not be validated
 	newOptions.HTTPUser = r.FormValue("HTTPUser")

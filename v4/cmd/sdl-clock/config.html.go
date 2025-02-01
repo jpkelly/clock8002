@@ -615,6 +615,11 @@ const configHTML = `
               </fieldset>
 
               <fieldset>
+                <legend>Futaba VFD output</legend>
+                {{checkbox "VFD" "Enable Futaba GP9002 VFD output on linux." .VFD}}
+              </fieldset>
+
+              <fieldset>
                 <legend>GPIO Pulser, raspberry pi only.</legend>
 
                 <p>Provides pulses on GPIO pins every second, minute and hour, and

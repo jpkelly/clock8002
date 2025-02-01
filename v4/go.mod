@@ -23,6 +23,8 @@ require github.com/icholy/digest v0.1.15
 
 require (
 	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3 // indirect
+	github.com/stianeikeland/go-rpio/v4 v4.6.0 // indirect
+	gitlab.com/clock-8001/futaba_vfd v0.0.0-20240531201016-091b45c8cf5e // indirect
 	periph.io/x/conn/v3 v3.6.7 // indirect
 	periph.io/x/host/v3 v3.6.7 // indirect
 )

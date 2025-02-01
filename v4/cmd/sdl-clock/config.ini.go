@@ -479,4 +479,7 @@ gpio-hours-pulse-pin={{.HourPulse}}
 gpio-hours-trigger={{.HourTrigger}}
 gpio-pulse-duration={{.PulseDuration}}
 gpio-invert-polarity={{.InvertPolarity}}
+
+# Enable GP9002A VFD output
+VFD={{.VFD}}
 `
