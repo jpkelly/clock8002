@@ -40,6 +40,7 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 		wg:                 &sync.WaitGroup{},
 		flashPeriod:        options.Flash,
 		overtimeVisibility: options.OvertimeVisibility,
+		highResolution:     options.HighResolution,
 	}
 	engine.ctx, engine.cancelFunc = context.WithCancel(context.Background())
 	uuid, err := machineid.ProtectedID("clock-8001")
@@ -466,6 +467,7 @@ func (engine *Engine) initCounters(options *EngineOptions) (err error) {
 			number:           i,
 			mute:             options.TimerOptions[i].Mute,
 			stopAtEnd:        options.TimerOptions[i].StopAtEnd,
+			highResolution:   options.HighResolution,
 		}
 
 		engine.Counters[i].previous = &counterSetting{

@@ -28,6 +28,7 @@ func ParseEngineOptions(r *http.Request) (*clock.EngineOptions, string) {
 	eo.LTCFollow = r.FormValue("LTCFollow") != ""
 	eo.Format12h = r.FormValue("Format12h") != ""
 	eo.ToDHideSeconds = r.FormValue("tod-hide-seconds") != ""
+	eo.HighResolution = r.FormValue("high-resolution") != ""
 
 	eo.Source1.LTC = r.FormValue("source1-ltc") != ""
 	eo.Source1.Timer = r.FormValue("source1-timer") != ""

@@ -142,6 +142,7 @@ type EngineOptions struct {
 	//lint:ignore SA5008 go-flags uses multiple choice
 	OvertimeVisibility string `long:"overtime-visibility" description:"Extra visibility for overtime timers" default:"blink" choice:"blink" choice:"background" choice:"both" choice:"none"`
 	ToDHideSeconds     bool   `long:"tod-hide-seconds" description:"Hide seconds on time-of-day displays"`
+	HighResolution     bool   `long:"high-resolution" description:"1/100th second resolution timers"`
 
 	AutoSignals            bool   `long:"auto-signals" description:"Automatic signal colors based on timer state"`
 	SignalStart            bool   `long:"signal-start" description:"Set signal color on timer start"`
@@ -308,6 +309,7 @@ type Engine struct {
 	cueChan             chan *cueState
 	cueState            *cueState
 	cueDuration         time.Duration
+	highResolution      bool
 
 	mediaTimeouts []*time.Time
 	flashTimer    *timer.Timer

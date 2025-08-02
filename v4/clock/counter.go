@@ -48,6 +48,7 @@ type Counter struct {
 	endAction        *counterAction
 	mute             bool
 	stopAtEnd        bool
+	highResolution   bool
 }
 
 type counterSetting struct {
@@ -68,24 +69,26 @@ type counterAction struct {
 
 // CounterOutput the data structure returned by Counter.Output() and contains the static state of the counter at that time
 type CounterOutput struct {
-	Active      bool          // True if the counter is active
-	Media       bool          // True if counter represents a playing media file
-	Countdown   bool          // True if counting down, false if counting up
-	Paused      bool          // True if counter has been paused
-	Looping     bool          // True if the playing media is looping in the player
-	Expired     bool          // Has the countdown timer expired?
-	Hours       int           // Hour part of the timer
-	Minutes     int           // Minutes of the timer, 0-60
-	Seconds     int           // Seconds of the timer, 0-60
-	Text        string        // HH:MM:SS string representation
-	Icon        string        // Single unicode glyph to use as an icon for the timer
-	Compact     string        // Compact 4-character output
-	Progress    float64       // Percentage of total time elapsed of the countdown, 0-1
-	Diff        time.Duration // raw difference
-	Duration    time.Duration // Total duration of the count, if available
-	SignalColor color.RGBA
-	Mode        string
-	Target      *time.Time // End time for counter, if available
+	Active         bool          // True if the counter is active
+	Media          bool          // True if counter represents a playing media file
+	Countdown      bool          // True if counting down, false if counting up
+	Paused         bool          // True if counter has been paused
+	Looping        bool          // True if the playing media is looping in the player
+	Expired        bool          // Has the countdown timer expired?
+	Hours          int           // Hour part of the timer
+	Minutes        int           // Minutes of the timer, 0-60
+	Seconds        int           // Seconds of the timer, 0-60
+	Hundredths     int           // 1/100th of seconds
+	Text           string        // HH:MM:SS string representation
+	Icon           string        // Single unicode glyph to use as an icon for the timer
+	Compact        string        // Compact 4-character output
+	Progress       float64       // Percentage of total time elapsed of the countdown, 0-1
+	Diff           time.Duration // raw difference
+	Duration       time.Duration // Total duration of the count, if available
+	SignalColor    color.RGBA
+	Mode           string
+	Target         *time.Time // End time for counter, if available
+	highResolution bool
 }
 
 type externalState interface {
@@ -505,7 +508,11 @@ func (counter *Counter) normalOutput(t time.Time) *CounterOutput {
 	hours := int(diff.Truncate(time.Hour).Hours())
 	minutes := int(diff.Truncate(time.Minute).Minutes()) - (hours * 60)
 	seconds := int(diff.Truncate(time.Second).Seconds()) - (((hours * 60) + minutes) * 60)
+	hundredths := int(0)
 
+	if counter.highResolution {
+		hundredths = int(diff.Truncate(time.Millisecond).Milliseconds()) / 10 % 100
+	}
 	progress := (float64(diff) / float64(counter.state.duration))
 
 	if expired {
@@ -535,20 +542,25 @@ func (counter *Counter) normalOutput(t time.Time) *CounterOutput {
 	target := counter.state.target
 
 	out := &CounterOutput{
-		Active:    counter.active,
-		Countdown: counter.countdown,
-		Paused:    counter.paused,
-		Expired:   expired,
-		Hours:     hours,
-		Minutes:   minutes,
-		Seconds:   seconds,
-		Text:      fmt.Sprintf("%02d:%02d:%02d", abs(hours), abs(minutes), abs(seconds)),
-		Compact:   fmt.Sprintf("%s%s", icon, c),
-		Icon:      icon,
-		Progress:  progress,
-		Diff:      diff,
-		Duration:  counter.state.duration,
-		Target:    &target,
+		Active:     counter.active,
+		Countdown:  counter.countdown,
+		Paused:     counter.paused,
+		Expired:    expired,
+		Hours:      hours,
+		Minutes:    minutes,
+		Seconds:    seconds,
+		Hundredths: hundredths,
+		Text:       fmt.Sprintf("%02d:%02d:%02d", abs(hours), abs(minutes), abs(seconds)),
+		Compact:    fmt.Sprintf("%s%s", icon, c),
+		Icon:       icon,
+		Progress:   progress,
+		Diff:       diff,
+		Duration:   counter.state.duration,
+		Target:     &target,
+	}
+
+	if counter.highResolution {
+		out.Text = fmt.Sprintf("%02d:%02d:%02d", abs(minutes), abs(seconds), abs(hundredths))
 	}
 
 	return out
@@ -577,6 +589,11 @@ func (counter *Counter) Start(countdown bool, timer time.Duration) {
 		duration: timer,
 		left:     timer,
 	}
+
+	if counter.highResolution {
+		s.target = time.Now().Add(timer)
+	}
+
 	counter.state = &s
 
 	p := counterSetting{
@@ -722,10 +739,20 @@ func (counter *Counter) Pause() {
 		return
 	}
 	t := time.Now()
-	if counter.countdown {
-		counter.state.left = counter.state.target.Sub(t).Truncate(time.Second)
+	if counter.highResolution {
+		if counter.countdown {
+			counter.state.left = counter.state.target.Sub(t)
+		} else {
+			counter.state.left = t.Sub(counter.state.target)
+		}
+
 	} else {
-		counter.state.left = t.Sub(counter.state.target).Truncate(time.Second)
+		if counter.countdown {
+			counter.state.left = counter.state.target.Sub(t).Truncate(time.Second)
+		} else {
+			counter.state.left = t.Sub(counter.state.target).Truncate(time.Second)
+		}
+
 	}
 	counter.paused = true
 }

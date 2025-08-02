@@ -23,6 +23,9 @@ Format12h={{.EngineOptions.Format12h}}
 # Set to true to hide seconds from time-of-day displays.
 ToDHideSeconds={{.EngineOptions.ToDHideSeconds}}
 
+# Set true to have 1/100th second resolution timers
+HighResolution={{.EngineOptions.HighResolution}}
+
 # Set to true to disable detection of official raspberry pi display for aspect ratio correction
 NoARCorrection={{.NoARCorrection}}
 
