@@ -765,9 +765,17 @@ func (counter *Counter) Resume() {
 	}
 	t := time.Now()
 	if counter.countdown {
-		counter.state.target = t.Add(counter.state.left).Truncate(time.Second)
+		target := t.Add(counter.state.left)
+		if !counter.highResolution {
+			target = target.Truncate(time.Second)
+		}
+		counter.state.target = target
 	} else {
-		counter.state.target = t.Add(-counter.state.left).Truncate(time.Second)
+		target := t.Add(-counter.state.left)
+		if !counter.highResolution {
+			target = target.Truncate(time.Second)
+		}
+		counter.state.target = target
 	}
 	counter.paused = false
 }
