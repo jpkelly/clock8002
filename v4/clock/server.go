@@ -110,6 +110,11 @@ func (server *Server) update(message Message) {
  * Timer related handlers
  */
 
+func (server *Server) handleTimerSet(msg *osc.Message) {
+	debug.Printf("handleTimerSet: %v", msg)
+	server.sendTimerMessage("timerSet", false, msg)
+}
+
 func (server *Server) handleTimerRestart(msg *osc.Message) {
 	debug.Printf("handleTimerRestart: %v", msg)
 	server.sendTimerCommand("timerRestart", msg)
@@ -762,6 +767,7 @@ func (server *Server) setupDispatch(d *oscutil.RegexpDispatcher) {
 	registerHandler(d, "^/clock/timer/*/media$", server.handleMedia)
 	registerHandler(d, "^/clock/timer/*/resetmedia$", server.handleResetMedia)
 	registerHandler(d, "^/clock/timer/*/restart$", server.handleTimerRestart)
+	registerHandler(d, "^/clock/timer/*/set", server.handleTimerSet)
 	registerHandler(d, "^/clock/pause$", server.handlePause)
 	registerHandler(d, "^/clock/resume$", server.handleResume)
 	registerHandler(d, "^/clock/limitimer/*", server.handleLimitimer)

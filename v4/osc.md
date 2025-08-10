@@ -77,6 +77,13 @@ Restarts the timer with the last used duration and count type. The initial defau
 
 Resumes a paused timer.
 
+### `/clock/timer/*/set`
+
+Sets the timer display to an external state. Timer doesn't advance on its own, relying completely on the external state.
+
+Parameters:
+1. integer: Timer display in seconds
+
 ### `/clock/timer/*/stop`
 
 Stops a given timer.
