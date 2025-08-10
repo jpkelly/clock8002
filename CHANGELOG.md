@@ -1,3 +1,8 @@
+## Version 4.24.0
+* Features
+  * `/clock/timer/*/set` OSC command to set a timer to display an external value
+  * Experimental "high resolution" timing mode that shows 1/100th second times
+
 ## Version 4.23.0
 * Features:
   * Stereo LTC decoding. The raspberry pi can now decode both channels of a stereo LTC signal into different time codes and the clock can display them both. This requires a stereo capture interface. Tested with Behringer U-phoria.
