@@ -1,6 +1,7 @@
 # OSC controlled simple clock
 * Clock binary builds: [![pipeline status](https://gitlab.com/clock-8001/clock-8001/badges/master/pipeline.svg)](https://gitlab.com/clock-8001/clock-8001/commits/master)
-* The installation files are available on https://kissa.depili.fi/clock-8001/releases/
+* The installation files for windows and linux are available on https://kissa.depili.fi/clock-8001/releases/
+* The raspberry pi images are available at: https://kissa.depili.fi/clock-8001/images/
 
 Support clock-8001 development by paypal: [![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=XUMXUL5RX5MWJ&currency_code=EUR)
 
