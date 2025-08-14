@@ -1,3 +1,7 @@
+## Version 4.24.1
+* Bugfixes
+  * `/clock/timer/*/set` misscalculated hours
+
 ## Version 4.24.0
 * Features
   * `/clock/timer/*/set` OSC command to set a timer to display an external value
