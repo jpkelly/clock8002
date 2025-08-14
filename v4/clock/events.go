@@ -134,7 +134,7 @@ func (engine *Engine) handleOSC(message *Message) {
 		rawSeconds := message.CountdownMessage.Seconds
 		seconds := int(rawSeconds % 60)
 		minutes := int(rawSeconds / 60 % 60)
-		hours := int(rawSeconds / 360)
+		hours := int(rawSeconds) / 3600
 		engine.Counters[message.Counter].SetSlave(hours, minutes, seconds, false, "")
 	case "display":
 		msg := message.DisplayMessage
