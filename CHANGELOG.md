@@ -1,3 +1,8 @@
+## Version 4.24.2
+* Bugfixes
+  * `/clock/timer/*/set` and negative seconds
+    * Now we display the "-" icon if the provided time is negative
+
 ## Version 4.24.1
 * Bugfixes
   * `/clock/timer/*/set` misscalculated hours
