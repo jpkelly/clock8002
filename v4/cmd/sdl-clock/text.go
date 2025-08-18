@@ -540,6 +540,8 @@ func materialIcon(icon string) string {
 		return "\ue044"
 	case clock.IconRecord:
 		return "\ue061"
+	case clock.IconNegative:
+		return "\ue15b"
 	}
 	return ""
 }

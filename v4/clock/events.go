@@ -135,7 +135,15 @@ func (engine *Engine) handleOSC(message *Message) {
 		seconds := int(rawSeconds % 60)
 		minutes := int(rawSeconds / 60 % 60)
 		hours := int(rawSeconds) / 3600
-		engine.Counters[message.Counter].SetSlave(hours, minutes, seconds, false, "")
+		if hours < 0 {
+			hours = -hours
+		}
+
+		icon := ""
+		if rawSeconds < 0 {
+			icon = IconNegative
+		}
+		engine.Counters[message.Counter].SetSlave(hours, minutes, seconds, false, icon)
 	case "display":
 		msg := message.DisplayMessage
 		log.Printf("Setting tally message to: %s", msg.Text)

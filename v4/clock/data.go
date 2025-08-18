@@ -45,6 +45,8 @@ const (
 	IconRecord = "⏺"
 	// Icon for PlayPause, used when playback ends after one cue
 	IconPlayPause = "⏯"
+	// Icon for negative external times
+	IconNegative = "-"
 )
 
 const (
