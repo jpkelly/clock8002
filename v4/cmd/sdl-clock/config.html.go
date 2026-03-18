@@ -21,7 +21,7 @@ const configHTML = `
           <legend>Project links</legend>
           <ul>
             <li>{{version}}</li>
-            <li><a href="https://gitlab.com/clock-8001/clock-8001/">View the project on gitlab</a></li>
+            <li><a href="https://github.com/jpkelly/clock8002">View the project on GitHub</a></li>
             <li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=XUMXUL5RX5MWJ&currency_code=EUR">Support development of clock-8001 via Paypal</a></li>
           </ul>
         </fieldset>
