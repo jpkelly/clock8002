@@ -9,9 +9,9 @@
 mode=dhcp
 
 # Static IP settings (only used when mode=static)
-#address=192.168.8.100
+#address=10.0.0.100
 #netmask=24
-#gateway=192.168.8.1
+#gateway=10.0.0.1
 #dns=1.1.1.1
 
 [host]
