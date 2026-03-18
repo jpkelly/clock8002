@@ -16,6 +16,10 @@ if [ "$(uname -s)" != "Linux" ] || [ "$(uname -m)" != "aarch64" ]; then
     [ "$reply" != "y" ] && exit 1
 fi
 
+# Stop running services before copying binaries
+echo "Stopping services..."
+sudo systemctl stop clock8002 alsa-ltc oled_daemon 2>/dev/null || true
+
 # Install SDL2 runtime libraries and LTC dependencies
 echo "Installing runtime libraries..."
 sudo apt update
@@ -70,64 +74,22 @@ fi
 # Install systemd service
 echo "Installing systemd services..."
 
-# Apply network.ini settings if present on boot partition
-NETWORK_INI="${BOOT_CONFIG_DIR}/network.ini"
-if [ -f "${NETWORK_INI}" ]; then
-    echo "Found network configuration at ${NETWORK_INI}..."
-
-    # Simple INI parser — reads key=value, ignoring comments and section headers
-    parse_ini() {
-        local file="$1" section="$2" key="$3"
-        awk -F= -v section="$section" -v key="$key" '
-            /^\[/ { current = substr($0, 2, index($0, "]") - 2) }
-            current == section && $1 == key { print $2; exit }
-        ' "$file"
-    }
-
-    NET_MODE=$(parse_ini "$NETWORK_INI" network mode)
-    NET_HOSTNAME=$(parse_ini "$NETWORK_INI" host hostname)
-
-    # Get the active NetworkManager connection name (wired or wireless)
-    NM_CON=$(nmcli -t -f NAME,DEVICE con show --active | head -1 | cut -d: -f1)
-
-    if [ -n "$NM_CON" ]; then
-        if [ "$NET_MODE" = "static" ]; then
-            NET_ADDR=$(parse_ini "$NETWORK_INI" network address)
-            NET_MASK=$(parse_ini "$NETWORK_INI" network netmask)
-            NET_GW=$(parse_ini "$NETWORK_INI" network gateway)
-            NET_DNS=$(parse_ini "$NETWORK_INI" network dns)
-
-            if [ -n "$NET_ADDR" ] && [ -n "$NET_MASK" ]; then
-                echo "Applying static IP: ${NET_ADDR}/${NET_MASK}..."
-                sudo nmcli con mod "$NM_CON" ipv4.method manual \
-                    ipv4.addresses "${NET_ADDR}/${NET_MASK}"
-                [ -n "$NET_GW" ] && sudo nmcli con mod "$NM_CON" ipv4.gateway "$NET_GW"
-                [ -n "$NET_DNS" ] && sudo nmcli con mod "$NM_CON" ipv4.dns "$NET_DNS"
-                sudo nmcli con up "$NM_CON"
-            else
-                echo "Warning: static mode set but address/netmask missing — skipping."
-            fi
-        elif [ "$NET_MODE" = "dhcp" ]; then
-            echo "Network mode: DHCP (default, no changes needed)."
-        fi
-    else
-        echo "Warning: No active NetworkManager connection found — skipping network config."
-    fi
-
-    if [ -n "$NET_HOSTNAME" ]; then
-        CURRENT_HOSTNAME=$(hostname)
-        if [ "$CURRENT_HOSTNAME" != "$NET_HOSTNAME" ]; then
-            echo "Setting hostname to ${NET_HOSTNAME}..."
-            sudo hostnamectl set-hostname "$NET_HOSTNAME"
-        fi
-    fi
-else
-    # Copy sample network.ini to boot partition if not present
-    if [ -f network.ini ]; then
-        echo "Installing sample network.ini to ${BOOT_CONFIG_DIR}/..."
-        sudo cp network.ini "${BOOT_CONFIG_DIR}/network.ini"
-    fi
+# Install network config script and service
+if [ -f piclock-network.sh ]; then
+    sudo cp piclock-network.sh "${INSTALL_DIR}/"
+    sudo chmod +x "${INSTALL_DIR}/piclock-network.sh"
 fi
+if [ -f piclock-network.service ]; then
+    sudo cp piclock-network.service /etc/systemd/system/
+    sudo systemctl enable piclock-network
+fi
+
+# Copy sample network.ini to boot partition if not present
+if [ ! -f "${BOOT_CONFIG_DIR}/network.ini" ] && [ -f network.ini ]; then
+    echo "Installing sample network.ini to ${BOOT_CONFIG_DIR}/..."
+    sudo cp network.ini "${BOOT_CONFIG_DIR}/network.ini"
+fi
+
 sed "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" "${SERVICE_FILE}" | \
     sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl-clock --fullscreen|" | \
     sed "s|User=.*|User=$USER|" | \
@@ -198,19 +160,19 @@ echo "Installation complete!"
 echo ""
 echo "  Install directory: ${INSTALL_DIR}"
 echo "  Config file:       /boot/piclock/clock.ini"
+echo "  Network config:    /boot/piclock/network.ini"
 echo "  Config symlink:    ~/.config/clock-8001/clock.ini"
 echo "  Web UI:            http://$(hostname -I | awk '{print $1}'):8080"
 echo "  Credentials:       admin / clockwork"
 echo ""
-echo "Start the clock now with:"
-echo "  sudo systemctl start clock8002"
+
+# Start services
+echo "Starting services..."
+sudo systemctl start clock8002 2>/dev/null || true
+sudo systemctl start oled_daemon 2>/dev/null || true
+sudo systemctl start alsa-ltc 2>/dev/null || true
+
 echo ""
 echo "For LTC timecode input (requires USB audio interface):"
 echo "  sudo systemctl enable alsa-ltc"
-echo "  sudo systemctl start alsa-ltc"
-echo ""
-echo "OLED display (if installed):"
-echo "  sudo systemctl start oled_daemon"
-echo ""
-echo "  sudo systemctl start alsa-ltc"
 echo ""

@@ -46,6 +46,8 @@ release: sdl-clock alsa-ltc ## Package a release tarball
 	@cp -r oled $(RELEASE_DIR)/
 	@cp clock8002.service $(RELEASE_DIR)/
 	@cp alsa-ltc.service $(RELEASE_DIR)/
+	@cp piclock-network.sh $(RELEASE_DIR)/
+	@cp piclock-network.service $(RELEASE_DIR)/
 	@cp install.sh $(RELEASE_DIR)/
 	@cp network.ini $(RELEASE_DIR)/
 	@chmod +x $(RELEASE_DIR)/install.sh
