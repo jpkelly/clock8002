@@ -34,14 +34,16 @@ alsa-ltc: alsa-ltc.c ## Build the LTC decoder
 	@echo Building alsa-ltc
 	gcc -O2 -o alsa-ltc alsa-ltc.c -lasound -lltc
 
-release: sdl-clock ## Package a release tarball
+release: sdl-clock alsa-ltc ## Package a release tarball
 	@echo Packaging release $(GIT_TAG)
 	@mkdir -p $(RELEASE_DIR)
 	@cp sdl-clock $(RELEASE_DIR)/
+	@cp alsa-ltc $(RELEASE_DIR)/
 	@cp ttf_fonts/*.ttf $(RELEASE_DIR)/
 	@cp -r fonts $(RELEASE_DIR)/
 	@cp -r voices $(RELEASE_DIR)/
 	@cp clock8002.service $(RELEASE_DIR)/
+	@cp alsa-ltc.service $(RELEASE_DIR)/
 	@cp install.sh $(RELEASE_DIR)/
 	@chmod +x $(RELEASE_DIR)/install.sh
 	@tar czf $(RELEASE_DIR).tar.gz $(RELEASE_DIR)

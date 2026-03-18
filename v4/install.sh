@@ -16,10 +16,10 @@ if [ "$(uname -s)" != "Linux" ] || [ "$(uname -m)" != "aarch64" ]; then
     [ "$reply" != "y" ] && exit 1
 fi
 
-# Install SDL2 runtime libraries
-echo "Installing SDL2 runtime libraries..."
+# Install SDL2 runtime libraries and LTC dependencies
+echo "Installing runtime libraries..."
 sudo apt update
-sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0
+sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libltc11
 
 # Create install directory
 echo "Installing to ${INSTALL_DIR}..."
@@ -30,16 +30,30 @@ sudo cp -r fonts "${INSTALL_DIR}/"
 sudo cp -r voices "${INSTALL_DIR}/"
 sudo chmod +x "${INSTALL_DIR}/sdl-clock"
 
+# Install alsa-ltc if present
+if [ -f alsa-ltc ]; then
+    sudo cp alsa-ltc "${INSTALL_DIR}/"
+    sudo chmod +x "${INSTALL_DIR}/alsa-ltc"
+fi
+
 # Add current user to video and render groups
 echo "Adding $USER to video and render groups..."
 sudo usermod -aG video,render "$USER"
 
 # Install systemd service
-echo "Installing systemd service..."
+echo "Installing systemd services..."
 sed "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" "${SERVICE_FILE}" | \
     sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl-clock --fullscreen|" | \
     sed "s|User=.*|User=$USER|" | \
     sudo tee /etc/systemd/system/clock8002.service > /dev/null
+
+# Install alsa-ltc service if present
+if [ -f alsa-ltc.service ]; then
+    sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/alsa-ltc - 127.0.0.1 1245|" alsa-ltc.service | \
+        sed "s|User=.*|User=$USER|" | \
+        sudo tee /etc/systemd/system/alsa-ltc.service > /dev/null
+fi
+
 sudo systemctl daemon-reload
 sudo systemctl enable clock8002
 
@@ -54,4 +68,7 @@ echo ""
 echo "Start the clock now with:"
 echo "  sudo systemctl start clock8002"
 echo ""
-echo "Note: You may need to log out and back in for video group access."
+echo "For LTC timecode input (requires USB audio interface):"
+echo "  sudo systemctl enable alsa-ltc"
+echo "  sudo systemctl start alsa-ltc"
+echo ""
