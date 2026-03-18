@@ -1,125 +1,103 @@
-# OSC controlled simple clock
-* Clock binary builds: [![pipeline status](https://gitlab.com/clock-8001/clock-8001/badges/master/pipeline.svg)](https://gitlab.com/clock-8001/clock-8001/commits/master)
-* The installation files for windows and linux are available on https://kissa.depili.fi/clock-8001/releases/
-* The raspberry pi images are available at: https://kissa.depili.fi/clock-8001/images/
+# Clock 8002
 
-Support clock-8001 development by paypal: [![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=XUMXUL5RX5MWJ&currency_code=EUR)
+An HDMI clock display for Raspberry Pi 5, based on the [clock-8001](https://gitlab.com/clock-8001/clock-8001) project. Outputs a full-screen clock to HDMI via SDL2 with KMSDRM (no desktop environment required). Controllable via OSC.
 
+## Acknowledgements
 
-## Repository name change 2022-06-02
+This project is a fork of **clock-8001** by Depili, developed in co-operation with Daniel Richert and with grants from FUUG — Finnish Unix User Group. The original project is available at https://gitlab.com/clock-8001/clock-8001 and is licensed under the GNU General Public License v2.
 
-Due to changes to gitlab OSS licensing the project had to be moved to a new location inside a gitlab clock-8001 organization. So this is the new home for the project, https://gitlab.com/clock-8001/clock-8001/ Unfortunately this also means that go projects importing the clock packages need to be updated to reflect on the new module location and name. Sorry about that, but it had to be done.
+Please consider supporting the original clock-8001 development: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=XUMXUL5RX5MWJ&currency_code=EUR
 
-## About
+## What changed from clock-8001
 
-This is a simplistic clock written in go that can be used either as a video out with SDL or as a dedicated clock buidt with a 32x32 pixel hub75 led matrix and a ring of 60 addressable leds.
+- Stripped to HDMI-only SDL clock output (removed HUB75 LED matrix, Arduino LED ring, Pimoroni Unicorn HD, Futaba VFD)
+- Targets Raspberry Pi 5 running 64-bit Debian Trixie (arm64)
+- Runs headless via KMSDRM — no X11 or Wayland needed
+- GPIO pulse output support retained (periph.io)
 
-The README has been written for the version 4.x.x clocks, ie. the gitlab.com/clock-8001/clock-8001/v4 go module.
+## Requirements
 
-The clock can be controlled with the depili-clock-8001 companion module: https://github.com/bitfocus/companion-module-depili-clock-8001 Module version 5.0.0 is the first to implement V4 clock API.
+- Raspberry Pi 5 running Raspberry Pi OS / Debian Trixie (64-bit)
+- HDMI display
+- Network connection (for OSC control and web configuration)
 
-Features and configuration in greated detail can be found in the [getting started guide in wiki](https://gitlab.com/clock-8001/clock-8001/-/wikis/Getting-started-on-clock-8001-version-4).
+## Setup
 
-Developed in co-operation with Daniel Richert and with grants from FUUG - Finnish Unix User Group.
+### 1. Install dependencies
 
-## Platforms supported
-
-The main target is a custom hardened linux image for raspberry pi 2 & 3 single board computers. It has been made to be as fault tolerant as possible.
-
-Currently the clock is also available on macos Vetura, linux and windows as precompiled installation packages. Compiling from the source should be possible on many other variants.
-
-The installation files are available on https://kissa.depili.fi/clock-8001/releases/
-
-* .msi files are Microsoft installer files for Windows, tested on windows 10 64bit
-* .deb files are debian / ubuntu linux packages, currently x86 64bit (amd64) and armhf (raspberry pi os 32bit) packages are being generated. Packages have been tested on raspberry pi os bullseye on rpi 3b+ and rpi4 and on ubuntu 22.4 jammy 64bit.
-  * Best way to install the package is to use 'sudo apt install ./clock-8001_1.2.3_arch.deb' command, as it will automatically pull all the dependencies.
-* .zip files contain Macos .app files. The earlier unsigned intel releases should work on big sur onwards on x86 macs, the later signed universal releases are for ventura.
-
-## Web configuration interface
-
-The new unified images have a web configuration interface for the clock settings. You can access this interface by pointing your browser to the address of the clock. The default username is `admin` and the default password is `clockwork`. You should change them from the interface or the clock.ini file.
-
-On the raspberry pi images the config interface runs on port 80, on the installable versions on macos, linux and windows the default port is 8080.
-
-You can open a browser pointing to the configuration interface by pressing 'c' key while the clock is running.
-
-## Ready made raspberry pi images
-
-SD-card images for raspberry pi can be found at https://kissa.depili.fi/clock-8001/images
-
-Clock-8001 no longer has multiple different images, they have all been consolidated to one unified image which uses `enable_` files to activate various parts of the clock system as desired. The new images are named as `clock-800-unified-<version>.img`
-
-The images support raspberry pi 2B / 3B / 3B+ boards. They need at least 64Mb SD-cards. Write them to the card like any other raspberry pi sd-card image.
-
-The image tries to get a dhcp address on wired ethernet and also brings up a virtual interface eth0:1 with static ip (default 192.168.10.245 with 255.255.255.0 netmask).
-
-### Customizing the images
-
-You can place the following files on the sd-card FAT partition to customize the installation:
-* `clock.ini` main clock configuration file that is used by the default `clock_cmd.sh`
-* `hostname` to change the hostname used by the clock, it is available with "hostname.local" for bonjour / mDNS requests
-* `interfaces` a replacement for /etc/network/interfaces for custom network configuration
-* `ntp.conf` for custom ntp server configuration
-* `config.sys` the normal raspberry pi boot configuration for changing video modes etc.
-* `sdl-clock` to update the clock binary with this file
-* `clock_cmd.sh` is the command line for the clock, it should start with `/root/sdl-clock ` and be followed by any command line parameters you wish to use for the clock.
-* `clock_bridge` to update the clock bridge binary file
-* `clock_bridge_cmd.sh` to update the clock bridge command line. It should start with `/root/clock-bridge` and be followed by any command line paramaters for the bridge.
-* `enable_clock` delete this file and the main clock will not be active
-* `enable_bridge` delete this file and the mitti / millumin osc bridge will not be active
-* `enable_ssh` delete this file and remote ssh logins to the raspberry pi will not be allowed
-* `enable_ltc` delete this file and the LTC audio -> OSC functionality will not be active
-
-### Hyperpixel4 displays
-
-The image supports both the retangular and square hyperpixel4 displays from Pimoroni. To use them you need to rename either `config.txt.hp4_square` or `config.txt.hp4_rect` to `config.txt`
-
-For the rectangular display you need to also modify `clock_cmd.sh` to contain:
+```bash
+sudo apt update && sudo apt install -y golang libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
 ```
-/hyperpixel4_rect/hyperpixel4-init
-/root/sdl-clock -C /boot/clock.ini
+
+### 2. Clone and build
+
+```bash
+git clone https://github.com/jpkelly/clock8002.git
+cd clock8002/v4
+go build ./cmd/sdl-clock
+ln -s ttf_fonts/*.ttf .
 ```
-So that the display is initialized on boot.
 
-## sdl-clock - Output the clock to hdmi on the raspberry pi
+### 3. Test run
 
-You can build the clock binary with `go get gitlab.com/clock-8001/clock-8001/v4/cmd/sdl_clock`. Compiling requires SDL 2 and SDL_GFX 2 libraries. On the raspberry pi the default libraries shipped with rasbian will only output data to X11 window, so for full screen dedicated clock you need to compile the SDL libraries from source. For compiling use `./configure --host=armv7l-raspberry-linux-gnueabihf --disable-pulseaudio --disable-esd --disable-video-mir --disable-video-wayland --disable-video-x11 --disable-video-opengl` for config flags.
+```bash
+SDL_VIDEODRIVER=kmsdrm ./sdl-clock --fullscreen
+```
 
-### Precompiled binaries
+The first run creates a default config at `~/.config/clock-8001/clock.ini`. Edit it to set your timezone, clock face, colors, etc. You can also dump a fresh default config with:
 
-* Latest from git master: [sdl-clock](https://gitlab.com/clock-8001/clock-8001/-/jobs/artifacts/master/raw/sdl-clock?job=build)
-* Testing builds: https://kissa.depili.fi/clock-8001/testing/
-* Tagged releases: https://kissa.depili.fi/clock-8001/releases/
+```bash
+./sdl-clock --dump-config > ~/.config/clock-8001/clock.ini
+```
 
-### LTC timecode support
+### 4. Install as a system service
 
-The clock can be used to display a SMPTE LTC time. This requires a Hifiberry ADC+ DAC Pro hat: https://www.hifiberry.com/shop/boards/hifiberry-dac-adc-pro/ or Interpace Industries USB AiO interface. Currently only these two options for audio input are supported.
+```bash
+sudo usermod -aG video,render $USER
+sudo cp clock8002.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable clock8002
+sudo systemctl start clock8002
+```
 
-For Hifiberry it is recommended to use the pin headers for balanced audio input and to wire the incoming mono LTC signal to both left and right channels.
+### Service management
 
-Other usb audio interfaces might work, but they are completely untested and no support is offered for them.
+```bash
+sudo systemctl status clock8002       # check status
+sudo systemctl restart clock8002      # restart
+sudo systemctl stop clock8002         # stop
+cat ~/.config/clock-8001/clock.log    # view logs
+```
 
-## matrix-clock - Dedicated led matrix clock
+## Configuration
 
-**The matrix clock v4 isn't currently available. You can still use the version 3.**
+Edit `~/.config/clock-8001/clock.ini`. Key settings:
 
-Bill of materials:
-* Raspberry pi
-* 32x32 pixel 4mm pixel pitch led matrix
-* Led ring with 60 ws2812b leds
-* Arduino (nano recommend)
-* Adapter hat for the raspberry pi to connect to the led matrix
-* 5V 3A power supply
-* 12 leds of your choice for the static "hour" markers and current limiting resistors
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `Face` | Clock face: `round`, `text`, `small`, `countdown`, etc. | `round` |
+| `FullScreen` | Start in full screen mode | `false` |
+| `source1.tod` | Enable time-of-day on source 1 | `false` |
+| `source1.timezone` | Timezone for source 1 | `Europe/Helsinki` |
+| `text-color` | Main text color (hex) | `#FF8000` |
+| `BackgroundColor` | Background color (hex) | `#000000` |
+| `ListenAddr` | OSC listen address | `0.0.0.0:1245` |
+| `HTTPPort` | Web config interface port | `:8080` |
 
-You need to compile https://gitlab.com/Depili/rpi-matrix for a small program that will listen on udp socket for the led matrix data and handle driving the led matrix.
+## Web Configuration
 
-Compile the led matrix clock binary with `go get gitlab.com/clock-8001/clock-8001/v3/cmd/matrix-clock`
+Access the web configuration interface at `http://<pi-ip>:8080`. Default credentials: `admin` / `clockwork`.
 
-### Precompiled binaries
+## Platform
 
-* Latest from git master: [matrix-clock](https://gitlab.com/clock-8001/clock-8001/-/jobs/artifacts/master/raw/matrix-clock?job=build)
+- **Target**: Raspberry Pi 5, arm64, Debian Trixie
+- **Display**: HDMI via SDL2 KMSDRM (headless, no desktop)
+- **Language**: Go with SDL2 CGo bindings
 
-## OSC commands understood by the clock
+## OSC Control
 
-See https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md
+See the [original clock-8001 OSC documentation](https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md) for the full list of OSC commands.
+
+## License
+
+This project is licensed under the GNU General Public License v2, the same license as the original clock-8001.
