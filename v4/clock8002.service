@@ -1,0 +1,15 @@
+[Unit]
+Description=Clock 8002 SDL Display
+After=multi-user.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/clock8002/v4
+Environment=SDL_VIDEODRIVER=kmsdrm
+ExecStart=/home/pi/clock8002/v4/sdl-clock
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
