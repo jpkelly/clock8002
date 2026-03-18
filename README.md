@@ -46,20 +46,15 @@ If a release tarball is available, you can install without compiling:
 
 ### 1. Download the latest release
 
-Go to https://github.com/jpkelly/clock8002/releases and download the `clock8002-vX.X.X-linux-arm64.tar.gz` file to your Pi.
-
-Or from the command line:
-
 ```bash
-# Replace vX.X.X with the actual version
-wget https://github.com/jpkelly/clock8002/releases/download/vX.X.X/clock8002-vX.X.X-linux-arm64.tar.gz
+wget https://github.com/jpkelly/clock8002/releases/download/v0.0.3/clock8002-v0.0.3-linux-arm64.tar.gz
 ```
 
 ### 2. Extract and install
 
 ```bash
-tar xzf clock8002-v*-linux-arm64.tar.gz
-cd clock8002-v*-linux-arm64
+tar xzf clock8002-v0.0.3-linux-arm64.tar.gz
+cd clock8002-v0.0.3-linux-arm64
 ./install.sh
 ```
 
