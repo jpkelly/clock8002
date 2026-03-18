@@ -83,6 +83,8 @@ func initTextClock() {
 
 	if options.singleLine {
 		numAudioSources = 1
+	} else if options.dualLine {
+		numAudioSources = 2
 	} else if options.quadLine {
 		numAudioSources = 4
 	} else {
@@ -138,6 +140,8 @@ func drawTextClock(state *clock.State) {
 		drawMaxClock(state)
 	} else if options.singleLine && !state.Clocks[0].Hidden {
 		drawSingleLineClock(state)
+	} else if options.dualLine {
+		draw2TextClocks(state)
 	} else if options.quadLine {
 		draw4TextClocks(state)
 	} else if !options.singleLine {
@@ -206,6 +210,52 @@ func drawSingleLineClock(state *clock.State) {
 		numberBox.W = numberBox.W - 20
 
 		copyIntoRect(textClock.r[0].textTex, numberBox)
+	}
+}
+
+func draw2TextClocks(state *clock.State) {
+	var x, y int32
+
+	for i := 0; i < 2; i++ {
+		if state.Clocks[i].Hidden {
+			continue
+		}
+		y = 25 + (530 * int32(i))
+		x = 530
+		numberBox := sdl.Rect{X: x, Y: y, W: 1380, H: 440}
+		textR := sdl.Rect{X: x + 300, Y: y, W: 1380 - 300, H: 440}
+		if options.IconsDisable {
+			textR = numberBox
+		}
+		iconR := sdl.Rect{X: x, Y: y, W: 300, H: 440}
+		x = 10
+		labelR := sdl.Rect{X: x, Y: y, W: 500, H: 150}
+		signalR := sdl.Rect{X: iconR.X - 175, Y: y + 170, W: 150, H: 150}
+		if options.DrawBoxes {
+			gfx.BoxColor(renderer,
+				numberBox.X, numberBox.Y,
+				numberBox.X+numberBox.W, numberBox.Y+numberBox.H,
+				colors.rowBG[i])
+
+			gfx.BoxColor(renderer,
+				labelR.X, labelR.Y,
+				labelR.X+labelR.W, labelR.Y+labelR.H,
+				colors.labelBG)
+		}
+
+		copyIntoRect(textClock.r[i].signalTex, signalR)
+		copyIntoRect(textClock.r[i].labelTex, labelR)
+
+		if state.Clocks[i].Mode != clock.LTC {
+			copyIntoRect(textClock.r[i].textTex, textR)
+			if textClock.r[i].iconTex != nil {
+				copyIntoRect(textClock.r[i].iconTex, iconR)
+			}
+		} else {
+			numberBox.Y = numberBox.Y + 10
+			numberBox.W = numberBox.W - 20
+			copyIntoRect(textClock.r[i].textTex, numberBox)
+		}
 	}
 }
 
@@ -537,6 +587,9 @@ func drawTally(state *clock.State) {
 		}
 
 		tallyRect := sdl.Rect{X: 10, Y: 25 + (365 * 2), W: 1920 - 20, H: 300}
+		if options.dualLine {
+			tallyRect = sdl.Rect{X: 10, Y: 25 + (530 * 1), W: 1920 - 20, H: 440}
+		}
 		if options.quadLine {
 			tallyRect = sdl.Rect{X: 10, Y: 10 + (265 * 3), W: 1920 - 20, H: 240}
 		}
