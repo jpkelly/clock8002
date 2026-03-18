@@ -14,7 +14,7 @@ import (
 )
 
 // Version is the current clock engine version
-const Version = "0.1.1"
+const Version = "0.1.2"
 
 // State feedback timer
 const stateTimer = time.Second / 2
