@@ -48,8 +48,16 @@ if [ "$NET_MODE" = "static" ]; then
         echo "Applying static IP: ${NET_ADDR}/${NET_MASK}..."
         nmcli con mod "$NM_CON" ipv4.method manual \
             ipv4.addresses "${NET_ADDR}/${NET_MASK}"
-        [ -n "$NET_GW" ] && nmcli con mod "$NM_CON" ipv4.gateway "$NET_GW"
-        [ -n "$NET_DNS" ] && nmcli con mod "$NM_CON" ipv4.dns "$NET_DNS"
+        if [ -n "$NET_GW" ]; then
+            nmcli con mod "$NM_CON" ipv4.gateway "$NET_GW"
+        else
+            nmcli con mod "$NM_CON" ipv4.gateway ""
+        fi
+        if [ -n "$NET_DNS" ]; then
+            nmcli con mod "$NM_CON" ipv4.dns "$NET_DNS"
+        else
+            nmcli con mod "$NM_CON" ipv4.dns ""
+        fi
         nmcli con up "$NM_CON"
     else
         echo "Warning: static mode set but address/netmask missing."
