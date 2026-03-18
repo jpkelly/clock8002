@@ -172,7 +172,11 @@ func (engine *Engine) prepareInfo() {
 	}
 
 	info += fmt.Sprintf("Network: %s\n", detectNetworkMode())
-	info += fmt.Sprintf("IP-addresses:\n%s", clockAddresses())
+	info += interfaceAddresses()
+
+	if ap := detectWifiAP(); ap != "" {
+		info += ap
+	}
 
 	if engine.oscServer.Addr != "" {
 		info += fmt.Sprintf("OSC-listen: %s\n", engine.oscServer.Addr)
@@ -201,6 +205,53 @@ func detectNetworkMode() string {
 		return "Static"
 	}
 	return "DHCP"
+}
+
+// interfaceAddresses returns labeled IP addresses for eth0 and wlan0
+func interfaceAddresses() string {
+	var ret string
+	for _, name := range []string{"eth0", "wlan0"} {
+		iface, err := net.InterfaceByName(name)
+		if err != nil {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			ip, _, err := net.ParseCIDR(addr.String())
+			if err != nil || ip.To4() == nil {
+				continue
+			}
+			label := "Ethernet"
+			if name == "wlan0" {
+				label = "Wi-Fi"
+			}
+			ret += fmt.Sprintf("%s: %v\n", label, ip)
+		}
+	}
+	return ret
+}
+
+// detectWifiAP returns AP SSID line if piclock-ap is active, empty string otherwise
+func detectWifiAP() string {
+	out, err := exec.Command("nmcli", "-t", "-f", "GENERAL.STATE", "con", "show", "piclock-ap").Output()
+	if err != nil {
+		return ""
+	}
+	if !strings.Contains(string(out), "activated") {
+		return ""
+	}
+	ssidOut, err := exec.Command("nmcli", "-g", "802-11-wireless.ssid", "con", "show", "piclock-ap").Output()
+	if err != nil {
+		return ""
+	}
+	ssid := strings.TrimSpace(string(ssidOut))
+	if ssid != "" {
+		return fmt.Sprintf("AP SSID: %s\n", ssid)
+	}
+	return ""
 }
 
 func (engine *Engine) infoTimeout() {
