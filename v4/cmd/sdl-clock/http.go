@@ -232,7 +232,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Clock face type
 	newOptions.Face = r.FormValue("Face")
-	if f := newOptions.Face; (f != "countdown") && (f != "round") && (f != "dual-round") && (f != "text") && (f != "max") && (f != "small") && (f != "single") && (f != "144") && (f != "192") && (f != "288x144") {
+	if f := newOptions.Face; (f != "countdown") && (f != "round") && (f != "dual-round") && (f != "text") && (f != "quad") && (f != "max") && (f != "small") && (f != "single") && (f != "144") && (f != "192") && (f != "288x144") {
 		errors += fmt.Sprintf("<li>Clock face selection is invalid (%s)</li>", newOptions.Face)
 	}
 
@@ -272,6 +272,10 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	errors += util.ValidateNumber(err, "Row3 alpha")
 	newOptions.Row3Alpha = uint8(alpha)
 
+	alpha, err = strconv.Atoi(r.FormValue("row4-alpha"))
+	errors += util.ValidateNumber(err, "Row4 alpha")
+	newOptions.Row4Alpha = uint8(alpha)
+
 	alpha, err = strconv.Atoi(r.FormValue("label-alpha"))
 	errors += util.ValidateNumber(err, "Label alpha")
 	newOptions.LabelAlpha = uint8(alpha)
@@ -303,6 +307,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	errors += util.ValidateColor(newOptions.Row2Color, "Text clock row 2 color")
 	newOptions.Row3Color = r.FormValue("Row3Color")
 	errors += util.ValidateColor(newOptions.Row3Color, "Text clock row 3 color")
+	newOptions.Row4Color = r.FormValue("Row4Color")
+	errors += util.ValidateColor(newOptions.Row4Color, "Text clock row 4 color")
 
 	newOptions.LabelColor = r.FormValue("LabelColor")
 	errors += util.ValidateColor(newOptions.LabelColor, "Text clock label color")
