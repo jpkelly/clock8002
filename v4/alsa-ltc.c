@@ -75,8 +75,9 @@ static int osc_build_message(char *buf, int bufsize,
     return pos;
 }
 
-/* Auto-detect a suitable ALSA capture device on Raspberry Pi.
- * Looks for a device matching "bcm2835" that is not "null" or "Output".
+/* Auto-detect a suitable ALSA capture device.
+ * Looks for a hardware capture device (hw: prefix), preferring USB audio
+ * or bcm2835. Skips "null" and output-only devices.
  * Returns a malloc'd string with the device name, or NULL.
  */
 static char *detect_device(void) {
@@ -109,9 +110,9 @@ static char *detect_device(void) {
                 desc ? desc : "(null)",
                 ioid ? ioid : "(null)");
 
-        /* Match bcm2835 (Raspberry Pi onboard audio) */
-        if (strstr(name, "bcm2835") != NULL && result == NULL) {
-            fprintf(stdout, "Matched card:\n");
+        /* Match hw: devices — prefer USB Audio, bcm2835, or any hw: capture */
+        if (result == NULL && strstr(name, "hw:") != NULL) {
+            fprintf(stdout, "Matched card: %s\n", name);
             result = strdup(name);
         }
 
