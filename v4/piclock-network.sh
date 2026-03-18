@@ -24,6 +24,9 @@ if [ -n "$NET_HOSTNAME" ]; then
     if [ "$CURRENT_HOSTNAME" != "$NET_HOSTNAME" ]; then
         echo "Setting hostname to ${NET_HOSTNAME}..."
         hostnamectl set-hostname "$NET_HOSTNAME"
+        # Update /etc/hosts so sudo and other tools can resolve the hostname
+        sed -i "s/127\.0\.1\.1.*/127.0.1.1\t${NET_HOSTNAME}/" /etc/hosts
+        grep -q "127.0.1.1" /etc/hosts || echo -e "127.0.1.1\t${NET_HOSTNAME}" >> /etc/hosts
         # Restart mDNS so the new hostname is advertised on the network
         systemctl restart avahi-daemon 2>/dev/null || true
     fi
