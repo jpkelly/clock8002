@@ -74,12 +74,21 @@ def flush_logo_buffer(buf):
 def parse_ini_settings():
     settings = {'HTTPPort': '', 'HTTPUser': '', 'HTTPPassword': ''}
     if os.path.exists(INI_PATH):
-        config = configparser.ConfigParser()
-        config.read(INI_PATH)
-        for section in config.sections():
-            for key in settings:
-                if config.has_option(section, key):
-                    settings[key] = config.get(section, key)
+        try:
+            config = configparser.ConfigParser()
+            config.read(INI_PATH)
+            for section in config.sections():
+                for key in settings:
+                    if config.has_option(section, key):
+                        settings[key] = config.get(section, key)
+        except configparser.MissingSectionHeaderError:
+            # Flat INI format (no section headers)
+            with open(INI_PATH, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    for key in settings:
+                        if line.startswith(f'{key}='):
+                            settings[key] = line.split('=', 1)[1]
     return settings
 
 def get_ip():
