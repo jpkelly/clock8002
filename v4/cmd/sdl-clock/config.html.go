@@ -674,11 +674,11 @@ const configHTML = `
       </form>
     </div>
 
-    {{$color := "#8E1047"}}
-    {{$oldColor := "F072A9"}}
-    {{$background := "#FFF4F4"}}
-    {{$tabInactive := "#EB3383"}}
-    {{$tabActive := "#E3166F"}}
+    {{$color := "#00695C"}}
+    {{$oldColor := "4DB6AC"}}
+    {{$background := "#E0F2F1"}}
+    {{$tabInactive := "#00897B"}}
+    {{$tabActive := "#004D40"}}
     {{$tabText := "white"}}
 
     <style type="text/css">
@@ -747,22 +747,22 @@ const configHTML = `
       -webkit-border-radius: 10px;
       -moz-border-radius: 10px;
       margin: 0px 0px 10px 0px;
-      border: 1px solid #FFD2D2;
+      border: 1px solid #B2DFDB;
       padding: 20px;
-      background: #FFF4F4;
-      box-shadow: inset 0px 0px 15px #FFE5E5;
-      -moz-box-shadow: inset 0px 0px 15px #FFE5E5;
-      -webkit-box-shadow: inset 0px 0px 15px #FFE5E5;
+      background: #E0F2F1;
+      box-shadow: inset 0px 0px 15px #B2DFDB;
+      -moz-box-shadow: inset 0px 0px 15px #B2DFDB;
+      -webkit-box-shadow: inset 0px 0px 15px #B2DFDB;
     }
     .config-form fieldset legend {
       color: {{$color}};
-      border-top: 1px solid #FFD2D2;
-      border-left: 1px solid #FFD2D2;
-      border-right: 1px solid #FFD2D2;
+      border-top: 1px solid #B2DFDB;
+      border-left: 1px solid #B2DFDB;
+      border-right: 1px solid #B2DFDB;
       border-radius: 5px 5px 0px 0px;
       -webkit-border-radius: 5px 5px 0px 0px;
       -moz-border-radius: 5px 5px 0px 0px;
-      background: #FFF4F4;
+      background: #E0F2F1;
       padding: 0px 8px 3px 8px;
       box-shadow: -0px -1px 2px #F1F1F1;
       -moz-box-shadow:-0px -1px 2px #F1F1F1;
@@ -783,14 +783,14 @@ const configHTML = `
       border-radius: 3px;
       -webkit-border-radius: 3px;
       -moz-border-radius: 3px;
-      border: 1px solid #FFC2DC;
+      border: 1px solid #80CBC4;
       outline: none;
       color: {{$color}};
       padding: 5px 8px 5px 8px;
-      box-shadow: inset 1px 1px 4px #FFD5E7;
-      -moz-box-shadow: inset 1px 1px 4px #FFD5E7;
-      -webkit-box-shadow: inset 1px 1px 4px #FFD5E7;
-      background: #FFEFF6;
+      box-shadow: inset 1px 1px 4px #B2DFDB;
+      -moz-box-shadow: inset 1px 1px 4px #B2DFDB;
+      -webkit-box-shadow: inset 1px 1px 4px #B2DFDB;
+      background: #E0F7FA;
       width:50%;
     }
     .config-form  input[type=checkbox]{
@@ -799,12 +799,12 @@ const configHTML = `
     .config-form  input[type=submit],
     .config-form  input[type=button]{
       background: {{$tabInactive}};
-      border: 1px solid #C94A81;
+      border: 1px solid #00695C;
       padding: 5px 15px 5px 15px;
       color: {{$tabText}};
-      box-shadow: inset -1px -1px 3px #FF62A7;
-      -moz-box-shadow: inset -1px -1px 3px #FF62A7;
-      -webkit-box-shadow: inset -1px -1px 3px #FF62A7;
+      box-shadow: inset -1px -1px 3px #4DB6AC;
+      -moz-box-shadow: inset -1px -1px 3px #4DB6AC;
+      -webkit-box-shadow: inset -1px -1px 3px #4DB6AC;
       border-radius: 3px;
       border-radius: 3px;
       -webkit-border-radius: 3px;
@@ -878,7 +878,7 @@ const configHTML = `
     .tab-content {
       max-height: 0;
       padding: 0 1em;
-      color: #F072A9;
+      color: #4DB6AC;
       background: white;
       transition: all 0.35s;
     }
@@ -887,11 +887,11 @@ const configHTML = `
       justify-content: flex-end;
       padding: 1em;
       font-size: 0.75em;
-      background: #F072A9;
+      background: #4DB6AC;
       cursor: pointer;
     }
     .tab-close:hover {
-      background: #eb448d;
+      background: #00897B;
     }
 
     input:checked + .tab-label {
