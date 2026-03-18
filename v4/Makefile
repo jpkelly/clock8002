@@ -9,6 +9,7 @@ GIT_COMMIT ?= $(shell git rev-list -1 HEAD)
 VERSION_PKG := gitlab.com/clock-8001/clock-8001/v4/clock
 GO_LD_FLAGS := "-X $(VERSION_PKG).gitCommit=$(GIT_COMMIT) -X $(VERSION_PKG).gitTag=$(GIT_TAG)"
 RELEASE_DIR := clock8002-$(GIT_TAG)-linux-arm64
+NETWORK_CONFIG ?= default
 
 .PHONY: all dep build clean test release
 
@@ -50,7 +51,7 @@ release: sdl-clock alsa-ltc ## Package a release tarball
 	@cp piclock-network.sh $(RELEASE_DIR)/
 	@cp piclock-network.service $(RELEASE_DIR)/
 	@cp install.sh $(RELEASE_DIR)/
-	@cp network.ini $(RELEASE_DIR)/
+	@cp network.ini.$(NETWORK_CONFIG) $(RELEASE_DIR)/network.ini
 	@chmod +x $(RELEASE_DIR)/install.sh
 	@tar czf $(RELEASE_DIR).tar.gz $(RELEASE_DIR)
 	@rm -rf $(RELEASE_DIR)
