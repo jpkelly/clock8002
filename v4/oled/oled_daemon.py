@@ -106,7 +106,7 @@ def get_stats():
     http_pass = settings['HTTPPassword']
     hostname = socket.gethostname() + '.local'
     if port:
-        hostname = f"{hostname}:{port}"
+        hostname = f"{hostname}:{port.lstrip(':')}"
     ip = get_ip()
     return hostname, ip, http_user, http_pass
 
