@@ -91,9 +91,21 @@ if [ -d oled ]; then
     sudo cp oled/oled_daemon.py "${INSTALL_DIR}/oled/"
     sudo chmod +x "${INSTALL_DIR}/oled/oled_daemon.py"
 
-    # Copy default OLED config if not present
-    if [ -f oled/oled.ini ] && [ ! -f "${INSTALL_DIR}/oled/oled.ini" ]; then
-        sudo cp oled/oled.ini "${INSTALL_DIR}/oled/oled.ini"
+    # Install OLED config to boot partition with symlink
+    if [ -L "${INSTALL_DIR}/oled/oled.ini" ]; then
+        echo "OLED config symlink already in place."
+    elif [ -f "${INSTALL_DIR}/oled/oled.ini" ]; then
+        echo "Migrating OLED config to ${BOOT_CONFIG_DIR}/oled.ini..."
+        sudo cp "${INSTALL_DIR}/oled/oled.ini" "${BOOT_CONFIG_DIR}/oled.ini"
+        sudo rm "${INSTALL_DIR}/oled/oled.ini"
+        sudo ln -s "${BOOT_CONFIG_DIR}/oled.ini" "${INSTALL_DIR}/oled/oled.ini"
+    elif [ -f "${BOOT_CONFIG_DIR}/oled.ini" ]; then
+        echo "Found OLED config on boot partition, creating symlink..."
+        sudo ln -s "${BOOT_CONFIG_DIR}/oled.ini" "${INSTALL_DIR}/oled/oled.ini"
+    elif [ -f oled/oled.ini ]; then
+        echo "Installing default OLED config to ${BOOT_CONFIG_DIR}/oled.ini..."
+        sudo cp oled/oled.ini "${BOOT_CONFIG_DIR}/oled.ini"
+        sudo ln -s "${BOOT_CONFIG_DIR}/oled.ini" "${INSTALL_DIR}/oled/oled.ini"
     fi
 
     # Copy splash logo to user home
