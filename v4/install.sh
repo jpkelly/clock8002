@@ -40,6 +40,16 @@ fi
 echo "Adding $USER to video and render groups..."
 sudo usermod -aG video,render "$USER"
 
+# Install default config if none exists
+CONFIG_DIR="$HOME/.config/clock-8001"
+if [ ! -f "${CONFIG_DIR}/clock.ini" ]; then
+    echo "Installing default configuration..."
+    mkdir -p "${CONFIG_DIR}"
+    cp clock.ini "${CONFIG_DIR}/clock.ini"
+else
+    echo "Existing config found at ${CONFIG_DIR}/clock.ini — not overwriting."
+fi
+
 # Install systemd service
 echo "Installing systemd services..."
 sed "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" "${SERVICE_FILE}" | \
