@@ -37,7 +37,46 @@ Please consider supporting the original clock-8001 development: https://www.payp
 - HDMI display
 - Network connection (for OSC control and web configuration)
 
-## Building on the Raspberry Pi
+## Quick Install (pre-built binary)
+
+If a release tarball is available, you can install without compiling:
+
+### 1. Download the latest release
+
+Go to https://github.com/jpkelly/clock8002/releases and download the `clock8002-vX.X.X-linux-arm64.tar.gz` file to your Pi.
+
+Or from the command line:
+
+```bash
+# Replace vX.X.X with the actual version
+wget https://github.com/jpkelly/clock8002/releases/download/vX.X.X/clock8002-vX.X.X-linux-arm64.tar.gz
+```
+
+### 2. Extract and install
+
+```bash
+tar xzf clock8002-v*-linux-arm64.tar.gz
+cd clock8002-v*-linux-arm64
+./install.sh
+```
+
+The install script will:
+- Install SDL2 runtime libraries (no dev packages or Go needed)
+- Copy the binary and assets to `/opt/clock8002`
+- Add your user to video/render groups
+- Install and enable the systemd service
+
+### 3. Start the clock
+
+```bash
+sudo systemctl start clock8002
+```
+
+Then open `http://<pi-ip>:8080` to configure (default: **admin** / **clockwork**).
+
+---
+
+## Building from Source
 
 ### 1. Install system dependencies
 
@@ -179,10 +218,30 @@ See the [original clock-8001 OSC documentation](https://gitlab.com/clock-8001/cl
 | Problem | Solution |
 |---------|----------|
 | Black screen / no output | Make sure `SDL_VIDEODRIVER=kmsdrm` is set and user is in `video` and `render` groups |
-| "Couldn't open RobotoMono" | Run `ln -sf ttf_fonts/*.ttf .` in the v4 directory |
+| "Couldn't open RobotoMono" | Run `ln -sf ttf_fonts/*.ttf .` in the v4 directory (source builds only) |
 | Clock exits silently | Check `~/.config/clock-8001/clock.log` for errors |
 | Web UI not accessible | Verify the service is running with `systemctl status clock8002` and check firewall |
 | Config changes not applied | Restart the service: `sudo systemctl restart clock8002` |
+
+## Creating a Release
+
+On the Pi (where the binary is built natively):
+
+```bash
+cd ~/clock8002/v4
+git tag v0.0.1
+make release
+```
+
+This produces `clock8002-v0.0.1-linux-arm64.tar.gz` containing the binary, fonts, voices, service file, and install script.
+
+Upload to GitHub Releases:
+
+```bash
+# Install gh CLI if needed: sudo apt install gh
+gh auth login
+gh release create v0.0.1 clock8002-v0.0.1-linux-arm64.tar.gz --title "v0.0.1" --notes "Initial release"
+```
 
 ## License
 
