@@ -88,6 +88,6 @@ func parseColor(s string) (c *color.RGBA, err error) {
 
 // VersionInfo returns the clock engine version and git commit as a string
 func VersionInfo() string {
-	version := fmt.Sprintf("Clock version %s (%s)", gitTag, gitCommit)
+	version := fmt.Sprintf("Clock-8002 version %s", Version)
 	return version
 }
