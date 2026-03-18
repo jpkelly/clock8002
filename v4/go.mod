@@ -13,16 +13,9 @@ require (
 	gitlab.com/Depili/go-osc v0.0.0-20220126123138-cdbd92c9027a
 	gitlab.com/Depili/go-rgb-led-matrix v0.0.0-20170204170814-25b63d4baf68
 	gitlab.com/Depili/limitimer v0.0.0-20220312082356-1cec6f97c270
-	gitlab.com/Depili/ubercorn v1.0.0
-	gitlab.com/clock-8001/futaba_vfd v0.0.0-20240531201016-091b45c8cf5e
 	periph.io/x/periph v3.6.7+incompatible
 )
 
-require (
-	github.com/husl-colors/husl-go v2.0.0+incompatible // indirect
-	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3 // indirect
-	github.com/stianeikeland/go-rpio/v4 v4.6.0 // indirect
-	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
-	periph.io/x/conn/v3 v3.6.7 // indirect
-	periph.io/x/host/v3 v3.6.7 // indirect
-)
+require github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3 // indirect
+
+require golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
