@@ -12,6 +12,8 @@ Please consider supporting the original clock-8001 development: https://www.payp
 
 - Stripped to HDMI-only SDL clock output (removed HUB75 LED matrix, Arduino LED ring, Pimoroni Unicorn HD, Futaba VFD)
 - Added "quad" face — text clock with 4 timers
+- Added "dual" face — text clock with 2 timers
+- Added LTC timecode input via ALSA audio (alsa-ltc)
 - Targets Raspberry Pi 5 running 64-bit Debian Trixie (arm64)
 - Runs headless via KMSDRM — no X11 or Wayland needed
 - GPIO pulse output support retained (periph.io)
@@ -24,6 +26,7 @@ Please consider supporting the original clock-8001 development: https://www.payp
 | `dual-round` | Two round clocks side by side |
 | `text` | Text clock with 3 timers |
 | `quad` | Text clock with 4 timers |
+| `dual` | Text clock with 2 timers |
 | `single` | Text clock with 1 large timer |
 | `max` | Maximal size single timer |
 | `countdown` | Countdown to a fixed date/time |
@@ -61,10 +64,11 @@ cd clock8002-v*-linux-arm64
 ```
 
 The install script will:
-- Install SDL2 runtime libraries (no dev packages or Go needed)
-- Copy the binary and assets to `/opt/clock8002`
+- Install SDL2 and LTC runtime libraries (no dev packages or Go needed)
+- Copy the binary, alsa-ltc, and assets to `/opt/clock8002`
+- Install a default `clock.ini` config (quad face with world clocks)
 - Add your user to video/render groups
-- Install and enable the systemd service
+- Install and enable the systemd services
 
 ### 3. Start the clock
 
@@ -74,6 +78,15 @@ sudo systemctl start clock8002
 
 Then open `http://<pi-ip>:8080` to configure (default: **admin** / **clockwork**).
 
+### 4. Enable LTC timecode (optional)
+
+If you have a USB audio interface receiving LTC timecode:
+
+```bash
+sudo systemctl enable alsa-ltc
+sudo systemctl start alsa-ltc
+```
+
 ---
 
 ## Building from Source
@@ -82,10 +95,10 @@ Then open `http://<pi-ip>:8080` to configure (default: **admin** / **clockwork**
 
 ```bash
 sudo apt update
-sudo apt install -y git golang libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
+sudo apt install -y git golang libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev libltc-dev libasound2-dev
 ```
 
-This installs Go (1.22+ from Trixie repos) and all SDL2 development libraries needed for the CGo bindings.
+This installs Go (1.22+ from Trixie repos), SDL2 development libraries for the CGo bindings, and ALSA/LTC libraries for the timecode decoder.
 
 ### 2. Clone the repository
 
@@ -98,10 +111,18 @@ cd clock8002/v4
 ### 3. Build
 
 ```bash
-go build ./cmd/sdl-clock
+make build
+make alsa-ltc
 ```
 
-The first build downloads Go module dependencies and compiles everything. This takes a few minutes on a Pi 5.
+Or build individually:
+
+```bash
+go build ./cmd/sdl-clock
+gcc -O2 -o alsa-ltc alsa-ltc.c -lasound -lltc
+```
+
+The first Go build downloads module dependencies and compiles everything. This takes a few minutes on a Pi 5.
 
 ### 4. Set up fonts
 
@@ -152,6 +173,17 @@ journalctl -u clock8002 -f            # live service logs
 cat ~/.config/clock-8001/clock.log    # application log file
 ```
 
+### LTC timecode service
+
+```bash
+sudo systemctl enable alsa-ltc       # enable on boot
+sudo systemctl start alsa-ltc        # start LTC decoder
+sudo systemctl status alsa-ltc       # check status
+journalctl -u alsa-ltc -f            # live LTC logs
+```
+
+The LTC decoder auto-detects USB audio capture devices and sends decoded timecode via OSC to the clock. Enable LTC on a source in the web UI or config file (`source1.ltc=true`).
+
 ## Updating
 
 After pulling new changes, rebuild and restart:
@@ -160,8 +192,10 @@ After pulling new changes, rebuild and restart:
 cd ~/clock8002
 git pull
 cd v4
-go build ./cmd/sdl-clock
+make build
+make alsa-ltc
 sudo systemctl restart clock8002
+sudo systemctl restart alsa-ltc
 ```
 
 If `clock8002.service` was modified, also run:
@@ -229,18 +263,19 @@ On the Pi (where the binary is built natively):
 
 ```bash
 cd ~/clock8002/v4
-git tag v0.0.1
+git tag vX.X.X
+git push origin vX.X.X
 make release
 ```
 
-This produces `clock8002-v0.0.1-linux-arm64.tar.gz` containing the binary, fonts, voices, service file, and install script.
+This produces `clock8002-vX.X.X-linux-arm64.tar.gz` containing sdl-clock, alsa-ltc, default config, fonts, voices, service files, and install script.
 
 Upload to GitHub Releases:
 
 ```bash
 # Install gh CLI if needed: sudo apt install gh
 gh auth login
-gh release create v0.0.1 clock8002-v0.0.1-linux-arm64.tar.gz --title "v0.0.1" --notes "Initial release"
+gh release create vX.X.X clock8002-vX.X.X-linux-arm64.tar.gz --title "vX.X.X" --notes "Release notes"
 ```
 
 ## License
