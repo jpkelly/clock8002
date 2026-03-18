@@ -24,6 +24,8 @@ if [ -n "$NET_HOSTNAME" ]; then
     if [ "$CURRENT_HOSTNAME" != "$NET_HOSTNAME" ]; then
         echo "Setting hostname to ${NET_HOSTNAME}..."
         hostnamectl set-hostname "$NET_HOSTNAME"
+        # Restart mDNS so the new hostname is advertised on the network
+        systemctl restart avahi-daemon 2>/dev/null || true
     fi
 fi
 
