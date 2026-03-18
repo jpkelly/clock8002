@@ -40,14 +40,31 @@ fi
 echo "Adding $USER to video and render groups..."
 sudo usermod -aG video,render "$USER"
 
-# Install default config if none exists
+# Install config to boot partition with symlink
+BOOT_CONFIG_DIR="/boot/firmware/piclock"
 CONFIG_DIR="$HOME/.config/clock-8001"
-if [ ! -f "${CONFIG_DIR}/clock.ini" ]; then
-    echo "Installing default configuration..."
-    mkdir -p "${CONFIG_DIR}"
-    cp clock.ini "${CONFIG_DIR}/clock.ini"
+
+sudo mkdir -p "${BOOT_CONFIG_DIR}"
+mkdir -p "${CONFIG_DIR}"
+
+if [ -L "${CONFIG_DIR}/clock.ini" ]; then
+    # Already a symlink (previous install migrated it)
+    echo "Config symlink already in place."
+elif [ -f "${CONFIG_DIR}/clock.ini" ]; then
+    # Existing config at old location — migrate to boot partition
+    echo "Migrating existing config to ${BOOT_CONFIG_DIR}/clock.ini..."
+    sudo cp "${CONFIG_DIR}/clock.ini" "${BOOT_CONFIG_DIR}/clock.ini"
+    rm "${CONFIG_DIR}/clock.ini"
+    ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
+elif [ -f "${BOOT_CONFIG_DIR}/clock.ini" ]; then
+    # Config on boot partition but no symlink yet
+    echo "Found config on boot partition, creating symlink..."
+    ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
 else
-    echo "Existing config found at ${CONFIG_DIR}/clock.ini — not overwriting."
+    # Fresh install — copy default to boot partition and symlink
+    echo "Installing default configuration to ${BOOT_CONFIG_DIR}/clock.ini..."
+    sudo cp clock.ini "${BOOT_CONFIG_DIR}/clock.ini"
+    ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
 fi
 
 # Install systemd service
@@ -109,7 +126,8 @@ echo ""
 echo "Installation complete!"
 echo ""
 echo "  Install directory: ${INSTALL_DIR}"
-echo "  Config file:       ~/.config/clock-8001/clock.ini"
+echo "  Config file:       /boot/firmware/piclock/clock.ini"
+echo "  Config symlink:    ~/.config/clock-8001/clock.ini"
 echo "  Web UI:            http://$(hostname -I | awk '{print $1}'):8080"
 echo "  Credentials:       admin / clockwork"
 echo ""
