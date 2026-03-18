@@ -1,6 +1,6 @@
 # Clock 8002
 
-An HDMI clock display for Raspberry Pi 5, based on the [clock-8001](https://gitlab.com/clock-8001/clock-8001) project. Outputs a full-screen clock to HDMI via SDL2 with KMSDRM (no desktop environment required). Controllable via OSC.
+An HDMI clock display for Raspberry Pi 5, based on the [clock-8001](https://gitlab.com/clock-8001/clock-8001) project. Outputs a full-screen clock to HDMI via SDL2 with KMSDRM (no desktop environment required). Controllable via OSC and a built-in web UI.
 
 ## Acknowledgements
 
@@ -11,9 +11,25 @@ Please consider supporting the original clock-8001 development: https://www.payp
 ## What changed from clock-8001
 
 - Stripped to HDMI-only SDL clock output (removed HUB75 LED matrix, Arduino LED ring, Pimoroni Unicorn HD, Futaba VFD)
+- Added "quad" face — text clock with 4 timers
 - Targets Raspberry Pi 5 running 64-bit Debian Trixie (arm64)
 - Runs headless via KMSDRM — no X11 or Wayland needed
 - GPIO pulse output support retained (periph.io)
+
+## Clock Faces
+
+| Face | Description |
+|------|-------------|
+| `round` | Single analog-style round clock |
+| `dual-round` | Two round clocks side by side |
+| `text` | Text clock with 3 timers |
+| `quad` | Text clock with 4 timers |
+| `single` | Text clock with 1 large timer |
+| `max` | Maximal size single timer |
+| `countdown` | Countdown to a fixed date/time |
+| `192` | Small 192×192px round clock |
+| `144` | Small 144×144px round clock |
+| `288x144` | Small 288×144px text clock |
 
 ## Requirements
 
@@ -21,82 +37,152 @@ Please consider supporting the original clock-8001 development: https://www.payp
 - HDMI display
 - Network connection (for OSC control and web configuration)
 
-## Setup
+## Building on the Raspberry Pi
 
-### 1. Install dependencies
+### 1. Install system dependencies
 
 ```bash
-sudo apt update && sudo apt install -y golang libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
+sudo apt update
+sudo apt install -y git golang libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
 ```
 
-### 2. Clone and build
+This installs Go (1.22+ from Trixie repos) and all SDL2 development libraries needed for the CGo bindings.
+
+### 2. Clone the repository
 
 ```bash
+cd ~
 git clone https://github.com/jpkelly/clock8002.git
 cd clock8002/v4
-go build ./cmd/sdl-clock
-ln -s ttf_fonts/*.ttf .
 ```
 
-### 3. Test run
+### 3. Build
+
+```bash
+go build ./cmd/sdl-clock
+```
+
+The first build downloads Go module dependencies and compiles everything. This takes a few minutes on a Pi 5.
+
+### 4. Set up fonts
+
+The text clock faces require TTF fonts that live in the `ttf_fonts/` subdirectory. Create symlinks so the binary can find them in the working directory:
+
+```bash
+ln -sf ttf_fonts/*.ttf .
+```
+
+### 5. Add your user to video/render groups
+
+SDL2 KMSDRM needs direct access to the display hardware:
+
+```bash
+sudo usermod -aG video,render $USER
+```
+
+Log out and back in (or reboot) for group changes to take effect.
+
+### 6. Test run
 
 ```bash
 SDL_VIDEODRIVER=kmsdrm ./sdl-clock --fullscreen
 ```
 
-The first run creates a default config at `~/.config/clock-8001/clock.ini`. Edit it to set your timezone, clock face, colors, etc. You can also dump a fresh default config with:
+The clock should appear on the HDMI display. A startup overlay shows the version and IP address for about 30 seconds. Press Escape or Ctrl-C to exit.
+
+On first run, a default config is created at `~/.config/clock-8001/clock.ini`. Logs are written to `~/.config/clock-8001/clock.log`.
+
+### 7. Install as a system service
 
 ```bash
-./sdl-clock --dump-config > ~/.config/clock-8001/clock.ini
-```
-
-### 4. Install as a system service
-
-```bash
-sudo usermod -aG video,render $USER
 sudo cp clock8002.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable clock8002
 sudo systemctl start clock8002
 ```
 
+The service runs as your user, starts on boot, and auto-restarts on crash.
+
 ### Service management
 
 ```bash
 sudo systemctl status clock8002       # check status
-sudo systemctl restart clock8002      # restart
-sudo systemctl stop clock8002         # stop
-cat ~/.config/clock-8001/clock.log    # view logs
+sudo systemctl restart clock8002      # restart after config changes
+sudo systemctl stop clock8002         # stop the clock
+journalctl -u clock8002 -f            # live service logs
+cat ~/.config/clock-8001/clock.log    # application log file
+```
+
+## Updating
+
+After pulling new changes, rebuild and restart:
+
+```bash
+cd ~/clock8002
+git pull
+cd v4
+go build ./cmd/sdl-clock
+sudo systemctl restart clock8002
+```
+
+If `clock8002.service` was modified, also run:
+
+```bash
+sudo cp clock8002.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl restart clock8002
 ```
 
 ## Configuration
 
-Edit `~/.config/clock-8001/clock.ini`. Key settings:
+### Web UI
+
+Access the web configuration interface at `http://<pi-ip>:8080`. Default credentials: **admin** / **clockwork**.
+
+All clock settings — face type, colors, sources, timers, OSC, GPIO — can be changed from the web UI without editing files.
+
+### Config file
+
+Edit `~/.config/clock-8001/clock.ini` directly. To generate a fresh default config:
+
+```bash
+cd ~/clock8002/v4
+SDL_VIDEODRIVER=kmsdrm ./sdl-clock --dump-config > ~/.config/clock-8001/clock.ini
+```
+
+Key settings:
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| `Face` | Clock face: `round`, `text`, `small`, `countdown`, etc. | `round` |
+| `Face` | Clock face (see table above) | `round` |
 | `FullScreen` | Start in full screen mode | `false` |
 | `source1.tod` | Enable time-of-day on source 1 | `false` |
 | `source1.timezone` | Timezone for source 1 | `Europe/Helsinki` |
-| `text-color` | Main text color (hex) | `#FF8000` |
+| `Row1Color` | Text color for timer row 1 (hex) | `#FF8000` |
 | `BackgroundColor` | Background color (hex) | `#000000` |
 | `ListenAddr` | OSC listen address | `0.0.0.0:1245` |
 | `HTTPPort` | Web config interface port | `:8080` |
-
-## Web Configuration
-
-Access the web configuration interface at `http://<pi-ip>:8080`. Default credentials: `admin` / `clockwork`.
 
 ## Platform
 
 - **Target**: Raspberry Pi 5, arm64, Debian Trixie
 - **Display**: HDMI via SDL2 KMSDRM (headless, no desktop)
 - **Language**: Go with SDL2 CGo bindings
+- **Web UI**: Built-in HTTP server on port 8080
 
 ## OSC Control
 
 See the [original clock-8001 OSC documentation](https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md) for the full list of OSC commands.
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Black screen / no output | Make sure `SDL_VIDEODRIVER=kmsdrm` is set and user is in `video` and `render` groups |
+| "Couldn't open RobotoMono" | Run `ln -sf ttf_fonts/*.ttf .` in the v4 directory |
+| Clock exits silently | Check `~/.config/clock-8001/clock.log` for errors |
+| Web UI not accessible | Verify the service is running with `systemctl status clock8002` and check firewall |
+| Config changes not applied | Restart the service: `sudo systemctl restart clock8002` |
 
 ## License
 
