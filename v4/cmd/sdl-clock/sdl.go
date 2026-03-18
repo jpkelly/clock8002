@@ -16,9 +16,9 @@ var colors struct {
 	countdown  sdl.Color
 	tally      sdl.Color
 	tallyBG    sdl.Color
-	row        [3]sdl.Color
-	rowBG      [3]sdl.Color
-	icon       [3]sdl.Color
+	row        [4]sdl.Color
+	rowBG      [4]sdl.Color
+	icon       [4]sdl.Color
 	signal     [4]sdl.Color
 	label      sdl.Color
 	labelBG    sdl.Color
@@ -103,13 +103,17 @@ func initColors() {
 
 	colors.row[1], err = parseColor(options.Row2Color)
 	check(err)
-	colors.row[1].A = options.Row1Alpha
+	colors.row[1].A = options.Row2Alpha
 
 	colors.row[2], err = parseColor(options.Row3Color)
 	check(err)
-	colors.row[2].A = options.Row1Alpha
+	colors.row[2].A = options.Row3Alpha
 
-	for i := 0; i < 3; i++ {
+	colors.row[3], err = parseColor(options.Row4Color)
+	check(err)
+	colors.row[3].A = options.Row4Alpha
+
+	for i := 0; i < 4; i++ {
 		colors.icon[i] = colors.row[i]
 	}
 
@@ -128,7 +132,7 @@ func initColors() {
 	timerBG, err := parseColor(options.TimerBG)
 	check(err)
 	timerBG.A = options.TimerBGAlpha
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 4; i++ {
 		colors.rowBG[i] = timerBG
 	}
 

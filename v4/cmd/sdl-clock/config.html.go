@@ -50,6 +50,7 @@ const configHTML = `
                     <option value="round" {{if eq .Face "round"}} selected {{end}}>Single round clock</option>
                     <option value="dual-round" {{if eq .Face "dual-round"}} selected {{end}}>Dual round clocks</option>
                     <option value="text" {{if eq .Face "text"}} selected {{end}}>Text clock with 3 timers</option>
+                    <option value="quad" {{if eq .Face "quad"}} selected {{end}}>Text clock with 4 timers</option>
                     <option value="single" {{if eq .Face "single"}} selected {{end}}>Text clock with 1 timer</option>
                     <option value="max" {{if eq .Face "max"}} selected {{end}}>Text clock with maximal size. Recommend disabling hours. Doesn't include icons or signal colors.</option>
                     <option value="192" {{if eq .Face "192"}} selected {{end}}>Small 192x192px round clock</option>
@@ -567,6 +568,9 @@ const configHTML = `
 
                   {{color "Row3Color" "Color for timer row 3." .Row3Color}}
                   {{uint8 "row3-alpha" "Alpha for timer row 3." .Row3Alpha}}
+
+                  {{color "Row4Color" "Color for timer row 4." .Row4Color}}
+                  {{uint8 "row4-alpha" "Alpha for timer row 4." .Row4Alpha}}
 
                   {{color "LabelColor" "Color for timer titles." .LabelColor}}
                   {{uint8 "label-alpha" "Alpha for timer titles." .LabelAlpha}}

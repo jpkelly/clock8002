@@ -33,7 +33,7 @@ var textClock struct {
 	numberFont  *ttf.Font
 	labelFont   *ttf.Font
 	iconFont    *ttf.Font
-	r           [3]outputLine
+	r           [4]outputLine
 	glyphRegexp *regexp.Regexp
 	tally       string
 	tallyTex    *sdl.Texture
@@ -83,6 +83,8 @@ func initTextClock() {
 
 	if options.singleLine {
 		numAudioSources = 1
+	} else if options.quadLine {
+		numAudioSources = 4
 	} else {
 		numAudioSources = 3
 	}
@@ -136,6 +138,8 @@ func drawTextClock(state *clock.State) {
 		drawMaxClock(state)
 	} else if options.singleLine && !state.Clocks[0].Hidden {
 		drawSingleLineClock(state)
+	} else if options.quadLine {
+		draw4TextClocks(state)
 	} else if !options.singleLine {
 		draw3TextClocks(state)
 	}
@@ -208,7 +212,7 @@ func drawSingleLineClock(state *clock.State) {
 func draw3TextClocks(state *clock.State) {
 	var x, y int32
 
-	for i := range textClock.r {
+	for i := 0; i < 3; i++ {
 		if state.Clocks[i].Hidden {
 			// Row is hidden
 			continue
@@ -255,6 +259,52 @@ func draw3TextClocks(state *clock.State) {
 			numberBox.Y = numberBox.Y + 10
 			numberBox.W = numberBox.W - 20
 
+			copyIntoRect(textClock.r[i].textTex, numberBox)
+		}
+	}
+}
+
+func draw4TextClocks(state *clock.State) {
+	var x, y int32
+
+	for i := 0; i < 4; i++ {
+		if state.Clocks[i].Hidden {
+			continue
+		}
+		y = 10 + (265 * int32(i))
+		x = 530
+		numberBox := sdl.Rect{X: x, Y: y, W: 1380, H: 240}
+		textR := sdl.Rect{X: x + 300, Y: y, W: 1380 - 300, H: 240}
+		if options.IconsDisable {
+			textR = numberBox
+		}
+		iconR := sdl.Rect{X: x, Y: y, W: 300, H: 240}
+		x = 10
+		labelR := sdl.Rect{X: x, Y: y, W: 500, H: 80}
+		signalR := sdl.Rect{X: iconR.X - 175, Y: y + 95, W: 120, H: 120}
+		if options.DrawBoxes {
+			gfx.BoxColor(renderer,
+				numberBox.X, numberBox.Y,
+				numberBox.X+numberBox.W, numberBox.Y+numberBox.H,
+				colors.rowBG[i])
+
+			gfx.BoxColor(renderer,
+				labelR.X, labelR.Y,
+				labelR.X+labelR.W, labelR.Y+labelR.H,
+				colors.labelBG)
+		}
+
+		copyIntoRect(textClock.r[i].signalTex, signalR)
+		copyIntoRect(textClock.r[i].labelTex, labelR)
+
+		if state.Clocks[i].Mode != clock.LTC {
+			copyIntoRect(textClock.r[i].textTex, textR)
+			if textClock.r[i].iconTex != nil {
+				copyIntoRect(textClock.r[i].iconTex, iconR)
+			}
+		} else {
+			numberBox.Y = numberBox.Y + 10
+			numberBox.W = numberBox.W - 20
 			copyIntoRect(textClock.r[i].textTex, numberBox)
 		}
 	}
@@ -487,6 +537,9 @@ func drawTally(state *clock.State) {
 		}
 
 		tallyRect := sdl.Rect{X: 10, Y: 25 + (365 * 2), W: 1920 - 20, H: 300}
+		if options.quadLine {
+			tallyRect = sdl.Rect{X: 10, Y: 10 + (265 * 3), W: 1920 - 20, H: 240}
+		}
 		if options.singleLine {
 			tallyRect.X = 25
 			tallyRect.W = 1920 - 50

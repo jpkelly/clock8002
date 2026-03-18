@@ -392,6 +392,9 @@ func computeDerivedOptions() {
 		options.small = true
 	case "text":
 		options.textClock = true
+	case "quad":
+		options.textClock = true
+		options.quadLine = true
 	case "single":
 		options.textClock = true
 		options.singleLine = true

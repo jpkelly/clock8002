@@ -54,7 +54,7 @@ var outputModules []outputModule = make([]outputModule, 0)
 
 type clockOptions struct {
 	Config          func(s string) error `short:"C" long:"config" description:"read config from a file"`
-	Face            string               `long:"face" description:"Select the clock face to use" default:"round" choice:"round" choice:"dual-round" choice:"small" choice:"text" choice:"single" choice:"max" choice:"countdown" choice:"144" choice:"192" choice:"288x144"`
+	Face            string               `long:"face" description:"Select the clock face to use" default:"round" choice:"round" choice:"dual-round" choice:"small" choice:"text" choice:"quad" choice:"single" choice:"max" choice:"countdown" choice:"144" choice:"192" choice:"288x144"`
 	Debug           bool                 `long:"debug" description:"Enable debug output"`
 	HTTPPort        string               `long:"http-port" description:"Port to listen on for the http configuration interface" default:":8080"`
 	DisableHTTP     bool                 `long:"disable-http" description:"Disable the web configuration interface"`
@@ -86,6 +86,8 @@ type clockOptions struct {
 	Row2Alpha      uint8  `long:"row2-alpha" description:"Alpha channel for text clock row 2" default:"255"`
 	Row3Color      string `long:"row3-color" description:"Color for text clock row 3" default:"#FF8000"`
 	Row3Alpha      uint8  `long:"row3-alpha" description:"Alpha channel for text clock row 3" default:"255"`
+	Row4Color      string `long:"row4-color" description:"Color for text clock row 4" default:"#FF8000"`
+	Row4Alpha      uint8  `long:"row4-alpha" description:"Alpha channel for text clock row 4" default:"255"`
 	LabelColor     string `long:"label-color" description:"Color for text clock labels" default:"#FF8000"`
 	LabelAlpha     uint8  `long:"label-alpha" description:"Alpha channel for label text color" default:"255"`
 	TimerBG        string `long:"timer-bg-color" description:"Color for optional timer background box" default:"#202020"`
@@ -127,6 +129,7 @@ type clockOptions struct {
 	dualClock  bool
 	textClock  bool
 	singleLine bool
+	quadLine   bool
 	countdown  bool
 	vertical   bool
 	Errors     htmlTemplate.HTML // For passing errors to the html template
