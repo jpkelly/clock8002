@@ -43,6 +43,7 @@ release: sdl-clock alsa-ltc ## Package a release tarball
 	@cp ttf_fonts/*.ttf $(RELEASE_DIR)/
 	@cp -r fonts $(RELEASE_DIR)/
 	@cp -r voices $(RELEASE_DIR)/
+	@cp -r oled $(RELEASE_DIR)/
 	@cp clock8002.service $(RELEASE_DIR)/
 	@cp alsa-ltc.service $(RELEASE_DIR)/
 	@cp install.sh $(RELEASE_DIR)/

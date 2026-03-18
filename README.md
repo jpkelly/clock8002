@@ -47,21 +47,23 @@ If a release tarball is available, you can install without compiling:
 ### 1. Download the latest release
 
 ```bash
-wget https://github.com/jpkelly/clock8002/releases/download/v0.0.3/clock8002-v0.0.3-linux-arm64.tar.gz
+wget https://github.com/jpkelly/clock8002/releases/download/v0.1.0/clock8002-v0.1.0-linux-arm64.tar.gz
 ```
 
 ### 2. Extract and install
 
 ```bash
-tar xzf clock8002-v0.0.3-linux-arm64.tar.gz
-cd clock8002-v0.0.3-linux-arm64
+tar xzf clock8002-v0.1.0-linux-arm64.tar.gz
+cd clock8002-v0.1.0-linux-arm64
 ./install.sh
 ```
 
 The install script will:
-- Install SDL2 and LTC runtime libraries (no dev packages or Go needed)
-- Copy the binary, alsa-ltc, and assets to `/opt/clock8002`
+- Install SDL2, Mesa GL, LTC, and OLED runtime libraries
+- Copy the binary, alsa-ltc, OLED daemon, and assets to `/opt/clock8002`
 - Install a default `clock.ini` config (quad face with world clocks)
+- Set up OLED display daemon (SSD1306 I2C) if present
+- Enable I2C for OLED
 - Add your user to video/render groups
 - Install and enable the systemd services
 

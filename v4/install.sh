@@ -19,7 +19,7 @@ fi
 # Install SDL2 runtime libraries and LTC dependencies
 echo "Installing runtime libraries..."
 sudo apt update
-sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11
+sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11 i2c-tools python3-pip python3-venv
 
 # Create install directory
 echo "Installing to ${INSTALL_DIR}..."
@@ -67,11 +67,44 @@ fi
 sudo systemctl daemon-reload
 sudo systemctl enable clock8002
 
+# Install OLED display daemon if present
+if [ -d oled ]; then
+    echo "Installing OLED display daemon..."
+    sudo mkdir -p "${INSTALL_DIR}/oled"
+    sudo cp oled/oled_daemon.py "${INSTALL_DIR}/oled/"
+    sudo chmod +x "${INSTALL_DIR}/oled/oled_daemon.py"
+
+    # Copy splash logo to user home
+    if [ -f oled/piclockLogo.bin ] && [ ! -f "$HOME/piclockLogo.bin" ]; then
+        cp oled/piclockLogo.bin "$HOME/piclockLogo.bin"
+    fi
+
+    # Install Python dependencies
+    echo "Installing OLED Python dependencies..."
+    pip3 install --break-system-packages luma.oled Pillow 2>/dev/null || \
+        pip3 install luma.oled Pillow
+
+    # Enable I2C if not already enabled
+    if ! grep -q "^dtparam=i2c_arm=on" /boot/firmware/config.txt 2>/dev/null; then
+        echo "Enabling I2C..."
+        sudo raspi-config nonint do_i2c 0
+    fi
+
+    # Install OLED systemd service
+    if [ -f oled/oled_daemon.service ]; then
+        sed "s|ExecStart=.*|ExecStart=/usr/bin/python3 ${INSTALL_DIR}/oled/oled_daemon.py|" oled/oled_daemon.service | \
+            sed "s|User=.*|User=$USER|" | \
+            sudo tee /etc/systemd/system/oled_daemon.service > /dev/null
+        sudo systemctl daemon-reload
+        sudo systemctl enable oled_daemon
+    fi
+fi
+
 echo ""
 echo "Installation complete!"
 echo ""
 echo "  Install directory: ${INSTALL_DIR}"
-echo "  Config file:       ~/.config/clock-8001/clock.ini (created on first run)"
+echo "  Config file:       ~/.config/clock-8001/clock.ini"
 echo "  Web UI:            http://$(hostname -I | awk '{print $1}'):8080"
 echo "  Credentials:       admin / clockwork"
 echo ""
@@ -80,5 +113,10 @@ echo "  sudo systemctl start clock8002"
 echo ""
 echo "For LTC timecode input (requires USB audio interface):"
 echo "  sudo systemctl enable alsa-ltc"
+echo "  sudo systemctl start alsa-ltc"
+echo ""
+echo "OLED display (if installed):"
+echo "  sudo systemctl start oled_daemon"
+echo ""
 echo "  sudo systemctl start alsa-ltc"
 echo ""
