@@ -113,6 +113,24 @@ hostname=clock8002
 - A sample `network.ini` is included in the release tarball and installed to `/boot/piclock/` automatically
 - To apply changes without rebooting: `sudo /opt/clock8002/piclock-network.sh`
 
+#### Wi-Fi Access Point (optional)
+
+The Pi can broadcast its own Wi-Fi network, allowing a phone or laptop to connect directly and access the web UI — useful for standalone deployments without existing Wi-Fi infrastructure.
+
+Add a `[wifi]` section to `network.ini`:
+
+```ini
+[wifi]
+ap_enabled=true
+```
+
+- **SSID** defaults to `<hostname>-ap` (e.g. `piclock3-ap`). Override with `ap_ssid=MyNetwork`.
+- **Password** defaults to `clockwork`. Override with `ap_password=YourPassword` (minimum 8 characters).
+- **Channel** defaults to `6`. Override with `ap_channel=11`.
+- The AP uses NetworkManager's shared mode, which hands out DHCP addresses to clients (typically `10.42.0.x`).
+- The wired Ethernet connection continues to work alongside the AP.
+- Set `ap_enabled=false` to disable and remove the AP.
+
 ### 4. Enable LTC timecode (optional)
 
 If you have a USB audio interface receiving LTC timecode:

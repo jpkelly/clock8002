@@ -11,6 +11,8 @@ import (
 	"image/color"
 	"log"
 	"net"
+	"os"
+	"os/exec"
 	"regexp"
 	db "runtime/debug"
 	"strconv"
@@ -159,8 +161,13 @@ func (engine *Engine) listenUDPTime() {
 }
 
 func (engine *Engine) prepareInfo() {
-	info := fmt.Sprintf("Clock-8002 version: %v\n\n", gitTag)
-	info += fmt.Sprintf("ID: %v\n", engine.uuid[len(engine.uuid)-8:])
+	info := fmt.Sprintf("Clock-8002 %v (%v)\n\n", gitTag, gitCommit)
+
+	if hostname, err := os.Hostname(); err == nil {
+		info += fmt.Sprintf("%s.local\n", hostname)
+	}
+
+	info += fmt.Sprintf("Network: %s\n", detectNetworkMode())
 	info += fmt.Sprintf("IP-addresses:\n%s", clockAddresses())
 
 	if engine.oscServer.Addr != "" {
@@ -168,6 +175,18 @@ func (engine *Engine) prepareInfo() {
 	}
 
 	engine.info = info
+}
+
+func detectNetworkMode() string {
+	out, err := exec.Command("nmcli", "-g", "ipv4.method", "con", "show", "--active").Output()
+	if err != nil {
+		return "Unknown"
+	}
+	method := strings.TrimSpace(strings.Split(string(out), "\n")[0])
+	if method == "manual" {
+		return "Static"
+	}
+	return "DHCP"
 }
 
 func (engine *Engine) infoTimeout() {

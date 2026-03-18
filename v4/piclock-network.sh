@@ -72,3 +72,45 @@ elif [ "$NET_MODE" = "dhcp" ]; then
         echo "Network mode: DHCP (already set)."
     fi
 fi
+
+# --- Wi-Fi Access Point ---
+AP_ENABLED=$(parse_ini "$NETWORK_INI" wifi ap_enabled)
+AP_CON="piclock-ap"
+
+if [ "$AP_ENABLED" = "true" ]; then
+    AP_SSID=$(parse_ini "$NETWORK_INI" wifi ap_ssid)
+    AP_PASSWORD=$(parse_ini "$NETWORK_INI" wifi ap_password)
+    AP_CHANNEL=$(parse_ini "$NETWORK_INI" wifi ap_channel)
+
+    # Default SSID to <hostname>-ap
+    [ -z "$AP_SSID" ] && AP_SSID="$(hostname)-ap"
+    # Default password
+    [ -z "$AP_PASSWORD" ] && AP_PASSWORD="clockwork"
+    # Default channel
+    [ -z "$AP_CHANNEL" ] && AP_CHANNEL="6"
+
+    if nmcli con show "$AP_CON" >/dev/null 2>&1; then
+        echo "Updating Wi-Fi AP: ${AP_SSID}..."
+        nmcli con mod "$AP_CON" \
+            802-11-wireless.ssid "$AP_SSID" \
+            802-11-wireless.channel "$AP_CHANNEL" \
+            wifi-sec.psk "$AP_PASSWORD"
+    else
+        echo "Creating Wi-Fi AP: ${AP_SSID}..."
+        nmcli con add type wifi ifname wlan0 con-name "$AP_CON" autoconnect yes \
+            ssid "$AP_SSID" \
+            802-11-wireless.mode ap \
+            802-11-wireless.band bg \
+            802-11-wireless.channel "$AP_CHANNEL" \
+            ipv4.method shared \
+            wifi-sec.key-mgmt wpa-psk \
+            wifi-sec.psk "$AP_PASSWORD"
+    fi
+    nmcli con up "$AP_CON"
+elif [ "$AP_ENABLED" = "false" ]; then
+    if nmcli con show "$AP_CON" >/dev/null 2>&1; then
+        echo "Disabling Wi-Fi AP..."
+        nmcli con down "$AP_CON" 2>/dev/null || true
+        nmcli con delete "$AP_CON"
+    fi
+fi
