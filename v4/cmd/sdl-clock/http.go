@@ -444,8 +444,7 @@ func delayedReboot() {
 
 func delayedExit() {
 	time.Sleep(time.Second)
-	confChan <- true
-	// os.Exit(0)
+	os.Exit(0)
 }
 
 func (options *clockOptions) writeConfig(path string) {
