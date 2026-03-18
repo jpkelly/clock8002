@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"log"
 	"net"
+	"runtime/debug"
 	"time"
 )
 
@@ -88,6 +89,14 @@ func parseColor(s string) (c *color.RGBA, err error) {
 
 // VersionInfo returns the clock engine version and git commit as a string
 func VersionInfo() string {
-	version := fmt.Sprintf("Clock-8002 version %s", Version)
-	return version
+	commit := "unknown"
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, s := range info.Settings {
+			if s.Key == "vcs.revision" && len(s.Value) >= 7 {
+				commit = s.Value[:7]
+				break
+			}
+		}
+	}
+	return fmt.Sprintf("Clock-8002 version %s (%s)", Version, commit)
 }
