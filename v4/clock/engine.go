@@ -161,7 +161,11 @@ func (engine *Engine) listenUDPTime() {
 }
 
 func (engine *Engine) prepareInfo() {
-	info := fmt.Sprintf("Clock-8002 %v (%v)\n\n", gitTag, gitCommit)
+	commit := gitCommit
+	if len(commit) > 7 {
+		commit = commit[:7]
+	}
+	info := fmt.Sprintf("Clock-8002 %v (%v)\n\n", gitTag, commit)
 
 	if hostname, err := os.Hostname(); err == nil {
 		info += fmt.Sprintf("%s.local\n", hostname)
@@ -178,11 +182,21 @@ func (engine *Engine) prepareInfo() {
 }
 
 func detectNetworkMode() string {
-	out, err := exec.Command("nmcli", "-g", "ipv4.method", "con", "show", "--active").Output()
+	// Get the first active connection name
+	nameOut, err := exec.Command("nmcli", "-t", "-f", "NAME", "con", "show", "--active").Output()
 	if err != nil {
 		return "Unknown"
 	}
-	method := strings.TrimSpace(strings.Split(string(out), "\n")[0])
+	conName := strings.TrimSpace(strings.Split(string(nameOut), "\n")[0])
+	if conName == "" {
+		return "Unknown"
+	}
+	// Query ipv4.method for that connection
+	out, err := exec.Command("nmcli", "-g", "ipv4.method", "con", "show", conName).Output()
+	if err != nil {
+		return "Unknown"
+	}
+	method := strings.TrimSpace(string(out))
 	if method == "manual" {
 		return "Static"
 	}
