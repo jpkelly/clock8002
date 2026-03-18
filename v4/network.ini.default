@@ -16,7 +16,7 @@ mode=dhcp
 
 [host]
 # Hostname for the Pi (without .local)
-#hostname=piclock
+hostname=piClock
 
 [wifi]
 ap_enabled=false

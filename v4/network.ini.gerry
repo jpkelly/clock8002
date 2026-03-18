@@ -16,10 +16,10 @@ netmask=24
 
 [host]
 # Hostname for the Pi (without .local)
-hostname=piclock3
+hostname=piClock
 
 [wifi]
 ap_enabled=false
-ap_ssid=piclock3-ap
+ap_ssid=piClock-ap
 ap_password=clockwork
 ap_channel=6
