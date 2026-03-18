@@ -108,7 +108,7 @@ func main() {
 	engine, err := clock.MakeEngine(options.EngineOptions)
 	check(err)
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 4; i++ {
 		engine.SetSourceColors(i, toRGBA(colors.row[i]), toRGBA(colors.rowBG[i]))
 	}
 	engine.SetTitleColors(toRGBA(colors.label), toRGBA(colors.labelBG))
@@ -161,7 +161,7 @@ func main() {
 			// Create main clock engine
 			engine, err = clock.MakeEngine(options.EngineOptions)
 			check(err)
-			for i := 0; i < 3; i++ {
+			for i := 0; i < 4; i++ {
 				engine.SetSourceColors(i, toRGBA(colors.row[i]), toRGBA(colors.rowBG[i]))
 			}
 			engine.SetTitleColors(toRGBA(colors.label), toRGBA(colors.labelBG))
