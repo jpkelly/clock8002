@@ -49,8 +49,8 @@ const configHTML = `
                   <select name="Face" id="Face">
                     <option value="round" {{if eq .Face "round"}} selected {{end}}>Single round clock</option>
                     <option value="dual-round" {{if eq .Face "dual-round"}} selected {{end}}>Dual round clocks</option>
-                    <option value="text" {{if eq .Face "text"}} selected {{end}}>Text clock with 3 timers</option>
                     <option value="quad" {{if eq .Face "quad"}} selected {{end}}>Text clock with 4 timers</option>
+                    <option value="text" {{if eq .Face "text"}} selected {{end}}>Text clock with 3 timers</option>
                     <option value="dual" {{if eq .Face "dual"}} selected {{end}}>Text clock with 2 timers</option>
                     <option value="single" {{if eq .Face "single"}} selected {{end}}>Text clock with 1 timer</option>
                     <option value="max" {{if eq .Face "max"}} selected {{end}}>Text clock with maximal size. Recommend disabling hours. Doesn't include icons or signal colors.</option>
