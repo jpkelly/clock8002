@@ -47,6 +47,7 @@ release: sdl-clock alsa-ltc ## Package a release tarball
 	@cp clock8002.service $(RELEASE_DIR)/
 	@cp alsa-ltc.service $(RELEASE_DIR)/
 	@cp install.sh $(RELEASE_DIR)/
+	@cp network.ini $(RELEASE_DIR)/
 	@chmod +x $(RELEASE_DIR)/install.sh
 	@tar czf $(RELEASE_DIR).tar.gz $(RELEASE_DIR)
 	@rm -rf $(RELEASE_DIR)

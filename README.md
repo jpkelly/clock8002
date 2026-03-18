@@ -75,6 +75,24 @@ sudo systemctl start clock8002
 
 Then open `http://<pi-ip>:8080` to configure (default: **admin** / **clockwork**).
 
+### Pre-boot Network Configuration (optional)
+
+You can configure the Pi's IP address and hostname before first boot — no SSH needed. Mount the SD card on a Mac/PC and edit `/boot/firmware/piclock/network.ini`:
+
+```ini
+[network]
+mode=static
+address=10.0.0.100
+netmask=24
+gateway=10.0.0.1
+dns=10.0.0.1
+
+[host]
+hostname=clock8002
+```
+
+Set `mode=dhcp` (the default) to use DHCP, or `mode=static` with the settings above. The installer applies these via NetworkManager on first run. A sample `network.ini` is included in the release tarball.
+
 ### 4. Enable LTC timecode (optional)
 
 If you have a USB audio interface receiving LTC timecode:
