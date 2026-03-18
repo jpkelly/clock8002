@@ -19,7 +19,7 @@ fi
 # Install SDL2 runtime libraries and LTC dependencies
 echo "Installing runtime libraries..."
 sudo apt update
-sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libltc11
+sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11
 
 # Create install directory
 echo "Installing to ${INSTALL_DIR}..."

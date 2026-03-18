@@ -5,9 +5,10 @@ After=multi-user.target
 [Service]
 Type=simple
 User=pi
-WorkingDirectory=/home/pi/clock8002/v4
+WorkingDirectory=/opt/clock8002
 Environment=SDL_VIDEODRIVER=kmsdrm
-ExecStart=/home/pi/clock8002/v4/sdl-clock
+Environment=XDG_RUNTIME_DIR=/run/user/%U
+ExecStart=/opt/clock8002/sdl-clock --fullscreen
 Restart=always
 RestartSec=5
 
