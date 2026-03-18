@@ -3,7 +3,7 @@ package main
 const configHTML = `
 <html>
   <head>
-    <title>Clock-8001 configuration</title>
+    <title>Clock-8002 configuration</title>
   </head>
   <body>
     <h1>Clock configuration editor</h1>
