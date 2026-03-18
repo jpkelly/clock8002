@@ -1,0 +1,13 @@
+[Unit]
+Description=Bootsplash screen
+DefaultDependencies=no
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/fbi --noverbose -a -t 3 -1 /opt/clock8002/bootsplash.png
+StandardInput=tty
+StandardOutput=tty
+
+[Install]
+WantedBy=sysinit.target

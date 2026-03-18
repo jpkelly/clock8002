@@ -18,12 +18,12 @@ fi
 
 # Stop running services before copying binaries
 echo "Stopping services..."
-sudo systemctl stop clock8002 alsa-ltc oled_daemon 2>/dev/null || true
+sudo systemctl stop clock8002 alsa-ltc oled_daemon bootsplash 2>/dev/null || true
 
 # Install SDL2 runtime libraries and LTC dependencies
 echo "Installing runtime libraries..."
 sudo apt update
-sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11 i2c-tools python3-pip python3-venv
+sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11 i2c-tools python3-pip python3-venv fbi
 
 # Create install directory
 echo "Installing to ${INSTALL_DIR}..."
@@ -152,6 +152,30 @@ if [ -d oled ]; then
             sudo tee /etc/systemd/system/oled_daemon.service > /dev/null
         sudo systemctl daemon-reload
         sudo systemctl enable oled_daemon
+    fi
+fi
+
+# Install boot splash screen
+if [ -d splash ]; then
+    echo "Installing boot splash screen..."
+    sudo cp splash/bootsplash.png "${INSTALL_DIR}/bootsplash.png"
+
+    # Install bootsplash systemd service
+    if [ -f splash/bootsplash.service ]; then
+        sudo cp splash/bootsplash.service /etc/systemd/system/
+        sudo systemctl daemon-reload
+        sudo systemctl enable bootsplash
+    fi
+
+    # Patch cmdline.txt to suppress Pi logos and kernel messages
+    CMDLINE="/boot/firmware/cmdline.txt"
+    if [ -f "${CMDLINE}" ]; then
+        for opt in logo.nologo quiet "loglevel=1" "console=tty3"; do
+            if ! grep -q "${opt}" "${CMDLINE}"; then
+                echo "Adding ${opt} to cmdline.txt..."
+                sudo sed -i "s/$/ ${opt}/" "${CMDLINE}"
+            fi
+        done
     fi
 fi
 
