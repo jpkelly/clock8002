@@ -14,7 +14,7 @@ import (
 )
 
 // Version is the current clock engine version
-const Version = "4.0.0"
+const Version = "0.0.1"
 
 // State feedback timer
 const stateTimer = time.Second / 2
@@ -23,7 +23,7 @@ const flashDuration = 200 * time.Millisecond
 
 // Will get overridden by ldflags in Makefile
 var gitCommit = "Unknown"
-var gitTag = "v4.0.0"
+var gitTag = "v0.0.1"
 
 // Icons
 const (

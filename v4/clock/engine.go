@@ -159,7 +159,7 @@ func (engine *Engine) listenUDPTime() {
 }
 
 func (engine *Engine) prepareInfo() {
-	info := fmt.Sprintf("Clock-8001 version: %v\n\n", gitTag)
+	info := fmt.Sprintf("Clock-8002 version: %v\n\n", gitTag)
 	info += fmt.Sprintf("ID: %v\n", engine.uuid[len(engine.uuid)-8:])
 	info += fmt.Sprintf("IP-addresses:\n%s", clockAddresses())
 
@@ -435,7 +435,7 @@ func (engine *Engine) printVersion() {
 	} else {
 		log.Printf("Error reading BuildInfo, version data unavailable")
 	}
-	log.Printf("Clock-8001 engine version %s git: %s\n", gitTag, gitCommit)
+	log.Printf("Clock-8002 engine version %s git: %s\n", gitTag, gitCommit)
 }
 
 // initCounters initializes the countdown and count up timers
