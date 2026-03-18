@@ -77,7 +77,7 @@ Then open `http://<pi-ip>:8080` to configure (default: **admin** / **clockwork**
 
 ### Pre-boot Network Configuration (optional)
 
-You can configure the Pi's IP address and hostname before first boot — no SSH needed. Mount the SD card on a Mac/PC and edit `/boot/firmware/piclock/network.ini`:
+You can configure the Pi's IP address and hostname before first boot — no SSH needed. Mount the SD card on a Mac/PC and edit `/boot/piclock/network.ini`:
 
 ```ini
 [network]

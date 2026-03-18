@@ -41,7 +41,7 @@ echo "Adding $USER to video and render groups..."
 sudo usermod -aG video,render "$USER"
 
 # Install config to boot partition with symlink
-BOOT_CONFIG_DIR="/boot/firmware/piclock"
+BOOT_CONFIG_DIR="/boot/piclock"
 CONFIG_DIR="$HOME/.config/clock-8001"
 
 sudo mkdir -p "${BOOT_CONFIG_DIR}"
@@ -197,7 +197,7 @@ echo ""
 echo "Installation complete!"
 echo ""
 echo "  Install directory: ${INSTALL_DIR}"
-echo "  Config file:       /boot/firmware/piclock/clock.ini"
+echo "  Config file:       /boot/piclock/clock.ini"
 echo "  Config symlink:    ~/.config/clock-8001/clock.ini"
 echo "  Web UI:            http://$(hostname -I | awk '{print $1}'):8080"
 echo "  Credentials:       admin / clockwork"
