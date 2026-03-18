@@ -77,7 +77,21 @@ Then open `http://<pi-ip>:8080` to configure (default: **admin** / **clockwork**
 
 ### Pre-boot Network Configuration (optional)
 
-You can configure the Pi's IP address and hostname before first boot — no SSH needed. Mount the SD card on a Mac/PC and edit `/boot/piclock/network.ini`:
+You can configure the Pi's IP address and hostname without SSH by editing `/boot/piclock/network.ini`. This file is on the FAT32 boot partition, so you can mount the SD card on a Mac/PC to edit it.
+
+Settings are applied automatically on every boot by the `piclock-network` service. After editing, just reboot for changes to take effect.
+
+#### DHCP (default)
+
+```ini
+[network]
+mode=dhcp
+
+[host]
+hostname=clock8002
+```
+
+#### Static IP
 
 ```ini
 [network]
@@ -91,7 +105,11 @@ dns=10.0.0.1
 hostname=clock8002
 ```
 
-Set `mode=dhcp` (the default) to use DHCP, or `mode=static` with the settings above. The installer applies these via NetworkManager on first run. A sample `network.ini` is included in the release tarball.
+**Notes:**
+- Uncomment settings by removing the `#` at the start of the line
+- The hostname is set without `.local` — mDNS adds that automatically
+- A sample `network.ini` is included in the release tarball and installed to `/boot/piclock/` automatically
+- To apply changes without rebooting: `sudo /opt/clock8002/piclock-network.sh`
 
 ### 4. Enable LTC timecode (optional)
 
