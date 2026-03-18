@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import time
 import os
 import socket
@@ -8,12 +9,34 @@ from luma.core.interface.serial import i2c
 from luma.oled.device import ssd1306
 from PIL import ImageDraw, ImageFont, Image
 
-serial = i2c(port=1, address=0x3c)
-device = ssd1306(serial, rotate=2)
-font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
-
 INI_PATH = os.path.expanduser('~/.config/clock-8001/clock.ini')
+OLED_INI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oled.ini')
 LOGO_PATH = os.path.expanduser('~/piclockLogo.bin')
+
+# OLED hardware defaults
+OLED_ENABLED = True
+OLED_I2C_PORT = 1
+OLED_I2C_ADDRESS = 0x3c
+OLED_ROTATION = 2
+
+# Read OLED config
+if os.path.exists(OLED_INI_PATH):
+    _cfg = configparser.ConfigParser()
+    _cfg.read(OLED_INI_PATH)
+    if _cfg.has_section('oled'):
+        OLED_ENABLED = _cfg.getboolean('oled', 'enabled', fallback=OLED_ENABLED)
+        OLED_I2C_PORT = _cfg.getint('oled', 'i2c_port', fallback=OLED_I2C_PORT)
+        _addr = _cfg.get('oled', 'i2c_address', fallback=None)
+        if _addr:
+            OLED_I2C_ADDRESS = int(_addr, 16)
+        OLED_ROTATION = _cfg.getint('oled', 'rotation', fallback=OLED_ROTATION)
+
+if not OLED_ENABLED:
+    sys.exit(0)
+
+serial = i2c(port=OLED_I2C_PORT, address=OLED_I2C_ADDRESS)
+device = ssd1306(serial, rotate=OLED_ROTATION)
+font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
 
 # Direct port of Argon logo display logic
 OLED_WD = device.bounding_box[2] + 1

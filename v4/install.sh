@@ -74,6 +74,11 @@ if [ -d oled ]; then
     sudo cp oled/oled_daemon.py "${INSTALL_DIR}/oled/"
     sudo chmod +x "${INSTALL_DIR}/oled/oled_daemon.py"
 
+    # Copy default OLED config if not present
+    if [ -f oled/oled.ini ] && [ ! -f "${INSTALL_DIR}/oled/oled.ini" ]; then
+        sudo cp oled/oled.ini "${INSTALL_DIR}/oled/oled.ini"
+    fi
+
     # Copy splash logo to user home
     if [ -f oled/piclockLogo.bin ] && [ ! -f "$HOME/piclockLogo.bin" ]; then
         cp oled/piclockLogo.bin "$HOME/piclockLogo.bin"
