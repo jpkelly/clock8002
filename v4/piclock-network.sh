@@ -55,5 +55,12 @@ if [ "$NET_MODE" = "static" ]; then
         echo "Warning: static mode set but address/netmask missing."
     fi
 elif [ "$NET_MODE" = "dhcp" ]; then
-    echo "Network mode: DHCP (no changes needed)."
+    CURRENT_METHOD=$(nmcli -g ipv4.method con show "$NM_CON")
+    if [ "$CURRENT_METHOD" != "auto" ]; then
+        echo "Switching to DHCP..."
+        nmcli con mod "$NM_CON" ipv4.method auto ipv4.addresses "" ipv4.gateway "" ipv4.dns ""
+        nmcli con up "$NM_CON"
+    else
+        echo "Network mode: DHCP (already set)."
+    fi
 fi
