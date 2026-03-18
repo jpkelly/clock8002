@@ -1,0 +1,14 @@
+[Unit]
+Description=OLED Display Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/clock8002/oled/oled_daemon.py
+ExecStop=/usr/bin/python3 -c "from luma.core.interface.serial import i2c; from luma.oled.device import ssd1306; device=ssd1306(i2c(port=1, address=0x3c)); device.clear()"
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+
