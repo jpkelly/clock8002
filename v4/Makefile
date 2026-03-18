@@ -21,7 +21,7 @@ dep: ## Get the dependencies
 	@go get -v -d ./...
 
 clean:
-	@rm -f sdl-clock
+	@rm -f sdl-clock alsa-ltc
 	@rm -fr clock8002-*-linux-arm64 clock8002-*-linux-arm64.tar.gz
 
 build: dep sdl-clock ## Build the binary file
@@ -29,6 +29,10 @@ build: dep sdl-clock ## Build the binary file
 sdl-clock:
 	@echo Building sdl-clock tag $(GIT_TAG) commit $(GIT_COMMIT)
 	@go build -ldflags $(GO_LD_FLAGS) gitlab.com/clock-8001/clock-8001/v4/cmd/sdl-clock
+
+alsa-ltc: alsa-ltc.c ## Build the LTC decoder
+	@echo Building alsa-ltc
+	gcc -O2 -o alsa-ltc alsa-ltc.c -lasound -lltc
 
 release: sdl-clock ## Package a release tarball
 	@echo Packaging release $(GIT_TAG)
