@@ -6,6 +6,7 @@ Wants=NetworkManager.service
 [Service]
 Type=oneshot
 ExecStart=/opt/clock8002/piclock-network.sh
+TimeoutStartSec=60
 RemainAfterExit=yes
 
 [Install]

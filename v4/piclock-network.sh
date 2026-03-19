@@ -68,7 +68,7 @@ if [ "$NET_MODE" = "static" ]; then
         else
             nmcli con mod "$NM_CON" ipv4.dns ""
         fi
-        nmcli con up "$NM_CON"
+        nmcli --wait 10 con up "$NM_CON"
     else
         echo "Warning: static mode set but address/netmask missing."
     fi
@@ -77,7 +77,7 @@ elif [ "$NET_MODE" = "dhcp" ]; then
     if [ "$CURRENT_METHOD" != "auto" ]; then
         echo "Switching to DHCP..."
         nmcli con mod "$NM_CON" ipv4.method auto ipv4.addresses "" ipv4.gateway "" ipv4.dns ""
-        nmcli con up "$NM_CON"
+        nmcli --wait 10 con up "$NM_CON"
     else
         echo "Network mode: DHCP (already set)."
     fi
@@ -104,7 +104,8 @@ if [ "$AP_ENABLED" = "true" ]; then
         nmcli con mod "$AP_CON" \
             802-11-wireless.ssid "$AP_SSID" \
             802-11-wireless.channel "$AP_CHANNEL" \
-            wifi-sec.psk "$AP_PASSWORD"
+            wifi-sec.psk "$AP_PASSWORD" \
+            ipv4.method shared
     else
         echo "Creating Wi-Fi AP: ${AP_SSID}..."
         nmcli con add type wifi ifname wlan0 con-name "$AP_CON" autoconnect yes \
@@ -116,7 +117,7 @@ if [ "$AP_ENABLED" = "true" ]; then
             wifi-sec.key-mgmt wpa-psk \
             wifi-sec.psk "$AP_PASSWORD"
     fi
-    nmcli con up "$AP_CON"
+    nmcli --wait 10 con up "$AP_CON" || echo "Warning: AP activation timed out (will autoconnect later)"
 elif [ "$AP_ENABLED" = "false" ]; then
     if nmcli con show "$AP_CON" >/dev/null 2>&1; then
         echo "Disabling Wi-Fi AP..."
