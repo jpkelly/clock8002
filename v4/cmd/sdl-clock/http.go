@@ -181,7 +181,11 @@ func importHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go delayedExit()
+	// Signal the main loop to hot-reload config
+	select {
+	case confChan <- true:
+	default:
+	}
 
 	tmpl, err := htmlTemplate.New("confirm.html").Parse(confirmHTML)
 	if err != nil {
@@ -417,7 +421,11 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 
 		}
 
-		go delayedExit()
+		// Signal the main loop to hot-reload config
+		select {
+		case confChan <- true:
+		default:
+		}
 
 		// Render success page
 
@@ -440,11 +448,6 @@ func delayedReboot() {
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
-}
-
-func delayedExit() {
-	time.Sleep(time.Second)
-	os.Exit(0)
 }
 
 func (options *clockOptions) writeConfig(path string) {
