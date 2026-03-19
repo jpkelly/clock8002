@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/desertbit/timer"
 	"github.com/jessevdk/go-flags"
 	"github.com/veandco/go-sdl2/sdl"
 	"gitlab.com/clock-8001/clock-8001/v4/clock"
@@ -13,7 +12,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime"
@@ -74,10 +72,8 @@ func main() {
 	defer window.Destroy()
 	defer renderer.Destroy()
 
-	isFullScreen := false
 	if options.FullScreen {
 		window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
-		isFullScreen = true
 	}
 
 	setupScaling()
@@ -117,9 +113,7 @@ func main() {
 
 	log.Printf("Entering main loop")
 
-	configStarted := false
-
-	configTimer := timer.NewTimer(time.Second * 5)
+	infoHidden := false
 
 	for {
 		select {
@@ -175,47 +169,15 @@ func main() {
 			case *sdl.QuitEvent:
 				engine.Close()
 				os.Exit(0)
-			case *sdl.KeyboardEvent:
+	case *sdl.KeyboardEvent:
 				key := t.Keysym.Sym
-				if key == sdl.K_f {
-					if !isFullScreen {
-						window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
-						setupScaling()
-						initTextures()
-						isFullScreen = true
-					}
-				} else if key == sdl.K_ESCAPE {
-					if isFullScreen {
-						window.SetFullscreen(0)
-						setupScaling()
-						initTextures()
-						isFullScreen = false
-					}
-				} else if key == sdl.K_c {
-					if !configStarted {
-						configStarted = true
-						url := fmt.Sprintf("http://localhost%s", options.HTTPPort)
-						var err error
-
-						switch runtime.GOOS {
-						case "linux":
-							err = exec.Command("xdg-open", url).Start()
-						case "windows":
-							err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-						case "darwin":
-							err = exec.Command("open", url).Start()
-						default:
-							err = fmt.Errorf("unsupported platform")
-						}
-						if err != nil {
-							log.Fatal(err)
-						}
-						configTimer.Reset(time.Second * 5)
-					}
+				if key == sdl.K_i {
+					infoHidden = !infoHidden
+				} else if key == sdl.K_q {
+					engine.Close()
+					os.Exit(0)
 				}
 			}
-		case <-configTimer.C:
-			configStarted = false
 		case <-updateTicker.C:
 			// Display update
 
@@ -246,8 +208,9 @@ func main() {
 				}
 			}
 
-			if state.Info != "" {
-				newInfo := fmt.Sprintf("%s\nKeyboard:\nF - Full screen\nEscape - Exit full screen\nC - Open web config", state.Info)
+			if state.Info != "" && !infoHidden {
+				hostname, _ := os.Hostname()
+				newInfo := fmt.Sprintf("%s\nWeb config: http://%s.local%s\n\nI - Toggle overlay  Q - Quit", state.Info, hostname, options.HTTPPort)
 				if newInfo != info {
 					info = newInfo
 
