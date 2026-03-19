@@ -23,7 +23,7 @@ sudo systemctl stop clock8002 alsa-ltc oled_daemon bootsplash 2>/dev/null || tru
 # Install SDL2 runtime libraries and LTC dependencies
 echo "Installing runtime libraries..."
 sudo apt update
-sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11 i2c-tools python3-pip python3-venv fbi iw rfkill
+sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11 i2c-tools python3-pip python3-venv fbi
 
 # Create install directory
 echo "Installing to ${INSTALL_DIR}..."
@@ -92,10 +92,7 @@ fi
 
 # Enable Wi-Fi radio and set regulatory domain (persistent)
 echo "Configuring Wi-Fi radio..."
-rfkill unblock wifi 2>/dev/null || true
-nmcli radio wifi on 2>/dev/null || true
-/usr/sbin/iw reg set US 2>/dev/null || true
-echo 'REGDOMAIN=US' | sudo tee /etc/default/crda > /dev/null
+raspi-config nonint do_wifi_country US
 
 sed "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" "${SERVICE_FILE}" | \
     sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl-clock --fullscreen|" | \
