@@ -10,7 +10,7 @@ mode=dhcp
 
 # NTP time synchronization (true or false)
 # Disable if using OSC settime to manually control the clock
-ntp=true
+ntp=false
 
 # Static IP settings (only used when mode=static)
 #address=10.0.0.100
