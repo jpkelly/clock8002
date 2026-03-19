@@ -8,6 +8,10 @@
 # mode: dhcp or static
 mode=static
 
+# NTP time synchronization (true or false)
+# Disable if using OSC settime to manually control the clock
+ntp=true
+
 # Static IP settings (only used when mode=static)
 address=192.168.8.245
 netmask=24

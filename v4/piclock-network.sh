@@ -32,6 +32,16 @@ if [ -n "$NET_HOSTNAME" ]; then
     fi
 fi
 
+# Apply NTP setting
+NTP_ENABLED=$(parse_ini "$NETWORK_INI" network ntp)
+if [ "$NTP_ENABLED" = "false" ]; then
+    echo "Disabling NTP..."
+    timedatectl set-ntp false
+elif [ "$NTP_ENABLED" = "true" ]; then
+    echo "Enabling NTP..."
+    timedatectl set-ntp true
+fi
+
 # Wait for NetworkManager to be ready
 sleep 5
 
