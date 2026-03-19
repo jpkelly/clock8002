@@ -42,11 +42,33 @@ elif [ "$NTP_ENABLED" = "true" ]; then
     timedatectl set-ntp true
 fi
 
-# Wait for NetworkManager to be ready
-sleep 5
+# Find the wired Ethernet connection.
+# Pi 5 Trixie uses end0 or eth0 depending on configuration.
+# We look for the NM connection bound to the first wired interface we find,
+# retrying for up to 30 seconds in case it hasn't come up yet.
+find_wired_con() {
+    for iface in end0 eth0 enp0s31f6; do
+        local con
+        con=$(nmcli -t -f NAME,DEVICE con show | grep ":${iface}$" | head -1 | cut -d: -f1)
+        if [ -n "$con" ]; then
+            echo "$con"
+            return 0
+        fi
+    done
+    return 1
+}
 
-NM_CON=$(nmcli -t -f NAME,DEVICE con show --active | head -1 | cut -d: -f1)
-[ -z "$NM_CON" ] && { echo "No active NetworkManager connection found."; exit 0; }
+NM_CON=""
+for i in $(seq 1 30); do
+    NM_CON=$(find_wired_con) && break
+    sleep 1
+done
+
+if [ -z "$NM_CON" ]; then
+    echo "No wired NetworkManager connection found after 30s."
+    exit 0
+fi
+echo "Using wired connection: $NM_CON"
 
 if [ "$NET_MODE" = "static" ]; then
     NET_ADDR=$(parse_ini "$NETWORK_INI" network address)

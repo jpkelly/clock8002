@@ -69,7 +69,7 @@ const configHTML = `
                 </label>
 
                 {{checkbox "hide-hours" "Only show minutes and seconds for countdowns on the text clocks" .HideHours}}
-                {{checkbox "high-resolution" "Show 1/100th seconds on counters on text clocks" .HideHours}}
+                {{checkbox "high-resolution" "Show 1/100th seconds on counters on text clocks" .EngineOptions.HighResolution}}
                 {{checkbox "disable-icons" "Do not show icons on the text clocks" .IconsDisable}}
                 {{checkbox "Format12h" "Use 12 hour format for time-of-day display" .EngineOptions.Format12h }}
                 {{checkbox "tod-hide-seconds" "Hide seconds on time-of-day displays" .EngineOptions.ToDHideSeconds }}

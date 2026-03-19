@@ -4,8 +4,6 @@ import (
 	// "fmt"
 	"crypto/subtle"
 	"fmt"
-	"gitlab.com/clock-8001/clock-8001/v4/clock"
-	"gitlab.com/clock-8001/clock-8001/v4/util"
 	htmlTemplate "html/template"
 	"io"
 	"log"
@@ -16,10 +14,13 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strings"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
+
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
+	"gitlab.com/clock-8001/clock-8001/v4/util"
 )
 
 func runHTTP() {
@@ -39,7 +40,9 @@ func runHTTP() {
 	http.HandleFunc("/api/settime", basicAuth(setTimeHandler))
 
 	log.Printf("HTTP config: listening on %v", options.HTTPPort)
-	log.Fatal(http.ListenAndServe(options.HTTPPort, nil))
+	if err := http.ListenAndServe(options.HTTPPort, nil); err != nil {
+		log.Printf("HTTP config server failed: %v", err)
+	}
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {

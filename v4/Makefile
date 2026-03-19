@@ -8,10 +8,10 @@ GIT_TAG ?= $(shell git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0
 GIT_COMMIT ?= $(shell git rev-list -1 HEAD)
 VERSION_PKG := gitlab.com/clock-8001/clock-8001/v4/clock
 GO_LD_FLAGS := "-X $(VERSION_PKG).gitCommit=$(GIT_COMMIT) -X $(VERSION_PKG).gitTag=$(GIT_TAG)"
-RELEASE_DIR := clock8002-$(GIT_TAG)-linux-arm64
 NETWORK_CONFIG ?= default
+RELEASE_DIR := clock8002-$(GIT_TAG)-$(NETWORK_CONFIG)-linux-arm64
 
-.PHONY: all dep build clean test release
+.PHONY: all dep build clean test release release-all
 
 all: build
 
@@ -23,7 +23,7 @@ dep: ## Get the dependencies
 
 clean:
 	@rm -f sdl-clock alsa-ltc
-	@rm -fr clock8002-*-linux-arm64 clock8002-*-linux-arm64.tar.gz
+	@rm -fr clock8002-*-linux-arm64 clock8002-*-linux-arm64.tar.gz clock8002-*-*-linux-arm64 clock8002-*-*-linux-arm64.tar.gz
 
 build: dep sdl-clock ## Build the binary file
 
@@ -35,8 +35,8 @@ alsa-ltc: alsa-ltc.c ## Build the LTC decoder
 	@echo Building alsa-ltc
 	gcc -O2 -o alsa-ltc alsa-ltc.c -lasound -lltc
 
-release: sdl-clock alsa-ltc ## Package a release tarball
-	@echo Packaging release $(GIT_TAG)
+release: sdl-clock alsa-ltc ## Package a release tarball for NETWORK_CONFIG variant
+	@echo Packaging release $(GIT_TAG) variant=$(NETWORK_CONFIG)
 	@mkdir -p $(RELEASE_DIR)
 	@cp sdl-clock $(RELEASE_DIR)/
 	@cp alsa-ltc $(RELEASE_DIR)/
@@ -56,6 +56,10 @@ release: sdl-clock alsa-ltc ## Package a release tarball
 	@tar czf $(RELEASE_DIR).tar.gz $(RELEASE_DIR)
 	@rm -rf $(RELEASE_DIR)
 	@echo Release tarball: $(RELEASE_DIR).tar.gz
+
+release-all: sdl-clock alsa-ltc ## Package release tarballs for all variants
+	$(MAKE) release NETWORK_CONFIG=default
+	$(MAKE) release NETWORK_CONFIG=gerry
 
 debian_amd64: clock_port8080.ini sdl-clock
 	@export GIT_TAG=$(GIT_TAG); export NFPM_ARCH=amd64; nfpm pkg --packager deb

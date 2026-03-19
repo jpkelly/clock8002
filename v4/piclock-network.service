@@ -1,6 +1,6 @@
 [Unit]
 Description=Apply PiClock network configuration
-After=NetworkManager.service
+After=NetworkManager.service network-online.target
 Wants=NetworkManager.service
 
 [Service]
