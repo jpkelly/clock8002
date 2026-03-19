@@ -2,8 +2,10 @@ package clock
 
 import (
 	"context"
+
 	"github.com/desertbit/timer"
 	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
+
 	// "gitlab.com/Depili/go-osc/osc"
 	"github.com/chabad360/go-osc/osc"
 
@@ -14,7 +16,7 @@ import (
 )
 
 // Version is the current clock engine version
-const Version = "0.2.5"
+const Version = "0.2.6"
 
 // State feedback timer
 const stateTimer = time.Second / 2

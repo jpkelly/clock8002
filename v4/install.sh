@@ -23,7 +23,7 @@ sudo systemctl stop clock8002 alsa-ltc oled_daemon bootsplash 2>/dev/null || tru
 # Install SDL2 runtime libraries and LTC dependencies
 echo "Installing runtime libraries..."
 sudo apt update
-sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11 i2c-tools python3-pip python3-venv fbi
+sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11 i2c-tools python3-luma.oled fbi
 
 # Create install directory
 echo "Installing to ${INSTALL_DIR}..."
@@ -140,11 +140,6 @@ if [ -d oled ]; then
     if [ -f oled/piclockLogo.bin ] && [ ! -f "$HOME/piclockLogo.bin" ]; then
         cp oled/piclockLogo.bin "$HOME/piclockLogo.bin"
     fi
-
-    # Install Python dependencies
-    echo "Installing OLED Python dependencies..."
-    pip3 install --break-system-packages luma.oled Pillow 2>/dev/null || \
-        pip3 install luma.oled Pillow
 
     # Enable I2C if not already enabled
     if ! grep -q "^dtparam=i2c_arm=on" /boot/firmware/config.txt 2>/dev/null; then
