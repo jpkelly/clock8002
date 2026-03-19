@@ -168,7 +168,7 @@ func (engine *Engine) prepareInfo() {
 	info := fmt.Sprintf("Clock-8002 %v (%v)\n\n", gitTag, commit)
 
 	if hostname, err := os.Hostname(); err == nil {
-		info += fmt.Sprintf("%s.local\n", hostname)
+		info += fmt.Sprintf("Hostname: %s.local\n", hostname)
 	}
 
 	info += fmt.Sprintf("Network: %s\n", detectNetworkMode())
