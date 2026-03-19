@@ -40,7 +40,7 @@ release: sdl-clock alsa-ltc ## Package a release tarball
 	@mkdir -p $(RELEASE_DIR)
 	@cp sdl-clock $(RELEASE_DIR)/
 	@cp alsa-ltc $(RELEASE_DIR)/
-	@cp clock.ini $(RELEASE_DIR)/
+	@cp clock.ini.$(NETWORK_CONFIG) $(RELEASE_DIR)/clock.ini
 	@cp ttf_fonts/*.ttf $(RELEASE_DIR)/
 	@cp -r fonts $(RELEASE_DIR)/
 	@cp -r voices $(RELEASE_DIR)/
