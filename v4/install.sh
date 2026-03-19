@@ -58,16 +58,19 @@ elif [ -f "${CONFIG_DIR}/clock.ini" ]; then
     # Existing config at old location — migrate to boot partition
     echo "Migrating existing config to ${BOOT_CONFIG_DIR}/clock.ini..."
     sudo cp "${CONFIG_DIR}/clock.ini" "${BOOT_CONFIG_DIR}/clock.ini"
+    sudo chown "$USER":"$USER" "${BOOT_CONFIG_DIR}/clock.ini"
     rm "${CONFIG_DIR}/clock.ini"
     ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
 elif [ -f "${BOOT_CONFIG_DIR}/clock.ini" ]; then
     # Config on boot partition but no symlink yet
     echo "Found config on boot partition, creating symlink..."
+    sudo chown "$USER":"$USER" "${BOOT_CONFIG_DIR}/clock.ini"
     ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
 else
     # Fresh install — copy default to boot partition and symlink
     echo "Installing default configuration to ${BOOT_CONFIG_DIR}/clock.ini..."
     sudo cp clock.ini "${BOOT_CONFIG_DIR}/clock.ini"
+    sudo chown "$USER":"$USER" "${BOOT_CONFIG_DIR}/clock.ini"
     ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
 fi
 
