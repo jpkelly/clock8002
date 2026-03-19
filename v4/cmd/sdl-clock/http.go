@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strings"
 	"strconv"
 	"text/template"
 	"time"
@@ -35,6 +36,7 @@ func runHTTP() {
 		http.ServeFile(res, req, options.configFile)
 	})
 	http.HandleFunc("/import", basicAuth(importHandler))
+	http.HandleFunc("/api/settime", basicAuth(setTimeHandler))
 
 	log.Printf("HTTP config: listening on %v", options.HTTPPort)
 	log.Fatal(http.ListenAndServe(options.HTTPPort, nil))
@@ -462,6 +464,45 @@ func (options *clockOptions) writeConfig(path string) {
 	}
 	f.Sync()
 	f.Close()
+}
+
+func setTimeHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	timeStr := r.FormValue("time")
+	if timeStr == "" {
+		http.Error(w, "Missing time parameter", http.StatusBadRequest)
+		return
+	}
+
+	// Validate ISO 8601 format: 2006-01-02T15:04:05
+	match, _ := regexp.MatchString(`^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d:[0-5]\d$`, timeStr)
+	if !match {
+		http.Error(w, "Invalid time format", http.StatusBadRequest)
+		return
+	}
+
+	_, lookErr := exec.LookPath("date")
+	if lookErr != nil {
+		http.Error(w, "date command not found", http.StatusInternalServerError)
+		return
+	}
+
+	// Convert ISO format to date --set format
+	dateString := strings.Replace(timeStr, "T", " ", 1)
+	log.Printf("Web UI settime: setting system date to %s", dateString)
+	cmd := exec.Command("date", "--set", dateString) // #nosec strict validation above
+	if err := cmd.Run(); err != nil {
+		log.Printf("Failed to set system time: %v", err)
+		http.Error(w, "Failed to set time", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 func basicAuth(handler http.HandlerFunc) http.HandlerFunc {

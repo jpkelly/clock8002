@@ -36,6 +36,13 @@ const configHTML = `
         </fieldset>
       </form>
 
+      <fieldset>
+        <legend>Sync Time</legend>
+        <p>Set the piClock time from this computer's clock.</p>
+        <input type="button" value="Sync Time Now" onclick="syncTime()" />
+        <span id="sync-status"></span>
+      </fieldset>
+
       <form action="/save" method="post">
         <div class="tabs">
           <div class="tab">
@@ -910,6 +917,37 @@ const configHTML = `
       padding: 1em;
     }
     </style>
+    <script>
+    function syncTime() {
+      var btn = document.querySelector('[value="Sync Time Now"]');
+      var status = document.getElementById('sync-status');
+      btn.disabled = true;
+      status.textContent = 'Syncing...';
+      status.style.color = '{{$color}}';
+      var now = new Date();
+      var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+      var ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/settime');
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          status.textContent = 'Time set to ' + ts.replace('T', ' ');
+          status.style.color = 'green';
+        } else {
+          status.textContent = 'Error: ' + xhr.responseText;
+          status.style.color = 'red';
+        }
+        btn.disabled = false;
+      };
+      xhr.onerror = function() {
+        status.textContent = 'Network error';
+        status.style.color = 'red';
+        btn.disabled = false;
+      };
+      xhr.send('time=' + encodeURIComponent(ts));
+    }
+    </script>
   </body>
 </html>
 `
