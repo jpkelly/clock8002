@@ -92,7 +92,7 @@ fi
 
 # Enable Wi-Fi radio and set regulatory domain (persistent)
 echo "Configuring Wi-Fi radio..."
-raspi-config nonint do_wifi_country US
+sudo raspi-config nonint do_wifi_country US
 
 sed "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" "${SERVICE_FILE}" | \
     sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl-clock --fullscreen|" | \
