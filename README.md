@@ -49,14 +49,14 @@ If a release tarball is available, you can install without compiling:
 ### 1. Download the latest release
 
 ```bash
-wget https://github.com/jpkelly/clock8002/releases/download/v0.1.7/clock8002-v0.1.7-linux-arm64.tar.gz
+wget https://github.com/jpkelly/clock8002/releases/download/v0.1.8/clock8002-v0.1.8-linux-arm64.tar.gz
 ```
 
 ### 2. Extract and install
 
 ```bash
-tar xzf clock8002-v0.1.7-linux-arm64.tar.gz
-cd clock8002-v0.1.7-linux-arm64
+tar xzf clock8002-v0.1.8-linux-arm64.tar.gz
+cd clock8002-v0.1.8-linux-arm64
 ./install.sh
 ```
 
@@ -106,6 +106,18 @@ dns=10.0.0.1
 [host]
 hostname=clock8002
 ```
+
+#### NTP (Network Time Protocol)
+
+By default, NTP is **disabled** so that OSC `settime` commands can set and hold the system clock. If your clocks are on a network with reliable NTP and you don't need OSC time control, you can enable it:
+
+```ini
+[network]
+ntp=true
+```
+
+- `ntp=false` (default) — NTP disabled, OSC settime controls the clock
+- `ntp=true` — NTP enabled, system clock syncs automatically from the network
 
 **Notes:**
 - Uncomment settings by removing the `#` at the start of the line
