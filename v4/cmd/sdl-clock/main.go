@@ -147,12 +147,14 @@ func main() {
 			destroyTextClock()
 			destroySmallTextClock()
 
-			// Destroy the lazily-created info texture; it will be recreated with
-			// updated fonts/colors on the next draw that needs it.
+			// Destroy the lazily-created info texture and reset the cached info
+			// string so updateInfoScreen() is forced to recreate it before the
+			// next drawInfoScreen() call (avoids panic on nil texture).
 			if infoTexture != nil {
 				infoTexture.Destroy()
 				infoTexture = nil
 			}
+			info = ""
 
 			log.Printf("->Initializing clock face")
 			if options.textClock {
