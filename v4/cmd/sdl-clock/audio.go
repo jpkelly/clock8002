@@ -27,7 +27,27 @@ var lastVoice []int
 
 var clips map[int]*mix.Chunk
 
+var audioOpen bool
+
 func initAudio() {
+	// Clean up any previously allocated audio resources before reinitializing.
+	if shortBeep != nil {
+		shortBeep.Free()
+		shortBeep = nil
+	}
+	if longBeep != nil {
+		longBeep.Free()
+		longBeep = nil
+	}
+	for _, c := range clips {
+		c.Free()
+	}
+	clips = nil
+	if audioOpen {
+		mix.CloseAudio()
+		audioOpen = false
+	}
+
 	if !options.AudioEnabled && !options.TODBeep && !options.VoiceEnabled {
 		return
 	}
@@ -36,6 +56,7 @@ func initAudio() {
 	if err = mix.OpenAudio(44100, mix.DEFAULT_FORMAT, 2, 4096); err != nil {
 		panic(err)
 	}
+	audioOpen = true
 
 	shortBeep, err = mix.QuickLoadWAV(shortWav)
 	if err != nil {

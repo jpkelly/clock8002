@@ -46,31 +46,72 @@ const (
 	iconSize   = 200
 )
 
-func initTextClock() {
-	var f *ttf.Font
-	var err error
-
+func destroyTextClock() {
 	if textClock.numberFont != nil {
 		textClock.numberFont.Close()
+		textClock.numberFont = nil
 	}
+	if textClock.labelFont != nil {
+		textClock.labelFont.Close()
+		textClock.labelFont = nil
+	}
+	if textClock.iconFont != nil {
+		textClock.iconFont.Close()
+		textClock.iconFont = nil
+	}
+	if textClock.tallyTex != nil {
+		textClock.tallyTex.Destroy()
+		textClock.tallyTex = nil
+	}
+	textClock.tally = ""
+	for i := range textClock.r {
+		if textClock.r[i].textTex != nil {
+			textClock.r[i].textTex.Destroy()
+			textClock.r[i].textTex = nil
+		}
+		if textClock.r[i].iconTex != nil {
+			textClock.r[i].iconTex.Destroy()
+			textClock.r[i].iconTex = nil
+		}
+		if textClock.r[i].signalTex != nil {
+			textClock.r[i].signalTex.Destroy()
+			textClock.r[i].signalTex = nil
+		}
+		if textClock.r[i].labelTex != nil {
+			textClock.r[i].labelTex.Destroy()
+			textClock.r[i].labelTex = nil
+		}
+		for j := range textClock.r[i].timeFragments {
+			if textClock.r[i].timeFragments[j] != nil {
+				textClock.r[i].timeFragments[j].Destroy()
+				textClock.r[i].timeFragments[j] = nil
+			}
+		}
+		if textClock.r[i].colonTex != nil {
+			textClock.r[i].colonTex.Destroy()
+			textClock.r[i].colonTex = nil
+		}
+		textClock.r[i].text = ""
+		textClock.r[i].icon = ""
+		textClock.r[i].label = ""
+	}
+}
+
+func initTextClock() {
+	destroyTextClock()
+
+	var f *ttf.Font
+	var err error
 
 	if f, err = ttf.OpenFont(options.NumberFont, options.NumberFontSize); err != nil {
 		panic(err)
 	}
 	textClock.numberFont = f
 
-	if textClock.labelFont != nil {
-		textClock.labelFont.Close()
-	}
-
 	if f, err = ttf.OpenFont(options.LabelFont, labelSize); err != nil {
 		panic(err)
 	}
 	textClock.labelFont = f
-
-	if textClock.iconFont != nil {
-		textClock.iconFont.Close()
-	}
 
 	if f, err = ttf.OpenFont(options.IconFont, iconSize); err != nil {
 		panic(err)

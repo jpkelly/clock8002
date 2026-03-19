@@ -142,6 +142,18 @@ func main() {
 			log.Printf("texture init done")
 			initAudio()
 
+			// Tear down all face-specific SDL resources before reinitializing.
+			// These are idempotent — safe to call even if the face was never active.
+			destroyTextClock()
+			destroySmallTextClock()
+
+			// Destroy the lazily-created info texture; it will be recreated with
+			// updated fonts/colors on the next draw that needs it.
+			if infoTexture != nil {
+				infoTexture.Destroy()
+				infoTexture = nil
+			}
+
 			log.Printf("->Initializing clock face")
 			if options.textClock {
 				initTextClock()
@@ -160,6 +172,7 @@ func main() {
 			}
 			engine.SetTitleColors(toRGBA(colors.label), toRGBA(colors.labelBG))
 
+			initBackgrounds()
 			loadBackground(options.Background)
 			log.Printf("Config reloaded!")
 		case <-eventTicker.C:

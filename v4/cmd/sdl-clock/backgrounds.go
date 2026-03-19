@@ -63,7 +63,29 @@ func checkDynamicBG(s *clock.State) {
 	setBackground(defaultBackground)
 }
 
+func destroyBackgrounds() {
+	if defaultBackground != nil {
+		defaultBackground.Destroy()
+		defaultBackground = nil
+	}
+	backgroundTexture = nil
+	for i, t := range timerBG {
+		if t != nil {
+			t.Destroy()
+			timerBG[i] = nil
+		}
+	}
+	for _, m := range backgrounds {
+		for _, t := range m {
+			if t != nil {
+				t.Destroy()
+			}
+		}
+	}
+}
+
 func initBackgrounds() {
+	destroyBackgrounds()
 	lastBG = make([]int, clock.NumCounters)
 	backgrounds = make([]map[int]*sdl.Texture, clock.NumCounters)
 	timerBG = make([]*sdl.Texture, clock.NumCounters)
@@ -108,9 +130,15 @@ func loadBackground(file string) {
 		// Failed to load background image, continue without it
 		log.Printf("Error loading background image: %v %v\n", options.Background, err)
 		log.Printf("Disabling background image.")
-		defaultBackground = nil
+		if defaultBackground != nil {
+			defaultBackground.Destroy()
+			defaultBackground = nil
+		}
 		showBackground = false
 		return
+	}
+	if defaultBackground != nil {
+		defaultBackground.Destroy()
 	}
 	defaultBackground = t
 	setBackground(defaultBackground)
@@ -128,7 +156,6 @@ func setBackground(t *sdl.Texture) {
 func loadImage(file string) (*sdl.Texture, error) {
 	image, err := img.Load(file)
 	if err != nil {
-		image.Free()
 		return nil, err
 	}
 

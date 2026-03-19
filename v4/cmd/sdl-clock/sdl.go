@@ -224,6 +224,9 @@ func initTextures() {
 		}
 	}
 
+	if cueTexture != nil {
+		cueTexture.Destroy()
+	}
 	cueTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 500, 500)
 	check(err)
 	err = cueTexture.SetBlendMode(sdl.BLENDMODE_BLEND)

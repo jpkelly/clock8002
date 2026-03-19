@@ -31,7 +31,19 @@ const (
 	smallTextH            = 9 * 3
 )
 
+func destroySmallTextClock() {
+	if smallTextClock.main != nil {
+		smallTextClock.main.Destroy()
+		smallTextClock.main = nil
+	}
+	if smallTextClock.tallyTex != nil {
+		smallTextClock.tallyTex.Destroy()
+		smallTextClock.tallyTex = nil
+	}
+}
+
 func initSmallTextClock() {
+	destroySmallTextClock()
 	var err error
 	smallTextClock.font, err = bdf.Parse(options.Font)
 	if err != nil {
