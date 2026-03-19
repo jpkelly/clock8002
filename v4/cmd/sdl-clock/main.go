@@ -210,7 +210,7 @@ func main() {
 
 			if state.Info != "" && !infoHidden {
 				hostname, _ := os.Hostname()
-				newInfo := fmt.Sprintf("%s\nWeb config: http://%s.local%s\n\nI - Toggle overlay  Q - Quit", state.Info, hostname, options.HTTPPort)
+				newInfo := fmt.Sprintf("%s\nWeb: %s.local%s\n\nI - Toggle overlay  Q - Quit", state.Info, hostname, options.HTTPPort)
 				if newInfo != info {
 					info = newInfo
 
