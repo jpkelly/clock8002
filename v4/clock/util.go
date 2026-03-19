@@ -6,7 +6,6 @@ import (
 	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
 	"image/color"
 	"log"
-	"net"
 	"runtime/debug"
 	"time"
 )
@@ -32,27 +31,6 @@ func oscListenerSetup(listenAddr string) *Server {
 
 	log.Printf("OSC: listening on %v", oscServer.Addr)
 	return &server
-}
-
-func clockAddresses() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		log.Printf("Failed to get interface addresses")
-		return ""
-	}
-	var ret string
-	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
-		if err != nil {
-			continue
-		}
-		if ip.IsLoopback() {
-			continue
-		} else if ip.To4() != nil {
-			ret += fmt.Sprintf("    %v\n", ip)
-		}
-	}
-	return ret
 }
 
 func formatDuration(diff time.Duration) string {
