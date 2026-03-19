@@ -531,29 +531,30 @@ func (engine *Engine) DisplaySeconds() bool {
 	return engine.displaySeconds
 }
 
-func (engine *Engine) setTime(time string) {
-	debug.Printf("Set time: %#v", time)
+func (engine *Engine) setTime(t string) {
+	log.Printf("OSC settime received: %s", t)
 	_, lookErr := exec.LookPath("date")
 	if lookErr != nil {
-		debug.Printf("Date binary not found, cannot set system date: %s\n", lookErr.Error())
+		log.Printf("Date binary not found, cannot set system date: %s", lookErr.Error())
 		return
 	}
 	// Validate the received time
-	match, _ := regexp.MatchString("^(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])$", time)
+	match, _ := regexp.MatchString("^(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])$", t)
 	if match {
-		// Set the system time
-		dateString := fmt.Sprintf("2019-01-01 %s", time)
+		// Set the system time using today's date
+		today := time.Now().Format("2006-01-02")
+		dateString := fmt.Sprintf("%s %s", today, t)
 		tzString := fmt.Sprintf("TZ=%s", engine.sources[0].tz.String())
-		debug.Printf("Setting system date to: %s\n", dateString)
+		log.Printf("Setting system date to: %s (TZ=%s)", dateString, engine.sources[0].tz.String())
 		args := []string{"--set", dateString}
 		cmd := exec.Command("date", args...) // #nosec we have strict validation in place
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, tzString)
 		if err := cmd.Run(); err != nil {
-			panic(err)
+			log.Printf("Failed to set system time: %v", err)
 		}
 	} else {
-		debug.Printf("Invalid time provided: %v\n", time)
+		log.Printf("Invalid time provided: %v", t)
 	}
 }
 
