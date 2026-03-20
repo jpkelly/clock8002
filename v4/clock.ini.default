@@ -507,7 +507,7 @@ tricaster-timeout=1000
 
 # Limitimer
 limitimer-mode=off
-limitimer-serial=/dev/ttyAMA0
+limitimer-serial=/dev/ttyAMA3
 limitimer-receive-timer1=false
 limitimer-receive-timer2=false
 limitimer-receive-timer3=false
@@ -521,7 +521,7 @@ limitimer-broadcast-timer5=false
 
 # Perfect Cue
 cue-enabled=false
-cue-serial=/dev/ttyAMA0
+cue-serial=/dev/ttyAMA1
 cue-duration=2
 cue-fullscreen=false
 
