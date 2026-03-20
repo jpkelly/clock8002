@@ -114,18 +114,18 @@ The Pi 5 has multiple UART serial interfaces available via GPIO pins. `install.s
 - `dtparam=uart0=on` — Primary UART (GPIO 14/15)
 - `dtoverlay=dwc2,dr_mode=host` — USB host mode for dwc2
 
-#### UART Pin Mapping (Pi 5, all 3.3V logic)
+#### UART Pin Mapping (Pi 5, all 3.3V logic, current piclock wiring)
 
 | Device | Function | GPIO | Pin | Notes |
 |--------|----------|------|-----|-------|
 | `/dev/ttyAMA0` | UART0 TX | GPIO 14 | Pin 8 | Primary UART |
 | `/dev/ttyAMA0` | UART0 RX | GPIO 15 | Pin 10 | Primary UART |
-| `/dev/ttyAMA1` | UART1 TX | GPIO 0 | Pin 27 | |
-| `/dev/ttyAMA1` | UART1 RX | GPIO 1 | Pin 28 | |
-| `/dev/ttyAMA2` | UART2 TX | GPIO 4 | Pin 7 | |
-| `/dev/ttyAMA2` | UART2 RX | GPIO 5 | Pin 29 | |
-| `/dev/ttyAMA3` | UART3 TX | GPIO 8 | Pin 24 | |
-| `/dev/ttyAMA3` | UART3 RX | GPIO 9 | Pin 21 | |
+| `/dev/ttyAMA1` | UART1 TX | GPIO 0 | Pin 27 | PerfectCue TX |
+| `/dev/ttyAMA1` | UART1 RX | GPIO 1 | Pin 28 | PerfectCue RX |
+| `/dev/ttyAMA2` | UART2 TX | GPIO 4 | Pin 7 | RS-485 TX |
+| `/dev/ttyAMA2` | UART2 RX | GPIO 5 | Pin 29 | RS-485 RX (incoming to Pi) |
+| `/dev/ttyAMA3` | UART3 TX | GPIO 8 | Pin 24 | Limitimer TX |
+| `/dev/ttyAMA3` | UART3 RX | GPIO 9 | Pin 21 | Limitimer RX |
 | `/dev/ttyAMA10` | BT TX/RX | – | – | **Bluetooth UART** — enabled by default; see below to disable |
 
 #### Using the Bluetooth UART (/dev/ttyAMA10)
