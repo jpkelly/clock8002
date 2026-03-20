@@ -283,14 +283,14 @@ int main(int argc, char *argv[]) {
     dest.sin_addr.s_addr = inet_addr(osc_ip);
 
     /* Outer retry loop — reopens the device after any setup or persistent read failure.
-     * The process stays alive so systemd doesn't thrash the USB device with rapid restarts. */
+     * The process stays alive so systemd doesn't thrash the USB device with rapid restarts.
+     * A 30-second delay between reopens matches the old RestartSec=30 behaviour. */
     int open_attempt = 0;
     while (running) {
         /* Delay between retries to let the USB device recover */
         if (open_attempt > 0) {
-            int delay = (open_attempt <= 3) ? 5 : 15;
-            fprintf(stderr, "waiting %ds before retry (attempt %d)\n", delay, open_attempt + 1);
-            for (int i = 0; i < delay && running; i++)
+            fprintf(stderr, "waiting 30s before reopening (attempt %d)\n", open_attempt + 1);
+            for (int i = 0; i < 30 && running; i++)
                 sleep(1);
         }
         if (!running) break;
@@ -315,8 +315,11 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "read from audio interface failed (%s) [%d]\n",
                         snd_strerror(frames), consecutive_errors);
                 sleep(1);
-                /* Try a soft recover first; fall back to full reopen after 10 errors */
-                if (consecutive_errors >= 10 || snd_pcm_prepare(capture) < 0) {
+                /* Try a soft recover — don't close the device on prepare failure as
+                 * closing a USB device triggers a kernel reset that causes ETIMEDOUT
+                 * on the next open. Only reopen after 10 consecutive read failures. */
+                snd_pcm_prepare(capture);
+                if (consecutive_errors >= 10) {
                     fprintf(stderr, "reopening audio device after %d consecutive errors\n",
                             consecutive_errors);
                     need_reopen = 1;
