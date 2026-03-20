@@ -129,12 +129,95 @@ next:
     return result;
 }
 
-int main(int argc, char *argv[]) {
+/* Open, configure, and prepare an ALSA capture device.
+ * Returns a ready-to-use capture handle, or NULL on failure.
+ * On failure, the device is always closed before returning.
+ */
+static snd_pcm_t *setup_capture(const char *device) {
     snd_pcm_t *capture = NULL;
+    snd_pcm_hw_params_t *hw_params = NULL;
+    int rc;
+
+    rc = snd_pcm_open(&capture, device, SND_PCM_STREAM_CAPTURE, 0);
+    if (rc < 0) {
+        fprintf(stderr, "cannot open audio device %s (%s)\n", device, snd_strerror(rc));
+        return NULL;
+    }
+    fprintf(stdout, "audio interface opened\n");
+
+    rc = snd_pcm_hw_params_malloc(&hw_params);
+    if (rc < 0) {
+        fprintf(stderr, "cannot allocate hardware parameter structure (%s)\n", snd_strerror(rc));
+        goto fail;
+    }
+    fprintf(stdout, "hw_params allocated\n");
+
+    rc = snd_pcm_hw_params_any(capture, hw_params);
+    if (rc < 0) {
+        fprintf(stderr, "cannot initialize hardware parameter structure (%s)\n", snd_strerror(rc));
+        goto fail;
+    }
+    fprintf(stdout, "hw_params initialized\n");
+
+    rc = snd_pcm_hw_params_set_access(capture, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
+    if (rc < 0) {
+        fprintf(stderr, "cannot set access type (%s)\n", snd_strerror(rc));
+        goto fail;
+    }
+    fprintf(stdout, "hw_params access setted\n");
+
+    rc = snd_pcm_hw_params_set_format(capture, hw_params, SND_PCM_FORMAT_S16_LE);
+    if (rc < 0) {
+        fprintf(stderr, "cannot set sample format (%s)\n", snd_strerror(rc));
+        goto fail;
+    }
+    fprintf(stdout, "hw_params format setted\n");
+
+    unsigned int rate = SAMPLE_RATE;
+    rc = snd_pcm_hw_params_set_rate_near(capture, hw_params, &rate, 0);
+    if (rc < 0) {
+        fprintf(stderr, "cannot set sample rate (%s)\n", snd_strerror(rc));
+        goto fail;
+    }
+    fprintf(stdout, "hw_params rate setted\n");
+
+    rc = snd_pcm_hw_params_set_channels(capture, hw_params, CHANNELS);
+    if (rc < 0) {
+        fprintf(stderr, "cannot set channel count (%s)\n", snd_strerror(rc));
+        goto fail;
+    }
+    fprintf(stdout, "hw_params channels setted\n");
+
+    rc = snd_pcm_hw_params(capture, hw_params);
+    if (rc < 0) {
+        fprintf(stderr, "cannot set parameters (%s)\n", snd_strerror(rc));
+        goto fail;
+    }
+    fprintf(stdout, "hw_params setted\n");
+
+    snd_pcm_hw_params_free(hw_params);
+    hw_params = NULL;
+    fprintf(stdout, "hw_params freed\n");
+
+    rc = snd_pcm_prepare(capture);
+    if (rc < 0) {
+        fprintf(stderr, "cannot prepare audio interface for use (%s)\n", snd_strerror(rc));
+        goto fail;
+    }
+    fprintf(stdout, "audio interface prepared\n");
+    return capture;
+
+fail:
+    if (hw_params) snd_pcm_hw_params_free(hw_params);
+    snd_pcm_close(capture);
+    fprintf(stdout, "audio interface closed\n");
+    return NULL;
+}
+
+int main(int argc, char *argv[]) {
     LTCDecoder *decoder = NULL;
     short *audiobuf = NULL;
     int sock = -1;
-    int rc;
     char *device = NULL;
     int device_allocated = 0;
 
@@ -162,84 +245,6 @@ int main(int argc, char *argv[]) {
         device = argv[1];
     }
 
-    /* Open ALSA capture */
-    rc = snd_pcm_open(&capture, device, SND_PCM_STREAM_CAPTURE, 0);
-    if (rc < 0) {
-        fprintf(stderr, "cannot open audio device %s (%s)\n", device, snd_strerror(rc));
-        if (device_allocated) free(device);
-        return 1;
-    }
-    fprintf(stdout, "audio interface opened\n");
-
-    /* Configure hardware parameters */
-    snd_pcm_hw_params_t *hw_params;
-
-    rc = snd_pcm_hw_params_malloc(&hw_params);
-    if (rc < 0) {
-        fprintf(stderr, "cannot allocate hardware parameter structure (%s)\n", snd_strerror(rc));
-        goto cleanup;
-    }
-    fprintf(stdout, "hw_params allocated\n");
-
-    rc = snd_pcm_hw_params_any(capture, hw_params);
-    if (rc < 0) {
-        fprintf(stderr, "cannot initialize hardware parameter structure (%s)\n", snd_strerror(rc));
-        snd_pcm_hw_params_free(hw_params);
-        goto cleanup;
-    }
-    fprintf(stdout, "hw_params initialized\n");
-
-    rc = snd_pcm_hw_params_set_access(capture, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
-    if (rc < 0) {
-        fprintf(stderr, "cannot set access type (%s)\n", snd_strerror(rc));
-        snd_pcm_hw_params_free(hw_params);
-        goto cleanup;
-    }
-    fprintf(stdout, "hw_params access setted\n");
-
-    rc = snd_pcm_hw_params_set_format(capture, hw_params, SND_PCM_FORMAT_S16_LE);
-    if (rc < 0) {
-        fprintf(stderr, "cannot set sample format (%s)\n", snd_strerror(rc));
-        snd_pcm_hw_params_free(hw_params);
-        goto cleanup;
-    }
-    fprintf(stdout, "hw_params format setted\n");
-
-    unsigned int rate = SAMPLE_RATE;
-    rc = snd_pcm_hw_params_set_rate_near(capture, hw_params, &rate, 0);
-    if (rc < 0) {
-        fprintf(stderr, "cannot set sample rate (%s)\n", snd_strerror(rc));
-        snd_pcm_hw_params_free(hw_params);
-        goto cleanup;
-    }
-    fprintf(stdout, "hw_params rate setted\n");
-
-    rc = snd_pcm_hw_params_set_channels(capture, hw_params, CHANNELS);
-    if (rc < 0) {
-        fprintf(stderr, "cannot set channel count (%s)\n", snd_strerror(rc));
-        snd_pcm_hw_params_free(hw_params);
-        goto cleanup;
-    }
-    fprintf(stdout, "hw_params channels setted\n");
-
-    rc = snd_pcm_hw_params(capture, hw_params);
-    if (rc < 0) {
-        fprintf(stderr, "cannot set parameters (%s)\n", snd_strerror(rc));
-        snd_pcm_hw_params_free(hw_params);
-        goto cleanup;
-    }
-    fprintf(stdout, "hw_params setted\n");
-
-    snd_pcm_hw_params_free(hw_params);
-    fprintf(stdout, "hw_params freed\n");
-
-    rc = snd_pcm_prepare(capture);
-    if (rc < 0) {
-        fprintf(stderr, "cannot prepare audio interface for use (%s)\n", snd_strerror(rc));
-        goto cleanup;
-    }
-    fprintf(stdout, "audio interface prepared\n");
-
     /* Allocate audio buffer */
     audiobuf = malloc(BUF_SIZE * CHANNELS * sizeof(short));
     if (audiobuf == NULL) {
@@ -255,7 +260,7 @@ int main(int argc, char *argv[]) {
         goto cleanup;
     }
     fprintf(stdout, "LTC decoder initialized: sample rate: %d, fps: %d / %d\n",
-            rate, FPS, BUF_SIZE);
+            SAMPLE_RATE, FPS, BUF_SIZE);
 
     /* Create UDP socket for OSC output */
     sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -277,63 +282,86 @@ int main(int argc, char *argv[]) {
     dest.sin_port = htons(osc_port);
     dest.sin_addr.s_addr = inet_addr(osc_ip);
 
-    /* Main capture loop */
-    char prev_tc[16] = "";
-    ltc_off_t total_samples = 0;
-    int consecutive_errors = 0;
-
+    /* Outer retry loop — reopens the device after any setup or persistent read failure.
+     * The process stays alive so systemd doesn't thrash the USB device with rapid restarts. */
+    int open_attempt = 0;
     while (running) {
-        snd_pcm_sframes_t frames = snd_pcm_readi(capture, audiobuf, BUF_SIZE);
-        if (frames < 0) {
-            consecutive_errors++;
-            fprintf(stderr, "read from audio interface failed (%s) [%d]\n",
-                    snd_strerror(frames), consecutive_errors);
-            /* USB devices may need a moment to settle — sleep before prepare */
-            sleep(1);
-            if (snd_pcm_prepare(capture) < 0) {
-                if (consecutive_errors >= 10) {
-                    /* Truly unrecoverable — exit so systemd can restart */
-                    fprintf(stderr, "audio device unrecoverable after %d errors, exiting\n",
-                            consecutive_errors);
-                    goto cleanup;
-                }
-                /* prepare failed but haven't hit limit yet — keep trying */
-            }
+        /* Delay between retries to let the USB device recover */
+        if (open_attempt > 0) {
+            int delay = (open_attempt <= 3) ? 5 : 15;
+            fprintf(stderr, "waiting %ds before retry (attempt %d)\n", delay, open_attempt + 1);
+            for (int i = 0; i < delay && running; i++)
+                sleep(1);
+        }
+        if (!running) break;
+
+        snd_pcm_t *capture = setup_capture(device);
+        if (capture == NULL) {
+            open_attempt++;
             continue;
         }
-        consecutive_errors = 0;
+        open_attempt = 0;
 
-        ltc_decoder_write_s16(decoder, audiobuf, frames, total_samples);
-        total_samples += frames;
+        /* Inner capture loop */
+        char prev_tc[16] = "";
+        ltc_off_t total_samples = 0;
+        int consecutive_errors = 0;
+        int need_reopen = 0;
 
-        LTCFrameExt frame;
-        while (ltc_decoder_read(decoder, &frame)) {
-            SMPTETimecode tc;
-            ltc_frame_to_time(&tc, &frame.ltc, 1);
-
-            char tc_str[16];
-            snprintf(tc_str, sizeof(tc_str), "%02d:%02d:%02d:%02d",
-                     tc.hours, tc.mins, tc.secs, tc.frame);
-
-            /* Only send if timecode changed */
-            if (strcmp(tc_str, prev_tc) != 0) {
-                strncpy(prev_tc, tc_str, sizeof(prev_tc) - 1);
-                prev_tc[sizeof(prev_tc) - 1] = '\0';
-
-                char osc_buf[256];
-                int len = osc_build_message(osc_buf, sizeof(osc_buf),
-                                            "/clock/ltc", tc_str);
-                if (len > 0) {
-                    ssize_t sent = sendto(sock, osc_buf, len, 0,
-                                          (struct sockaddr *)&dest, sizeof(dest));
-                    if (sent < 0) {
-                        fprintf(stderr, "Failed to send OSC packet!\n");
-                    }
+        while (running && !need_reopen) {
+            snd_pcm_sframes_t frames = snd_pcm_readi(capture, audiobuf, BUF_SIZE);
+            if (frames < 0) {
+                consecutive_errors++;
+                fprintf(stderr, "read from audio interface failed (%s) [%d]\n",
+                        snd_strerror(frames), consecutive_errors);
+                sleep(1);
+                /* Try a soft recover first; fall back to full reopen after 10 errors */
+                if (consecutive_errors >= 10 || snd_pcm_prepare(capture) < 0) {
+                    fprintf(stderr, "reopening audio device after %d consecutive errors\n",
+                            consecutive_errors);
+                    need_reopen = 1;
                 }
+                continue;
+            }
+            consecutive_errors = 0;
 
-                fflush(stdout);
+            ltc_decoder_write_s16(decoder, audiobuf, frames, total_samples);
+            total_samples += frames;
+
+            LTCFrameExt frame;
+            while (ltc_decoder_read(decoder, &frame)) {
+                SMPTETimecode tc;
+                ltc_frame_to_time(&tc, &frame.ltc, 1);
+
+                char tc_str[16];
+                snprintf(tc_str, sizeof(tc_str), "%02d:%02d:%02d:%02d",
+                         tc.hours, tc.mins, tc.secs, tc.frame);
+
+                /* Only send if timecode changed */
+                if (strcmp(tc_str, prev_tc) != 0) {
+                    strncpy(prev_tc, tc_str, sizeof(prev_tc) - 1);
+                    prev_tc[sizeof(prev_tc) - 1] = '\0';
+
+                    char osc_buf[256];
+                    int len = osc_build_message(osc_buf, sizeof(osc_buf),
+                                                "/clock/ltc", tc_str);
+                    if (len > 0) {
+                        ssize_t sent = sendto(sock, osc_buf, len, 0,
+                                              (struct sockaddr *)&dest, sizeof(dest));
+                        if (sent < 0) {
+                            fprintf(stderr, "Failed to send OSC packet!\n");
+                        }
+                    }
+
+                    fflush(stdout);
+                }
             }
         }
+
+        snd_pcm_close(capture);
+        fprintf(stdout, "audio interface closed\n");
+        if (need_reopen)
+            open_attempt = 1; /* will sleep before next attempt */
     }
 
 cleanup:
@@ -341,10 +369,6 @@ cleanup:
     if (audiobuf) {
         free(audiobuf);
         fprintf(stdout, "buffer freed\n");
-    }
-    if (capture) {
-        snd_pcm_close(capture);
-        fprintf(stdout, "audio interface closed\n");
     }
     if (decoder)
         ltc_decoder_free(decoder);
