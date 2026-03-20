@@ -283,9 +283,9 @@ sudo rpi-clone -f -v sda
 ```
 
 Notes:
-- `rpi-clone` overwrites the target disk. Confirm device name carefully before running.
 - Replace `/dev/sda` with your actual target device (the whole disk, not a partition)
 - The SD card target should be plugged into a USB port on the Pi
+- `rpi-clone` overwrites the target disk. Confirm device name carefully before running.
 
 ## Configuration
 
