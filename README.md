@@ -152,6 +152,34 @@ sudo systemctl enable alsa-ltc
 sudo systemctl start alsa-ltc
 ```
 
+### 5. GPIO/UART Serial Connections (optional)
+
+The Pi 5 has multiple UART serial interfaces available via GPIO pins. The installer enables them by default, adding the following device tree overlays to `/boot/firmware/config.txt`:
+
+- `dtoverlay=uart1`, `dtoverlay=uart2`, `dtoverlay=uart3` — Secondary UARTs
+- `dtparam=uart0=on` — Primary UART (GPIO 14/15)
+- `dtoverlay=dwc2,dr_mode=host` — USB host mode for dwc2
+
+#### UART Pin Mapping (Pi 5, all 3.3V logic)
+
+| Device | Function | GPIO | Pin |
+|--------|----------|------|-----|
+| `/dev/ttyAMA0` | UART0 TX | GPIO 14 | Pin 8 |
+| `/dev/ttyAMA0` | UART0 RX | GPIO 15 | Pin 10 |
+| `/dev/ttyAMA1` | UART1 TX | GPIO 0 | Pin 27 |
+| `/dev/ttyAMA1` | UART1 RX | GPIO 1 | Pin 28 |
+| `/dev/ttyAMA2` | UART2 TX | GPIO 4 | Pin 7 |
+| `/dev/ttyAMA2` | UART2 RX | GPIO 5 | Pin 29 |
+| `/dev/ttyAMA3` | UART3 TX | GPIO 8 | Pin 24 |
+| `/dev/ttyAMA3` | UART3 RX | GPIO 9 | Pin 21 |
+
+After installation, a reboot is required for the overlays to take effect. To apply overlays without rebooting:
+
+```bash
+sudo dtoverlay -R           # Remove current overlays (may disrupt display)
+sudo dtoverlay uart1 uart2 uart3  # Re-apply overlays
+```
+
 ---
 
 ## Building from Source
