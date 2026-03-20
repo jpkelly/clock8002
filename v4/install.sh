@@ -110,6 +110,25 @@ if [ -f "${RTC_CFG}" ]; then
     fi
 fi
 
+# Enable GPIO/UART serial overlays for Pi 5
+CONFIG_FILE="/boot/firmware/config.txt"
+UART_OVERLAYS=(
+    "dtoverlay=dwc2,dr_mode=host"
+    "dtoverlay=uart1"
+    "dtoverlay=uart2"
+    "dtoverlay=uart3"
+    "dtparam=uart0=on"
+)
+
+if [ -f "${CONFIG_FILE}" ]; then
+    for overlay in "${UART_OVERLAYS[@]}"; do
+        if ! grep -q "^${overlay}$" "${CONFIG_FILE}"; then
+            echo "Adding UART overlay: ${overlay}"
+            echo "${overlay}" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+        fi
+    done
+fi
+
 sed "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" "${SERVICE_FILE}" | \
     sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl-clock --fullscreen|" | \
     sed "s|User=.*|User=$USER|" | \
