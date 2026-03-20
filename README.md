@@ -12,6 +12,7 @@ This build is intended to be used with the piClock platform.
 - [Quick Install (pre-built binary)](#quick-install-pre-built-binary)
 - [Building from Source](#building-from-source)
 - [Updating](#updating)
+- [Cloning the Image](#cloning-the-image)
 - [Configuration](#configuration)
 - [Platform](#platform)
 - [OSC Control](#osc-control)
@@ -269,6 +270,22 @@ sudo cp clock8002.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl restart clock8002
 ```
+
+## Cloning the Image
+
+`rpi-clone` is installed by `install.sh` and can be used to clone a running system to another SD card or USB device.
+
+Basic workflow:
+
+```bash
+lsblk
+sudo rpi-clone -f /dev/sda
+```
+
+Notes:
+- Replace `/dev/sda` with your actual target device (the whole disk, not a partition)
+- `-f` forces the clone to proceed; omit it for a safer first dry-run prompt
+- After cloning, power down and boot from the cloned media to verify
 
 ## Configuration
 
