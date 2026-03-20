@@ -8,7 +8,6 @@ This build is intended to be used with the piClock platform.
 
 - [Acknowledgements](#acknowledgements)
 - [What changed from clock-8001](#what-changed-from-clock-8001)
-- [Clock Faces](#clock-faces)
 - [Requirements](#requirements)
 - [Quick Install (pre-built binary)](#quick-install-pre-built-binary)
 - [Building from Source](#building-from-source)
@@ -35,22 +34,6 @@ Please consider supporting the original clock-8001 development: https://www.payp
 - Targets Raspberry Pi 5 running 64-bit Debian Trixie (arm64)
 - Runs headless via KMSDRM — no X11 or Wayland needed
 - GPIO pulse output support retained (periph.io)
-
-## Clock Faces
-
-| Face | Description |
-|------|-------------|
-| `round` | Single analog-style round clock |
-| `dual-round` | Two round clocks side by side |
-| `text` | Text clock with 3 timers |
-| `quad` | Text clock with 4 timers |
-| `dual` | Text clock with 2 timers |
-| `single` | Text clock with 1 large timer |
-| `max` | Maximal size single timer |
-| `countdown` | Countdown to a fixed date/time |
-| `192` | Small 192×192px round clock |
-| `144` | Small 144×144px round clock |
-| `288x144` | Small 288×144px text clock |
 
 ## Requirements
 
