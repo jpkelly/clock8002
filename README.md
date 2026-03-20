@@ -279,7 +279,7 @@ Basic workflow:
 
 ```bash
 lsblk
-sudo rpi-clone -f -v /dev/sda
+sudo rpi-clone -f -v sda
 ```
 
 Notes:
