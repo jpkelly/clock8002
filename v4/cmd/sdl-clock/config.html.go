@@ -925,8 +925,8 @@ const configHTML = `
       status.textContent = 'Syncing...';
       status.style.color = '{{$color}}';
       var now = new Date();
-      var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
-      var ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+      // Use ISO8601 with millisecond precision to minimize time-setting error.
+      var ts = now.toISOString();
       var xhr = new XMLHttpRequest();
       xhr.open('POST', '/api/settime');
       xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');

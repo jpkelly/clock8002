@@ -15,7 +15,6 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
-	"strings"
 	"text/template"
 	"time"
 
@@ -519,21 +518,34 @@ func setTimeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate ISO 8601 format: 2006-01-02T15:04:05
-	match, _ := regexp.MatchString(`^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d:[0-5]\d$`, timeStr)
-	if !match {
-		http.Error(w, "Invalid time format", http.StatusBadRequest)
-		return
-	}
-
 	_, lookErr := exec.LookPath("date")
 	if lookErr != nil {
 		http.Error(w, "date command not found", http.StatusInternalServerError)
 		return
 	}
 
-	dateString := strings.Replace(timeStr, "T", " ", 1)
-	log.Printf("Web UI settime: setting system date to %s", dateString)
+	// Parse ISO 8601 format (RFC3339Nano) to support sub-second precision.
+	// Accepts: 2026-03-20T17:04:50.123Z (from toISOString) or 2026-03-20T10:04:50 (legacy).
+	var parsedTime time.Time
+	if t, parseErr := time.Parse(time.RFC3339Nano, timeStr); parseErr == nil {
+		parsedTime = t
+	} else {
+		match, _ := regexp.MatchString(`^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d:[0-5]\d$`, timeStr)
+		if !match {
+			http.Error(w, "Invalid time format", http.StatusBadRequest)
+			return
+		}
+		legacyTime, legacyErr := time.ParseInLocation("2006-01-02T15:04:05", timeStr, time.Local)
+		if legacyErr != nil {
+			http.Error(w, "Invalid time format", http.StatusBadRequest)
+			return
+		}
+		parsedTime = legacyTime
+	}
+
+	// Use @seconds.nanoseconds format for nanosecond precision.
+	dateString := fmt.Sprintf("@%d.%09d", parsedTime.Unix(), parsedTime.Nanosecond())
+	log.Printf("Web UI settime: setting system date to %s (raw input: %s)", parsedTime.Format(time.RFC3339Nano), timeStr)
 	cmd := exec.Command("date", "--set", dateString) // #nosec strict validation above
 	if err := cmd.Run(); err != nil {
 		log.Printf("Failed to set system time: %v", err)
