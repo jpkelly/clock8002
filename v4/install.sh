@@ -115,6 +115,14 @@ sed "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" "${SERVICE_FILE}" |
     sed "s|User=.*|User=$USER|" | \
     sudo tee /etc/systemd/system/clock8002.service > /dev/null
 
+echo "Installing restricted hwclock sudoers rule..."
+printf '%s\n' \
+    "Defaults:${USER} !requiretty" \
+    "${USER} ALL=(root) NOPASSWD: /usr/sbin/hwclock --systohc --utc, /sbin/hwclock --systohc --utc" | \
+    sudo tee /etc/sudoers.d/clock8002-hwclock > /dev/null
+sudo chmod 440 /etc/sudoers.d/clock8002-hwclock
+sudo visudo -cf /etc/sudoers.d/clock8002-hwclock
+
 # Install alsa-ltc service if present
 if [ -f alsa-ltc.service ]; then
     sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/alsa-ltc - 127.0.0.1 1245|" alsa-ltc.service | \

@@ -470,6 +470,43 @@ func (options *clockOptions) writeConfig(path string) {
 	f.Close()
 }
 
+func findCommandPath(name string, fallbacks []string) string {
+	if path, err := exec.LookPath(name); err == nil {
+		return path
+	}
+	for _, candidate := range fallbacks {
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate
+		}
+	}
+	return ""
+}
+
+func syncHardwareClock() error {
+	hwclockPath := findCommandPath("hwclock", []string{"/usr/sbin/hwclock", "/sbin/hwclock", "/usr/bin/hwclock", "/bin/hwclock"})
+	if hwclockPath == "" {
+		return fmt.Errorf("hwclock command not found")
+	}
+
+	args := []string{"--systohc", "--utc"}
+	hwCmd := exec.Command(hwclockPath, args...)
+	if err := hwCmd.Run(); err == nil {
+		return nil
+	} else {
+		sudoPath := findCommandPath("sudo", []string{"/usr/bin/sudo", "/bin/sudo"})
+		if sudoPath == "" {
+			return fmt.Errorf("direct hwclock failed and sudo command not found: %w", err)
+		}
+		fullArgs := append([]string{"-n", hwclockPath}, args...)
+		sudoCmd := exec.Command(sudoPath, fullArgs...)
+		if sudoErr := sudoCmd.Run(); sudoErr != nil {
+			return fmt.Errorf("direct hwclock failed: %w; sudo hwclock failed: %v", err, sudoErr)
+		}
+		log.Printf("Web UI settime: RTC updated via sudo hwclock fallback")
+		return nil
+	}
+}
+
 func setTimeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -495,7 +532,6 @@ func setTimeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert ISO format to date --set format
 	dateString := strings.Replace(timeStr, "T", " ", 1)
 	log.Printf("Web UI settime: setting system date to %s", dateString)
 	cmd := exec.Command("date", "--set", dateString) // #nosec strict validation above
@@ -505,23 +541,9 @@ func setTimeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Best-effort RTC sync so time survives reboot.
-	hwclockPath, err := exec.LookPath("hwclock")
-	if err != nil {
-		for _, p := range []string{"/usr/sbin/hwclock", "/sbin/hwclock", "/usr/bin/hwclock", "/bin/hwclock"} {
-			if _, statErr := os.Stat(p); statErr == nil {
-				hwclockPath = p
-				break
-			}
-		}
-	}
-	if hwclockPath == "" {
-		log.Printf("Warning: hwclock command not found; RTC not updated")
-	} else {
-		hwCmd := exec.Command(hwclockPath, "--systohc")
-		if err := hwCmd.Run(); err != nil {
-			log.Printf("Warning: failed to update hardware clock: %v", err)
-		}
+	// Best-effort RTC sync so time survives reboot even when NTP is disabled.
+	if err := syncHardwareClock(); err != nil {
+		log.Printf("Warning: failed to update hardware clock: %v", err)
 	}
 
 	w.WriteHeader(http.StatusOK)
