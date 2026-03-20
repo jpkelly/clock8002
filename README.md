@@ -69,13 +69,7 @@ The install script will:
 - Add your user to video/render groups
 - Install and enable the systemd services
 
-### 3. Start the clock
-
-```bash
-sudo systemctl start clock8002
-```
-
-Then open `http://<pi-ip>:8080` to configure (default: **admin** / **clockwork**).
+The installer starts the clock service automatically. Then open `http://<pi-ip>:8080` to configure (default: **admin** / **clockwork**).
 
 ### Pre-boot Network Configuration (optional)
 
