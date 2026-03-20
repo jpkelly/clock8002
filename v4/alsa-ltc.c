@@ -215,6 +215,7 @@ fail:
 }
 
 int main(int argc, char *argv[]) {
+    snd_pcm_t *capture = NULL;
     LTCDecoder *decoder = NULL;
     short *audiobuf = NULL;
     int sock = -1;
@@ -282,89 +283,76 @@ int main(int argc, char *argv[]) {
     dest.sin_port = htons(osc_port);
     dest.sin_addr.s_addr = inet_addr(osc_ip);
 
-    /* Outer retry loop — reopens the device after any setup or persistent read failure.
-     * The process stays alive so systemd doesn't thrash the USB device with rapid restarts.
-     * A 30-second delay between reopens matches the old RestartSec=30 behaviour. */
-    int open_attempt = 0;
-    while (running) {
-        /* Delay between retries to let the USB device recover */
-        if (open_attempt > 0) {
-            fprintf(stderr, "waiting 30s before reopening (attempt %d)\n", open_attempt + 1);
-            for (int i = 0; i < 30 && running; i++)
-                sleep(1);
-        }
-        if (!running) break;
+    snd_pcm_t *capture = setup_capture(device);
+    if (capture == NULL) {
+        goto cleanup;
+    }
 
-        snd_pcm_t *capture = setup_capture(device);
-        if (capture == NULL) {
-            open_attempt++;
+    /* Main capture loop.
+     *
+     * On read errors we call snd_pcm_prepare() and retry — we deliberately do NOT
+     * close and reopen the device here. Closing a USB audio device while it is in
+     * an error state triggers a kernel USB reset (usb_set_interface -110), which
+     * then causes ETIMEDOUT on the next open attempt. Leaving the device open and
+     * retrying prepare is sufficient for the transient I/O errors that occur while
+     * a USB device is still settling after boot.
+     *
+     * If errors persist beyond the limit we exit cleanly so systemd restarts the
+     * whole process after RestartSec=30, which gives the USB stack enough time to
+     * fully recover before a fresh open attempt.
+     */
+    char prev_tc[16] = "";
+    ltc_off_t total_samples = 0;
+    int consecutive_errors = 0;
+
+    while (running) {
+        snd_pcm_sframes_t frames = snd_pcm_readi(capture, audiobuf, BUF_SIZE);
+        if (frames < 0) {
+            consecutive_errors++;
+            fprintf(stderr, "read from audio interface failed (%s) [%d]\n",
+                    snd_strerror(frames), consecutive_errors);
+            sleep(1);
+            snd_pcm_prepare(capture);
+            if (consecutive_errors >= 20) {
+                fprintf(stderr, "audio device unrecoverable after %d errors, exiting\n",
+                        consecutive_errors);
+                goto cleanup;
+            }
             continue;
         }
-        open_attempt = 0;
+        consecutive_errors = 0;
 
-        /* Inner capture loop */
-        char prev_tc[16] = "";
-        ltc_off_t total_samples = 0;
-        int consecutive_errors = 0;
-        int need_reopen = 0;
+        ltc_decoder_write_s16(decoder, audiobuf, frames, total_samples);
+        total_samples += frames;
 
-        while (running && !need_reopen) {
-            snd_pcm_sframes_t frames = snd_pcm_readi(capture, audiobuf, BUF_SIZE);
-            if (frames < 0) {
-                consecutive_errors++;
-                fprintf(stderr, "read from audio interface failed (%s) [%d]\n",
-                        snd_strerror(frames), consecutive_errors);
-                sleep(1);
-                /* Try a soft recover — don't close the device on prepare failure as
-                 * closing a USB device triggers a kernel reset that causes ETIMEDOUT
-                 * on the next open. Only reopen after 10 consecutive read failures. */
-                snd_pcm_prepare(capture);
-                if (consecutive_errors >= 10) {
-                    fprintf(stderr, "reopening audio device after %d consecutive errors\n",
-                            consecutive_errors);
-                    need_reopen = 1;
-                }
-                continue;
-            }
-            consecutive_errors = 0;
+        LTCFrameExt frame;
+        while (ltc_decoder_read(decoder, &frame)) {
+            SMPTETimecode tc;
+            ltc_frame_to_time(&tc, &frame.ltc, 1);
 
-            ltc_decoder_write_s16(decoder, audiobuf, frames, total_samples);
-            total_samples += frames;
+            char tc_str[16];
+            snprintf(tc_str, sizeof(tc_str), "%02d:%02d:%02d:%02d",
+                     tc.hours, tc.mins, tc.secs, tc.frame);
 
-            LTCFrameExt frame;
-            while (ltc_decoder_read(decoder, &frame)) {
-                SMPTETimecode tc;
-                ltc_frame_to_time(&tc, &frame.ltc, 1);
+            /* Only send if timecode changed */
+            if (strcmp(tc_str, prev_tc) != 0) {
+                strncpy(prev_tc, tc_str, sizeof(prev_tc) - 1);
+                prev_tc[sizeof(prev_tc) - 1] = '\0';
 
-                char tc_str[16];
-                snprintf(tc_str, sizeof(tc_str), "%02d:%02d:%02d:%02d",
-                         tc.hours, tc.mins, tc.secs, tc.frame);
-
-                /* Only send if timecode changed */
-                if (strcmp(tc_str, prev_tc) != 0) {
-                    strncpy(prev_tc, tc_str, sizeof(prev_tc) - 1);
-                    prev_tc[sizeof(prev_tc) - 1] = '\0';
-
-                    char osc_buf[256];
-                    int len = osc_build_message(osc_buf, sizeof(osc_buf),
-                                                "/clock/ltc", tc_str);
-                    if (len > 0) {
-                        ssize_t sent = sendto(sock, osc_buf, len, 0,
-                                              (struct sockaddr *)&dest, sizeof(dest));
-                        if (sent < 0) {
-                            fprintf(stderr, "Failed to send OSC packet!\n");
-                        }
+                char osc_buf[256];
+                int len = osc_build_message(osc_buf, sizeof(osc_buf),
+                                            "/clock/ltc", tc_str);
+                if (len > 0) {
+                    ssize_t sent = sendto(sock, osc_buf, len, 0,
+                                          (struct sockaddr *)&dest, sizeof(dest));
+                    if (sent < 0) {
+                        fprintf(stderr, "Failed to send OSC packet!\n");
                     }
-
-                    fflush(stdout);
                 }
+
+                fflush(stdout);
             }
         }
-
-        snd_pcm_close(capture);
-        fprintf(stdout, "audio interface closed\n");
-        if (need_reopen)
-            open_attempt = 1; /* will sleep before next attempt */
     }
 
 cleanup:
@@ -372,6 +360,10 @@ cleanup:
     if (audiobuf) {
         free(audiobuf);
         fprintf(stdout, "buffer freed\n");
+    }
+    if (capture) {
+        snd_pcm_close(capture);
+        fprintf(stdout, "audio interface closed\n");
     }
     if (decoder)
         ltc_decoder_free(decoder);
