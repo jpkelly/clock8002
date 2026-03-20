@@ -25,6 +25,13 @@ echo "Installing runtime libraries..."
 sudo apt update
 sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11 i2c-tools python3-luma.oled fbi util-linux-extra
 
+echo "Ensuring rpi-clone is installed..."
+if command -v rpi-clone >/dev/null 2>&1; then
+    echo "rpi-clone already installed"
+else
+    curl -fsSL https://raw.githubusercontent.com/geerlingguy/rpi-clone/master/install | sudo bash
+fi
+
 # Create install directory
 echo "Installing to ${INSTALL_DIR}..."
 sudo mkdir -p "${INSTALL_DIR}"
