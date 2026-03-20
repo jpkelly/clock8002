@@ -12,6 +12,7 @@ This build is intended to be used with the piClock platform.
 - [Quick Install (pre-built binary)](#quick-install-pre-built-binary)
 - [GPIO/UART Serial Connections](#gpiouart-serial-connections)
 - [Building from Source](#building-from-source)
+- [Service Operations](#service-operations)
 - [Updating](#updating)
 - [Cloning the Image](#cloning-the-image)
 - [Configuration](#configuration)
@@ -223,21 +224,29 @@ sudo systemctl start clock8002
 
 The service runs as your user, starts on boot, and auto-restarts on crash.
 
-### Service management
+For runtime service commands, see [Service Operations](#service-operations).
+
+## Service Operations
+
+### Clock service lifecycle
 
 ```bash
 sudo systemctl status clock8002       # check status
+sudo systemctl start clock8002        # start clock service
 sudo systemctl restart clock8002      # restart after config changes
 sudo systemctl stop clock8002         # stop the clock
+sudo systemctl enable clock8002       # enable on boot
 journalctl -u clock8002 -f            # live service logs
 cat ~/.config/clock-8001/clock.log    # application log file
 ```
 
-### LTC timecode service
+### LTC service lifecycle
 
 ```bash
 sudo systemctl enable alsa-ltc       # enable on boot
 sudo systemctl start alsa-ltc        # start LTC decoder
+sudo systemctl restart alsa-ltc      # restart LTC decoder
+sudo systemctl stop alsa-ltc         # stop LTC decoder
 sudo systemctl status alsa-ltc       # check status
 journalctl -u alsa-ltc -f            # live LTC logs
 ```
