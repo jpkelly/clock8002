@@ -30,13 +30,12 @@ Please consider supporting the original clock-8001 development: https://www.payp
 
 ## What changed from clock-8001
 
-- Stripped to HDMI-only SDL clock output (removed HUB75 LED matrix, Arduino LED ring, Pimoroni Unicorn HD, Futaba VFD)
-- Added "quad" face — text clock with 4 timers
-- Added "dual" face — text clock with 2 timers
-- Added LTC timecode input via ALSA audio (alsa-ltc)
-- Targets Raspberry Pi 5 running 64-bit Debian Trixie (arm64)
-- Runs headless via KMSDRM — no X11 or Wayland needed
-- GPIO pulse output support retained (periph.io)
+- Runtime: runs headless via KMSDRM (no X11/Wayland)
+- Features: added "quad" and "dual" text clock faces
+- Features: added LTC timecode input via ALSA audio (`alsa-ltc`)
+- Features: retained GPIO pulse output support (`periph.io`)
+- Platform: targets Raspberry Pi 5 running 64-bit Debian Trixie (arm64)
+- Removed hardware: HUB75 LED matrix, Arduino LED ring, Pimoroni Unicorn HD, Futaba VFD
 
 ## Requirements
 
