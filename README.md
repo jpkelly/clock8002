@@ -273,19 +273,18 @@ sudo systemctl restart clock8002
 
 ## Cloning the Image
 
-`rpi-clone` is installed by `install.sh` and can be used to clone a running system to another SD card or USB device.
+`rpi-clone` is installed by `install.sh` and can be used to clone a running system to another SD card.
 
 Basic workflow:
 
 ```bash
 lsblk
-sudo rpi-clone -f /dev/sda
+sudo rpi-clone -f -v /dev/sda
 ```
 
 Notes:
 - Replace `/dev/sda` with your actual target device (the whole disk, not a partition)
-- `-f` forces the clone to proceed; omit it for a safer first dry-run prompt
-- After cloning, power down and boot from the cloned media to verify
+- The SD card target should be plugged into a USB port on the Pi
 
 ## Configuration
 
