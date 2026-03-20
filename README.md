@@ -122,8 +122,8 @@ The Pi 5 has multiple UART serial interfaces available via GPIO pins. `install.s
 | `/dev/ttyAMA0` | UART0 RX | GPIO 15 | Pin 10 | Primary UART |
 | `/dev/ttyAMA1` | UART1 TX | GPIO 0 | Pin 27 | PerfectCue TX |
 | `/dev/ttyAMA1` | UART1 RX | GPIO 1 | Pin 28 | PerfectCue RX |
-| `/dev/ttyAMA2` | UART2 TX | GPIO 4 | Pin 7 | RS-485 TX |
-| `/dev/ttyAMA2` | UART2 RX | GPIO 5 | Pin 29 | RS-485 RX (incoming to Pi) |
+| `/dev/ttyAMA2` | UART2 TX | GPIO 4 | Pin 7 | |
+| `/dev/ttyAMA2` | UART2 RX | GPIO 5 | Pin 29 | |
 | `/dev/ttyAMA3` | UART3 TX | GPIO 8 | Pin 24 | Limitimer TX |
 | `/dev/ttyAMA3` | UART3 RX | GPIO 9 | Pin 21 | Limitimer RX |
 | `/dev/ttyAMA10` | BT TX/RX | – | – | **Bluetooth UART** — enabled by default; see below to disable |
