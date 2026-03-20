@@ -505,6 +505,12 @@ func setTimeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Best-effort RTC sync so time survives reboot.
+	hwCmd := exec.Command("hwclock", "--systohc")
+	if err := hwCmd.Run(); err != nil {
+		log.Printf("Warning: failed to update hardware clock: %v", err)
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }

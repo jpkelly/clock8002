@@ -1,4 +1,6 @@
 .*
+!.github/
+!.github/copilot-instructions.md
 /sdl-clock
 /clock-bridge
 /matrix-clock
