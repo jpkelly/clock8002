@@ -506,9 +506,22 @@ func setTimeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Best-effort RTC sync so time survives reboot.
-	hwCmd := exec.Command("hwclock", "--systohc")
-	if err := hwCmd.Run(); err != nil {
-		log.Printf("Warning: failed to update hardware clock: %v", err)
+	hwclockPath, err := exec.LookPath("hwclock")
+	if err != nil {
+		for _, p := range []string{"/usr/sbin/hwclock", "/sbin/hwclock", "/usr/bin/hwclock", "/bin/hwclock"} {
+			if _, statErr := os.Stat(p); statErr == nil {
+				hwclockPath = p
+				break
+			}
+		}
+	}
+	if hwclockPath == "" {
+		log.Printf("Warning: hwclock command not found; RTC not updated")
+	} else {
+		hwCmd := exec.Command(hwclockPath, "--systohc")
+		if err := hwCmd.Run(); err != nil {
+			log.Printf("Warning: failed to update hardware clock: %v", err)
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)

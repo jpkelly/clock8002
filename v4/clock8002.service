@@ -8,6 +8,7 @@ User=pi
 WorkingDirectory=/opt/clock8002
 Environment=SDL_VIDEODRIVER=kmsdrm
 Environment=XDG_RUNTIME_DIR=/run/user/%U
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=/opt/clock8002/sdl-clock --fullscreen
 Restart=always
 RestartSec=5
