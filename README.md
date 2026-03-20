@@ -10,6 +10,7 @@ This build is intended to be used with the piClock platform.
 - [What changed from clock-8001](#what-changed-from-clock-8001)
 - [Requirements](#requirements)
 - [Quick Install (pre-built binary)](#quick-install-pre-built-binary)
+- [GPIO/UART Serial Connections](#gpiouart-serial-connections)
 - [Building from Source](#building-from-source)
 - [Updating](#updating)
 - [Cloning the Image](#cloning-the-image)
@@ -105,9 +106,9 @@ ap_channel=6                       # Wi-Fi channel
 - NTP defaults to disabled so OSC `settime` commands can hold the system clock reliably
 - The Wi-Fi AP shares the wired connection; both work simultaneously
 
-### 4. GPIO/UART Serial Connections (optional)
+## GPIO/UART Serial Connections
 
-The Pi 5 has multiple UART serial interfaces available via GPIO pins. The installer enables them by default, adding the following device tree overlays to `/boot/firmware/config.txt`:
+The Pi 5 has multiple UART serial interfaces available via GPIO pins. `install.sh` enables them by default by adding the following device tree overlays to `/boot/firmware/config.txt`:
 
 - `dtoverlay=uart1`, `dtoverlay=uart2`, `dtoverlay=uart3` — Secondary UARTs
 - `dtparam=uart0=on` — Primary UART (GPIO 14/15)
