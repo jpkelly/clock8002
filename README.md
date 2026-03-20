@@ -118,8 +118,8 @@ The Pi 5 has multiple UART serial interfaces available via GPIO pins. `install.s
 
 | Device | Function | GPIO | Pin | Notes |
 |--------|----------|------|-----|-------|
-| `/dev/ttyAMA0` | UART0 TX | GPIO 14 | Pin 8 | |
-| `/dev/ttyAMA0` | UART0 RX | GPIO 15 | Pin 10 | |
+| `/dev/ttyAMA0` | UART0 TX | GPIO 14 | Pin 8 | Primary UART |
+| `/dev/ttyAMA0` | UART0 RX | GPIO 15 | Pin 10 | Primary UART |
 | `/dev/ttyAMA1` | UART1 TX | GPIO 0 | Pin 27 | PerfectCue TX |
 | `/dev/ttyAMA1` | UART1 RX | GPIO 1 | Pin 28 | PerfectCue RX |
 | `/dev/ttyAMA2` | UART2 TX | GPIO 4 | Pin 7 | RS-485 TX |
