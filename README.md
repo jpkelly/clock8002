@@ -111,9 +111,10 @@ ap_channel=6                       # Wi-Fi channel
 - NTP defaults to disabled so OSC `settime` commands can hold the system clock reliably
 - The Wi-Fi AP shares the wired connection; both work simultaneously
 
-### 4. Enable LTC timecode (optional)
+### 4. LTC timecode service
 
-If you have a USB audio interface receiving LTC timecode:
+If the release includes `alsa-ltc`, the installer enables and starts it automatically.
+If needed, you can manage it manually:
 
 ```bash
 sudo systemctl enable alsa-ltc

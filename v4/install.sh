@@ -151,6 +151,9 @@ fi
 
 sudo systemctl daemon-reload
 sudo systemctl enable clock8002
+if [ -f /etc/systemd/system/alsa-ltc.service ]; then
+    sudo systemctl enable alsa-ltc
+fi
 
 # Install OLED display daemon if present
 if [ -d oled ]; then
@@ -237,8 +240,3 @@ echo "Starting services..."
 sudo systemctl start clock8002 2>/dev/null || true
 sudo systemctl start oled_daemon 2>/dev/null || true
 sudo systemctl start alsa-ltc 2>/dev/null || true
-
-echo ""
-echo "For LTC timecode input (requires USB audio interface):"
-echo "  sudo systemctl enable alsa-ltc"
-echo ""
