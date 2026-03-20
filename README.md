@@ -162,16 +162,29 @@ The Pi 5 has multiple UART serial interfaces available via GPIO pins. The instal
 
 #### UART Pin Mapping (Pi 5, all 3.3V logic)
 
-| Device | Function | GPIO | Pin |
-|--------|----------|------|-----|
-| `/dev/ttyAMA0` | UART0 TX | GPIO 14 | Pin 8 |
-| `/dev/ttyAMA0` | UART0 RX | GPIO 15 | Pin 10 |
-| `/dev/ttyAMA1` | UART1 TX | GPIO 0 | Pin 27 |
-| `/dev/ttyAMA1` | UART1 RX | GPIO 1 | Pin 28 |
-| `/dev/ttyAMA2` | UART2 TX | GPIO 4 | Pin 7 |
-| `/dev/ttyAMA2` | UART2 RX | GPIO 5 | Pin 29 |
-| `/dev/ttyAMA3` | UART3 TX | GPIO 8 | Pin 24 |
-| `/dev/ttyAMA3` | UART3 RX | GPIO 9 | Pin 21 |
+| Device | Function | GPIO | Pin | Notes |
+|--------|----------|------|-----|-------|
+| `/dev/ttyAMA0` | UART0 TX | GPIO 14 | Pin 8 | Primary UART |
+| `/dev/ttyAMA0` | UART0 RX | GPIO 15 | Pin 10 | Primary UART |
+| `/dev/ttyAMA1` | UART1 TX | GPIO 0 | Pin 27 | |
+| `/dev/ttyAMA1` | UART1 RX | GPIO 1 | Pin 28 | |
+| `/dev/ttyAMA2` | UART2 TX | GPIO 4 | Pin 7 | |
+| `/dev/ttyAMA2` | UART2 RX | GPIO 5 | Pin 29 | |
+| `/dev/ttyAMA3` | UART3 TX | GPIO 8 | Pin 24 | |
+| `/dev/ttyAMA3` | UART3 RX | GPIO 9 | Pin 21 | |
+| `/dev/ttyAMA10` | BT TX/RX | – | – | **Bluetooth UART** — enabled by default; see below to disable |
+
+#### Using the Bluetooth UART (/dev/ttyAMA10)
+
+By default, `/dev/ttyAMA10` is reserved for Bluetooth. If you need to use it as a regular serial interface, disable Bluetooth:
+
+Add this line to `/boot/firmware/config.txt`:
+
+```ini
+dtparam=bluetooth=off
+```
+
+Then reboot. This frees up AMA10 for serial communication and disables the on-board Bluetooth radio.
 
 After installation, a reboot is required for the overlays to take effect. To apply overlays without rebooting:
 
