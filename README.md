@@ -228,7 +228,7 @@ For runtime service commands, see [Service Operations](#service-operations).
 
 ## Service Operations
 
-### Clock service lifecycle
+### Clock service
 
 ```bash
 sudo systemctl status clock8002       # check status
@@ -240,7 +240,7 @@ journalctl -u clock8002 -f            # live service logs
 cat ~/.config/clock-8001/clock.log    # application log file
 ```
 
-### LTC service lifecycle
+### LTC service
 
 ```bash
 sudo systemctl enable alsa-ltc       # enable on boot
