@@ -32,7 +32,7 @@ Please consider supporting the original clock-8001 development: https://www.payp
 
 - Runtime: runs headless via KMSDRM (no X11/Wayland)
 - Features: added "quad" and "dual" text clock faces
-- Features: added LTC timecode input via ALSA audio (`alsa-ltc`)
+- Features: refactored `alsa-ltc` binary for 64-bit Trixie
 - Features: retained GPIO pulse output support (`periph.io`)
 - Platform: targets Raspberry Pi 5 running 64-bit Debian Trixie (arm64)
 - Removed hardware: HUB75 LED matrix, Arduino LED ring, Pimoroni Unicorn HD, Futaba VFD
