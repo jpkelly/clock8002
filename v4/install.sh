@@ -97,6 +97,19 @@ fi
 echo "Configuring Wi-Fi radio..."
 sudo raspi-config nonint do_wifi_country US
 
+# Enable Pi 5 RTC battery charging at 3.0V when a backup battery is connected.
+RTC_CFG="/boot/firmware/config.txt"
+RTC_PARAM="dtparam=rtc_bbat_vchg=3000000"
+if [ -f "${RTC_CFG}" ]; then
+    if grep -q "^dtparam=rtc_bbat_vchg=" "${RTC_CFG}"; then
+        echo "Updating RTC battery charging setting in ${RTC_CFG}..."
+        sudo sed -i "s|^dtparam=rtc_bbat_vchg=.*|${RTC_PARAM}|" "${RTC_CFG}"
+    else
+        echo "Enabling RTC battery charging in ${RTC_CFG}..."
+        echo "${RTC_PARAM}" | sudo tee -a "${RTC_CFG}" > /dev/null
+    fi
+fi
+
 sed "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" "${SERVICE_FILE}" | \
     sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl-clock --fullscreen|" | \
     sed "s|User=.*|User=$USER|" | \
