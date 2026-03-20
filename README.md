@@ -111,17 +111,7 @@ ap_channel=6                       # Wi-Fi channel
 - NTP defaults to disabled so OSC `settime` commands can hold the system clock reliably
 - The Wi-Fi AP shares the wired connection; both work simultaneously
 
-### 4. LTC timecode service
-
-If the release includes `alsa-ltc`, the installer enables and starts it automatically.
-If needed, you can manage it manually:
-
-```bash
-sudo systemctl enable alsa-ltc
-sudo systemctl start alsa-ltc
-```
-
-### 5. GPIO/UART Serial Connections (optional)
+### 4. GPIO/UART Serial Connections (optional)
 
 The Pi 5 has multiple UART serial interfaces available via GPIO pins. The installer enables them by default, adding the following device tree overlays to `/boot/firmware/config.txt`:
 
