@@ -81,34 +81,35 @@ Then open `http://<pi-ip>:8080` to configure (default: **admin** / **clockwork**
 
 Edit `/boot/piclock/network.ini` on the SD card's FAT32 boot partition (mountable on Mac/PC) to configure the Pi without SSH. Settings apply automatically on boot via the `piclock-network` service.
 
-Example `network.ini` with common configurations (uncomment/adjust as needed):
+Example `network.ini` with common configurations:
 
 ```ini
+# Clock-8002 Network Configuration
+# Place this file at /boot/piclock/network.ini and reboot to apply
+
 [network]
-# mode=dhcp          # DHCP (default)
-# mode=static        # Static IP — uncomment and set below
-# address=10.0.0.100
+mode=dhcp                          # dhcp or static
+ntp=false                          # Disable if using OSC settime
+# address=10.0.0.100               # Static IP only
 # netmask=24
 # gateway=10.0.0.1
-# dns=10.0.0.1
-# ntp=false          # NTP disabled (default) — OSC settime controls clock
-# ntp=true           # Enable NTP if you have reliable network time
+# dns=1.1.1.1
 
 [host]
-hostname=clock8002   # Set without .local — mDNS adds it automatically
+hostname=piClock                   # Hostname (without .local)
 
 [wifi]
-# ap_enabled=true                    # Broadcast Wi-Fi access point
-# ap_ssid=MyNetwork                  # SSID (defaults to <hostname>-ap)
-# ap_password=YourPassword           # Min 8 characters (defaults to clockwork)
-# ap_channel=6                       # Channel (defaults to 6)
+ap_enabled=true                    # Broadcast Wi-Fi access point
+ap_ssid=piClock-ap                 # SSID (defaults to <hostname>-ap)
+ap_password=clockwork              # Password (min 8 characters)
+ap_channel=6                       # Wi-Fi channel
 ```
 
 **Notes:**
+- Edit directly or uncomment lines by removing `#`
 - To apply changes without rebooting: `sudo /opt/clock8002/piclock-network.sh`
 - NTP defaults to disabled so OSC `settime` commands can hold the system clock reliably
 - The Wi-Fi AP shares the wired connection; both work simultaneously
-- Set `ap_enabled=false` to disable the AP
 
 ### 4. Enable LTC timecode (optional)
 
