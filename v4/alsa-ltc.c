@@ -280,19 +280,28 @@ int main(int argc, char *argv[]) {
     /* Main capture loop */
     char prev_tc[16] = "";
     ltc_off_t total_samples = 0;
+    int consecutive_errors = 0;
 
     while (running) {
         snd_pcm_sframes_t frames = snd_pcm_readi(capture, audiobuf, BUF_SIZE);
         if (frames < 0) {
-            fprintf(stderr, "read from audio interface failed (%s)\n", snd_strerror(frames));
-            /* Try to recover from overrun/suspend */
+            consecutive_errors++;
+            fprintf(stderr, "read from audio interface failed (%s) [%d]\n",
+                    snd_strerror(frames), consecutive_errors);
+            /* USB devices may need a moment to settle — sleep before prepare */
+            sleep(1);
             if (snd_pcm_prepare(capture) < 0) {
-                /* Device gone (unplugged or I/O error) — exit so systemd can restart */
-                fprintf(stderr, "audio device unrecoverable, exiting\n");
-                goto cleanup;
+                if (consecutive_errors >= 10) {
+                    /* Truly unrecoverable — exit so systemd can restart */
+                    fprintf(stderr, "audio device unrecoverable after %d errors, exiting\n",
+                            consecutive_errors);
+                    goto cleanup;
+                }
+                /* prepare failed but haven't hit limit yet — keep trying */
             }
             continue;
         }
+        consecutive_errors = 0;
 
         ltc_decoder_write_s16(decoder, audiobuf, frames, total_samples);
         total_samples += frames;
