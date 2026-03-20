@@ -8,7 +8,7 @@ Type=simple
 User=pi
 ExecStart=/opt/clock8002/alsa-ltc - 127.0.0.1 1245
 Restart=always
-RestartSec=5
+RestartSec=30
 
 [Install]
 WantedBy=multi-user.target

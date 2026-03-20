@@ -110,10 +110,13 @@ static char *detect_device(void) {
                 desc ? desc : "(null)",
                 ioid ? ioid : "(null)");
 
-        /* Match hw: devices — prefer USB Audio, bcm2835, or any hw: capture */
-        if (result == NULL && strstr(name, "hw:") != NULL) {
-            fprintf(stdout, "Matched card: %s\n", name);
-            result = strdup(name);
+        /* Match hw:CARD= devices — use plughw: for software conversion layer,
+         * which is more resilient to USB device reset timing issues. */
+        if (result == NULL && strncmp(name, "hw:CARD=", 8) == 0) {
+            char plughw_name[256];
+            snprintf(plughw_name, sizeof(plughw_name), "plug%s", name);
+            fprintf(stdout, "Matched card: %s (using %s)\n", name, plughw_name);
+            result = strdup(plughw_name);
         }
 
 next:
@@ -282,8 +285,12 @@ int main(int argc, char *argv[]) {
         snd_pcm_sframes_t frames = snd_pcm_readi(capture, audiobuf, BUF_SIZE);
         if (frames < 0) {
             fprintf(stderr, "read from audio interface failed (%s)\n", snd_strerror(frames));
-            /* Try to recover from overrun */
-            snd_pcm_prepare(capture);
+            /* Try to recover from overrun/suspend */
+            if (snd_pcm_prepare(capture) < 0) {
+                /* Device gone (unplugged or I/O error) — exit so systemd can restart */
+                fprintf(stderr, "audio device unrecoverable, exiting\n");
+                goto cleanup;
+            }
             continue;
         }
 
