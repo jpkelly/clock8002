@@ -4,6 +4,22 @@ An HDMI clock display for Raspberry Pi 5, based on the [clock-8001](https://gitl
 
 This build is intended to be used with the piClock platform.
 
+## Table of Contents
+
+- [Acknowledgements](#acknowledgements)
+- [What changed from clock-8001](#what-changed-from-clock-8001)
+- [Clock Faces](#clock-faces)
+- [Requirements](#requirements)
+- [Quick Install (pre-built binary)](#quick-install-pre-built-binary)
+- [Building from Source](#building-from-source)
+- [Updating](#updating)
+- [Configuration](#configuration)
+- [Platform](#platform)
+- [OSC Control](#osc-control)
+- [Troubleshooting](#troubleshooting)
+- [Creating a Release](#creating-a-release)
+- [License](#license)
+
 ## Acknowledgements
 
 This project is a fork of **clock-8001** by Depili, developed in co-operation with Daniel Richert and with grants from FUUG — Finnish Unix User Group. The original project is available at https://gitlab.com/clock-8001/clock-8001 and is licensed under the GNU General Public License v2.
