@@ -283,7 +283,7 @@ int main(int argc, char *argv[]) {
     dest.sin_port = htons(osc_port);
     dest.sin_addr.s_addr = inet_addr(osc_ip);
 
-    snd_pcm_t *capture = setup_capture(device);
+    capture = setup_capture(device);
     if (capture == NULL) {
         goto cleanup;
     }
