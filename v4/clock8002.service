@@ -11,7 +11,7 @@ Environment=XDG_RUNTIME_DIR=/run/user/%U
 ExecStart=/opt/clock8002/sdl-clock --fullscreen
 Restart=always
 RestartSec=5
-AmbientCapabilities=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_SYS_TIME
 
 [Install]
 WantedBy=multi-user.target
