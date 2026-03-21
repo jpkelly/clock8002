@@ -1,3 +1,9 @@
+## Version 1.0.3
+* Bugfixes
+  * Installer consistency report now prints `sdl-clock` version from embedded build metadata when `--version` is unsupported
+* Documentation
+  * Added reusable release notes template workflow for GitHub releases
+
 ## Version 1.0.2
 * Documentation
   * README: specify Raspberry Pi OS Lite (64-bit) based on Debian Trixie
