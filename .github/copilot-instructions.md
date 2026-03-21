@@ -10,4 +10,4 @@ Test management note:
 
 Release management note:
 - For each new release, be sure to include both a default and a Gerry version.
-- Versioning must follow this repository's `v0.x` tag line only; ignore inherited upstream `v4.x` tags from the fork source.
+- Versioning must follow this repository's own tag line (`v1.x` and onward); ignore inherited upstream `v4.x` tags from the fork source.
