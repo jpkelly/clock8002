@@ -123,13 +123,13 @@ def get_build_version():
             [
                 'sh',
                 '-c',
-                "strings /opt/clock8002/sdl-clock | grep -m1 -oE 'clock\\.gitTag=v0\\.[0-9]+\\.[0-9]+'",
+                "strings /opt/clock8002/sdl-clock | grep -m1 -oE 'clock\\.gitTag=v[0-9]+\\.[0-9]+\\.[0-9]+'",
             ],
             stderr=subprocess.STDOUT,
             timeout=1.0,
         )
         text = out.decode(errors='ignore').strip()
-        match = re.search(r'clock\.gitTag=(v0\.\d+\.\d+)', text)
+        match = re.search(r'clock\.gitTag=(v[0-9]+\.\d+\.\d+)', text)
         if match:
             return match.group(1)
     except Exception:
@@ -142,7 +142,7 @@ def get_build_version():
     except Exception:
         return ''
 
-    match = re.search(r'v0\.\d+\.\d+', text)
+    match = re.search(r'v[0-9]+\.\d+\.\d+', text)
     if match:
         return match.group(0)
 
