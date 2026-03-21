@@ -11,3 +11,4 @@ Test management note:
 Release management note:
 - For each new release, be sure to include both a default and a Gerry version.
 - Versioning must follow this repository's own tag line (`v1.x` and onward); ignore inherited upstream `v4.x` tags from the fork source.
+- When cutting a new release, update README quick-install download/extract commands to the new release URL/version.
