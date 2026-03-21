@@ -259,7 +259,18 @@ echo "Consistency report"
 echo "------------------"
 if [ -x "${INSTALL_DIR}/sdl-clock" ]; then
     echo "sdl-clock version:"
-    "${INSTALL_DIR}/sdl-clock" --version 2>/dev/null || true
+    SDL_CLOCK_VERSION="$("${INSTALL_DIR}/sdl-clock" --version 2>/dev/null || true)"
+    if [ -n "${SDL_CLOCK_VERSION}" ]; then
+        echo "${SDL_CLOCK_VERSION}"
+    else
+        SDL_GIT_TAG="$(strings "${INSTALL_DIR}/sdl-clock" 2>/dev/null | grep -m1 -oE 'clock\.gitTag=v[0-9]+\.[0-9]+\.[0-9]+' | sed 's/^clock\.gitTag=//')"
+        SDL_GIT_COMMIT="$(strings "${INSTALL_DIR}/sdl-clock" 2>/dev/null | grep -m1 -oE 'clock\.gitCommit=[0-9a-f]+' | sed 's/^clock\.gitCommit=//')"
+        if [ -n "${SDL_GIT_TAG}" ] || [ -n "${SDL_GIT_COMMIT}" ]; then
+            echo "${INSTALL_DIR}/sdl-clock version ${SDL_GIT_TAG:-unknown} commit ${SDL_GIT_COMMIT:-unknown}"
+        else
+            echo "(version info not found)"
+        fi
+    fi
     echo "sdl-clock sha256:"
     sha256sum "${INSTALL_DIR}/sdl-clock"
 fi
