@@ -34,12 +34,12 @@ Please consider supporting the original clock-8001 development: https://www.payp
 - Features: added "quad" and "dual" text clock faces
 - Features: refactored `alsa-ltc` binary for 64-bit Trixie
 - Features: retained GPIO pulse output support (`periph.io`)
-- Platform: targets Raspberry Pi 5 running Raspberry Pi OS Lite (64-bit) / Debian Trixie (arm64) — no desktop environment
+- Platform: targets Raspberry Pi 5 running Raspberry Pi OS Lite (64-bit) / Debian Trixie (arm64)
 - Removed hardware: HUB75 LED matrix, Arduino LED ring, Pimoroni Unicorn HD, Futaba VFD
 
 ## Requirements
 
-- Raspberry Pi 5 running **Raspberry Pi OS Lite (64-bit)** based on Debian Trixie — the desktop version is not required and not recommended
+- Raspberry Pi 5 running **Raspberry Pi OS Lite (64-bit)** based on Debian Trixie
 - HDMI display
 - Network connection (for OSC control and web configuration)
 
