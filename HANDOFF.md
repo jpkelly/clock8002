@@ -55,6 +55,15 @@ Last updated: 2026-03-20
 - Verify services on piclock:
   - `ssh pi@piclock.local 'systemctl is-active clock8002 alsa-ltc oled_daemon'`
 
+## Release Notes Template Workflow
+
+- Template file: `.github/release-notes-template.md`
+- Placeholder token: `__VERSION__`
+- Generate release notes file:
+  - `VERSION=v1.x.y; sed "s/__VERSION__/${VERSION}/g" .github/release-notes-template.md > /tmp/release-notes-${VERSION}.md`
+- Publish release with templated notes:
+  - `gh release create "${VERSION}" "clock8002-${VERSION}-default-linux-arm64.tar.gz" "clock8002-${VERSION}-gerry-linux-arm64.tar.gz" --title "${VERSION}" --notes-file "/tmp/release-notes-${VERSION}.md"`
+
 ## Next Suggested Release
 
 - Cut v1.0.3 from current `master` to include install consistency-report fix from `132e9ce`.
