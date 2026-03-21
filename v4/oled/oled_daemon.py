@@ -5,6 +5,7 @@ import os
 import socket
 import subprocess
 import configparser
+import re
 from luma.core.interface.serial import i2c
 from luma.oled.device import ssd1306
 from PIL import ImageDraw, ImageFont, Image
@@ -12,6 +13,8 @@ from PIL import ImageDraw, ImageFont, Image
 INI_PATH = os.path.expanduser('~/.config/clock-8001/clock.ini')
 OLED_INI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oled.ini')
 LOGO_PATH = os.path.expanduser('~/piclockLogo.bin')
+SDL_CLOCK_PATH = '/opt/clock8002/sdl-clock'
+LOGO_SECONDS = 8
 
 # OLED hardware defaults
 OLED_ENABLED = True
@@ -37,6 +40,10 @@ if not OLED_ENABLED:
 serial = i2c(port=OLED_I2C_PORT, address=OLED_I2C_ADDRESS)
 device = ssd1306(serial, rotate=OLED_ROTATION)
 font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
+try:
+    logo_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 10)
+except Exception:
+    logo_font = ImageFont.load_default()
 
 # Direct port of Argon logo display logic
 OLED_WD = device.bounding_box[2] + 1
@@ -90,8 +97,57 @@ def flush_logo_buffer(buf):
             ymask = ymask << 1
         srcidx = srcidx + OLED_WD
     image = Image.frombytes("1", [OLED_WD, OLED_HT], bytes(tmplist))
+    draw = ImageDraw.Draw(image)
+    version_text = get_build_version()
+    if version_text:
+        # Keep version readable over the logo with a small black backing box.
+        try:
+            l, t, r, b = draw.textbbox((0, 0), version_text, font=logo_font)
+            text_w = r - l
+            text_h = b - t
+        except Exception:
+            text_w, text_h = draw.textsize(version_text, font=logo_font)
+        x = max(0, OLED_WD - text_w - 2)
+        y = max(0, OLED_HT - text_h - 6)
+        draw.rectangle((x - 1, y - 1, OLED_WD - 1, OLED_HT - 1), fill=0)
+        draw.text((x, y), version_text, font=logo_font, fill=255)
     device.display(image)
-    time.sleep(7)
+    time.sleep(LOGO_SECONDS)
+
+
+def get_build_version():
+    # Primary source: parse embedded build ldflags from the binary itself.
+    # Use grep -m1 so command exits quickly after first match.
+    try:
+        out = subprocess.check_output(
+            [
+                'sh',
+                '-c',
+                "strings /opt/clock8002/sdl-clock | grep -m1 -oE 'clock\\.gitTag=v0\\.[0-9]+\\.[0-9]+'",
+            ],
+            stderr=subprocess.STDOUT,
+            timeout=1.0,
+        )
+        text = out.decode(errors='ignore').strip()
+        match = re.search(r'clock\.gitTag=(v0\.\d+\.\d+)', text)
+        if match:
+            return match.group(1)
+    except Exception:
+        pass
+
+    # Fallback for builds that support --version directly.
+    try:
+        out = subprocess.check_output([SDL_CLOCK_PATH, '--version'], stderr=subprocess.STDOUT, timeout=1.5)
+        text = out.decode(errors='ignore').strip()
+    except Exception:
+        return ''
+
+    match = re.search(r'v0\.\d+\.\d+', text)
+    if match:
+        return match.group(0)
+
+    first_line = text.splitlines()[0] if text else ''
+    return first_line[:18]
 
 
 def parse_ini_settings():
