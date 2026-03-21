@@ -6,15 +6,16 @@ Last updated: 2026-03-20
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- Latest release published: v1.0.2
-- Test machine deployment status: v1.0.2 installed on piclock.local, services active (`clock8002`, `alsa-ltc`, `oled_daemon`)
+- Latest release published: v1.0.3
+- Test machine deployment status: v1.0.3 installed on piclock.local, services active (`clock8002`, `alsa-ltc`, `oled_daemon`)
 
-## Important Fixes Landed After v1.0.2
+## Recent Release Notes
 
 - `v4/install.sh` now reports `sdl-clock` version in the consistency report even when `--version` is unsupported.
 - Method: fallback parses embedded `clock.gitTag` and `clock.gitCommit` via `strings`.
 - Commit containing this fix: `132e9ce`
-- Note: this fix is on `master` but not included in v1.0.2 release artifacts.
+- Included in release: `v1.0.3`
+- GitHub release notes now use `.github/release-notes-template.md` with `__VERSION__` placeholder substitution.
 
 ## OLED Splash Version Overlay
 
@@ -66,4 +67,4 @@ Last updated: 2026-03-20
 
 ## Next Suggested Release
 
-- Cut v1.0.3 from current `master` to include install consistency-report fix from `132e9ce`.
+- No immediate release pending.
