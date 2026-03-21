@@ -1,3 +1,13 @@
+## Version 1.0.1
+* Bugfixes
+  * OLED splash version display now works with v1.x+ release tags
+
+## Version 1.0.0
+* First stable release under clock8002 versioning (v1.x)
+* Features
+  * OLED splash screen with build version overlay (lower-right corner)
+  * alsa-ltc version reporting via `--version` flag
+
 ## Version 4.24.2
 * Bugfixes
   * `/clock/timer/*/set` and negative seconds
