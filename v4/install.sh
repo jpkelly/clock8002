@@ -20,6 +20,12 @@ fi
 echo "Stopping services..."
 sudo systemctl stop clock8002 alsa-ltc oled_daemon bootsplash 2>/dev/null || true
 
+# Verify release payload integrity when checksum manifest is present
+if [ -f SHA256SUMS ]; then
+    echo "Verifying release checksums..."
+    sha256sum -c --ignore-missing SHA256SUMS
+fi
+
 # Install SDL2 runtime libraries and LTC dependencies
 echo "Installing runtime libraries..."
 sudo apt update
@@ -247,3 +253,26 @@ echo "Starting services..."
 sudo systemctl start clock8002 2>/dev/null || true
 sudo systemctl start oled_daemon 2>/dev/null || true
 sudo systemctl start alsa-ltc 2>/dev/null || true
+
+echo ""
+echo "Consistency report"
+echo "------------------"
+if [ -x "${INSTALL_DIR}/sdl-clock" ]; then
+    echo "sdl-clock version:"
+    "${INSTALL_DIR}/sdl-clock" --version 2>/dev/null || true
+    echo "sdl-clock sha256:"
+    sha256sum "${INSTALL_DIR}/sdl-clock"
+fi
+if [ -x "${INSTALL_DIR}/alsa-ltc" ]; then
+    echo "alsa-ltc version:"
+    "${INSTALL_DIR}/alsa-ltc" --version || true
+    echo "alsa-ltc sha256:"
+    sha256sum "${INSTALL_DIR}/alsa-ltc"
+fi
+if [ -f /etc/systemd/system/alsa-ltc.service ]; then
+    echo "alsa-ltc.service sha256:"
+    sha256sum /etc/systemd/system/alsa-ltc.service
+    echo "alsa-ltc.service enabled/active:"
+    systemctl is-enabled alsa-ltc 2>/dev/null || true
+    systemctl is-active alsa-ltc 2>/dev/null || true
+fi

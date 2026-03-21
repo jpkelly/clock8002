@@ -8,6 +8,8 @@ GIT_TAG ?= $(shell git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0
 GIT_COMMIT ?= $(shell git rev-list -1 HEAD)
 VERSION_PKG := gitlab.com/clock-8001/clock-8001/v4/clock
 GO_LD_FLAGS := "-X $(VERSION_PKG).gitCommit=$(GIT_COMMIT) -X $(VERSION_PKG).gitTag=$(GIT_TAG)"
+BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+ALSA_LTC_CFLAGS := -O2 -DALSA_LTC_GIT_TAG=\"$(GIT_TAG)\" -DALSA_LTC_GIT_COMMIT=\"$(GIT_COMMIT)\" -DALSA_LTC_BUILD_DATE=\"$(BUILD_DATE)\"
 NETWORK_CONFIG ?= default
 RELEASE_DIR := clock8002-$(GIT_TAG)-$(NETWORK_CONFIG)-linux-arm64
 
@@ -32,8 +34,8 @@ sdl-clock:
 	@go build -ldflags $(GO_LD_FLAGS) gitlab.com/clock-8001/clock-8001/v4/cmd/sdl-clock
 
 alsa-ltc: alsa-ltc.c ## Build the LTC decoder
-	@echo Building alsa-ltc
-	gcc -O2 -o alsa-ltc alsa-ltc.c -lasound -lltc
+	@echo Building alsa-ltc tag $(GIT_TAG) commit $(GIT_COMMIT) built $(BUILD_DATE)
+	gcc $(ALSA_LTC_CFLAGS) -o alsa-ltc alsa-ltc.c -lasound -lltc
 
 release: sdl-clock alsa-ltc ## Package a release tarball for NETWORK_CONFIG variant
 	@echo Packaging release $(GIT_TAG) variant=$(NETWORK_CONFIG)
@@ -53,6 +55,7 @@ release: sdl-clock alsa-ltc ## Package a release tarball for NETWORK_CONFIG vari
 	@cp install.sh $(RELEASE_DIR)/
 	@cp network.ini.$(NETWORK_CONFIG) $(RELEASE_DIR)/network.ini
 	@chmod +x $(RELEASE_DIR)/install.sh
+	@(cd $(RELEASE_DIR) && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
 	@tar czf $(RELEASE_DIR).tar.gz $(RELEASE_DIR)
 	@rm -rf $(RELEASE_DIR)
 	@echo Release tarball: $(RELEASE_DIR).tar.gz

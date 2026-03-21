@@ -27,7 +27,28 @@
 #define CHANNELS    1
 #define BUF_SIZE    1024
 
+#ifndef ALSA_LTC_GIT_TAG
+#define ALSA_LTC_GIT_TAG "dev"
+#endif
+
+#ifndef ALSA_LTC_GIT_COMMIT
+#define ALSA_LTC_GIT_COMMIT "unknown"
+#endif
+
+#ifndef ALSA_LTC_BUILD_DATE
+#define ALSA_LTC_BUILD_DATE "unknown"
+#endif
+
 static volatile int running = 1;
+
+static void print_version(FILE *out, const char *prog) {
+    fprintf(out,
+            "%s version %s commit %s built %s\n",
+            prog,
+            ALSA_LTC_GIT_TAG,
+            ALSA_LTC_GIT_COMMIT,
+            ALSA_LTC_BUILD_DATE);
+}
 
 static void sighandler(int sig) {
     (void)sig;
@@ -138,9 +159,15 @@ int main(int argc, char *argv[]) {
     char *device = NULL;
     int device_allocated = 0;
 
+    if (argc == 2 && strcmp(argv[1], "--version") == 0) {
+        print_version(stdout, argv[0]);
+        return 0;
+    }
+
     if (argc != 4) {
         fprintf(stderr, "Usage:  %s <alsa-device> <OSC destination ip> <OSC port>\n", argv[0]);
         fprintf(stderr, "Use - for device for automatic detection on raspberry pi\n");
+        fprintf(stderr, "Use --version to display build information\n");
         return 1;
     }
 
@@ -149,6 +176,8 @@ int main(int argc, char *argv[]) {
 
     signal(SIGINT, sighandler);
     signal(SIGTERM, sighandler);
+
+    print_version(stdout, argv[0]);
 
     /* Device selection */
     if (strcmp(argv[1], "-") == 0) {
