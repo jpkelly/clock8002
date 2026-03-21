@@ -1,3 +1,7 @@
+## Version 1.0.2
+* Documentation
+  * README: specify Raspberry Pi OS Lite (64-bit) based on Debian Trixie
+
 ## Version 1.0.1
 * Bugfixes
   * OLED splash version display now works with v1.x+ release tags
