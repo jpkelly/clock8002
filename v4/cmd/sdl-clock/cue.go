@@ -70,6 +70,11 @@ func updateCue(state *clock.State) {
 }
 
 func drawCue() {
+	canvasW, canvasH := renderer.GetLogicalSize()
+	if canvasW <= 0 || canvasH <= 0 {
+		canvasW, canvasH, _ = renderer.GetOutputSize()
+	}
+
 	clamp := func(v, min, max int32) int32 {
 		if v < min {
 			return min
@@ -92,15 +97,15 @@ func drawCue() {
 		if h < 1 {
 			h = 1
 		}
-		if w > winWidth {
-			w = winWidth
+		if w > canvasW {
+			w = canvasW
 		}
-		if h > winHeight {
-			h = winHeight
+		if h > canvasH {
+			h = canvasH
 		}
 
-		x = clamp(x, 0, winWidth-w)
-		y = clamp(y, 0, winHeight-h)
+		x = clamp(x, 0, canvasW-w)
+		y = clamp(y, 0, canvasH-h)
 
 		return sdl.Rect{X: x, Y: y, W: w, H: h}
 	}
@@ -108,7 +113,7 @@ func drawCue() {
 	if options.CueFullScreen {
 
 		// Keep legacy fullscreen behavior unchanged when cue-fullscreen is enabled.
-		rect := sdl.Rect{X: 10, Y: 10, W: winWidth - 20, H: winHeight - 20}
+		rect := sdl.Rect{X: 10, Y: 10, W: canvasW - 20, H: canvasH - 20}
 		if rect.W < 1 {
 			rect.W = 1
 		}
