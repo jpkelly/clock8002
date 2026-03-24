@@ -363,8 +363,7 @@ cue-duration={{.EngineOptions.CueDuration}}
 cue-fullscreen={{.CueFullScreen}}
 cue-pos-x={{.CuePosX}}
 cue-pos-y={{.CuePosY}}
-cue-width={{.CueWidth}}
-cue-height={{.CueHeight}}
+cue-size={{.CueSize}}
 
 # Hyperdeck
 hyperdeck-enabled={{.EngineOptions.HyperdeckEnabled}}

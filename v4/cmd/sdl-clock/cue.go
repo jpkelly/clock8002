@@ -88,8 +88,9 @@ func drawCue() {
 	computeRect := func() sdl.Rect {
 		x := int32(options.CuePosX)
 		y := int32(options.CuePosY)
-		w := int32(options.CueWidth)
-		h := int32(options.CueHeight)
+		s := int32(options.CueSize)
+		w := s
+		h := s
 
 		if w < 1 {
 			w = 1

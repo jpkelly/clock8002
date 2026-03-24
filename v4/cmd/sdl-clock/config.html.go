@@ -509,14 +509,14 @@ const configHTML = `
               </fieldset>
 
               <fieldset>
-                <legend>DSAN Perfect Cue</legend>
+                <legend>DSAN PerfectCue</legend>
                 <p>See the documentation in perfectcue.md for required hardware.</p>
 
-                <p>Use this button to test cue overlay rendering without Perfect Cue hardware.</p>
+                <p>Use this button to test cue overlay rendering without PerfectCue hardware.</p>
                 <input type="button" value="Test" onclick="sendCueTest()" />
                 <span id="cue-test-status"></span>
 
-                {{checkbox "cue-enabled" "Enable Perfect Cue integration" .EngineOptions.CueEnabled}}
+                {{checkbox "cue-enabled" "Enable PerfectCue integration" .EngineOptions.CueEnabled}}
 
                 {{ if .Serials }}
                   <p>Detected serial devices:
@@ -528,13 +528,13 @@ const configHTML = `
                   </p>
                 {{ end }}
 
-                {{text "cue-serial" "Serial port for communication with the Perfect Cue" .EngineOptions.CueSerial}}
+                {{text "cue-serial" "Serial port for communication with PerfectCue" .EngineOptions.CueSerial}}
                 {{number "cue-duration" "Time to show the cue marks on screen, in seconds" .EngineOptions.CueDuration}}
                 {{checkbox "cue-fullscreen" "Show the cue information as full screen icons" .CueFullScreen}}
-                {{number "cue-pos-x" "Cue overlay X position in pixels (used when fullscreen mode is off)" .CuePosX}}
-                {{number "cue-pos-y" "Cue overlay Y position in pixels (used when fullscreen mode is off)" .CuePosY}}
-                {{number "cue-width" "Cue overlay width in pixels (used when fullscreen mode is off)" .CueWidth}}
-                {{number "cue-height" "Cue overlay height in pixels (used when fullscreen mode is off)" .CueHeight}}
+                <h4>Use the following when full screen is off.</h4>
+                {{number "cue-pos-x" "Cue overlay X position in pixels" .CuePosX}}
+                {{number "cue-pos-y" "Cue overlay Y position in pixels" .CuePosY}}
+                {{number "cue-size" "Cue overlay square size in pixels" .CueSize}}
               </fieldset>
 
               <fieldset>

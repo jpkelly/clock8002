@@ -184,7 +184,7 @@ func main() {
 			case *sdl.QuitEvent:
 				engine.Close()
 				os.Exit(0)
-	case *sdl.KeyboardEvent:
+			case *sdl.KeyboardEvent:
 				key := t.Keysym.Sym
 				if key == sdl.K_i {
 					infoHidden = !infoHidden
@@ -354,6 +354,18 @@ func parseOptions() {
 }
 
 func computeDerivedOptions() {
+	if options.CueSize < 1 {
+		if options.CueWidth > 0 {
+			options.CueSize = options.CueWidth
+		} else if options.CueHeight > 0 {
+			options.CueSize = options.CueHeight
+		} else {
+			options.CueSize = 150
+		}
+	}
+	options.CueWidth = options.CueSize
+	options.CueHeight = options.CueSize
+
 	switch options.Face {
 	case "max":
 		options.textClock = true

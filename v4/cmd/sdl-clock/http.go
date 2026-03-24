@@ -241,17 +241,13 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		errors += "<li>Perfect Cue Y position must be 0 or greater</li>"
 	}
 
-	newOptions.CueWidth, err = strconv.Atoi(r.FormValue("cue-width"))
-	errors += util.ValidateNumber(err, "Perfect Cue width")
-	if err == nil && newOptions.CueWidth < 1 {
-		errors += "<li>Perfect Cue width must be at least 1 pixel</li>"
+	newOptions.CueSize, err = strconv.Atoi(r.FormValue("cue-size"))
+	errors += util.ValidateNumber(err, "PerfectCue overlay size")
+	if err == nil && newOptions.CueSize < 1 {
+		errors += "<li>PerfectCue overlay size must be at least 1 pixel</li>"
 	}
-
-	newOptions.CueHeight, err = strconv.Atoi(r.FormValue("cue-height"))
-	errors += util.ValidateNumber(err, "Perfect Cue height")
-	if err == nil && newOptions.CueHeight < 1 {
-		errors += "<li>Perfect Cue height must be at least 1 pixel</li>"
-	}
+	newOptions.CueWidth = newOptions.CueSize
+	newOptions.CueHeight = newOptions.CueSize
 
 	// Strings, will not be validated
 	newOptions.HTTPUser = r.FormValue("HTTPUser")
