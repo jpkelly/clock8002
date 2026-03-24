@@ -355,14 +355,8 @@ func parseOptions() {
 }
 
 func computeDerivedOptions() {
-	if options.ConfigSchema < legacyConfigSchema {
-		options.ConfigSchema = legacyConfigSchema
-	}
-
-	if options.ConfigSchema > currentConfigSchema {
-		log.Printf("Warning: clock.ini schema %d is newer than supported schema %d; attempting compatibility mode", options.ConfigSchema, currentConfigSchema)
-	} else if options.ConfigSchema < currentConfigSchema {
-		log.Printf("Info: clock.ini schema %d detected; applying compatibility migration to schema %d", options.ConfigSchema, currentConfigSchema)
+	if options.AppVersion == "" {
+		log.Printf("Info: clock.ini has no app-version; applying legacy compatibility migration")
 	}
 
 	if options.CueSize < 1 {
@@ -376,7 +370,7 @@ func computeDerivedOptions() {
 	}
 	options.CueWidth = options.CueSize
 	options.CueHeight = options.CueSize
-	options.ConfigSchema = currentConfigSchema
+	options.AppVersion = clock.Version
 
 	switch options.Face {
 	case "max":
