@@ -512,10 +512,6 @@ const configHTML = `
                 <legend>DSAN PerfectCue</legend>
                 <p>See the documentation in perfectcue.md for required hardware.</p>
 
-                <p>Use this button to test cue overlay rendering without PerfectCue hardware.</p>
-                <input type="button" value="Test" onclick="sendCueTest()" />
-                <span id="cue-test-status"></span>
-
                 {{checkbox "cue-enabled" "Enable PerfectCue integration" .EngineOptions.CueEnabled}}
 
                 {{ if .Serials }}
@@ -535,6 +531,10 @@ const configHTML = `
                 {{number "cue-pos-x" "Cue overlay X position in pixels" .CuePosX}}
                 {{number "cue-pos-y" "Cue overlay Y position in pixels" .CuePosY}}
                 {{number "cue-size" "Cue overlay square size in pixels" .CueSize}}
+
+                <p>Use this button to test cue overlay rendering without PerfectCue hardware.</p>
+                <input type="button" value="Test" onclick="sendCueTest()" />
+                <span id="cue-test-status"></span>
               </fieldset>
 
               <fieldset>
