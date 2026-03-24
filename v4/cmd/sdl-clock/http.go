@@ -229,6 +229,30 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.DynamicBG = r.FormValue("DynamicBG") != ""
 	newOptions.VFD = r.FormValue("VFD") != ""
 
+	newOptions.CuePosX, err = strconv.Atoi(r.FormValue("cue-pos-x"))
+	errors += util.ValidateNumber(err, "Perfect Cue X position")
+	if err == nil && newOptions.CuePosX < 0 {
+		errors += "<li>Perfect Cue X position must be 0 or greater</li>"
+	}
+
+	newOptions.CuePosY, err = strconv.Atoi(r.FormValue("cue-pos-y"))
+	errors += util.ValidateNumber(err, "Perfect Cue Y position")
+	if err == nil && newOptions.CuePosY < 0 {
+		errors += "<li>Perfect Cue Y position must be 0 or greater</li>"
+	}
+
+	newOptions.CueWidth, err = strconv.Atoi(r.FormValue("cue-width"))
+	errors += util.ValidateNumber(err, "Perfect Cue width")
+	if err == nil && newOptions.CueWidth < 1 {
+		errors += "<li>Perfect Cue width must be at least 1 pixel</li>"
+	}
+
+	newOptions.CueHeight, err = strconv.Atoi(r.FormValue("cue-height"))
+	errors += util.ValidateNumber(err, "Perfect Cue height")
+	if err == nil && newOptions.CueHeight < 1 {
+		errors += "<li>Perfect Cue height must be at least 1 pixel</li>"
+	}
+
 	// Strings, will not be validated
 	newOptions.HTTPUser = r.FormValue("HTTPUser")
 	newOptions.HTTPPassword = r.FormValue("HTTPPassword")

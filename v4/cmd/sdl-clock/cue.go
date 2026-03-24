@@ -70,22 +70,54 @@ func updateCue(state *clock.State) {
 }
 
 func drawCue() {
+	clamp := func(v, min, max int32) int32 {
+		if v < min {
+			return min
+		}
+		if v > max {
+			return max
+		}
+		return v
+	}
+
+	computeRect := func() sdl.Rect {
+		x := int32(options.CuePosX)
+		y := int32(options.CuePosY)
+		w := int32(options.CueWidth)
+		h := int32(options.CueHeight)
+
+		if w < 1 {
+			w = 1
+		}
+		if h < 1 {
+			h = 1
+		}
+		if w > winWidth {
+			w = winWidth
+		}
+		if h > winHeight {
+			h = winHeight
+		}
+
+		x = clamp(x, 0, winWidth-w)
+		y = clamp(y, 0, winHeight-h)
+
+		return sdl.Rect{X: x, Y: y, W: w, H: h}
+	}
+
 	if options.CueFullScreen {
 
-		rect := sdl.Rect{
-			W: 1920 - 20,
-			H: 1080 - 20,
-			X: 10,
-			Y: 10,
+		// Keep legacy fullscreen behavior unchanged when cue-fullscreen is enabled.
+		rect := sdl.Rect{X: 10, Y: 10, W: winWidth - 20, H: winHeight - 20}
+		if rect.W < 1 {
+			rect.W = 1
+		}
+		if rect.H < 1 {
+			rect.H = 1
 		}
 		copyIntoRect(cueTexture, rect)
 	} else {
-		rect := sdl.Rect{
-			H: 150,
-			W: 150,
-			X: 5,
-			Y: 1080 - 155,
-		}
+		rect := computeRect()
 		copyIntoRect(cueTexture, rect)
 	}
 

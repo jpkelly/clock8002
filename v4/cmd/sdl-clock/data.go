@@ -114,6 +114,10 @@ type clockOptions struct {
 	CountdownTarget string `long:"countdown-target" default:"2020-12-24 00:00:00"`
 
 	CueFullScreen bool `long:"cue-fullscreen" description:"Show cue changes as full screen icons"`
+	CuePosX       int  `long:"cue-pos-x" description:"Perfect Cue overlay X position in pixels" default:"5"`
+	CuePosY       int  `long:"cue-pos-y" description:"Perfect Cue overlay Y position in pixels" default:"925"`
+	CueWidth      int  `long:"cue-width" description:"Perfect Cue overlay width in pixels" default:"150"`
+	CueHeight     int  `long:"cue-height" description:"Perfect Cue overlay height in pixels" default:"150"`
 
 	DynamicBG bool `long:"dynamic-bg"`
 

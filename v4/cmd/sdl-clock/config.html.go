@@ -512,11 +512,8 @@ const configHTML = `
                 <legend>DSAN Perfect Cue</legend>
                 <p>See the documentation in perfectcue.md for required hardware.</p>
 
-                <p>Use these buttons to test cue overlays without Perfect Cue hardware.</p>
-                <input type="button" value="Test Right Cue" onclick="sendCueTest('right')" />
-                <input type="button" value="Test Left Cue" onclick="sendCueTest('left')" />
-                <input type="button" value="Test Blank On" onclick="sendCueTest('blank_on')" />
-                <input type="button" value="Test Blank Off" onclick="sendCueTest('blank_off')" />
+                <p>Use this button to test cue overlay rendering without Perfect Cue hardware.</p>
+                <input type="button" value="Test" onclick="sendCueTest()" />
                 <span id="cue-test-status"></span>
 
                 {{checkbox "cue-enabled" "Enable Perfect Cue integration" .EngineOptions.CueEnabled}}
@@ -534,6 +531,10 @@ const configHTML = `
                 {{text "cue-serial" "Serial port for communication with the Perfect Cue" .EngineOptions.CueSerial}}
                 {{number "cue-duration" "Time to show the cue marks on screen, in seconds" .EngineOptions.CueDuration}}
                 {{checkbox "cue-fullscreen" "Show the cue information as full screen icons" .CueFullScreen}}
+                {{number "cue-pos-x" "Cue overlay X position in pixels (used when fullscreen mode is off)" .CuePosX}}
+                {{number "cue-pos-y" "Cue overlay Y position in pixels (used when fullscreen mode is off)" .CuePosY}}
+                {{number "cue-width" "Cue overlay width in pixels (used when fullscreen mode is off)" .CueWidth}}
+                {{number "cue-height" "Cue overlay height in pixels (used when fullscreen mode is off)" .CueHeight}}
               </fieldset>
 
               <fieldset>
@@ -955,7 +956,7 @@ const configHTML = `
       xhr.send('time=' + encodeURIComponent(ts));
     }
 
-    function sendCueTest(action) {
+    function sendCueTest() {
       var status = document.getElementById('cue-test-status');
       status.textContent = 'Sending cue test...';
       status.style.color = '{{$color}}';
@@ -965,7 +966,7 @@ const configHTML = `
       xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
       xhr.onload = function() {
         if (xhr.status === 200) {
-          status.textContent = 'Cue test sent: ' + action;
+          status.textContent = 'Cue test sent';
           status.style.color = 'green';
         } else {
           status.textContent = 'Cue test failed: ' + xhr.responseText;
@@ -976,7 +977,7 @@ const configHTML = `
         status.textContent = 'Cue test failed: network error';
         status.style.color = 'red';
       };
-      xhr.send('action=' + encodeURIComponent(action));
+      xhr.send('action=right');
     }
     </script>
   </body>
