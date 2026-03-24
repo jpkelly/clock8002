@@ -364,6 +364,7 @@ cue-enabled={{.EngineOptions.CueEnabled}}
 cue-serial={{.EngineOptions.CueSerial}}
 cue-duration={{.EngineOptions.CueDuration}}
 cue-fullscreen={{.CueFullScreen}}
+cue-second-display={{.CueSecondDisplay}}
 cue-pos-x={{.CuePosX}}
 cue-pos-y={{.CuePosY}}
 cue-size={{.CueSize}}

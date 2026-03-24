@@ -226,6 +226,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.HideHours = r.FormValue("hide-hours") != ""
 	newOptions.IconsDisable = r.FormValue("disable-icons") != ""
 	newOptions.CueFullScreen = r.FormValue("cue-fullscreen") != ""
+	newOptions.CueSecondDisplay = r.FormValue("cue-second-display") != ""
 	newOptions.DynamicBG = r.FormValue("DynamicBG") != ""
 	newOptions.VFD = r.FormValue("VFD") != ""
 

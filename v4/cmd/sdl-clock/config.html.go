@@ -526,14 +526,24 @@ const configHTML = `
 
                 {{text "cue-serial" "Serial port for communication with PerfectCue" .EngineOptions.CueSerial}}
                 {{number "cue-duration" "Time to show the cue marks on screen, in seconds" .EngineOptions.CueDuration}}
+                {{checkbox "cue-second-display" "Enable second HDMI output for full-screen cue only display (off mirrors clock display)" .CueSecondDisplay}}
                 {{checkbox "cue-fullscreen" "Show the cue information as full screen icons" .CueFullScreen}}
                 <h4>Use the following when full screen is off.</h4>
                 {{number "cue-pos-x" "Cue overlay X position in pixels" .CuePosX}}
                 {{number "cue-pos-y" "Cue overlay Y position in pixels" .CuePosY}}
                 {{number "cue-size" "Cue overlay square size in pixels" .CueSize}}
 
-                <p>Use this button to test cue overlay rendering without PerfectCue hardware.</p>
-                <input type="button" value="Test" onclick="sendCueTest()" />
+                <p>Use these buttons to test cue overlay rendering without PerfectCue hardware.</p>
+                <div style="display:flex;gap:1em;">
+                  <div style="display:flex;flex-direction:column;gap:0.5em;">
+                    <input type="button" value="Forward" onclick="sendCueTest('right', 'Forward')" style="width:200px;" />
+                    <input type="button" value="Reverse" onclick="sendCueTest('left', 'Reverse')" style="width:200px;" />
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:0.5em;">
+                    <input type="button" value="Blank" onclick="sendCueTest('blank_on', 'Blank')" style="width:200px;" />
+                    <input type="button" value="Clear" onclick="sendCueTest('blank_off', 'Clear')" style="width:200px;" />
+                  </div>
+                </div>
                 <span id="cue-test-status"></span>
               </fieldset>
 
@@ -956,9 +966,9 @@ const configHTML = `
       xhr.send('time=' + encodeURIComponent(ts));
     }
 
-    function sendCueTest() {
+    function sendCueTest(action, label) {
       var status = document.getElementById('cue-test-status');
-      status.textContent = 'Sending cue test...';
+      status.textContent = 'Sending cue test: ' + label + '...';
       status.style.color = '{{$color}}';
 
       var xhr = new XMLHttpRequest();
@@ -966,7 +976,7 @@ const configHTML = `
       xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
       xhr.onload = function() {
         if (xhr.status === 200) {
-          status.textContent = 'Cue test sent';
+          status.textContent = 'Cue test sent: ' + label;
           status.style.color = 'green';
         } else {
           status.textContent = 'Cue test failed: ' + xhr.responseText;
@@ -977,7 +987,7 @@ const configHTML = `
         status.textContent = 'Cue test failed: network error';
         status.style.color = 'red';
       };
-      xhr.send('action=right');
+      xhr.send('action=' + encodeURIComponent(action));
     }
     </script>
   </body>

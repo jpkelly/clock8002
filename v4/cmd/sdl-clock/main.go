@@ -69,6 +69,7 @@ func main() {
 
 	// Initialize SDL
 	initSDL()
+	probeSecondDisplayOutput()
 	defer sdl.Quit()
 	defer window.Destroy()
 	defer renderer.Destroy()
@@ -142,6 +143,7 @@ func main() {
 			initTextures()
 			log.Printf("texture init done")
 			initAudio()
+			probeSecondDisplayOutput()
 
 			// Tear down all face-specific SDL resources before reinitializing.
 			// These are idempotent — safe to call even if the face was never active.
@@ -238,6 +240,11 @@ func main() {
 			updateCue(state)
 			if state.CueShow {
 				drawCue()
+			}
+			if options.CueSecondDisplay {
+				syncSecondDisplayCueDisplay(state)
+			} else {
+				syncSecondDisplayMirrorDisplay()
 			}
 
 			// Update the canvas
@@ -375,6 +382,9 @@ func computeDerivedOptions() {
 	options.CueWidth = options.CueSize
 	options.CueHeight = options.CueSize
 	options.AppVersion = clock.Version
+	if options.CueSecondDisplay {
+		log.Printf("Info: cue-second-display enabled (issue #23 work in progress)")
+	}
 
 	switch options.Face {
 	case "max":

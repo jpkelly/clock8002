@@ -65,6 +65,29 @@ Last updated: 2026-03-20
 - Publish release with templated notes:
   - `gh release create "${VERSION}" "clock8002-${VERSION}-default-linux-arm64.tar.gz" "clock8002-${VERSION}-gerry-linux-arm64.tar.gz" --title "${VERSION}" --notes-file "/tmp/release-notes-${VERSION}.md"`
 
+## Dev-Deploy Workflow (Feature Branch Testing)
+
+Use this when testing a feature branch on piclock — **not** a formal release.
+`install.sh` must always run on the target machine from a flat release directory (never from the source tree — `*.ttf` won't be found).
+
+```bash
+# 1. Clone branch, build, and package on pi5start
+ssh pi@pi5start.local 'cd /tmp && rm -rf clock8002-build && git clone --depth 1 --branch BRANCH https://github.com/jpkelly/clock8002.git clock8002-build && cd clock8002-build/v4 && make release NETWORK_CONFIG=default'
+
+# 2. Relay tarball through Mac to piclock
+#    (GIT_TAG defaults to nearest ancestor tag, e.g. v1.0.3)
+scp pi@pi5start.local:/tmp/clock8002-build/v4/clock8002-*-default-linux-arm64.tar.gz /tmp/
+scp /tmp/clock8002-*-default-linux-arm64.tar.gz pi@piclock.local:/tmp/
+
+# 3. Extract and install on piclock
+ssh pi@piclock.local 'cd /tmp && tar xzf clock8002-*-default-linux-arm64.tar.gz && cd clock8002-*-default-linux-arm64 && sudo bash install.sh'
+
+# 4. Verify
+ssh pi@piclock.local 'systemctl is-active clock8002'
+```
+
+> **After every deploy to the test unit, report the short GitHub commit hash (first 7 characters) that was deployed.**
+
 ## Next Suggested Release
 
 - No immediate release pending.

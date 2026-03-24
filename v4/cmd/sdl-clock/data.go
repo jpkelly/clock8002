@@ -115,10 +115,11 @@ type clockOptions struct {
 	HideHours       bool   `long:"hide-hours" description:"Only show minutes and seconds on counters"`
 	CountdownTarget string `long:"countdown-target" default:"2020-12-24 00:00:00"`
 
-	CueFullScreen bool `long:"cue-fullscreen" description:"Show cue changes as full screen icons"`
-	CuePosX       int  `long:"cue-pos-x" description:"Perfect Cue overlay X position in pixels" default:"5"`
-	CuePosY       int  `long:"cue-pos-y" description:"Perfect Cue overlay Y position in pixels" default:"925"`
-	CueSize       int  `long:"cue-size" description:"Perfect Cue overlay square size in pixels"`
+	CueFullScreen    bool `long:"cue-fullscreen" description:"Show cue changes as full screen icons"`
+	CueSecondDisplay bool `long:"cue-second-display" description:"Enable second HDMI output for PerfectCue display"`
+	CuePosX          int  `long:"cue-pos-x" description:"Perfect Cue overlay X position in pixels" default:"5"`
+	CuePosY          int  `long:"cue-pos-y" description:"Perfect Cue overlay Y position in pixels" default:"925"`
+	CueSize          int  `long:"cue-size" description:"Perfect Cue overlay square size in pixels"`
 
 	// Legacy options retained for backward compatibility with older config files.
 	CueWidth     int `long:"cue-width" description:"Perfect Cue overlay width in pixels" default:"150"`

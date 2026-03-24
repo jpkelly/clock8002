@@ -526,6 +526,7 @@ cue-enabled=false
 cue-serial=/dev/ttyAMA1
 cue-duration=2
 cue-fullscreen=false
+cue-second-display=false
 
 # Hyperdeck
 hyperdeck-enabled=false
