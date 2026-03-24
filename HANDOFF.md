@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-03-20
+Last updated: 2026-03-24
 
 ## Current State
 
@@ -8,6 +8,29 @@ Last updated: 2026-03-20
 - Active release line: v1.x
 - Latest release published: v1.0.3
 - Test machine deployment status: v1.0.3 installed on piclock.local, services active (`clock8002`, `alsa-ltc`, `oled_daemon`)
+- Issue #23 implementation is merged to `master` via squash commit `d62c48e`
+- README update for 2nd HDMI feature wording is on `master` at `c4f67b5`
+
+## Issue #23 Status (Dual HDMI Output)
+
+- Core feature is implemented and merged.
+- Behavior now:
+  - `cue-second-display = true`: HDMI-2 shows full-screen PerfectCue icons (forward/reverse/blank) via `fbi`.
+  - `cue-second-display = false`: HDMI-2 mirrors the main clock in real-time via an SDL second window.
+- Issue remains open pending hard testing and hot-plug validation.
+
+## Hot-Plug Policy (Current Expected Behavior)
+
+- Do not crash on HDMI plug/unplug events.
+- Main clock on primary output must continue running regardless of HDMI-2 state.
+- Icon mode (`fbi`) should tolerate disconnect/reconnect and resume when HDMI-2 is available.
+- Mirror mode (SDL/kmsdrm second display) may require process restart after HDMI-2 reconnect, because display enumeration is effectively fixed at SDL startup.
+- Test matrix still required before closing issue #23:
+  - Boot with HDMI-1 only
+  - Boot with HDMI-2 only
+  - Boot with both connected
+  - Unplug/replug HDMI-2 while running in icon mode
+  - Unplug/replug HDMI-2 while running in mirror mode
 
 ## Recent Release Notes
 
@@ -91,3 +114,4 @@ ssh pi@piclock.local 'systemctl is-active clock8002'
 ## Next Suggested Release
 
 - No immediate release pending.
+- Before release: complete issue #23 hard testing/hot-plug matrix and document results in issue #23.
