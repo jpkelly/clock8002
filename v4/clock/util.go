@@ -2,12 +2,13 @@ package clock
 
 import (
 	"fmt"
-	"github.com/chabad360/go-osc/osc"
-	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
 	"image/color"
 	"log"
 	"runtime/debug"
 	"time"
+
+	"github.com/chabad360/go-osc/osc"
+	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
 )
 
 /*
@@ -67,7 +68,19 @@ func parseColor(s string) (c *color.RGBA, err error) {
 
 // VersionInfo returns the clock engine version and git commit as a string
 func VersionInfo() string {
-	commit := "unknown"
+	version := Version
+	if gitTag != "" && gitTag != "v0.0.1" && gitTag != "Unknown" {
+		version = gitTag
+	}
+
+	commit := gitCommit
+	if len(commit) > 7 {
+		commit = commit[:7]
+	}
+	if commit == "" || commit == "Unknown" {
+		commit = "unknown"
+	}
+
 	if info, ok := debug.ReadBuildInfo(); ok {
 		for _, s := range info.Settings {
 			if s.Key == "vcs.revision" && len(s.Value) >= 7 {
@@ -76,5 +89,5 @@ func VersionInfo() string {
 			}
 		}
 	}
-	return fmt.Sprintf("Clock-8002 version %s (%s)", Version, commit)
+	return fmt.Sprintf("Clock-8002 version %s (%s)", version, commit)
 }
