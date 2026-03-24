@@ -33,7 +33,7 @@ Please consider supporting the original clock-8001 development: https://www.payp
 - Runtime: runs headless via KMSDRM (no X11/Wayland)
 - Features: added "quad" and "dual" text clock faces
 - Features: added configurable PerfectCue overlay placement/size in the web UI
-- Features: added dual HDMI output support — PerfectCue full-screen icons or main clock mirror
+- Features: added 2nd HDMI output support — chooseable PerfectCue full-screen icons or main clock mirror
 - Features: refactored `alsa-ltc` binary for 64-bit Trixie
 - Features: retained GPIO pulse output support (`periph.io`)
 - Platform: targets Raspberry Pi 5 running Raspberry Pi OS Lite (64-bit) / Debian Trixie (arm64)
