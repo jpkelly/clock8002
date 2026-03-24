@@ -2,6 +2,7 @@
 # Copy to ~/.config/clock-8001/clock.ini
 
 Face=quad
+config-schema=2
 
 HTTPUser=admin
 HTTPPassword=clockwork

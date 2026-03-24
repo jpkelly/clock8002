@@ -355,6 +355,16 @@ func parseOptions() {
 }
 
 func computeDerivedOptions() {
+	if options.ConfigSchema < legacyConfigSchema {
+		options.ConfigSchema = legacyConfigSchema
+	}
+
+	if options.ConfigSchema > currentConfigSchema {
+		log.Printf("Warning: clock.ini schema %d is newer than supported schema %d; attempting compatibility mode", options.ConfigSchema, currentConfigSchema)
+	} else if options.ConfigSchema < currentConfigSchema {
+		log.Printf("Info: clock.ini schema %d detected; applying compatibility migration to schema %d", options.ConfigSchema, currentConfigSchema)
+	}
+
 	if options.CueSize < 1 {
 		if options.CueWidth > 0 {
 			options.CueSize = options.CueWidth
@@ -366,6 +376,7 @@ func computeDerivedOptions() {
 	}
 	options.CueWidth = options.CueSize
 	options.CueHeight = options.CueSize
+	options.ConfigSchema = currentConfigSchema
 
 	switch options.Face {
 	case "max":

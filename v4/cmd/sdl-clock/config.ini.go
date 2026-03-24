@@ -7,6 +7,9 @@ const configTemplate = `# Example configuration file for clock-8001
 # Clock face to use. (countdown, round, dual-round, text, single or small)
 Face={{.Face}}
 
+# Configuration schema version
+config-schema={{.ConfigSchema}}
+
 # Username and password for the web configuration interface
 HTTPUser={{.HTTPUser}}
 HTTPPassword={{.HTTPPassword}}
