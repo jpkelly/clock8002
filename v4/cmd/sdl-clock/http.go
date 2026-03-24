@@ -3,10 +3,12 @@ package main
 import (
 	// "fmt"
 	"crypto/subtle"
+	"errors"
 	"fmt"
 	htmlTemplate "html/template"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -15,9 +17,11 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 
+	oscClient "gitlab.com/Depili/go-osc/osc"
 	"gitlab.com/clock-8001/clock-8001/v4/clock"
 	"gitlab.com/clock-8001/clock-8001/v4/util"
 )
@@ -37,6 +41,7 @@ func runHTTP() {
 	})
 	http.HandleFunc("/import", basicAuth(importHandler))
 	http.HandleFunc("/api/settime", basicAuth(setTimeHandler))
+	http.HandleFunc("/api/cue", basicAuth(cueTestHandler))
 
 	log.Printf("HTTP config: listening on %v", options.HTTPPort)
 	if err := http.ListenAndServe(options.HTTPPort, nil); err != nil {
@@ -223,6 +228,26 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.CueFullScreen = r.FormValue("cue-fullscreen") != ""
 	newOptions.DynamicBG = r.FormValue("DynamicBG") != ""
 	newOptions.VFD = r.FormValue("VFD") != ""
+
+	newOptions.CuePosX, err = strconv.Atoi(r.FormValue("cue-pos-x"))
+	errors += util.ValidateNumber(err, "Perfect Cue X position")
+	if err == nil && newOptions.CuePosX < 0 {
+		errors += "<li>Perfect Cue X position must be 0 or greater</li>"
+	}
+
+	newOptions.CuePosY, err = strconv.Atoi(r.FormValue("cue-pos-y"))
+	errors += util.ValidateNumber(err, "Perfect Cue Y position")
+	if err == nil && newOptions.CuePosY < 0 {
+		errors += "<li>Perfect Cue Y position must be 0 or greater</li>"
+	}
+
+	newOptions.CueSize, err = strconv.Atoi(r.FormValue("cue-size"))
+	errors += util.ValidateNumber(err, "PerfectCue overlay size")
+	if err == nil && newOptions.CueSize < 1 {
+		errors += "<li>PerfectCue overlay size must be at least 1 pixel</li>"
+	}
+	newOptions.CueWidth = newOptions.CueSize
+	newOptions.CueHeight = newOptions.CueSize
 
 	// Strings, will not be validated
 	newOptions.HTTPUser = r.FormValue("HTTPUser")
@@ -560,6 +585,86 @@ func setTimeHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
+}
+
+func localOSCClient() (*oscClient.Client, error) {
+	if options.EngineOptions == nil {
+		return nil, errors.New("engine options not initialized")
+	}
+	if options.EngineOptions.DisableOSC {
+		return nil, errors.New("osc control is disabled")
+	}
+
+	listenAddr := strings.TrimSpace(options.EngineOptions.ListenAddr)
+	if listenAddr == "" {
+		return nil, errors.New("osc listen address is empty")
+	}
+
+	portStr := ""
+	if strings.HasPrefix(listenAddr, ":") {
+		portStr = strings.TrimPrefix(listenAddr, ":")
+	} else {
+		_, p, err := net.SplitHostPort(listenAddr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid osc listen address %q: %w", listenAddr, err)
+		}
+		portStr = p
+	}
+
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid osc port %q: %w", portStr, err)
+	}
+
+	return oscClient.NewClient("127.0.0.1", port), nil
+}
+
+func cueTestHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	action := r.FormValue("action")
+	if action == "" {
+		http.Error(w, "Missing action parameter", http.StatusBadRequest)
+		return
+	}
+
+	client, err := localOSCClient()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var msg *oscClient.Message
+	switch action {
+	case "right":
+		msg = oscClient.NewMessage("/clock/cue/right")
+		msg.Append("")
+	case "left":
+		msg = oscClient.NewMessage("/clock/cue/left")
+		msg.Append("")
+	case "blank_on":
+		msg = oscClient.NewMessage("/clock/cue/blank")
+		msg.Append("")
+		msg.Append(true)
+	case "blank_off":
+		msg = oscClient.NewMessage("/clock/cue/blank")
+		msg.Append("")
+		msg.Append(false)
+	default:
+		http.Error(w, "Invalid action parameter", http.StatusBadRequest)
+		return
+	}
+
+	if err := client.Send(msg); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to send cue OSC message: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("ok"))
 }
 
 func basicAuth(handler http.HandlerFunc) http.HandlerFunc {

@@ -1,10 +1,11 @@
 package main
 
 import (
-	"gitlab.com/clock-8001/clock-8001/v4/clock"
-	"gitlab.com/clock-8001/clock-8001/v4/util"
 	htmlTemplate "html/template"
 	"image/color"
+
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
+	"gitlab.com/clock-8001/clock-8001/v4/util"
 )
 
 var winTitle = "SDL CLOCK"
@@ -114,6 +115,13 @@ type clockOptions struct {
 	CountdownTarget string `long:"countdown-target" default:"2020-12-24 00:00:00"`
 
 	CueFullScreen bool `long:"cue-fullscreen" description:"Show cue changes as full screen icons"`
+	CuePosX       int  `long:"cue-pos-x" description:"Perfect Cue overlay X position in pixels" default:"5"`
+	CuePosY       int  `long:"cue-pos-y" description:"Perfect Cue overlay Y position in pixels" default:"925"`
+	CueSize       int  `long:"cue-size" description:"Perfect Cue overlay square size in pixels"`
+
+	// Legacy options retained for backward compatibility with older config files.
+	CueWidth  int `long:"cue-width" description:"Perfect Cue overlay width in pixels" default:"150"`
+	CueHeight int `long:"cue-height" description:"Perfect Cue overlay height in pixels" default:"150"`
 
 	DynamicBG bool `long:"dynamic-bg"`
 

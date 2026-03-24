@@ -509,10 +509,10 @@ const configHTML = `
               </fieldset>
 
               <fieldset>
-                <legend>DSAN Perfect Cue</legend>
+                <legend>DSAN PerfectCue</legend>
                 <p>See the documentation in perfectcue.md for required hardware.</p>
 
-                {{checkbox "cue-enabled" "Enable Perfect Cue integration" .EngineOptions.CueEnabled}}
+                {{checkbox "cue-enabled" "Enable PerfectCue integration" .EngineOptions.CueEnabled}}
 
                 {{ if .Serials }}
                   <p>Detected serial devices:
@@ -524,9 +524,17 @@ const configHTML = `
                   </p>
                 {{ end }}
 
-                {{text "cue-serial" "Serial port for communication with the Perfect Cue" .EngineOptions.CueSerial}}
+                {{text "cue-serial" "Serial port for communication with PerfectCue" .EngineOptions.CueSerial}}
                 {{number "cue-duration" "Time to show the cue marks on screen, in seconds" .EngineOptions.CueDuration}}
                 {{checkbox "cue-fullscreen" "Show the cue information as full screen icons" .CueFullScreen}}
+                <h4>Use the following when full screen is off.</h4>
+                {{number "cue-pos-x" "Cue overlay X position in pixels" .CuePosX}}
+                {{number "cue-pos-y" "Cue overlay Y position in pixels" .CuePosY}}
+                {{number "cue-size" "Cue overlay square size in pixels" .CueSize}}
+
+                <p>Use this button to test cue overlay rendering without PerfectCue hardware.</p>
+                <input type="button" value="Test" onclick="sendCueTest()" />
+                <span id="cue-test-status"></span>
               </fieldset>
 
               <fieldset>
@@ -946,6 +954,30 @@ const configHTML = `
         btn.disabled = false;
       };
       xhr.send('time=' + encodeURIComponent(ts));
+    }
+
+    function sendCueTest() {
+      var status = document.getElementById('cue-test-status');
+      status.textContent = 'Sending cue test...';
+      status.style.color = '{{$color}}';
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/cue');
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          status.textContent = 'Cue test sent';
+          status.style.color = 'green';
+        } else {
+          status.textContent = 'Cue test failed: ' + xhr.responseText;
+          status.style.color = 'red';
+        }
+      };
+      xhr.onerror = function() {
+        status.textContent = 'Cue test failed: network error';
+        status.style.color = 'red';
+      };
+      xhr.send('action=right');
     }
     </script>
   </body>
