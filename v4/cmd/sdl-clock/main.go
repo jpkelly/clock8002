@@ -3,11 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/jessevdk/go-flags"
-	"github.com/veandco/go-sdl2/sdl"
-	"gitlab.com/clock-8001/clock-8001/v4/clock"
-	"gitlab.com/clock-8001/clock-8001/v4/debug"
-	"gitlab.com/clock-8001/clock-8001/v4/util"
 	"image/color"
 	"io"
 	"log"
@@ -19,6 +14,12 @@ import (
 	"text/template"
 	"time"
 	_ "time/tzdata"
+
+	"github.com/jessevdk/go-flags"
+	"github.com/veandco/go-sdl2/sdl"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
+	"gitlab.com/clock-8001/clock-8001/v4/debug"
+	"gitlab.com/clock-8001/clock-8001/v4/util"
 )
 
 var parser = flags.NewParser(&options, flags.Default)
