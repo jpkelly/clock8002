@@ -32,7 +32,6 @@ const (
 var secCircles []util.Point
 var staticCircles []util.Point
 
-
 type signalHW interface {
 	Fill(color.RGBA)
 	Update() error
@@ -56,9 +55,9 @@ var outputModules []outputModule = make([]outputModule, 0)
 
 type clockOptions struct {
 	Config          func(s string) error `short:"C" long:"config" description:"read config from a file"`
-	AppVersion       string               `long:"app-version" description:"App version that wrote this config"`
-	Face             string               `long:"face" description:"Select the clock face to use" default:"round" choice:"round" choice:"dual-round" choice:"small" choice:"text" choice:"quad" choice:"dual" choice:"single" choice:"max" choice:"countdown" choice:"144" choice:"192" choice:"288x144"`
-	Debug            bool                 `long:"debug" description:"Enable debug output"`
+	AppVersion      string               `long:"app-version" description:"App version that wrote this config"`
+	Face            string               `long:"face" description:"Select the clock face to use" default:"round" choice:"round" choice:"dual-round" choice:"small" choice:"text" choice:"quad" choice:"dual" choice:"single" choice:"max" choice:"countdown" choice:"144" choice:"192" choice:"288x144"`
+	Debug           bool                 `long:"debug" description:"Enable debug output"`
 	HTTPPort        string               `long:"http-port" description:"Port to listen on for the http configuration interface" default:":8080"`
 	DisableHTTP     bool                 `long:"disable-http" description:"Disable the web configuration interface"`
 	HTTPUser        string               `long:"http-user" description:"Username for web configuration" default:"admin"`
@@ -122,8 +121,9 @@ type clockOptions struct {
 	CueSize       int  `long:"cue-size" description:"Perfect Cue overlay square size in pixels"`
 
 	// Legacy options retained for backward compatibility with older config files.
-	CueWidth  int `long:"cue-width" description:"Perfect Cue overlay width in pixels" default:"150"`
-	CueHeight int `long:"cue-height" description:"Perfect Cue overlay height in pixels" default:"150"`
+	CueWidth     int `long:"cue-width" description:"Perfect Cue overlay width in pixels" default:"150"`
+	CueHeight    int `long:"cue-height" description:"Perfect Cue overlay height in pixels" default:"150"`
+	ConfigSchema int `long:"config-schema" description:"Deprecated: replaced by app-version"`
 
 	DynamicBG bool `long:"dynamic-bg"`
 
