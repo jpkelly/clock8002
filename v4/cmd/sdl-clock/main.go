@@ -355,8 +355,12 @@ func parseOptions() {
 }
 
 func computeDerivedOptions() {
-	if options.AppVersion == "" {
-		log.Printf("Info: clock.ini has no app-version; applying legacy compatibility migration")
+	loadedVersion := options.AppVersion
+
+	if loadedVersion == "" {
+		log.Printf("Info: clock.ini has no app-version; will update file after migration")
+	} else if loadedVersion != clock.Version {
+		log.Printf("Info: clock.ini app-version %q differs from binary version %q; will update file", loadedVersion, clock.Version)
 	}
 
 	if options.CueSize < 1 {
@@ -435,6 +439,15 @@ func computeDerivedOptions() {
 	// Dump the current config to stdout
 	if options.DumpConfig {
 		dumpConfig()
+	}
+
+	// If the config file is out of date, rewrite it now so it gains any new
+	// keys and the correct app-version stamp. Only do this when a real config
+	// file was loaded (configFile != "") and the face is set, indicating a
+	// complete config was parsed rather than pure defaults.
+	if loadedVersion != clock.Version && options.configFile != "" && options.Face != "" {
+		log.Printf("Info: rewriting %s to update app-version to %s", options.configFile, clock.Version)
+		options.writeConfig(options.configFile)
 	}
 }
 
