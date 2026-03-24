@@ -425,6 +425,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		log.Printf("Writing new config ini file")
+		newOptions.AppVersion = clock.Version
 		newOptions.writeConfig(options.configFile)
 
 		// TODO render success page
