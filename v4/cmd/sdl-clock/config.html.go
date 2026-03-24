@@ -512,6 +512,13 @@ const configHTML = `
                 <legend>DSAN Perfect Cue</legend>
                 <p>See the documentation in perfectcue.md for required hardware.</p>
 
+                <p>Use these buttons to test cue overlays without Perfect Cue hardware.</p>
+                <input type="button" value="Test Right Cue" onclick="sendCueTest('right')" />
+                <input type="button" value="Test Left Cue" onclick="sendCueTest('left')" />
+                <input type="button" value="Test Blank On" onclick="sendCueTest('blank_on')" />
+                <input type="button" value="Test Blank Off" onclick="sendCueTest('blank_off')" />
+                <span id="cue-test-status"></span>
+
                 {{checkbox "cue-enabled" "Enable Perfect Cue integration" .EngineOptions.CueEnabled}}
 
                 {{ if .Serials }}
@@ -946,6 +953,30 @@ const configHTML = `
         btn.disabled = false;
       };
       xhr.send('time=' + encodeURIComponent(ts));
+    }
+
+    function sendCueTest(action) {
+      var status = document.getElementById('cue-test-status');
+      status.textContent = 'Sending cue test...';
+      status.style.color = '{{$color}}';
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/cue');
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          status.textContent = 'Cue test sent: ' + action;
+          status.style.color = 'green';
+        } else {
+          status.textContent = 'Cue test failed: ' + xhr.responseText;
+          status.style.color = 'red';
+        }
+      };
+      xhr.onerror = function() {
+        status.textContent = 'Cue test failed: network error';
+        status.style.color = 'red';
+      };
+      xhr.send('action=' + encodeURIComponent(action));
     }
     </script>
   </body>
