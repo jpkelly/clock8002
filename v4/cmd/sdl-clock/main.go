@@ -111,7 +111,9 @@ func main() {
 	}
 	engine.SetTitleColors(toRGBA(colors.label), toRGBA(colors.labelBG))
 
-	loadBackground(options.Background)
+	if strings.TrimSpace(options.Background) != "" {
+		loadBackground(options.Background)
+	}
 
 	log.Printf("Entering main loop")
 
@@ -178,7 +180,9 @@ func main() {
 			engine.SetTitleColors(toRGBA(colors.label), toRGBA(colors.labelBG))
 
 			initBackgrounds()
-			loadBackground(options.Background)
+			if strings.TrimSpace(options.Background) != "" {
+				loadBackground(options.Background)
+			}
 			log.Printf("Config reloaded!")
 		case <-eventTicker.C:
 			// SDL event polling
