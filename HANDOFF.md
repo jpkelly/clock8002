@@ -6,8 +6,9 @@ Last updated: 2026-03-24
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- Latest release published: v1.0.3
-- Test machine deployment status: v1.0.3 installed on piclock.local, services active (`clock8002`, `alsa-ltc`, `oled_daemon`)
+- Latest release published: v1.1.5
+- Test machine deployment status: v1.1.5 default installed on piclock.local, services active (`clock8002`, `alsa-ltc`, `oled_daemon`)
+- Deployed commit on piclock: `a90a1ca`
 - Issue #23 implementation is merged to `master` via squash commit `d62c48e`
 - README update for 2nd HDMI feature wording is on `master` at `c4f67b5`
 
@@ -34,11 +35,11 @@ Last updated: 2026-03-24
 
 ## Recent Release Notes
 
-- `v4/install.sh` now reports `sdl-clock` version in the consistency report even when `--version` is unsupported.
-- Method: fallback parses embedded `clock.gitTag` and `clock.gitCommit` via `strings`.
-- Commit containing this fix: `132e9ce`
-- Included in release: `v1.0.3`
-- GitHub release notes now use `.github/release-notes-template.md` with `__VERSION__` placeholder substitution.
+- v1.1.5 includes:
+  - Skip timer background preload when `DynamicBG` is disabled.
+  - Skip static background loading when `Background` is empty.
+  - Deploy reliability rules added to repository instructions.
+- GitHub release notes continue to use `.github/release-notes-template.md` with `__VERSION__` substitution.
 
 ## OLED Splash Version Overlay
 
@@ -56,6 +57,8 @@ Last updated: 2026-03-24
    - `make release-all GIT_TAG=v1.x.y` (produces default + gerry tarballs)
 5. Publish GitHub release with both tarballs.
 6. Deploy to piclock.local and run installer.
+7. Start and verify `clock8002`, `alsa-ltc`, and `oled_daemon`.
+8. Report deployed short commit hash.
 
 ## Repository Instructions Already Added
 
@@ -65,6 +68,9 @@ Last updated: 2026-03-24
 - Include both default and gerry artifacts for each release.
 - Use repository version line (`v1.x` and onward), ignore inherited upstream `v4.x` tags.
 - Update README quick-install URL/version during release cuts.
+- Avoid `pkill -f /opt/clock8002/sdl-clock` and `pkill -f /opt/clock8002/alsa-ltc` in one-shot SSH deploy commands (can trigger SSH exit 255).
+- Prefer `systemctl stop` + `systemctl kill` for teardown.
+- Run installer with log capture and explicit exit check.
 
 ## Useful Commands
 
@@ -75,7 +81,7 @@ Last updated: 2026-03-24
 - Deploy release tarball to piclock.local from local Mac relay:
   - `scp pi@pi5start.local:/tmp/clock8002-build/v4/clock8002-v1.x.y-default-linux-arm64.tar.gz /tmp/`
   - `scp /tmp/clock8002-v1.x.y-default-linux-arm64.tar.gz pi@piclock.local:/tmp/`
-  - `ssh pi@piclock.local 'cd /tmp && tar xzf clock8002-v1.x.y-default-linux-arm64.tar.gz && cd clock8002-v1.x.y-default-linux-arm64 && sha256sum -c SHA256SUMS && sudo bash install.sh'`
+  - `ssh pi@piclock.local 'set -e; sudo systemctl stop clock8002.service alsa-ltc.service oled_daemon.service || true; sudo systemctl kill clock8002.service alsa-ltc.service oled_daemon.service || true; mkdir -p /tmp/clock8002-install && rm -rf /tmp/clock8002-install/clock8002-v1.x.y-default-linux-arm64; tar xzf /tmp/clock8002-v1.x.y-default-linux-arm64.tar.gz -C /tmp/clock8002-install; cd /tmp/clock8002-install/clock8002-v1.x.y-default-linux-arm64; sudo bash install.sh > /tmp/clock8002-install-v1.x.y.log 2>&1; echo INSTALL_EXIT:$?; sudo systemctl start clock8002.service alsa-ltc.service oled_daemon.service'`
 - Verify services on piclock:
   - `ssh pi@piclock.local 'systemctl is-active clock8002 alsa-ltc oled_daemon'`
 
