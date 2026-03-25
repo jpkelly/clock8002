@@ -1,3 +1,10 @@
+## Version 1.1.4
+* Bugfixes
+  * Web config: clarify the full-screen cue icon setting as an overlay on the clock
+* Documentation
+  * README quick install updated for v1.1.4
+  * README release workflow updated to publish both default and Gerry variants
+
 ## Version 1.0.3
 * Bugfixes
   * Installer consistency report now prints `sdl-clock` version from embedded build metadata when `--version` is unsupported
