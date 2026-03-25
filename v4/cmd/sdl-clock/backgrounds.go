@@ -91,6 +91,11 @@ func initBackgrounds() {
 	timerBG = make([]*sdl.Texture, clock.NumCounters)
 	lastTimer = -1
 
+	if !options.DynamicBG {
+		log.Printf("Dynamic timer backgrounds disabled")
+		return
+	}
+
 	log.Printf("Loading dynamic timer backgrounds...")
 	for i := 0; i < clock.NumCounters; i++ {
 		log.Printf("-> Timer %d", i)
