@@ -527,7 +527,7 @@ const configHTML = `
                 {{text "cue-serial" "Serial port for communication with PerfectCue" .EngineOptions.CueSerial}}
                 {{number "cue-duration" "Time to show the cue marks on screen, in seconds" .EngineOptions.CueDuration}}
                 {{checkbox "cue-second-display" "Enable second HDMI output for full-screen cue only display (off mirrors clock display)" .CueSecondDisplay}}
-                {{checkbox "cue-fullscreen" "Show the cue information as full screen icons" .CueFullScreen}}
+                {{checkbox "cue-fullscreen" "Show the cue information as full screen icons (overlay on clock)" .CueFullScreen}}
                 <h4>Use the following when 'show cue information as full screen icons' is off.</h4>
                 {{number "cue-pos-x" "Cue overlay X position in pixels" .CuePosX}}
                 {{number "cue-pos-y" "Cue overlay Y position in pixels" .CuePosY}}
