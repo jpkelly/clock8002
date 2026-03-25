@@ -182,6 +182,11 @@ func loadBackgrounds(dir string, timer int) {
 
 	files, err := os.ReadDir(dir)
 	if err != nil {
+		if os.IsNotExist(err) {
+			// Missing timer background directories are optional.
+			log.Printf("Timer %d backgrounds not configured (%s)", timer, dir)
+			return
+		}
 		log.Printf("ERROR: Timer %d backgrounds: %v", timer, err)
 		return
 	}
