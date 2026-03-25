@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/veandco/go-sdl2/img"
-	"github.com/veandco/go-sdl2/sdl"
-	"gitlab.com/clock-8001/clock-8001/v4/clock"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/veandco/go-sdl2/img"
+	"github.com/veandco/go-sdl2/sdl"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
 )
 
 var backgrounds []map[int]*sdl.Texture

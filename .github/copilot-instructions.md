@@ -7,6 +7,11 @@ Repository workflow note:
 Dev-deploy workflow note (feature branch testing, NOT a release):
 - `install.sh` must be run on the TARGET machine (piclock) from a flat release directory — never from the source tree.
 - The Makefile `release` target flattens all assets (including ttf_fonts/*.ttf) into a release dir and tarballs it.
+- Reliability rules for remote deploy sessions:
+  - Do not use `pkill -f /opt/clock8002/sdl-clock` or `pkill -f /opt/clock8002/alsa-ltc` in one-shot SSH deploy commands; pattern matches can terminate the remote session and cause SSH exit 255.
+  - Prefer `sudo systemctl stop ...` and `sudo systemctl kill ...` for process teardown.
+  - Run installer as `sudo bash install.sh > /tmp/<install-log>.log 2>&1` and check `INSTALL_EXIT` before restarting services.
+  - After installer completion, explicitly start and verify `clock8002`, `alsa-ltc`, and `oled_daemon` service state.
 - Steps:
   1. Clone branch and build on pi5start: `ssh pi@pi5start.local 'cd /tmp && rm -rf clock8002-build && git clone --depth 1 --branch BRANCH https://github.com/jpkelly/clock8002.git clock8002-build && cd clock8002-build/v4 && make release NETWORK_CONFIG=default'`
   2. Relay tarball to piclock (note: GIT_TAG defaults to nearest ancestor tag, e.g. v1.0.3): `scp pi@pi5start.local:/tmp/clock8002-build/v4/clock8002-*-default-linux-arm64.tar.gz /tmp/ && scp /tmp/clock8002-*-default-linux-arm64.tar.gz pi@piclock.local:/tmp/`

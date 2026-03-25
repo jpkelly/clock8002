@@ -1,3 +1,10 @@
+## Version 1.1.5
+* Bugfixes
+  * Skip timer background preload when `DynamicBG` is disabled
+  * Skip static background load when `Background` is empty
+* Ops / workflow
+  * Documented deploy reliability rules to avoid SSH session drops and partial installs during remote deployment
+
 ## Version 1.1.4
 * Bugfixes
   * Web config: clarify the full-screen cue icon setting as an overlay on the clock
