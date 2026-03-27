@@ -28,7 +28,7 @@ const configHTML = `
 
         <fieldset>
           <legend>Config Import / Export</legend>
-          <p><a href="/export">Download current configuration.</a></p>
+          <p><a href="/export">Download current configuration.</a> Loaded config version: {{if .LoadedConfigVersion}}{{.LoadedConfigVersion}}{{else}}missing{{end}}</p>
           <label for="import"><span>Import configurations file</span>
             <input type="file" id="import" name="import" />
           </label>

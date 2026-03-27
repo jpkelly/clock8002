@@ -148,6 +148,7 @@ type clockOptions struct {
 	Fonts      []string          // For passing list of font files to html template
 	Serials    []string
 	Timezones  []string
+	LoadedConfigVersion string
 }
 
 type gpioOptions struct {

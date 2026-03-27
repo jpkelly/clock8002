@@ -368,6 +368,7 @@ func parseOptions() {
 func computeDerivedOptions() {
 	binaryAppVersion := clock.AppVersionForConfig()
 	loadedVersion := options.AppVersion
+	options.LoadedConfigVersion = loadedVersion
 
 	if loadedVersion == "" {
 		log.Printf("Info: clock.ini has no app-version; will update file after migration")

@@ -21,6 +21,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/jessevdk/go-flags"
 	oscClient "gitlab.com/Depili/go-osc/osc"
 	"gitlab.com/clock-8001/clock-8001/v4/clock"
 	"gitlab.com/clock-8001/clock-8001/v4/util"
@@ -174,16 +175,14 @@ func importHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("File Size: %+v\n", handler.Size)
 	fmt.Printf("MIME Header: %+v\n", handler.Header)
 
-	dst, err := os.OpenFile(options.configFile, os.O_RDWR|os.O_CREATE, 0755)
+	configPath, err := resolvedConfigPath(options.configFile)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer dst.Close()
 
 	log.Printf("Writing new config ini file")
-	// Copy the uploaded file to the created file on the filesystem
-	if _, err := io.Copy(dst, file); err != nil {
+	if err := replaceConfigFromUpload(configPath, file); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -202,6 +201,66 @@ func importHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func resolvedConfigPath(path string) (string, error) {
+	resolved, err := filepath.EvalSymlinks(path)
+	if err == nil {
+		return resolved, nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return path, nil
+	}
+	return "", err
+}
+
+func replaceConfigFromUpload(configPath string, src io.Reader) error {
+	dir := filepath.Dir(configPath)
+	mode := os.FileMode(0644)
+	if info, err := os.Stat(configPath); err == nil {
+		mode = info.Mode().Perm()
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+
+	tmp, err := os.CreateTemp(dir, ".clock-import-*.ini")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+
+	if err := tmp.Chmod(mode); err != nil {
+		tmp.Close()
+		return err
+	}
+	if _, err := io.Copy(tmp, src); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+
+	if err := validateConfigFile(tmpPath); err != nil {
+		return err
+	}
+
+	return os.Rename(tmpPath, configPath)
+}
+
+func validateConfigFile(path string) error {
+	var candidate clockOptions
+	validationParser := flags.NewParser(&candidate, flags.Default)
+	ini := flags.NewIniParser(validationParser)
+	if err := ini.ParseFile(path); err != nil {
+		return fmt.Errorf("invalid config file: %w", err)
+	}
+	return nil
 }
 
 // TODO: validation
