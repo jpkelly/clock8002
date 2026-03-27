@@ -1,14 +1,14 @@
 # Clock8002 Handoff
 
-Last updated: 2026-03-24
+Last updated: 2026-03-27
 
 ## Current State
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- Latest release published: v1.1.5
-- Test machine deployment status: v1.1.5 default installed on piclock.local, services active (`clock8002`, `alsa-ltc`, `oled_daemon`)
-- Deployed commit on piclock: `a90a1ca`
+- Latest release published: v1.1.7
+- Test machine deployment status: v1.1.7 gerry installed on piclock.local, services active (`clock8002`, `alsa-ltc`, `oled_daemon`)
+- Deployed commit on piclock: `c46dd4d`
 - Issue #23 implementation is merged to `master` via squash commit `d62c48e`
 - README update for 2nd HDMI feature wording is on `master` at `c4f67b5`
 
@@ -35,10 +35,11 @@ Last updated: 2026-03-24
 
 ## Recent Release Notes
 
-- v1.1.5 includes:
-  - Skip timer background preload when `DynamicBG` is disabled.
-  - Skip static background loading when `Background` is empty.
-  - Deploy reliability rules added to repository instructions.
+- v1.1.7 includes:
+  - Dynamic app-version stamping for clock.ini via `clock.AppVersionForConfig()` (uses injected git tag; strips leading `v`).
+  - Config rewrite/save paths now use dynamic app-version instead of hardcoded `clock.Version`.
+  - Gerry profile updates preserved in `clock.ini.gerry` (text face, Limitimer/TOD-LTC/Playback, row colors, limitimer receive mode).
+  - README quick-install URLs updated to v1.1.7.
 - GitHub release notes continue to use `.github/release-notes-template.md` with `__VERSION__` substitution.
 
 ## OLED Splash Version Overlay
@@ -72,6 +73,13 @@ Last updated: 2026-03-24
 - Prefer `systemctl stop` + `systemctl kill` for teardown.
 - Run installer with log capture and explicit exit check.
 
+## Hard Rules (Do Not Skip)
+
+- Build host rule: build/release artifacts for clock8002 are authoritative only when built on `pi@pi5start.local` from a fresh clone at target ref.
+- Do not use Mac local build results for release/deploy validation.
+- Gerry variant rule: deployment is only valid when both `/boot/piclock/clock.ini` and `/boot/piclock/network.ini` match Gerry settings.
+- Installer behavior note: `install.sh` preserves existing `/boot/piclock/clock.ini` and only installs packaged clock.ini on fresh install; existing units may require explicit config copy.
+
 ## Useful Commands
 
 - Check local working tree:
@@ -84,6 +92,8 @@ Last updated: 2026-03-24
   - `ssh pi@piclock.local 'set -e; sudo systemctl stop clock8002.service alsa-ltc.service oled_daemon.service || true; sudo systemctl kill clock8002.service alsa-ltc.service oled_daemon.service || true; mkdir -p /tmp/clock8002-install && rm -rf /tmp/clock8002-install/clock8002-v1.x.y-default-linux-arm64; tar xzf /tmp/clock8002-v1.x.y-default-linux-arm64.tar.gz -C /tmp/clock8002-install; cd /tmp/clock8002-install/clock8002-v1.x.y-default-linux-arm64; sudo bash install.sh > /tmp/clock8002-install-v1.x.y.log 2>&1; echo INSTALL_EXIT:$?; sudo systemctl start clock8002.service alsa-ltc.service oled_daemon.service'`
 - Verify services on piclock:
   - `ssh pi@piclock.local 'systemctl is-active clock8002 alsa-ltc oled_daemon'`
+- Force-apply gerry config pair on existing unit:
+  - `ssh pi@piclock.local 'sudo cp /tmp/clock8002-v1.x.y-gerry-linux-arm64/clock.ini /boot/piclock/clock.ini && sudo cp /tmp/clock8002-v1.x.y-gerry-linux-arm64/network.ini /boot/piclock/network.ini && sudo chown pi:pi /boot/piclock/clock.ini /boot/piclock/network.ini && sudo reboot'`
 
 ## Release Notes Template Workflow
 
@@ -120,4 +130,4 @@ ssh pi@piclock.local 'systemctl is-active clock8002'
 ## Next Suggested Release
 
 - No immediate release pending.
-- Before release: complete issue #23 hard testing/hot-plug matrix and document results in issue #23.
+- Before next release: complete issue #23 hard testing/hot-plug matrix and document results in issue #23.
