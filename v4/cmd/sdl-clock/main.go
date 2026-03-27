@@ -366,12 +366,13 @@ func parseOptions() {
 }
 
 func computeDerivedOptions() {
+	binaryAppVersion := clock.AppVersionForConfig()
 	loadedVersion := options.AppVersion
 
 	if loadedVersion == "" {
 		log.Printf("Info: clock.ini has no app-version; will update file after migration")
-	} else if loadedVersion != clock.Version {
-		log.Printf("Info: clock.ini app-version %q differs from binary version %q; will update file", loadedVersion, clock.Version)
+	} else if loadedVersion != binaryAppVersion {
+		log.Printf("Info: clock.ini app-version %q differs from binary version %q; will update file", loadedVersion, binaryAppVersion)
 	}
 
 	if options.CueSize < 1 {
@@ -385,7 +386,7 @@ func computeDerivedOptions() {
 	}
 	options.CueWidth = options.CueSize
 	options.CueHeight = options.CueSize
-	options.AppVersion = clock.Version
+	options.AppVersion = binaryAppVersion
 	if options.CueSecondDisplay {
 		log.Printf("Info: cue-second-display enabled (issue #23 work in progress)")
 	}
@@ -459,8 +460,8 @@ func computeDerivedOptions() {
 	// keys and the correct app-version stamp. Only do this when a real config
 	// file was loaded (configFile != "") and the face is set, indicating a
 	// complete config was parsed rather than pure defaults.
-	if loadedVersion != clock.Version && options.configFile != "" && options.Face != "" {
-		log.Printf("Info: rewriting %s to update app-version to %s", options.configFile, clock.Version)
+	if loadedVersion != binaryAppVersion && options.configFile != "" && options.Face != "" {
+		log.Printf("Info: rewriting %s to update app-version to %s", options.configFile, binaryAppVersion)
 		options.writeConfig(options.configFile)
 	}
 }

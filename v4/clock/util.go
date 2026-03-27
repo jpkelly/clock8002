@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"log"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/chabad360/go-osc/osc"
@@ -90,4 +91,13 @@ func VersionInfo() string {
 		}
 	}
 	return fmt.Sprintf("Clock-8002 version %s (%s)", version, commit)
+}
+
+// AppVersionForConfig returns a stable app-version value for clock.ini.
+// Prefer the injected git tag and normalize it to x.y.z (without leading "v").
+func AppVersionForConfig() string {
+	if gitTag != "" && gitTag != "v0.0.1" && gitTag != "Unknown" {
+		return strings.TrimPrefix(gitTag, "v")
+	}
+	return Version
 }
