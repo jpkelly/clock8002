@@ -135,19 +135,19 @@ type clockOptions struct {
 	Raspberry bool   // Is the host a raspberry pi
 	ConfigTxt string // /boot/config.txt contents
 
-	configFile string
-	small      bool
-	dualClock  bool
-	textClock  bool
-	singleLine bool
-	quadLine   bool
-	dualLine   bool
-	countdown  bool
-	vertical   bool
-	Errors     htmlTemplate.HTML // For passing errors to the html template
-	Fonts      []string          // For passing list of font files to html template
-	Serials    []string
-	Timezones  []string
+	configFile          string
+	small               bool
+	dualClock           bool
+	textClock           bool
+	singleLine          bool
+	quadLine            bool
+	dualLine            bool
+	countdown           bool
+	vertical            bool
+	Errors              htmlTemplate.HTML // For passing errors to the html template
+	Fonts               []string          // For passing list of font files to html template
+	Serials             []string
+	Timezones           []string
 	LoadedConfigVersion string
 }
 
