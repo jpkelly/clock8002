@@ -40,14 +40,6 @@ EOF
 		*) CMDLINE="${CMDLINE} root=/dev/mmcblk0p2 rootwait" ;;
 	esac
 
-	# Keep exactly one Pi serial console on Pi 5 to avoid conflicting UART init.
-	CMDLINE="$(echo "${CMDLINE}" | sed -E 's/(^| )console=ttyAMA[0-9]+(,[0-9]+)?//g')"
-
-	case " ${CMDLINE} " in
-		*" console=ttyAMA10,115200"*) ;;
-		*) CMDLINE="${CMDLINE} console=ttyAMA10,115200" ;;
-	esac
-
 	printf '%s\n' "$(echo "${CMDLINE}" | tr -s ' ')" > "${BINARIES_DIR}/cmdline.txt"
 
 	FILES=""
