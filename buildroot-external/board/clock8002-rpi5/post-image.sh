@@ -11,40 +11,8 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	GENIMAGE_CFG="${BINARIES_DIR}/genimage.cfg"
 	rm -f "${GENIMAGE_CFG}"
 
-	# Always regenerate top-level boot files to avoid stale settings between
-	# incremental builds.
-	PROJECT_ROOT="$(cd "${BOARD_DIR}/../../.." && pwd)"
-	PROJECT_CONFIG="${PROJECT_ROOT}/pi345build/boot/config.txt"
-	PROJECT_CMDLINE="${PROJECT_ROOT}/pi345build/boot/cmdline.txt"
-
-	if [ -f "${PROJECT_CONFIG}" ]; then
-		cp -f "${PROJECT_CONFIG}" "${BINARIES_DIR}/config.txt"
-	else
-		cat > "${BINARIES_DIR}/config.txt" << 'EOF'
-[all]
-arm_64bit=1
-kernel=Image
-disable_overscan=1
-EOF
-	fi
-
-	CMDLINE=""
-	if [ -f "${PROJECT_CMDLINE}" ]; then
-		CMDLINE="$(tr '\n' ' ' < "${PROJECT_CMDLINE}")"
-	elif [ -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" ]; then
-		CMDLINE="$(tr '\n' ' ' < "${BINARIES_DIR}/rpi-firmware/cmdline.txt")"
-	fi
-
-	case " ${CMDLINE} " in
-		*" root="*) ;;
-		*) CMDLINE="${CMDLINE} root=/dev/mmcblk0p2 rootwait" ;;
-	esac
-
-	# Do not bind Linux serial console to ttyAMA* by default on Pi 5.
-	# This avoids early brcmuart probe crashes seen during boot on some units.
-	CMDLINE="$(echo "${CMDLINE}" | sed -E 's/(^| )console=ttyAMA[0-9]+(,[0-9]+)?//g')"
-
-	printf '%s\n' "$(echo "${CMDLINE}" | tr -s ' ')" > "${BINARIES_DIR}/cmdline.txt"
+	# Do not override top-level config.txt/cmdline.txt here. Keep whatever
+	# Buildroot generated from BR2_PACKAGE_RPI_FIRMWARE_* settings.
 
 	FILES=""
 
