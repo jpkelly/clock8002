@@ -13,7 +13,7 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 
 	# Always regenerate top-level boot files to avoid stale settings between
 	# incremental builds.
-	PROJECT_ROOT="$(cd "${BOARD_DIR}/../../../.." && pwd)"
+	PROJECT_ROOT="$(cd "${BOARD_DIR}/../../.." && pwd)"
 	PROJECT_CONFIG="${PROJECT_ROOT}/pi345build/boot/config.txt"
 	PROJECT_CMDLINE="${PROJECT_ROOT}/pi345build/boot/cmdline.txt"
 
@@ -39,6 +39,9 @@ EOF
 		*" root="*) ;;
 		*) CMDLINE="${CMDLINE} root=/dev/mmcblk0p2 rootwait" ;;
 	esac
+
+	# Keep exactly one Pi serial console on Pi 5 to avoid conflicting UART init.
+	CMDLINE="$(echo "${CMDLINE}" | sed -E 's/(^| )console=ttyAMA[0-9]+(,[0-9]+)?//g')"
 
 	case " ${CMDLINE} " in
 		*" console=ttyAMA10,115200"*) ;;
