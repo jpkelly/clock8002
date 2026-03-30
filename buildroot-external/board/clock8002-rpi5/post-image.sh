@@ -18,10 +18,16 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 
 	if [ -d "${BINARIES_DIR}/rpi-firmware" ]; then
 		for i in "${BINARIES_DIR}"/rpi-firmware/*; do
-			[ -e "${i}" ] || continue
+			[ -f "${i}" ] || continue
 			FILES="${FILES}\t\t\t\"${i#${BINARIES_DIR}/}\",\n"
 		done
 	fi
+
+	for i in config.txt cmdline.txt; do
+		if [ -f "${BINARIES_DIR}/${i}" ]; then
+			FILES="${FILES}\t\t\t\"${i}\",\n"
+		fi
+	done
 
 	KERNEL=""
 	if [ -f "${BINARIES_DIR}/rpi-firmware/config.txt" ]; then
