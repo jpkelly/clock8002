@@ -13,7 +13,7 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 
 	# Always regenerate top-level boot files to avoid stale settings between
 	# incremental builds.
-	PROJECT_ROOT="$(cd "${BOARD_DIR}/../../.." && pwd)"
+	PROJECT_ROOT="$(cd "${BOARD_DIR}/../../../.." && pwd)"
 	PROJECT_CONFIG="${PROJECT_ROOT}/pi345build/boot/config.txt"
 	PROJECT_CMDLINE="${PROJECT_ROOT}/pi345build/boot/cmdline.txt"
 
