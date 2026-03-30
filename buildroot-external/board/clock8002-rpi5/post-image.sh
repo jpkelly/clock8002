@@ -31,7 +31,7 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		for i in "${BINARIES_DIR}"/rpi-firmware/*; do
 			[ -f "${i}" ] || continue
 			case "${i}" in
-				*.dtb|*/cmdline.txt)
+				*.dtb|*/cmdline.txt|*/config.txt)
 					continue
 					;;
 			esac
