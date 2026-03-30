@@ -11,11 +11,28 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	GENIMAGE_CFG="${BINARIES_DIR}/genimage.cfg"
 	FILES=""
 
-	for i in "${BINARIES_DIR}"/*.dtb "${BINARIES_DIR}"/rpi-firmware/*; do
+	for i in "${BINARIES_DIR}"/*.dtb; do
+		[ -e "${i}" ] || continue
 		FILES="${FILES}\t\t\t\"${i#${BINARIES_DIR}/}\",\n"
 	done
 
-	KERNEL="$(sed -n 's/^kernel=//p' "${BINARIES_DIR}/rpi-firmware/config.txt")"
+	if [ -d "${BINARIES_DIR}/rpi-firmware" ]; then
+		for i in "${BINARIES_DIR}"/rpi-firmware/*; do
+			[ -e "${i}" ] || continue
+			FILES="${FILES}\t\t\t\"${i#${BINARIES_DIR}/}\",\n"
+		done
+	fi
+
+	KERNEL=""
+	if [ -f "${BINARIES_DIR}/rpi-firmware/config.txt" ]; then
+		KERNEL="$(sed -n 's/^kernel=//p' "${BINARIES_DIR}/rpi-firmware/config.txt")"
+	elif [ -f "${BINARIES_DIR}/config.txt" ]; then
+		KERNEL="$(sed -n 's/^kernel=//p' "${BINARIES_DIR}/config.txt")"
+	fi
+	if [ -z "${KERNEL}" ] && [ -f "${BINARIES_DIR}/Image" ]; then
+		KERNEL="Image"
+	fi
+
 	if [ -n "${KERNEL}" ]; then
 		FILES="${FILES}\t\t\t\"${KERNEL}\",\n"
 	fi
