@@ -40,6 +40,10 @@ EOF
 		*) CMDLINE="${CMDLINE} root=/dev/mmcblk0p2 rootwait" ;;
 	esac
 
+	# Do not bind Linux serial console to ttyAMA* by default on Pi 5.
+	# This avoids early brcmuart probe crashes seen during boot on some units.
+	CMDLINE="$(echo "${CMDLINE}" | sed -E 's/(^| )console=ttyAMA[0-9]+(,[0-9]+)?//g')"
+
 	printf '%s\n' "$(echo "${CMDLINE}" | tr -s ' ')" > "${BINARIES_DIR}/cmdline.txt"
 
 	FILES=""
