@@ -12,17 +12,40 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	rm -f "${GENIMAGE_CFG}"
 
 	# Always regenerate top-level boot files to avoid stale settings between
-	# incremental builds. Pi 5 should use ttyAMA10 for early serial console.
-	cat > "${BINARIES_DIR}/config.txt" << 'EOF'
+	# incremental builds.
+	PROJECT_ROOT="$(cd "${BOARD_DIR}/../../.." && pwd)"
+	PROJECT_CONFIG="${PROJECT_ROOT}/pi345build/boot/config.txt"
+	PROJECT_CMDLINE="${PROJECT_ROOT}/pi345build/boot/cmdline.txt"
+
+	if [ -f "${PROJECT_CONFIG}" ]; then
+		cp -f "${PROJECT_CONFIG}" "${BINARIES_DIR}/config.txt"
+	else
+		cat > "${BINARIES_DIR}/config.txt" << 'EOF'
 [all]
 arm_64bit=1
 kernel=Image
 disable_overscan=1
 EOF
+	fi
 
-	cat > "${BINARIES_DIR}/cmdline.txt" << 'EOF'
-root=/dev/mmcblk0p2 rootwait console=tty1 console=ttyAMA10,115200
-EOF
+	CMDLINE=""
+	if [ -f "${PROJECT_CMDLINE}" ]; then
+		CMDLINE="$(tr '\n' ' ' < "${PROJECT_CMDLINE}")"
+	elif [ -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" ]; then
+		CMDLINE="$(tr '\n' ' ' < "${BINARIES_DIR}/rpi-firmware/cmdline.txt")"
+	fi
+
+	case " ${CMDLINE} " in
+		*" root="*) ;;
+		*) CMDLINE="${CMDLINE} root=/dev/mmcblk0p2 rootwait" ;;
+	esac
+
+	case " ${CMDLINE} " in
+		*" console=ttyAMA10,115200"*) ;;
+		*) CMDLINE="${CMDLINE} console=ttyAMA10,115200" ;;
+	esac
+
+	printf '%s\n' "$(echo "${CMDLINE}" | tr -s ' ')" > "${BINARIES_DIR}/cmdline.txt"
 
 	FILES=""
 
