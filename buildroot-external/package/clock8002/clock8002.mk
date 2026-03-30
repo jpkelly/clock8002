@@ -1,5 +1,5 @@
 ################################################################################
-# clock8002 package prototype
+# clock8002 application package
 ################################################################################
 
 CLOCK8002_VERSION = prototype
@@ -11,14 +11,18 @@ CLOCK8002_DEPENDENCIES = host-go sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf li
 
 define CLOCK8002_BUILD_CMDS
 	cd $(@D) && \
-		GO111MODULE=on \
+		$(HOST_GO_TARGET_ENV) \
 		CGO_ENABLED=1 \
-		GOOS=linux \
-		GOARCH=arm64 \
-		CC="$(TARGET_CC)" \
-		CXX="$(TARGET_CXX)" \
-		$(HOST_DIR)/bin/go build -ldflags "$(TARGET_LDFLAGS)" -o sdl-clock ./cmd/sdl-clock
-	$(TARGET_CC) -O2 -o $(@D)/alsa-ltc $(@D)/alsa-ltc.c -lasound -lltc
+		GOFLAGS=-mod=vendor \
+		$(HOST_DIR)/bin/go build \
+			-v \
+			-ldflags "-extldflags '-fuse-ld=bfd'" \
+			-o $(@D)/sdl-clock \
+			./cmd/sdl-clock
+	$(TARGET_CC) -O2 \
+		-I$(STAGING_DIR)/usr/include \
+		-o $(@D)/alsa-ltc $(@D)/alsa-ltc.c \
+		-L$(STAGING_DIR)/usr/lib -lasound -lltc
 endef
 
 define CLOCK8002_INSTALL_TARGET_CMDS

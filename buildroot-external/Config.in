@@ -1,3 +1,4 @@
 menu "clock8002 external packages"
+	source "$BR2_EXTERNAL_CLOCK8002_PATH/package/libltc/Config.in"
 	source "$BR2_EXTERNAL_CLOCK8002_PATH/package/clock8002/Config.in"
 endmenu

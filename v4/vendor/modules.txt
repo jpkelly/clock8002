@@ -1,0 +1,76 @@
+# github.com/chabad360/go-osc v0.0.0-20220217020417-1229c4fc60a5
+## explicit; go 1.17
+github.com/chabad360/go-osc/osc
+# github.com/denisbrodbeck/machineid v1.0.1
+## explicit
+github.com/denisbrodbeck/machineid
+# github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f
+## explicit
+github.com/desertbit/timer
+# github.com/icholy/digest v0.1.15
+## explicit; go 1.16
+github.com/icholy/digest
+github.com/icholy/digest/internal/param
+# github.com/jessevdk/go-flags v1.4.0
+## explicit
+github.com/jessevdk/go-flags
+# github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3
+## explicit
+github.com/sigurn/crc16
+# github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
+## explicit
+github.com/tarm/serial
+# github.com/veandco/go-sdl2 v0.4.27
+## explicit; go 1.15
+github.com/veandco/go-sdl2/gfx
+github.com/veandco/go-sdl2/img
+github.com/veandco/go-sdl2/mix
+github.com/veandco/go-sdl2/sdl
+github.com/veandco/go-sdl2/ttf
+# gitlab.com/Depili/go-osc v0.0.0-20220126123138-cdbd92c9027a
+## explicit; go 1.17
+gitlab.com/Depili/go-osc/osc
+# gitlab.com/Depili/go-rgb-led-matrix v0.0.0-20170204170814-25b63d4baf68
+## explicit
+gitlab.com/Depili/go-rgb-led-matrix/bdf
+# gitlab.com/Depili/limitimer v0.0.0-20220312082356-1cec6f97c270
+## explicit; go 1.17
+gitlab.com/Depili/limitimer
+# golang.org/x/sys v0.0.0-20211205182925-97ca703d548d
+## explicit; go 1.17
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+golang.org/x/sys/windows/registry
+# periph.io/x/periph v3.6.7+incompatible
+## explicit
+periph.io/x/periph
+periph.io/x/periph/conn
+periph.io/x/periph/conn/gpio
+periph.io/x/periph/conn/gpio/gpioreg
+periph.io/x/periph/conn/gpio/gpiostream
+periph.io/x/periph/conn/i2c
+periph.io/x/periph/conn/i2c/i2creg
+periph.io/x/periph/conn/physic
+periph.io/x/periph/conn/pin
+periph.io/x/periph/conn/pin/pinreg
+periph.io/x/periph/conn/spi
+periph.io/x/periph/conn/spi/spireg
+periph.io/x/periph/experimental/conn/gpio/gpioutil
+periph.io/x/periph/host
+periph.io/x/periph/host/allwinner
+periph.io/x/periph/host/am335x
+periph.io/x/periph/host/bcm283x
+periph.io/x/periph/host/beagle/black
+periph.io/x/periph/host/beagle/bone
+periph.io/x/periph/host/beagle/green
+periph.io/x/periph/host/chip
+periph.io/x/periph/host/cpu
+periph.io/x/periph/host/distro
+periph.io/x/periph/host/fs
+periph.io/x/periph/host/odroidc1
+periph.io/x/periph/host/pine64
+periph.io/x/periph/host/pmem
+periph.io/x/periph/host/rpi
+periph.io/x/periph/host/sysfs
+periph.io/x/periph/host/videocore

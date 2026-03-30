@@ -41,16 +41,19 @@ BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_CLOCK8002_PATH)/board/clock8002-rpi
 # Audio
 BR2_PACKAGE_ALSA_UTILS=y
 BR2_PACKAGE_ALSA_UTILS_APLAY=y
+BR2_PACKAGE_ALSA_LIB=y
+
+# LTC timecode library (custom package in br2-external)
+BR2_PACKAGE_LIBLTC=y
 
 # Hardware utils
 BR2_PACKAGE_I2C_TOOLS=y
 
 # Python (OLED daemon)
 BR2_PACKAGE_PYTHON3=y
-BR2_PACKAGE_PYTHON_SMBUS2=y
-BR2_PACKAGE_PYTHON_PILLOW=y
-BR2_PACKAGE_PYTHON_LUMA_CORE=y
-BR2_PACKAGE_PYTHON_LUMA_OLED=y
+# NOTE: python-luma-oled and python-smbus2 are not in Buildroot 2025.02 upstream.
+# OLED daemon requires manual addition of these packages to br2-external (future work).
+# BR2_PACKAGE_PYTHON_PILLOW is available but unused until luma packages are added.
 
 # SDL2 stack
 BR2_PACKAGE_SDL2=y
