@@ -11,6 +11,19 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	GENIMAGE_CFG="${BINARIES_DIR}/genimage.cfg"
 	rm -f "${GENIMAGE_CFG}"
 
+	# Always regenerate top-level boot files to avoid stale settings between
+	# incremental builds. Pi 5 should use ttyAMA10 for early serial console.
+	cat > "${BINARIES_DIR}/config.txt" << 'EOF'
+[all]
+arm_64bit=1
+kernel=Image
+disable_overscan=1
+EOF
+
+	cat > "${BINARIES_DIR}/cmdline.txt" << 'EOF'
+root=/dev/mmcblk0p2 rootwait console=tty1 console=ttyAMA10,115200
+EOF
+
 	FILES=""
 
 	for i in "${BINARIES_DIR}"/*.dtb; do
