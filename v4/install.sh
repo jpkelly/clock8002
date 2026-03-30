@@ -31,6 +31,12 @@ echo "Installing runtime libraries..."
 sudo apt update
 sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11 i2c-tools python3-luma.oled fbi util-linux-extra
 
+# Disable ModemManager on clock units unless a cellular modem is intentionally used.
+if systemctl list-unit-files | grep -q '^ModemManager\.service'; then
+    echo "Disabling ModemManager service..."
+    sudo systemctl disable --now ModemManager 2>/dev/null || true
+fi
+
 echo "Ensuring rpi-clone is installed..."
 if command -v rpi-clone >/dev/null 2>&1; then
     echo "rpi-clone already installed"

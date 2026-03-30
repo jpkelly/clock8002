@@ -24,6 +24,16 @@ Issue management note:
 Test management note:
 - If you are going to run a test, ask first and then I will decide whether or not you should run the test.
 
+Change control note:
+- Do not make code changes by default.
+- Before editing any repository files, first present findings/status and ask for explicit user approval to proceed with code changes.
+- Exception: if the user explicitly asks to implement/fix/change code in the current request, proceed.
+
+Stability decision gate note:
+- When investigating suspected memory/resource leaks, do not deploy code fixes until the current baseline run on the fully-populated 2GB piclock unit reaches at least the 24h checkpoint, unless the user explicitly overrides this gate.
+- Required decision checkpoints: 12h and 24h with the same metrics (`VmRSS`, `VmSwap`, system swap, service state, temperature/throttle).
+- Approve code change only if leak behavior is reproduced on that unit (e.g., materially rising `VmSwap` for `sdl-clock` or sustained RSS growth over time). If metrics are flat by 24h, hold changes and treat prior 1GB findings as non-generalized.
+
 Release management note:
 - For each new release, be sure to include both a default and a Gerry version.
 - Versioning must follow this repository's own tag line (`v1.x` and onward); ignore inherited upstream `v4.x` tags from the fork source.
