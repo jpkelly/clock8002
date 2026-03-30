@@ -11,8 +11,14 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	GENIMAGE_CFG="${BINARIES_DIR}/genimage.cfg"
 	rm -f "${GENIMAGE_CFG}"
 
-	# Do not override top-level config.txt/cmdline.txt here. Keep whatever
-	# Buildroot generated from BR2_PACKAGE_RPI_FIRMWARE_* settings.
+	# Promote rpi-firmware config/cmdline to the top-level binaries dir so
+	# genimage places them at the root of the FAT partition (/boot/firmware/).
+	if [ -f "${BINARIES_DIR}/rpi-firmware/config.txt" ]; then
+		cp -f "${BINARIES_DIR}/rpi-firmware/config.txt" "${BINARIES_DIR}/config.txt"
+	fi
+	if [ -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" ]; then
+		cp -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" "${BINARIES_DIR}/cmdline.txt"
+	fi
 
 	FILES=""
 
