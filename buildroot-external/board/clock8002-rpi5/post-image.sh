@@ -15,8 +15,17 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		FILES="${FILES}\t\t\t\"${i#${BINARIES_DIR}/}\",\n"
 	done
 
-	KERNEL="$(sed -n 's/^kernel=//p' "${BINARIES_DIR}/rpi-firmware/config.txt")"
-	FILES="${FILES}\t\t\t\"${KERNEL}\",\n"
+	# Newer firmware packaging may not emit rpi-firmware/config.txt.
+	# Prefer configured kernel from firmware config when present, else use Image.
+	if [ -f "${BINARIES_DIR}/rpi-firmware/config.txt" ]; then
+		KERNEL="$(sed -n 's/^kernel=//p' "${BINARIES_DIR}/rpi-firmware/config.txt")"
+		if [ -n "${KERNEL}" ]; then
+			FILES="${FILES}\t\t\t\"${KERNEL}\",\n"
+		fi
+	fi
+	if [ -f "${BINARIES_DIR}/Image" ]; then
+		FILES="${FILES}\t\t\t\"Image\",\n"
+	fi
 
 	sed "s|#BOOT_FILES#|${FILES}|" "${BOARD_DIR}/genimage.cfg.in" > "${GENIMAGE_CFG}"
 fi
