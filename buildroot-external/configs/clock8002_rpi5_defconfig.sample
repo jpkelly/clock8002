@@ -51,9 +51,11 @@ BR2_PACKAGE_I2C_TOOLS=y
 
 # Python (OLED daemon)
 BR2_PACKAGE_PYTHON3=y
-# NOTE: python-luma-oled and python-smbus2 are not in Buildroot 2025.02 upstream.
-# OLED daemon requires manual addition of these packages to br2-external (future work).
-# BR2_PACKAGE_PYTHON_PILLOW is available but unused until luma packages are added.
+# Draft OLED package set is provided in this br2-external tree.
+# Enable these to include OLED daemon dependencies in the image:
+# BR2_PACKAGE_PYTHON_SMBUS2=y
+# BR2_PACKAGE_PYTHON_LUMA_CORE=y
+# BR2_PACKAGE_PYTHON_LUMA_OLED=y
 
 # SDL2 stack
 BR2_PACKAGE_SDL2=y
