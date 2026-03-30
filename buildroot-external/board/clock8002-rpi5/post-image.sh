@@ -9,6 +9,8 @@ GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
 # Generate genimage config from template when a board-specific cfg is absent.
 if [ ! -e "${GENIMAGE_CFG}" ]; then
 	GENIMAGE_CFG="${BINARIES_DIR}/genimage.cfg"
+	rm -f "${GENIMAGE_CFG}"
+
 	FILES=""
 
 	for i in "${BINARIES_DIR}"/*.dtb; do
