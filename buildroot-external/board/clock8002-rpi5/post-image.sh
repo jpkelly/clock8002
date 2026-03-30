@@ -11,18 +11,29 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	GENIMAGE_CFG="${BINARIES_DIR}/genimage.cfg"
 	FILES=""
 
-	for i in "${BINARIES_DIR}"/*.dtb "${BINARIES_DIR}"/rpi-firmware/*; do
+	for i in "${BINARIES_DIR}"/*.dtb; do
 		FILES="${FILES}\t\t\t\"${i#${BINARIES_DIR}/}\",\n"
 	done
 
-	# Newer firmware packaging may not emit rpi-firmware/config.txt.
-	# Prefer configured kernel from firmware config when present, else use Image.
-	if [ -f "${BINARIES_DIR}/rpi-firmware/config.txt" ]; then
-		KERNEL="$(sed -n 's/^kernel=//p' "${BINARIES_DIR}/rpi-firmware/config.txt")"
-		if [ -n "${KERNEL}" ]; then
-			FILES="${FILES}\t\t\t\"${KERNEL}\",\n"
-		fi
+	# Buildroot's Pi5 firmware payload does not always provide a top-level
+	# config.txt; create one so the SD image has deterministic boot settings.
+	if [ ! -f "${BINARIES_DIR}/config.txt" ]; then
+		cat > "${BINARIES_DIR}/config.txt" << 'EOF'
+[all]
+arm_64bit=1
+kernel=Image
+EOF
 	fi
+	FILES="${FILES}\t\t\t\"config.txt\",\n"
+
+	# Ensure cmdline.txt is present at boot partition root.
+	if [ ! -f "${BINARIES_DIR}/cmdline.txt" ] && [ -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" ]; then
+		cp -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" "${BINARIES_DIR}/cmdline.txt"
+	fi
+	if [ -f "${BINARIES_DIR}/cmdline.txt" ]; then
+		FILES="${FILES}\t\t\t\"cmdline.txt\",\n"
+	fi
+
 	if [ -f "${BINARIES_DIR}/Image" ]; then
 		FILES="${FILES}\t\t\t\"Image\",\n"
 	fi
