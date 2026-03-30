@@ -21,6 +21,11 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	if [ -d "${BINARIES_DIR}/rpi-firmware" ]; then
 		for i in "${BINARIES_DIR}"/rpi-firmware/*; do
 			[ -f "${i}" ] || continue
+			case "${i}" in
+				*.dtb|*/cmdline.txt)
+					continue
+					;;
+			esac
 			FILES="${FILES}\t\t\t\"${i#${BINARIES_DIR}/}\",\n"
 		done
 	fi
