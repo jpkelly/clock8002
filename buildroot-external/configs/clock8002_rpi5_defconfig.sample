@@ -12,7 +12,7 @@
 # Architecture — Pi 5 is aarch64
 BR2_aarch64=y
 BR2_cortex_a76=y
-BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_6=y
+BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_12=y
 BR2_ARM64_PAGE_SIZE_16K=y
 
 # Raspberry Pi 5 board support
