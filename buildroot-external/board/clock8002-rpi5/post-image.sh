@@ -38,14 +38,8 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 				FILES="${FILES}\t\t\t\"${i#${BINARIES_DIR}/}\",\n"
 			fi
 		done
-		# Include DT overlay files (vc4-kms-v3d-pi5, i2c, etc.) on
-		# the boot FAT partition so the firmware can load them.
-		if [ -d "${BINARIES_DIR}/rpi-firmware/overlays" ]; then
-			for i in "${BINARIES_DIR}"/rpi-firmware/overlays/*.dtbo; do
-				[ -f "${i}" ] || continue
-				FILES="${FILES}\t\t\t\"${i#${BINARIES_DIR}/}\",\n"
-			done
-		fi
+		# Overlays are injected via mtools after genimage (see below)
+		# so the firmware finds them at /overlays/ on the FAT root.
 	fi
 
 	for i in config.txt cmdline.txt; do
@@ -109,6 +103,21 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 		[ -f "${ini}" ] || continue
 		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${ini}" ::piclock/
 	done
+
+	# Inject DT overlays into /overlays/ on the boot FAT partition.
+	# Pi 5 firmware expects overlays at the FAT root, not in rpi-firmware/.
+	# Only copy the overlays we actually reference in config.txt.
+	OVERLAY_SRC="${BINARIES_DIR}/rpi-firmware/overlays"
+	if [ -d "${OVERLAY_SRC}" ]; then
+		MTOOLS_SKIP_CHECK=1 mmd -i "${BOOT_IMG}" ::overlays 2>/dev/null || true
+		for dtbo in \
+			vc4-kms-v3d-pi5.dtbo; do
+			if [ -f "${OVERLAY_SRC}/${dtbo}" ]; then
+				MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${OVERLAY_SRC}/${dtbo}" ::overlays/
+			fi
+		done
+	fi
+
 	# Patch sdcard.img with the updated boot.vfat (boot partition at LBA 1 = byte 512).
 	dd if="${BOOT_IMG}" of="${BINARIES_DIR}/sdcard.img" bs=512 seek=1 conv=notrunc
 fi
