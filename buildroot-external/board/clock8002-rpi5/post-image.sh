@@ -90,6 +90,9 @@ genimage \
 
 # Inject piclock/ config files into the FAT boot partition via mtools.
 # genimage's mcopy doesn't auto-create subdirectories, so we do it manually.
+# We modify boot.vfat in-place, then dd it back into sdcard.img at the boot
+# partition offset (1 MiB = genimage default alignment) to avoid a second
+# genimage run which would recreate boot.vfat from scratch.
 BOOT_IMG="${BINARIES_DIR}/boot.vfat"
 if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 	MTOOLS_SKIP_CHECK=1 mmd -i "${BOOT_IMG}" ::piclock 2>/dev/null || true
@@ -97,12 +100,6 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 		[ -f "${ini}" ] || continue
 		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${ini}" ::piclock/
 	done
-	# Regenerate sdcard.img with updated boot.vfat
-	rm -rf "${GENIMAGE_TMP}"
-	genimage \
-		--rootpath "${ROOTPATH_TMP}" \
-		--tmppath "${GENIMAGE_TMP}" \
-		--inputpath "${BINARIES_DIR}" \
-		--outputpath "${BINARIES_DIR}" \
-		--config "${GENIMAGE_CFG}"
+	# Patch sdcard.img with the updated boot.vfat (partition starts at 1 MiB).
+	dd if="${BOOT_IMG}" of="${BINARIES_DIR}/sdcard.img" bs=1M seek=1 conv=notrunc
 fi
