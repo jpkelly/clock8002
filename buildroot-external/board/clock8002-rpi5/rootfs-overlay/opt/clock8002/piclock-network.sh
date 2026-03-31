@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Apply network settings from /boot/piclock/network.ini
 # Runs at boot via piclock-network.service
 
@@ -54,8 +54,10 @@ find_wired_con() {
 }
 
 NM_CON=""
-for i in $(seq 1 30); do
+i=0
+while [ "$i" -lt 30 ]; do
     NM_CON=$(find_wired_con) && break
+    i=$((i + 1))
     sleep 1
 done
 

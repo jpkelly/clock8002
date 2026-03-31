@@ -25,7 +25,7 @@ chmod +x "${TARGET_DIR}/opt/clock8002/piclock-network.sh"
 # Mount boot partition at /boot so network.ini is accessible at runtime.
 mkdir -p "${TARGET_DIR}/boot"
 if ! grep -q '/boot' "${TARGET_DIR}/etc/fstab" 2>/dev/null; then
-	echo '/dev/mmcblk0p1	/boot	vfat	defaults	0	0' >> "${TARGET_DIR}/etc/fstab"
+	echo '/dev/mmcblk0p1	/boot	vfat	defaults,nofail	0	0' >> "${TARGET_DIR}/etc/fstab"
 fi
 
 # Pre-create /boot/piclock directory (will be on the mounted FAT partition).
