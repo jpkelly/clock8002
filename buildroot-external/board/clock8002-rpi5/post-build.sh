@@ -30,3 +30,8 @@ fi
 
 # Pre-create /boot/piclock directory (will be on the mounted FAT partition).
 mkdir -p "${TARGET_DIR}/boot/piclock"
+
+# Allow root SSH login with password (appliance build).
+if [ -f "${TARGET_DIR}/etc/ssh/sshd_config" ]; then
+	sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' "${TARGET_DIR}/etc/ssh/sshd_config"
+fi
