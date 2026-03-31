@@ -17,6 +17,16 @@ ln -sf /dev/null "${TARGET_DIR}/etc/systemd/system/systemd-networkd.socket"
 ln -sf /dev/null "${TARGET_DIR}/etc/systemd/system/systemd-networkd-wait-online.service"
 rm -f "${TARGET_DIR}/etc/systemd/network/"*.network
 
+# Disable mDNS in systemd-resolved — avahi-daemon handles mDNS exclusively.
+mkdir -p "${TARGET_DIR}/etc/systemd/resolved.conf.d"
+cat > "${TARGET_DIR}/etc/systemd/resolved.conf.d/no-mdns.conf" <<'EOF'
+[Resolve]
+MulticastDNS=no
+EOF
+
+# Set hostname.
+echo 'piclockBR' > "${TARGET_DIR}/etc/hostname"
+
 # Enable login prompt on HDMI (tty1).
 mkdir -p "${TARGET_DIR}/etc/systemd/system/getty.target.wants"
 ln -sf /usr/lib/systemd/system/getty@.service \
