@@ -37,12 +37,23 @@ mkdir -p "${TARGET_DIR}/root/.config/clock-8001"
 ln -sf /boot/piclock/clock.ini "${TARGET_DIR}/root/.config/clock-8001/clock.ini"
 
 # Patch service files: Buildroot runs as root, not pi.
+# Also ensure stdout/stderr go to journal for crash diagnostics.
 for svc in clock8002.service alsa-ltc.service; do
 	F="${TARGET_DIR}/usr/lib/systemd/system/${svc}"
-	[ -f "${F}" ] && sed -i 's/^User=pi$/User=root/' "${F}"
+	if [ -f "${F}" ]; then
+		sed -i 's/^User=pi$/User=root/' "${F}"
+		grep -q '^StandardOutput=' "${F}" || sed -i '/^\[Service\]/a StandardOutput=journal\nStandardError=journal' "${F}"
+	fi
 done
 
 # Allow root SSH login with password (appliance build).
 if [ -f "${TARGET_DIR}/etc/ssh/sshd_config" ]; then
 	sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' "${TARGET_DIR}/etc/ssh/sshd_config"
 fi
+
+# Install SSH authorized key for passwordless root login.
+mkdir -p "${TARGET_DIR}/root/.ssh"
+echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIYrTQK4a861rEy89P2Uo+tbmINrjXJuyh88wvibrHeB jp_kelly@mac.com' \
+	> "${TARGET_DIR}/root/.ssh/authorized_keys"
+chmod 700 "${TARGET_DIR}/root/.ssh"
+chmod 600 "${TARGET_DIR}/root/.ssh/authorized_keys"

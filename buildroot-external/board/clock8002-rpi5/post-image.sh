@@ -59,10 +59,8 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		FILES="${FILES}\t\t\t\"${KERNEL}\",\n"
 	fi
 
-	# Place default config files on the FAT boot partition under piclock/.
+	# Prepare piclock config files (injected via mtools after genimage).
 	mkdir -p "${BINARIES_DIR}/piclock"
-	# network.ini lives in the board dir; clock.ini and oled.ini come from
-	# the clock8002 package source tree.
 	CLOCK8002_SRC="${BUILD_DIR}/clock8002-prototype"
 	for pair in \
 		"${BOARD_DIR}/network.ini:network.ini" \
@@ -70,10 +68,7 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		"${CLOCK8002_SRC}/oled/oled.ini:oled.ini"; do
 		SRC="${pair%%:*}"
 		DST="${pair##*:}"
-		if [ -f "${SRC}" ]; then
-			cp -f "${SRC}" "${BINARIES_DIR}/piclock/${DST}"
-			FILES="${FILES}\t\t\t\"piclock/${DST}\",\n"
-		fi
+		[ -f "${SRC}" ] && cp -f "${SRC}" "${BINARIES_DIR}/piclock/${DST}"
 	done
 
 	sed "s|#BOOT_FILES#|${FILES}|" "${BOARD_DIR}/genimage.cfg.in" > "${GENIMAGE_CFG}"
@@ -92,3 +87,22 @@ genimage \
 	--inputpath "${BINARIES_DIR}" \
 	--outputpath "${BINARIES_DIR}" \
 	--config "${GENIMAGE_CFG}"
+
+# Inject piclock/ config files into the FAT boot partition via mtools.
+# genimage's mcopy doesn't auto-create subdirectories, so we do it manually.
+BOOT_IMG="${BINARIES_DIR}/boot.vfat"
+if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
+	MTOOLS_SKIP_CHECK=1 mmd -i "${BOOT_IMG}" ::piclock 2>/dev/null || true
+	for ini in "${BINARIES_DIR}"/piclock/*.ini; do
+		[ -f "${ini}" ] || continue
+		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${ini}" ::piclock/
+	done
+	# Regenerate sdcard.img with updated boot.vfat
+	rm -rf "${GENIMAGE_TMP}"
+	genimage \
+		--rootpath "${ROOTPATH_TMP}" \
+		--tmppath "${GENIMAGE_TMP}" \
+		--inputpath "${BINARIES_DIR}" \
+		--outputpath "${BINARIES_DIR}" \
+		--config "${GENIMAGE_CFG}"
+fi
