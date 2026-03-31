@@ -36,6 +36,12 @@ mkdir -p "${TARGET_DIR}/boot/piclock"
 mkdir -p "${TARGET_DIR}/root/.config/clock-8001"
 ln -sf /boot/piclock/clock.ini "${TARGET_DIR}/root/.config/clock-8001/clock.ini"
 
+# Patch service files: Buildroot runs as root, not pi.
+for svc in clock8002.service alsa-ltc.service; do
+	F="${TARGET_DIR}/usr/lib/systemd/system/${svc}"
+	[ -f "${F}" ] && sed -i 's/^User=pi$/User=root/' "${F}"
+done
+
 # Allow root SSH login with password (appliance build).
 if [ -f "${TARGET_DIR}/etc/ssh/sshd_config" ]; then
 	sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' "${TARGET_DIR}/etc/ssh/sshd_config"
