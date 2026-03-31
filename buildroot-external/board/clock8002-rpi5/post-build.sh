@@ -74,3 +74,26 @@ echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIYrTQK4a861rEy89P2Uo+tbmINrjXJuyh88wv
 	> "${TARGET_DIR}/root/.ssh/authorized_keys"
 chmod 700 "${TARGET_DIR}/root/.ssh"
 chmod 600 "${TARGET_DIR}/root/.ssh/authorized_keys"
+
+# Generate modules.dep at every boot.  The host kmod (used during the
+# Buildroot build) lacks ZLIB support and cannot read .ko.gz modules, so
+# the build-time depmod produces empty dependency files.  This oneshot
+# service runs the target's depmod (which has +ZLIB) before systemd tries
+# to auto-load any modules.
+cat > "${TARGET_DIR}/etc/systemd/system/depmod.service" <<'EOF'
+[Unit]
+Description=Generate kernel module dependencies
+DefaultDependencies=no
+Before=sysinit.target systemd-modules-load.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/depmod -a
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target
+EOF
+mkdir -p "${TARGET_DIR}/etc/systemd/system/sysinit.target.wants"
+ln -sf /etc/systemd/system/depmod.service \
+	"${TARGET_DIR}/etc/systemd/system/sysinit.target.wants/depmod.service"

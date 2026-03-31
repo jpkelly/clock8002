@@ -29,14 +29,23 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 
 	if [ -d "${BINARIES_DIR}/rpi-firmware" ]; then
 		for i in "${BINARIES_DIR}"/rpi-firmware/*; do
-			[ -f "${i}" ] || continue
 			case "${i}" in
 				*.dtb|*/cmdline.txt|*/config.txt)
 					continue
 					;;
 			esac
-			FILES="${FILES}\t\t\t\"${i#${BINARIES_DIR}/}\",\n"
+			if [ -f "${i}" ]; then
+				FILES="${FILES}\t\t\t\"${i#${BINARIES_DIR}/}\",\n"
+			fi
 		done
+		# Include DT overlay files (vc4-kms-v3d-pi5, i2c, etc.) on
+		# the boot FAT partition so the firmware can load them.
+		if [ -d "${BINARIES_DIR}/rpi-firmware/overlays" ]; then
+			for i in "${BINARIES_DIR}"/rpi-firmware/overlays/*.dtbo; do
+				[ -f "${i}" ] || continue
+				FILES="${FILES}\t\t\t\"${i#${BINARIES_DIR}/}\",\n"
+			done
+		fi
 	fi
 
 	for i in config.txt cmdline.txt; do

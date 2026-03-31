@@ -17,3 +17,7 @@ device_tree=bcm2712d0-rpi-5-b.dtb
 # Skip Pi 5 OS compatibility check (newer EEPROM bootloaders require this
 # for non-RPiOS images whose DTB lacks the expected brcm,bcm2712 compatible)
 os_check=0
+
+# Enable KMS/DRM graphics — required for /dev/dri and SDL2 KMSDRM backend.
+# Pi 5 uses its own overlay variant (not the generic vc4-kms-v3d).
+dtoverlay=vc4-kms-v3d-pi5
