@@ -1,0 +1,9 @@
+[Match]
+Name=end0
+
+[Network]
+DHCP=yes
+MulticastDNS=yes
+
+[DHCPv4]
+RouteMetric=100
