@@ -59,6 +59,13 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		FILES="${FILES}\t\t\t\"${KERNEL}\",\n"
 	fi
 
+	# Place default network.ini on the FAT boot partition at piclock/network.ini.
+	if [ -f "${BOARD_DIR}/network.ini" ]; then
+		mkdir -p "${BINARIES_DIR}/piclock"
+		cp -f "${BOARD_DIR}/network.ini" "${BINARIES_DIR}/piclock/network.ini"
+		FILES="${FILES}\t\t\t\"piclock/network.ini\",\n"
+	fi
+
 	sed "s|#BOOT_FILES#|${FILES}|" "${BOARD_DIR}/genimage.cfg.in" > "${GENIMAGE_CFG}"
 fi
 
