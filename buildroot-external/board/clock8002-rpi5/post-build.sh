@@ -31,6 +31,11 @@ fi
 # Pre-create /boot/piclock directory (will be on the mounted FAT partition).
 mkdir -p "${TARGET_DIR}/boot/piclock"
 
+# Symlink ~/.config/clock-8001/clock.ini -> /boot/piclock/clock.ini
+# sdl-clock reads config from XDG config dir; production uses this symlink.
+mkdir -p "${TARGET_DIR}/root/.config/clock-8001"
+ln -sf /boot/piclock/clock.ini "${TARGET_DIR}/root/.config/clock-8001/clock.ini"
+
 # Allow root SSH login with password (appliance build).
 if [ -f "${TARGET_DIR}/etc/ssh/sshd_config" ]; then
 	sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' "${TARGET_DIR}/etc/ssh/sshd_config"

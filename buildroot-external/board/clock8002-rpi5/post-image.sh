@@ -59,12 +59,22 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		FILES="${FILES}\t\t\t\"${KERNEL}\",\n"
 	fi
 
-	# Place default network.ini on the FAT boot partition at piclock/network.ini.
-	if [ -f "${BOARD_DIR}/network.ini" ]; then
-		mkdir -p "${BINARIES_DIR}/piclock"
-		cp -f "${BOARD_DIR}/network.ini" "${BINARIES_DIR}/piclock/network.ini"
-		FILES="${FILES}\t\t\t\"piclock/network.ini\",\n"
-	fi
+	# Place default config files on the FAT boot partition under piclock/.
+	mkdir -p "${BINARIES_DIR}/piclock"
+	# network.ini lives in the board dir; clock.ini and oled.ini come from
+	# the clock8002 package source tree.
+	CLOCK8002_SRC="${BUILD_DIR}/clock8002-prototype"
+	for pair in \
+		"${BOARD_DIR}/network.ini:network.ini" \
+		"${CLOCK8002_SRC}/clock.ini.default:clock.ini" \
+		"${CLOCK8002_SRC}/oled/oled.ini:oled.ini"; do
+		SRC="${pair%%:*}"
+		DST="${pair##*:}"
+		if [ -f "${SRC}" ]; then
+			cp -f "${SRC}" "${BINARIES_DIR}/piclock/${DST}"
+			FILES="${FILES}\t\t\t\"piclock/${DST}\",\n"
+		fi
+	done
 
 	sed "s|#BOOT_FILES#|${FILES}|" "${BOARD_DIR}/genimage.cfg.in" > "${GENIMAGE_CFG}"
 fi

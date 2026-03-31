@@ -44,6 +44,10 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 		$(INSTALL) -D -m 0755 $(@D)/oled/oled_daemon.py \
 			$(TARGET_DIR)/opt/clock8002/oled/oled_daemon.py; \
 	fi
+	if [ -f $(@D)/oled/oled.ini ]; then \
+		$(INSTALL) -D -m 0644 $(@D)/oled/oled.ini \
+			$(TARGET_DIR)/boot/piclock/oled.ini; \
+	fi
 endef
 
 $(eval $(generic-package))
