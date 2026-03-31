@@ -9,6 +9,11 @@ arm_64bit=1
 # Disable compensation for displays with overscan
 disable_overscan=1
 
+# Force D0-stepping DTB for Pi 5 Rev 1.1 (D0 silicon).  The base
+# bcm2712-rpi-5-b.dtb maps 0x30 bytes of pinctrl registers but D0 only
+# has 0x20 — accessing the extra range triggers an SError bus fault.
+device_tree=bcm2712d0-rpi-5-b.dtb
+
 # Skip Pi 5 OS compatibility check (newer EEPROM bootloaders require this
 # for non-RPiOS images whose DTB lacks the expected brcm,bcm2712 compatible)
 os_check=0
