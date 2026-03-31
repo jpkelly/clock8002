@@ -10,6 +10,13 @@ mkdir -p "${TARGET_DIR}/etc/systemd/system/multi-user.target.wants"
 mkdir -p "${TARGET_DIR}/etc/systemd/system"
 ln -sf /dev/null "${TARGET_DIR}/etc/systemd/system/ModemManager.service"
 
+# Mask systemd-networkd — NetworkManager is the sole network manager.
+# networkd conflicts with NM (dual DHCP leases, ignores NM keyfiles).
+ln -sf /dev/null "${TARGET_DIR}/etc/systemd/system/systemd-networkd.service"
+ln -sf /dev/null "${TARGET_DIR}/etc/systemd/system/systemd-networkd.socket"
+ln -sf /dev/null "${TARGET_DIR}/etc/systemd/system/systemd-networkd-wait-online.service"
+rm -f "${TARGET_DIR}/etc/systemd/network/"*.network
+
 # Enable login prompt on HDMI (tty1).
 mkdir -p "${TARGET_DIR}/etc/systemd/system/getty.target.wants"
 ln -sf /usr/lib/systemd/system/getty@.service \
