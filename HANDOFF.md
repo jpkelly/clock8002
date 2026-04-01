@@ -14,12 +14,13 @@ Last updated: 2026-04-01
 
 ## Buildroot Prototype (Issue #24)
 
-- Branch: `buildroot-prototype`, HEAD: `8162512` (pushed)
+- Branch: `buildroot-prototype`, HEAD: `65c2481` (pushed)
 - Test unit: piclockBR.local (Pi 5 Rev 1.1 D0, static IP 10.0.0.100)
 - SD card image: `piclockBR-8162512-sdcard.img` (769 MB), flashed and running
 - Build host: pi@pi5start.local, `~/buildroot` (Buildroot 2025.02)
 - All Critical items complete — sdl-clock fully operational with GLES2/KMSDRM
 - Mesa 25.0.7 (upgraded from 24.0.9 — manual change on build host, not in git)
+- Known bug: "Sync Time" button non-functional — BusyBox `date`/`hwclock` use different flags than GNU coreutils (fix pending)
 - Remaining: OLED daemon, DT overlays, boot splash, Wi-Fi AP testing, merge SDL fixes to master
 - sdl-clock changes vs master (required for GLES2 compat): PIXELFORMAT_UNKNOWN, surfaceToABGR8888(), SetBlendMode — master binary panics on Buildroot without these
 
@@ -137,6 +138,13 @@ ssh pi@piclock.local 'systemctl is-active clock8002'
 ```
 
 > **After every deploy to the test unit, report the short GitHub commit hash (first 7 characters) that was deployed.**
+
+## Buildroot Known Issues
+
+- **Sync Time button broken**: BusyBox `date` doesn't support `--set "@epoch"` (needs `-s`); BusyBox `hwclock` doesn't support `--systohc --utc` (needs `-w -u`). Running as root means sudo fallback is unnecessary. Fix: update `setTimeHandler()` and `syncHardwareClock()` in `v4/cmd/sdl-clock/http.go`.
+- **System clock wrong after boot**: Shows Oct 2024 — no NTP or manual time set. Depends on sync time fix.
+- **Mesa 25.0.7 changes not in git**: Manual modifications on pi5start build host — must be re-applied after clean Buildroot checkout.
+- **host-xz libtool bug**: `acl_cv_wl="-Wl,"` workaround in xz.mk — also not in git.
 
 ## Next Suggested Release
 

@@ -36,12 +36,12 @@ Please consider supporting the original clock-8001 development: https://www.payp
 - Features: added 2nd HDMI output support — chooseable PerfectCue full-screen icons or main clock mirror
 - Features: refactored `alsa-ltc` binary for 64-bit Trixie
 - Features: retained GPIO pulse output support (`periph.io`)
-- Platform: targets Raspberry Pi 5 running Raspberry Pi OS Lite (64-bit) / Debian Trixie (arm64)
+- Platform: targets Raspberry Pi 5 running **Raspberry Pi OS Lite (64-bit)** / Debian Trixie (arm64), or a custom **Buildroot** image
 - Removed hardware: HUB75 LED matrix, Arduino LED ring, Pimoroni Unicorn HD, Futaba VFD
 
 ## Requirements
 
-- Raspberry Pi 5 running **Raspberry Pi OS Lite (64-bit)** based on Debian Trixie
+- Raspberry Pi 5 running **Raspberry Pi OS Lite (64-bit)** based on Debian Trixie, or a custom Buildroot image (see `buildroot-prototype` branch)
 - HDMI display
 - Network connection (for OSC control and web configuration)
 
