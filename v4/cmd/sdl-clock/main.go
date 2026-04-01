@@ -320,7 +320,7 @@ func drawDirectTextProbe() {
 			}
 			return
 		}
-		surf = surfaceToRGBA8888(surf)
+		surf = surfaceToABGR8888(surf)
 		directTextProbeTexture, err = renderer.CreateTextureFromSurface(surf)
 		surf.Free()
 		if err != nil {
@@ -346,7 +346,7 @@ func drawDirectTextProbe() {
 		if err != nil {
 			log.Printf("Direct text solid probe RenderUTF8Solid error: %v", err)
 		} else {
-			surf = surfaceToRGBA8888(surf)
+			surf = surfaceToABGR8888(surf)
 			directTextSolidProbeTexture, err = renderer.CreateTextureFromSurface(surf)
 			surf.Free()
 			if err != nil {
@@ -366,7 +366,7 @@ func drawDirectTextProbe() {
 		if err != nil {
 			log.Printf("Direct text shaded probe RenderUTF8Shaded error: %v", err)
 		} else {
-			surf = surfaceToRGBA8888(surf)
+			surf = surfaceToABGR8888(surf)
 			directTextShadedProbeTexture, err = renderer.CreateTextureFromSurface(surf)
 			surf.Free()
 			if err != nil {
