@@ -75,48 +75,6 @@ echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIYrTQK4a861rEy89P2Uo+tbmINrjXJuyh88wv
 chmod 700 "${TARGET_DIR}/root/.ssh"
 chmod 600 "${TARGET_DIR}/root/.ssh/authorized_keys"
 
-# Generate modules.dep at every boot.  The host kmod (used during the
-# Buildroot build) lacks ZLIB support and cannot read .ko.gz modules, so
-# the build-time depmod produces empty dependency files.  This oneshot
-# service runs the target's depmod (which has +ZLIB) before systemd tries
-# to auto-load any modules.
-cat > "${TARGET_DIR}/etc/systemd/system/depmod.service" <<'EOF'
-[Unit]
-Description=Generate kernel module dependencies
-DefaultDependencies=no
-Before=sysinit.target systemd-modules-load.service
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/depmod -a
-RemainAfterExit=yes
-
-[Install]
-WantedBy=sysinit.target
-EOF
-mkdir -p "${TARGET_DIR}/etc/systemd/system/sysinit.target.wants"
-ln -sf /etc/systemd/system/depmod.service \
-	"${TARGET_DIR}/etc/systemd/system/sysinit.target.wants/depmod.service"
-
-# Load DRM modules at boot.  The vc4-drm component master discovers
-# sub-devices (HDMI, CRTC, MOP) via platform_find_device_by_driver()
-# during probe.  Loading vc4 early via systemd-modules-load ensures all
-# sub-drivers register before the master probes, so the full display
-# pipeline (HVS + HDMI + CRTC) binds in a single pass.
-mkdir -p "${TARGET_DIR}/etc/modules-load.d"
-cat > "${TARGET_DIR}/etc/modules-load.d/drm.conf" <<'EOF'
-v3d
-vc4
-EOF
-
-# Load USB audio module at boot.  The host kmod's broken depmod produces
-# an empty modules.alias, so udev cannot auto-load snd-usb-audio when
-# the USB device appears.  Explicit early loading ensures the capture
-# device is available before alsa-ltc starts.
-cat > "${TARGET_DIR}/etc/modules-load.d/usb-audio.conf" <<'EOF'
-snd_usb_audio
-EOF
-
 # Enable ALSA extended name hints so that hw:CARD= devices appear in
 # snd_device_name_hint() enumeration.  Without this, Buildroot's minimal
 # alsa-lib only lists default/sysdefault/front — not hw: — and alsa-ltc's
