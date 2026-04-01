@@ -26,6 +26,8 @@ var parser = flags.NewParser(&options, flags.Default)
 var showBackground bool
 var backgroundNumber int
 var directTextProbeTexture *sdl.Texture
+var directSurfaceProbeTexture *sdl.Texture
+var directTargetProbeTexture *sdl.Texture
 var directTextProbeLogged bool
 
 // Channel to notify for configuration changes
@@ -164,6 +166,14 @@ func main() {
 			if directTextProbeTexture != nil {
 				directTextProbeTexture.Destroy()
 				directTextProbeTexture = nil
+			}
+			if directSurfaceProbeTexture != nil {
+				directSurfaceProbeTexture.Destroy()
+				directSurfaceProbeTexture = nil
+			}
+			if directTargetProbeTexture != nil {
+				directTargetProbeTexture.Destroy()
+				directTargetProbeTexture = nil
 			}
 			directTextProbeLogged = false
 			info = ""
@@ -311,8 +321,56 @@ func drawDirectTextProbe() {
 			return
 		}
 		if !directTextProbeLogged {
-			log.Printf("Direct text probe texture created")
+			log.Printf("Direct text probe texture created (font->surface->texture)")
 			directTextProbeLogged = true
+		}
+	}
+
+	if directSurfaceProbeTexture == nil {
+		surf, err := sdl.CreateRGBSurfaceWithFormat(0, 160, 60, 32, sdl.PIXELFORMAT_RGBA8888)
+		if err == nil {
+			err = surf.FillRect(nil, sdl.MapRGBA(surf.Format, 255, 255, 0, 255))
+		}
+		if err != nil {
+			log.Printf("Direct surface probe surface creation/fill error: %v", err)
+		} else {
+			directSurfaceProbeTexture, err = renderer.CreateTextureFromSurface(surf)
+			surf.Free()
+			if err != nil {
+				log.Printf("Direct surface probe CreateTextureFromSurface error: %v", err)
+			} else {
+				log.Printf("Direct surface probe texture created (solid yellow)")
+			}
+		}
+	}
+
+	if directTargetProbeTexture == nil {
+		t, err := renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 160, 60)
+		if err != nil {
+			log.Printf("Direct target probe CreateTexture error: %v", err)
+		} else {
+			err = t.SetBlendMode(sdl.BLENDMODE_BLEND)
+			if err != nil {
+				log.Printf("Direct target probe SetBlendMode error: %v", err)
+			}
+			err = renderer.SetRenderTarget(t)
+			if err != nil {
+				log.Printf("Direct target probe SetRenderTarget(texture) error: %v", err)
+			}
+			err = renderer.SetDrawColor(255, 0, 255, 255)
+			if err != nil {
+				log.Printf("Direct target probe SetDrawColor error: %v", err)
+			}
+			err = renderer.Clear()
+			if err != nil {
+				log.Printf("Direct target probe Clear error: %v", err)
+			}
+			err = renderer.SetRenderTarget(nil)
+			if err != nil {
+				log.Printf("Direct target probe SetRenderTarget(nil) error: %v", err)
+			}
+			directTargetProbeTexture = t
+			log.Printf("Direct target probe texture created (solid magenta)")
 		}
 	}
 
@@ -326,6 +384,28 @@ func drawDirectTextProbe() {
 	err = renderer.Copy(directTextProbeTexture, nil, &dest)
 	if err != nil {
 		log.Printf("Direct text probe Copy error: %v", err)
+	}
+
+	if directSurfaceProbeTexture != nil {
+		err = renderer.Copy(directSurfaceProbeTexture, nil, &sdl.Rect{X: 20, Y: 860, W: 160, H: 60})
+		if err != nil {
+			log.Printf("Direct surface probe Copy error: %v", err)
+		}
+	}
+
+	if directTargetProbeTexture != nil {
+		err = renderer.Copy(directTargetProbeTexture, nil, &sdl.Rect{X: 20, Y: 940, W: 160, H: 60})
+		if err != nil {
+			log.Printf("Direct target probe Copy error: %v", err)
+		}
+	}
+
+	err = renderer.SetDrawColor(0, 255, 0, 255)
+	if err == nil {
+		err = renderer.FillRect(&sdl.Rect{X: 20, Y: 1020, W: 40, H: 20})
+	}
+	if err != nil {
+		log.Printf("Direct primitive probe FillRect error: %v", err)
 	}
 }
 
