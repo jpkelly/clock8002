@@ -97,3 +97,14 @@ EOF
 mkdir -p "${TARGET_DIR}/etc/systemd/system/sysinit.target.wants"
 ln -sf /etc/systemd/system/depmod.service \
 	"${TARGET_DIR}/etc/systemd/system/sysinit.target.wants/depmod.service"
+
+# Load DRM modules at boot.  The vc4-drm component master discovers
+# sub-devices (HDMI, CRTC, MOP) via platform_find_device_by_driver()
+# during probe.  Loading vc4 early via systemd-modules-load ensures all
+# sub-drivers register before the master probes, so the full display
+# pipeline (HVS + HDMI + CRTC) binds in a single pass.
+mkdir -p "${TARGET_DIR}/etc/modules-load.d"
+cat > "${TARGET_DIR}/etc/modules-load.d/drm.conf" <<'EOF'
+v3d
+vc4
+EOF
