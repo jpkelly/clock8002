@@ -312,219 +312,27 @@ func main() {
 }
 
 func drawDirectTextProbe() {
-	if infoFont == nil {
-		return
-	}
-
-	if directTextProbeTexture == nil {
-		surf, err := infoFont.RenderUTF8Blended("TEXTURE PROBE", sdl.Color{R: 0, G: 255, B: 255, A: 255})
-		if err != nil {
-			if !directTextProbeLogged {
-				log.Printf("Direct text probe RenderUTF8Blended error: %v", err)
-				directTextProbeLogged = true
-			}
-			return
-		}
-		surf = surfaceToABGR8888(surf)
-		directTextProbeTexture, err = renderer.CreateTextureFromSurface(surf)
-		surf.Free()
-		if err != nil {
-			if !directTextProbeLogged {
-				log.Printf("Direct text probe CreateTextureFromSurface error: %v", err)
-				directTextProbeLogged = true
-			}
-			directTextProbeTexture = nil
-			return
-		}
-		err = directTextProbeTexture.SetBlendMode(sdl.BLENDMODE_NONE)
-		if err != nil {
-			log.Printf("Direct text probe SetBlendMode(NONE) error: %v", err)
-		}
-		if !directTextProbeLogged {
-			log.Printf("Direct text probe texture created (font->surface->texture)")
-			directTextProbeLogged = true
-		}
-	}
-
-	if directTextSolidProbeTexture == nil {
-		surf, err := infoFont.RenderUTF8Solid("SOLID PROBE", sdl.Color{R: 255, G: 255, B: 255, A: 255})
-		if err != nil {
-			log.Printf("Direct text solid probe RenderUTF8Solid error: %v", err)
-		} else {
-			surf = surfaceToABGR8888(surf)
-			directTextSolidProbeTexture, err = renderer.CreateTextureFromSurface(surf)
-			surf.Free()
-			if err != nil {
-				log.Printf("Direct text solid probe CreateTextureFromSurface error: %v", err)
-			} else {
-				err = directTextSolidProbeTexture.SetBlendMode(sdl.BLENDMODE_NONE)
-				if err != nil {
-					log.Printf("Direct text solid probe SetBlendMode(NONE) error: %v", err)
-				}
-				log.Printf("Direct text solid probe texture created")
-			}
-		}
-	}
-
-	if directTextShadedProbeTexture == nil {
-		surf, err := infoFont.RenderUTF8Shaded("SHADED PROBE", sdl.Color{R: 255, G: 255, B: 255, A: 255}, sdl.Color{R: 128, G: 0, B: 0, A: 255})
-		if err != nil {
-			log.Printf("Direct text shaded probe RenderUTF8Shaded error: %v", err)
-		} else {
-			surf = surfaceToABGR8888(surf)
-			directTextShadedProbeTexture, err = renderer.CreateTextureFromSurface(surf)
-			surf.Free()
-			if err != nil {
-				log.Printf("Direct text shaded probe CreateTextureFromSurface error: %v", err)
-			} else {
-				err = directTextShadedProbeTexture.SetBlendMode(sdl.BLENDMODE_NONE)
-				if err != nil {
-					log.Printf("Direct text shaded probe SetBlendMode(NONE) error: %v", err)
-				}
-				log.Printf("Direct text shaded probe texture created")
-			}
-		}
-	}
-
-	if directSurfaceProbeTexture == nil {
-		surf, err := sdl.CreateRGBSurfaceWithFormat(0, 160, 60, 32, sdl.PIXELFORMAT_RGBA8888)
-		if err == nil {
-			err = surf.FillRect(nil, sdl.MapRGBA(surf.Format, 255, 255, 0, 255))
-		}
-		if err != nil {
-			log.Printf("Direct surface probe surface creation/fill error: %v", err)
-		} else {
-			directSurfaceProbeTexture, err = renderer.CreateTextureFromSurface(surf)
-			surf.Free()
-			if err != nil {
-				log.Printf("Direct surface probe CreateTextureFromSurface error: %v", err)
-			} else {
-				log.Printf("Direct surface probe texture created (solid yellow)")
-			}
-		}
-	}
-
+	// Single test: render-target cleared to alpha=0, orange rect drawn in,
+	// copied to screen with BLENDMODE_NONE.
+	// Visible orange block = BLENDMODE_NONE on copies is the fix.
+	// Invisible = render-target alpha=0 is not recoverable with NONE either.
 	if directTargetProbeTexture == nil {
-		t, err := renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 160, 60)
+		t, err := renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 200, 100)
 		if err != nil {
-			log.Printf("Direct target probe CreateTexture error: %v", err)
-		} else {
-			err = t.SetBlendMode(sdl.BLENDMODE_BLEND)
-			if err != nil {
-				log.Printf("Direct target probe SetBlendMode error: %v", err)
-			}
-			err = renderer.SetRenderTarget(t)
-			if err != nil {
-				log.Printf("Direct target probe SetRenderTarget(texture) error: %v", err)
-			}
-			err = renderer.SetDrawColor(255, 0, 255, 255)
-			if err != nil {
-				log.Printf("Direct target probe SetDrawColor error: %v", err)
-			}
-			err = renderer.Clear()
-			if err != nil {
-				log.Printf("Direct target probe Clear error: %v", err)
-			}
-			err = renderer.SetRenderTarget(nil)
-			if err != nil {
-				log.Printf("Direct target probe SetRenderTarget(nil) error: %v", err)
-			}
-			directTargetProbeTexture = t
-			log.Printf("Direct target probe texture created (solid magenta)")
+			log.Printf("Probe CreateTexture error: %v", err)
+			return
 		}
+		renderer.SetRenderTarget(t)
+		renderer.SetDrawColor(0, 0, 0, 0)
+		renderer.Clear()
+		renderer.SetDrawColor(255, 128, 0, 255)
+		renderer.FillRect(&sdl.Rect{X: 0, Y: 0, W: 200, H: 100})
+		renderer.SetRenderTarget(nil)
+		t.SetBlendMode(sdl.BLENDMODE_NONE)
+		directTargetProbeTexture = t
+		log.Printf("Probe: render-target orange block created (BLENDMODE_NONE)")
 	}
-
-	_, _, w, h, err := directTextProbeTexture.Query()
-	if err != nil {
-		log.Printf("Direct text probe Query error: %v", err)
-		return
-	}
-
-	dest := sdl.Rect{X: 20, Y: 1040 - h, W: w, H: h}
-	err = renderer.Copy(directTextProbeTexture, nil, &dest)
-	if err != nil {
-		log.Printf("Direct text probe Copy error: %v", err)
-	}
-
-	if directSurfaceProbeTexture != nil {
-		err = renderer.Copy(directSurfaceProbeTexture, nil, &sdl.Rect{X: 20, Y: 860, W: 160, H: 60})
-		if err != nil {
-			log.Printf("Direct surface probe Copy error: %v", err)
-		}
-	}
-
-	if directTargetProbeTexture != nil {
-		err = renderer.Copy(directTargetProbeTexture, nil, &sdl.Rect{X: 20, Y: 940, W: 160, H: 60})
-		if err != nil {
-			log.Printf("Direct target probe Copy error: %v", err)
-		}
-	}
-
-	if directTextSolidProbeTexture != nil {
-		_, _, sw, sh, qerr := directTextSolidProbeTexture.Query()
-		if qerr != nil {
-			log.Printf("Direct text solid probe Query error: %v", qerr)
-		} else {
-			err = renderer.Copy(directTextSolidProbeTexture, nil, &sdl.Rect{X: 240, Y: 900, W: sw, H: sh})
-			if err != nil {
-				log.Printf("Direct text solid probe Copy error: %v", err)
-			}
-		}
-	}
-
-	if directTextShadedProbeTexture != nil {
-		_, _, tw, th, qerr := directTextShadedProbeTexture.Query()
-		if qerr != nil {
-			log.Printf("Direct text shaded probe Query error: %v", qerr)
-		} else {
-			err = renderer.Copy(directTextShadedProbeTexture, nil, &sdl.Rect{X: 240, Y: 960, W: tw, H: th})
-			if err != nil {
-				log.Printf("Direct text shaded probe Copy error: %v", err)
-			}
-		}
-	}
-
-	// No-convert blended text probe: skips surfaceToABGR8888 entirely.
-	// If this is visible as green text on Buildroot and Trixie, surfaceToABGR8888
-	// is the culprit for the blank-text bug on Buildroot SDL2 2.30.x.
-	if directNoConvProbeTexture == nil {
-		surf, err := infoFont.RenderUTF8Blended("NO-CONV PROBE", sdl.Color{R: 0, G: 255, B: 0, A: 255})
-		if err != nil {
-			log.Printf("No-conv probe RenderUTF8Blended error: %v", err)
-		} else {
-			directNoConvProbeTexture, err = renderer.CreateTextureFromSurface(surf)
-			surf.Free()
-			if err != nil {
-				log.Printf("No-conv probe CreateTextureFromSurface error: %v", err)
-				directNoConvProbeTexture = nil
-			} else {
-				err = directNoConvProbeTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
-				if err != nil {
-					log.Printf("No-conv probe SetBlendMode error: %v", err)
-				}
-				log.Printf("No-conv probe texture created (no surfaceToABGR8888, BLENDMODE_BLEND)")
-			}
-		}
-	}
-	if directNoConvProbeTexture != nil {
-		_, _, nw, nh, qerr := directNoConvProbeTexture.Query()
-		if qerr != nil {
-			log.Printf("No-conv probe Query error: %v", qerr)
-		} else {
-			err = renderer.Copy(directNoConvProbeTexture, nil, &sdl.Rect{X: 240, Y: 840, W: nw, H: nh})
-			if err != nil {
-				log.Printf("No-conv probe Copy error: %v", err)
-			}
-		}
-	}
-
-	err = renderer.SetDrawColor(0, 255, 0, 255)
-	if err == nil {
-		err = renderer.FillRect(&sdl.Rect{X: 20, Y: 1020, W: 40, H: 20})
-	}
-	if err != nil {
-		log.Printf("Direct primitive probe FillRect error: %v", err)
-	}
+	renderer.Copy(directTargetProbeTexture, nil, &sdl.Rect{X: 20, Y: 940, W: 200, H: 100})
 }
 
 func updateInfoScreen(info string) {
