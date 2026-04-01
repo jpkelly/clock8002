@@ -134,9 +134,14 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 			vc4-kms-v3d-pi5.dtbo \
 			gpu-enable.dtbo \
 			dwc2.dtbo \
+			uart0.dtbo \
+			uart0-pi5.dtbo \
 			uart1.dtbo \
+			uart1-pi5.dtbo \
 			uart2.dtbo \
-			uart3.dtbo; do
+			uart2-pi5.dtbo \
+			uart3.dtbo \
+			uart3-pi5.dtbo; do
 			if [ -f "${OVERLAY_SRC}/${dtbo}" ]; then
 				MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${OVERLAY_SRC}/${dtbo}" ::overlays/
 			fi
