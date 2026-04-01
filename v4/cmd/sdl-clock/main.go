@@ -25,6 +25,8 @@ import (
 var parser = flags.NewParser(&options, flags.Default)
 var showBackground bool
 var backgroundNumber int
+var directTextProbeTexture *sdl.Texture
+var directTextProbeLogged bool
 
 // Channel to notify for configuration changes
 var confChan chan bool
@@ -159,6 +161,11 @@ func main() {
 				infoTexture.Destroy()
 				infoTexture = nil
 			}
+			if directTextProbeTexture != nil {
+				directTextProbeTexture.Destroy()
+				directTextProbeTexture = nil
+			}
+			directTextProbeLogged = false
 			info = ""
 
 			log.Printf("->Initializing clock face")
@@ -228,6 +235,7 @@ func main() {
 					checkVoice(state, i)
 					todBeep(state, i)
 				}
+				drawDirectTextProbe()
 			}
 
 			if state.Info != "" && !infoHidden {
@@ -275,6 +283,49 @@ func main() {
 				m.Update(state)
 			}
 		}
+	}
+}
+
+func drawDirectTextProbe() {
+	if infoFont == nil {
+		return
+	}
+
+	if directTextProbeTexture == nil {
+		surf, err := infoFont.RenderUTF8Blended("TEXTURE PROBE", sdl.Color{R: 0, G: 255, B: 255, A: 255})
+		if err != nil {
+			if !directTextProbeLogged {
+				log.Printf("Direct text probe RenderUTF8Blended error: %v", err)
+				directTextProbeLogged = true
+			}
+			return
+		}
+		directTextProbeTexture, err = renderer.CreateTextureFromSurface(surf)
+		surf.Free()
+		if err != nil {
+			if !directTextProbeLogged {
+				log.Printf("Direct text probe CreateTextureFromSurface error: %v", err)
+				directTextProbeLogged = true
+			}
+			directTextProbeTexture = nil
+			return
+		}
+		if !directTextProbeLogged {
+			log.Printf("Direct text probe texture created")
+			directTextProbeLogged = true
+		}
+	}
+
+	_, _, w, h, err := directTextProbeTexture.Query()
+	if err != nil {
+		log.Printf("Direct text probe Query error: %v", err)
+		return
+	}
+
+	dest := sdl.Rect{X: 20, Y: 1040 - h, W: w, H: h}
+	err = renderer.Copy(directTextProbeTexture, nil, &dest)
+	if err != nil {
+		log.Printf("Direct text probe Copy error: %v", err)
 	}
 }
 
