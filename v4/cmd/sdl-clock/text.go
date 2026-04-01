@@ -537,7 +537,7 @@ func createRowTexture(i int, text string) {
 		}
 	}
 
-	textClock.r[i].textTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, texW, texH)
+	textClock.r[i].textTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, texW, texH)
 	textClock.r[i].textTex.SetBlendMode(sdl.BLENDMODE_BLEND)
 	check(err)
 	err = renderer.SetRenderTarget(textClock.r[i].textTex)
@@ -611,7 +611,7 @@ func renderIcon(row int, icon string, textColor sdl.Color) {
 			textClock.r[row].iconTex = renderText(icon, textClock.iconFont, colors.icon[row])
 		} else {
 			renderer.SetDrawColor(0, 0, 0, 0)
-			textClock.r[row].iconTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 1, 1)
+			textClock.r[row].iconTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 1, 1)
 			check(err)
 			err = textClock.r[row].iconTex.SetBlendMode(sdl.BLENDMODE_BLEND)
 			check(err)
@@ -629,7 +629,7 @@ func renderSignal(i int, newColor color.RGBA) {
 			textClock.r[i].signalTex.Destroy()
 		}
 		renderer.SetDrawColor(0, 0, 0, 0)
-		textClock.r[i].signalTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 150, 150)
+		textClock.r[i].signalTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 150, 150)
 		check(err)
 		err = textClock.r[i].signalTex.SetBlendMode(sdl.BLENDMODE_BLEND)
 		check(err)

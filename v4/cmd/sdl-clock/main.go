@@ -405,7 +405,7 @@ func drawDirectTextProbe() {
 	}
 
 	if directTargetProbeTexture == nil {
-		t, err := renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 160, 60)
+		t, err := renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 160, 60)
 		if err != nil {
 			log.Printf("Direct target probe CreateTexture error: %v", err)
 		} else {
@@ -535,7 +535,7 @@ func updateInfoScreen(info string) {
 	lines := strings.Split(info, "\n")
 
 	height := infoFont.LineSkip() * (len(lines) + 1)
-	infoTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 1024, int32(height))
+	infoTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 1024, int32(height))
 	infoTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	check(err)
 

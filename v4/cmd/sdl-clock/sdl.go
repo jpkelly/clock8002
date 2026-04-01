@@ -186,7 +186,7 @@ func initTextures() {
 	if staticTexture != nil {
 		staticTexture.Destroy()
 	}
-	staticTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, textureSize, textureSize)
+	staticTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, textureSize, textureSize)
 	check(err)
 	err = staticTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	check(err)
@@ -214,7 +214,7 @@ func initTextures() {
 	if secTexture != nil {
 		secTexture.Destroy()
 	}
-	secTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, textureSize, textureSize)
+	secTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, textureSize, textureSize)
 	check(err)
 	err = secTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	check(err)
@@ -240,7 +240,7 @@ func initTextures() {
 	if cueTexture != nil {
 		cueTexture.Destroy()
 	}
-	cueTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 500, 500)
+	cueTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 500, 500)
 	check(err)
 	err = cueTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	check(err)
