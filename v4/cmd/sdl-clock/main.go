@@ -25,13 +25,6 @@ import (
 var parser = flags.NewParser(&options, flags.Default)
 var showBackground bool
 var backgroundNumber int
-var directTextProbeTexture *sdl.Texture
-var directTextSolidProbeTexture *sdl.Texture
-var directTextShadedProbeTexture *sdl.Texture
-var directSurfaceProbeTexture *sdl.Texture
-var directTargetProbeTexture *sdl.Texture
-var directNoConvProbeTexture *sdl.Texture
-var directTextProbeLogged bool
 
 // Channel to notify for configuration changes
 var confChan chan bool
@@ -166,31 +159,6 @@ func main() {
 				infoTexture.Destroy()
 				infoTexture = nil
 			}
-			if directTextProbeTexture != nil {
-				directTextProbeTexture.Destroy()
-				directTextProbeTexture = nil
-			}
-			if directSurfaceProbeTexture != nil {
-				directSurfaceProbeTexture.Destroy()
-				directSurfaceProbeTexture = nil
-			}
-			if directTextSolidProbeTexture != nil {
-				directTextSolidProbeTexture.Destroy()
-				directTextSolidProbeTexture = nil
-			}
-			if directTextShadedProbeTexture != nil {
-				directTextShadedProbeTexture.Destroy()
-				directTextShadedProbeTexture = nil
-			}
-			if directTargetProbeTexture != nil {
-				directTargetProbeTexture.Destroy()
-				directTargetProbeTexture = nil
-			}
-			if directNoConvProbeTexture != nil {
-				directNoConvProbeTexture.Destroy()
-				directNoConvProbeTexture = nil
-			}
-			directTextProbeLogged = false
 			info = ""
 
 			log.Printf("->Initializing clock face")
@@ -260,7 +228,6 @@ func main() {
 					checkVoice(state, i)
 					todBeep(state, i)
 				}
-				drawDirectTextProbe()
 			}
 
 			if state.Info != "" && !infoHidden {
@@ -309,30 +276,6 @@ func main() {
 			}
 		}
 	}
-}
-
-func drawDirectTextProbe() {
-	// Single test: render-target cleared to alpha=0, orange rect drawn in,
-	// copied to screen with BLENDMODE_NONE.
-	// Visible orange block = BLENDMODE_NONE on copies is the fix.
-	// Invisible = render-target alpha=0 is not recoverable with NONE either.
-	if directTargetProbeTexture == nil {
-		t, err := renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 200, 100)
-		if err != nil {
-			log.Printf("Probe CreateTexture error: %v", err)
-			return
-		}
-		renderer.SetRenderTarget(t)
-		renderer.SetDrawColor(0, 0, 0, 0)
-		renderer.Clear()
-		renderer.SetDrawColor(255, 128, 0, 255)
-		renderer.FillRect(&sdl.Rect{X: 0, Y: 0, W: 200, H: 100})
-		renderer.SetRenderTarget(nil)
-		t.SetBlendMode(sdl.BLENDMODE_NONE)
-		directTargetProbeTexture = t
-		log.Printf("Probe: render-target orange block created (BLENDMODE_NONE)")
-	}
-	renderer.Copy(directTargetProbeTexture, nil, &sdl.Rect{X: 20, Y: 940, W: 200, H: 100})
 }
 
 func updateInfoScreen(info string) {
