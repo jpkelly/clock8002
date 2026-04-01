@@ -26,6 +26,8 @@ var parser = flags.NewParser(&options, flags.Default)
 var showBackground bool
 var backgroundNumber int
 var directTextProbeTexture *sdl.Texture
+var directTextSolidProbeTexture *sdl.Texture
+var directTextShadedProbeTexture *sdl.Texture
 var directSurfaceProbeTexture *sdl.Texture
 var directTargetProbeTexture *sdl.Texture
 var directTextProbeLogged bool
@@ -170,6 +172,14 @@ func main() {
 			if directSurfaceProbeTexture != nil {
 				directSurfaceProbeTexture.Destroy()
 				directSurfaceProbeTexture = nil
+			}
+			if directTextSolidProbeTexture != nil {
+				directTextSolidProbeTexture.Destroy()
+				directTextSolidProbeTexture = nil
+			}
+			if directTextShadedProbeTexture != nil {
+				directTextShadedProbeTexture.Destroy()
+				directTextShadedProbeTexture = nil
 			}
 			if directTargetProbeTexture != nil {
 				directTargetProbeTexture.Destroy()
@@ -320,9 +330,51 @@ func drawDirectTextProbe() {
 			directTextProbeTexture = nil
 			return
 		}
+		err = directTextProbeTexture.SetBlendMode(sdl.BLENDMODE_NONE)
+		if err != nil {
+			log.Printf("Direct text probe SetBlendMode(NONE) error: %v", err)
+		}
 		if !directTextProbeLogged {
 			log.Printf("Direct text probe texture created (font->surface->texture)")
 			directTextProbeLogged = true
+		}
+	}
+
+	if directTextSolidProbeTexture == nil {
+		surf, err := infoFont.RenderUTF8Solid("SOLID PROBE", sdl.Color{R: 255, G: 255, B: 255, A: 255})
+		if err != nil {
+			log.Printf("Direct text solid probe RenderUTF8Solid error: %v", err)
+		} else {
+			directTextSolidProbeTexture, err = renderer.CreateTextureFromSurface(surf)
+			surf.Free()
+			if err != nil {
+				log.Printf("Direct text solid probe CreateTextureFromSurface error: %v", err)
+			} else {
+				err = directTextSolidProbeTexture.SetBlendMode(sdl.BLENDMODE_NONE)
+				if err != nil {
+					log.Printf("Direct text solid probe SetBlendMode(NONE) error: %v", err)
+				}
+				log.Printf("Direct text solid probe texture created")
+			}
+		}
+	}
+
+	if directTextShadedProbeTexture == nil {
+		surf, err := infoFont.RenderUTF8Shaded("SHADED PROBE", sdl.Color{R: 255, G: 255, B: 255, A: 255}, sdl.Color{R: 128, G: 0, B: 0, A: 255})
+		if err != nil {
+			log.Printf("Direct text shaded probe RenderUTF8Shaded error: %v", err)
+		} else {
+			directTextShadedProbeTexture, err = renderer.CreateTextureFromSurface(surf)
+			surf.Free()
+			if err != nil {
+				log.Printf("Direct text shaded probe CreateTextureFromSurface error: %v", err)
+			} else {
+				err = directTextShadedProbeTexture.SetBlendMode(sdl.BLENDMODE_NONE)
+				if err != nil {
+					log.Printf("Direct text shaded probe SetBlendMode(NONE) error: %v", err)
+				}
+				log.Printf("Direct text shaded probe texture created")
+			}
 		}
 	}
 
@@ -397,6 +449,30 @@ func drawDirectTextProbe() {
 		err = renderer.Copy(directTargetProbeTexture, nil, &sdl.Rect{X: 20, Y: 940, W: 160, H: 60})
 		if err != nil {
 			log.Printf("Direct target probe Copy error: %v", err)
+		}
+	}
+
+	if directTextSolidProbeTexture != nil {
+		_, _, sw, sh, qerr := directTextSolidProbeTexture.Query()
+		if qerr != nil {
+			log.Printf("Direct text solid probe Query error: %v", qerr)
+		} else {
+			err = renderer.Copy(directTextSolidProbeTexture, nil, &sdl.Rect{X: 240, Y: 900, W: sw, H: sh})
+			if err != nil {
+				log.Printf("Direct text solid probe Copy error: %v", err)
+			}
+		}
+	}
+
+	if directTextShadedProbeTexture != nil {
+		_, _, tw, th, qerr := directTextShadedProbeTexture.Query()
+		if qerr != nil {
+			log.Printf("Direct text shaded probe Query error: %v", qerr)
+		} else {
+			err = renderer.Copy(directTextShadedProbeTexture, nil, &sdl.Rect{X: 240, Y: 960, W: tw, H: th})
+			if err != nil {
+				log.Printf("Direct text shaded probe Copy error: %v", err)
+			}
 		}
 	}
 
