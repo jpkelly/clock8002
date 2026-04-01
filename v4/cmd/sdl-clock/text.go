@@ -456,6 +456,7 @@ func renderText(text string, font *ttf.Font, color sdl.Color) *sdl.Texture {
 		t, err = font.RenderUTF8Blended("INVALID TEXT", color)
 		check(err)
 	}
+	t = surfaceToRGBA8888(t)
 
 	tex, err := renderer.CreateTextureFromSurface(t)
 	if err != nil {
@@ -464,14 +465,32 @@ func renderText(text string, font *ttf.Font, color sdl.Color) *sdl.Texture {
 		t.Free()
 		t, err = font.RenderUTF8Blended("INVALID TEXT", color)
 		check(err)
+		t = surfaceToRGBA8888(t)
 
 		tex, err = renderer.CreateTextureFromSurface(t)
 		check(err)
 	}
 	t.Free()
 	t = nil
+	err = tex.SetBlendMode(sdl.BLENDMODE_BLEND)
+	if err != nil {
+		log.Printf("renderText SetBlendMode error: %v", err)
+	}
 	tex.SetAlphaMod(color.A)
 	return tex
+}
+
+func surfaceToRGBA8888(s *sdl.Surface) *sdl.Surface {
+	if s == nil {
+		return s
+	}
+	converted, err := s.ConvertFormat(sdl.PIXELFORMAT_RGBA8888, 0)
+	if err != nil {
+		log.Printf("surfaceToRGBA8888 ConvertFormat error: %v", err)
+		return s
+	}
+	s.Free()
+	return converted
 }
 
 func preRenderFonts() {
