@@ -38,3 +38,18 @@ Release management note:
 - For each new release, be sure to include both a default and a Gerry version.
 - Versioning must follow this repository's own tag line (`v1.x` and onward); ignore inherited upstream `v4.x` tags from the fork source.
 - When cutting a new release, update README quick-install download/extract commands to the new release URL/version.
+
+Buildroot image workflow note:
+- Branch: `buildroot-prototype`. Test unit: `root@piclockBR.local`. Build host: `pi@pi5start.local` (~/buildroot).
+- Buildroot sources sdl-clock/alsa-ltc directly from `~/clock8002/v4` on pi5start — always `git pull --ff-only` in `~/clock8002` before any `make`.
+- Build: `ssh pi@pi5start.local 'cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
+- Monitor: `ssh pi@pi5start.local 'tail -f /tmp/br-build.log'`
+- Image transfer: `scp pi@pi5start.local:~/buildroot/output/images/sdcard.img ~/Desktop/piclockBR-<COMMIT>-sdcard.img`
+- Image naming convention: `piclockBR-<7-char-commit-hash>-sdcard.img`
+- Flash command format (user runs manually — never run dd from agent): `diskutil unmountDisk /dev/diskN && sudo dd if=/Users/jp/Desktop/piclockBR-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress && diskutil eject /dev/diskN`
+- Always verify disk number with `diskutil list external physical` before giving flash commands.
+- BusyBox on target: no bash (use `sh`), no `tar -z` (use `gzip -d -c | tar x`), no `--ignore-missing` on sha256sum.
+- SSH to Buildroot target: `root@piclockBR.local` with `-o IdentitiesOnly=yes -i ~/.ssh/id_ed25519`.
+- Deploy binary directly (no install.sh on BR): `systemctl stop clock8002 && cp <binary> /opt/clock8002/sdl-clock && systemctl start clock8002`.
+- Mesa 25.0.7 changes on pi5start are NOT in git — must be re-applied after any clean Buildroot checkout on the build host.
+- host-xz libtool bug workaround (`acl_cv_wl="-Wl,"` in xz.mk) is also NOT in git — must be re-applied after clean Buildroot checkout.

@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-03-27
+Last updated: 2026-04-01
 
 ## Current State
 
@@ -11,6 +11,17 @@ Last updated: 2026-03-27
 - Deployed commit on piclock: `c46dd4d`
 - Issue #23 implementation is merged to `master` via squash commit `d62c48e`
 - README update for 2nd HDMI feature wording is on `master` at `c4f67b5`
+
+## Buildroot Prototype (Issue #24)
+
+- Branch: `buildroot-prototype`, HEAD: `8162512` (pushed)
+- Test unit: piclockBR.local (Pi 5 Rev 1.1 D0, static IP 10.0.0.100)
+- SD card image: `piclockBR-8162512-sdcard.img` (769 MB), flashed and running
+- Build host: pi@pi5start.local, `~/buildroot` (Buildroot 2025.02)
+- All Critical items complete — sdl-clock fully operational with GLES2/KMSDRM
+- Mesa 25.0.7 (upgraded from 24.0.9 — manual change on build host, not in git)
+- Remaining: OLED daemon, DT overlays, boot splash, Wi-Fi AP testing, merge SDL fixes to master
+- sdl-clock changes vs master (required for GLES2 compat): PIXELFORMAT_UNKNOWN, surfaceToABGR8888(), SetBlendMode — master binary panics on Buildroot without these
 
 ## Issue #23 Status (Dual HDMI Output)
 
