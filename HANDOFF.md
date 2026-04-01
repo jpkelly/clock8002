@@ -14,15 +14,32 @@ Last updated: 2026-04-01
 
 ## Buildroot Prototype (Issue #24)
 
-- Branch: `buildroot-prototype`, HEAD: `65c2481` (pushed)
-- Test unit: piclockBR.local (Pi 5 Rev 1.1 D0, static IP 10.0.0.100)
-- SD card image: `piclockBR-8162512-sdcard.img` (769 MB), flashed and running
+- Branch: `buildroot-prototype`, HEAD: `123d86c` (pushed)
+- Test unit: piclockBR.local (Pi 5 Rev 1.1 D0, DHCP IP 10.0.0.163)
+- SD card image: `piclockBR-123d86c-sdcard.img` (768 MB), flashed and running
 - Build host: pi@pi5start.local, `~/buildroot` (Buildroot 2025.02)
 - All Critical items complete — sdl-clock fully operational with GLES2/KMSDRM
 - Mesa 25.0.7 (upgraded from 24.0.9 — manual change on build host, not in git)
-- Known bug: "Sync Time" button non-functional — BusyBox `date`/`hwclock` use different flags than GNU coreutils (fix pending)
-- Remaining: OLED daemon, DT overlays, boot splash, Wi-Fi AP testing, merge SDL fixes to master
-- sdl-clock changes vs master (required for GLES2 compat): PIXELFORMAT_UNKNOWN, surfaceToABGR8888(), SetBlendMode — master binary panics on Buildroot without these
+
+### Fixed this session (2026-04-01 evening)
+- **Sync Time button** (`6f76320`): switched `date --set "@epoch"` → `date -u -s "YYYY-MM-DD HH:MM:SS"` and `hwclock --systohc --utc` → `hwclock -w -u`. POSIX short flags work on both GNU coreutils (Trixie) and BusyBox (Buildroot). Verified: system clock and RTC both set correctly.
+- **DT overlays** (`3f70e46` + `123d86c`): config.txt now enables i2c_arm, rtc_bbat_vchg, dwc2 host mode, uart0-3. post-image.sh copies both generic and -pi5 overlay .dtbo variants (firmware's overlay_map.dtb redirects e.g. uart1 → uart1-pi5 on Pi 5). All 5 serial devices now visible (ttyAMA0, ttyAMA1, ttyAMA2, ttyAMA3, ttyAMA10).
+- **post-image.sh config.txt sync** (`c0ebb96`): post-image.sh now force-copies board config.txt/cmdline.txt over rpi-firmware cached copies before image generation. Eliminates need for `rpi-firmware-dirclean` after config.txt edits.
+
+### Merge-to-main checklist (tracked in issue #24)
+1. SDL rendering fixes (PIXELFORMAT_UNKNOWN, surfaceToABGR8888, SetBlendMode) — master panics without these
+2. date/hwclock POSIX short flags in http.go
+3. install.sh sudoers rule update (`--systohc --utc` → `-w -u`) — must land with item 2
+4. clock8002.service `User=root` vs `User=pi` — needs decision (Buildroot=root, Trixie=pi)
+5. piclock-network.sh hostname block moved to end — safe for Trixie, fixes DHCP override race
+6. Render diagnostic logging (`logRenderDiag`) — decide: keep or strip
+7. Import reordering (cosmetic, harmless)
+8. `renderSignal()` missing `SetRenderTarget(nil)` — real bug fix
+
+### Remaining work
+- OLED daemon + oled.ini symlink
+- Boot splash
+- Wi-Fi AP mode testing
 
 ## Issue #23 Status (Dual HDMI Output)
 
