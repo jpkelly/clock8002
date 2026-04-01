@@ -27,3 +27,18 @@ dtoverlay=vc4-kms-v3d-pi5
 
 # Fix D0-stepping GPU compatible string so vc4-drm binds the display pipeline.
 dtoverlay=gpu-enable
+
+# Enable I2C bus (for OLED, sensors, etc.)
+dtparam=i2c_arm=on
+
+# Enable Pi 5 RTC battery charging at 3.0V
+dtparam=rtc_bbat_vchg=3000000
+
+# USB OTG host mode
+dtoverlay=dwc2,dr_mode=host
+
+# Enable UART interfaces for serial peripherals
+dtoverlay=uart1
+dtoverlay=uart2
+dtoverlay=uart3
+dtparam=uart0=on
