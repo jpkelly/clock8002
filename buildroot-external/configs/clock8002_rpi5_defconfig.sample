@@ -60,6 +60,9 @@ BR2_PACKAGE_ALSA_UTILS=y
 BR2_PACKAGE_ALSA_UTILS_APLAY=y
 BR2_PACKAGE_ALSA_LIB=y
 
+# XZ — needed by target kmod to read .ko.xz compressed modules
+BR2_PACKAGE_XZ=y
+
 # LTC timecode library (custom package in br2-external)
 BR2_PACKAGE_LIBLTC=y
 

@@ -75,6 +75,12 @@ echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIYrTQK4a861rEy89P2Uo+tbmINrjXJuyh88wv
 chmod 700 "${TARGET_DIR}/root/.ssh"
 chmod 600 "${TARGET_DIR}/root/.ssh/authorized_keys"
 
+# Mask depmod.service — the build-time depmod (host-kmod with +XZ) produces
+# correct modules.alias for .ko.xz modules. The target's kmod may lack XZ
+# support, so a boot-time depmod -a would overwrite the good file with an
+# empty one. Masking preserves the build-time output.
+ln -sf /dev/null "${TARGET_DIR}/etc/systemd/system/depmod.service"
+
 # Enable ALSA extended name hints so that hw:CARD= devices appear in
 # snd_device_name_hint() enumeration.  Without this, Buildroot's minimal
 # alsa-lib only lists default/sysdefault/front — not hw: — and alsa-ltc's
