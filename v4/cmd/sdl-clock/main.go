@@ -30,6 +30,7 @@ var directTextSolidProbeTexture *sdl.Texture
 var directTextShadedProbeTexture *sdl.Texture
 var directSurfaceProbeTexture *sdl.Texture
 var directTargetProbeTexture *sdl.Texture
+var directNoConvProbeTexture *sdl.Texture
 var directTextProbeLogged bool
 
 // Channel to notify for configuration changes
@@ -184,6 +185,10 @@ func main() {
 			if directTargetProbeTexture != nil {
 				directTargetProbeTexture.Destroy()
 				directTargetProbeTexture = nil
+			}
+			if directNoConvProbeTexture != nil {
+				directNoConvProbeTexture.Destroy()
+				directNoConvProbeTexture = nil
 			}
 			directTextProbeLogged = false
 			info = ""
@@ -475,6 +480,40 @@ func drawDirectTextProbe() {
 			err = renderer.Copy(directTextShadedProbeTexture, nil, &sdl.Rect{X: 240, Y: 960, W: tw, H: th})
 			if err != nil {
 				log.Printf("Direct text shaded probe Copy error: %v", err)
+			}
+		}
+	}
+
+	// No-convert blended text probe: skips surfaceToABGR8888 entirely.
+	// If this is visible as green text on Buildroot and Trixie, surfaceToABGR8888
+	// is the culprit for the blank-text bug on Buildroot SDL2 2.30.x.
+	if directNoConvProbeTexture == nil {
+		surf, err := infoFont.RenderUTF8Blended("NO-CONV PROBE", sdl.Color{R: 0, G: 255, B: 0, A: 255})
+		if err != nil {
+			log.Printf("No-conv probe RenderUTF8Blended error: %v", err)
+		} else {
+			directNoConvProbeTexture, err = renderer.CreateTextureFromSurface(surf)
+			surf.Free()
+			if err != nil {
+				log.Printf("No-conv probe CreateTextureFromSurface error: %v", err)
+				directNoConvProbeTexture = nil
+			} else {
+				err = directNoConvProbeTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
+				if err != nil {
+					log.Printf("No-conv probe SetBlendMode error: %v", err)
+				}
+				log.Printf("No-conv probe texture created (no surfaceToABGR8888, BLENDMODE_BLEND)")
+			}
+		}
+	}
+	if directNoConvProbeTexture != nil {
+		_, _, nw, nh, qerr := directNoConvProbeTexture.Query()
+		if qerr != nil {
+			log.Printf("No-conv probe Query error: %v", qerr)
+		} else {
+			err = renderer.Copy(directNoConvProbeTexture, nil, &sdl.Rect{X: 240, Y: 840, W: nw, H: nh})
+			if err != nil {
+				log.Printf("No-conv probe Copy error: %v", err)
 			}
 		}
 	}

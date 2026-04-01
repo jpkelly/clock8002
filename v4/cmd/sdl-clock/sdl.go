@@ -81,6 +81,11 @@ func initSDL() {
 	rendererInfo, err := renderer.GetInfo()
 	check(err)
 	log.Printf("SDL renderer: name=%s flags=0x%x", rendererInfo.Name, rendererInfo.Flags)
+	for i, f := range rendererInfo.TextureFormats {
+		if f != 0 {
+			log.Printf("SDL renderer texture format[%d]: 0x%08x (%s)", i, f, sdl.GetPixelFormatName(uint(f)))
+		}
+	}
 
 	infoFont, err = ttf.OpenFont(options.LabelFont, 50)
 	check(err)
