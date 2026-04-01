@@ -108,3 +108,11 @@ cat > "${TARGET_DIR}/etc/modules-load.d/drm.conf" <<'EOF'
 v3d
 vc4
 EOF
+
+# Enable ALSA extended name hints so that hw:CARD= devices appear in
+# snd_device_name_hint() enumeration.  Without this, Buildroot's minimal
+# alsa-lib only lists default/sysdefault/front — not hw: — and alsa-ltc's
+# auto-detect fails to find capture devices.
+cat > "${TARGET_DIR}/etc/asound.conf" <<'EOF'
+defaults.namehint.extended on
+EOF
