@@ -109,6 +109,14 @@ v3d
 vc4
 EOF
 
+# Load USB audio module at boot.  The host kmod's broken depmod produces
+# an empty modules.alias, so udev cannot auto-load snd-usb-audio when
+# the USB device appears.  Explicit early loading ensures the capture
+# device is available before alsa-ltc starts.
+cat > "${TARGET_DIR}/etc/modules-load.d/usb-audio.conf" <<'EOF'
+snd_usb_audio
+EOF
+
 # Enable ALSA extended name hints so that hw:CARD= devices appear in
 # snd_device_name_hint() enumeration.  Without this, Buildroot's minimal
 # alsa-lib only lists default/sysdefault/front — not hw: — and alsa-ltc's
