@@ -39,7 +39,7 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 		$(TARGET_DIR)/boot/piclock/network.ini
 	cp -a $(@D)/fonts $(TARGET_DIR)/opt/clock8002/
 	cp -a $(@D)/voices $(TARGET_DIR)/opt/clock8002/
-	cp -a $(@D)/ttf_fonts $(TARGET_DIR)/opt/clock8002/
+	$(INSTALL) -m 0644 $(@D)/ttf_fonts/*.ttf $(TARGET_DIR)/opt/clock8002/
 	if [ -f $(@D)/oled/oled_daemon.py ]; then \
 		$(INSTALL) -D -m 0755 $(@D)/oled/oled_daemon.py \
 			$(TARGET_DIR)/opt/clock8002/oled/oled_daemon.py; \

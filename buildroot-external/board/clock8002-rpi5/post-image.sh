@@ -104,14 +104,27 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${ini}" ::piclock/
 	done
 
+	# Compile custom gpu-enable overlay (D0-stepping GPU compatible fix).
+	GPU_OVERLAY_SRC="${BOARD_DIR}/gpu-enable.dts"
+	OVERLAY_SRC="${BINARIES_DIR}/rpi-firmware/overlays"
+	if [ -f "${GPU_OVERLAY_SRC}" ] && [ -d "${OVERLAY_SRC}" ]; then
+		"${HOST_DIR}/bin/dtc" -@ -I dts -O dtb \
+			-o "${OVERLAY_SRC}/gpu-enable.dtbo" \
+			"${GPU_OVERLAY_SRC}"
+	fi
+
 	# Inject DT overlays into /overlays/ on the boot FAT partition.
 	# Pi 5 firmware expects overlays at the FAT root, not in rpi-firmware/.
-	# Only copy the overlays we actually reference in config.txt.
-	OVERLAY_SRC="${BINARIES_DIR}/rpi-firmware/overlays"
+	# Only copy the overlays we actually reference in config.txt, plus
+	# overlay_map.dtb (firmware overlay name resolution) and bcm2712d0.dtbo
+	# (D0-stepping fixups applied by firmware before Linux boots).
 	if [ -d "${OVERLAY_SRC}" ]; then
 		MTOOLS_SKIP_CHECK=1 mmd -i "${BOOT_IMG}" ::overlays 2>/dev/null || true
 		for dtbo in \
-			vc4-kms-v3d-pi5.dtbo; do
+			overlay_map.dtb \
+			bcm2712d0.dtbo \
+			vc4-kms-v3d-pi5.dtbo \
+			gpu-enable.dtbo; do
 			if [ -f "${OVERLAY_SRC}/${dtbo}" ]; then
 				MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${OVERLAY_SRC}/${dtbo}" ::overlays/
 			fi

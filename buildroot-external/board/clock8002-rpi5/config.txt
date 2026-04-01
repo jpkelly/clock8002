@@ -18,6 +18,12 @@ device_tree=bcm2712d0-rpi-5-b.dtb
 # for non-RPiOS images whose DTB lacks the expected brcm,bcm2712 compatible)
 os_check=0
 
+# Let firmware auto-detect displays and enable the GPU DT node.
+display_auto_detect=1
+
 # Enable KMS/DRM graphics — required for /dev/dri and SDL2 KMSDRM backend.
 # Pi 5 uses its own overlay variant (not the generic vc4-kms-v3d).
 dtoverlay=vc4-kms-v3d-pi5
+
+# Fix D0-stepping GPU compatible string so vc4-drm binds the display pipeline.
+dtoverlay=gpu-enable
