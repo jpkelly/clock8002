@@ -18,20 +18,6 @@ parse_ini() {
 NET_MODE=$(parse_ini "$NETWORK_INI" network mode)
 NET_HOSTNAME=$(parse_ini "$NETWORK_INI" host hostname)
 
-# Apply hostname if set
-if [ -n "$NET_HOSTNAME" ]; then
-    CURRENT_HOSTNAME=$(hostname)
-    if [ "$CURRENT_HOSTNAME" != "$NET_HOSTNAME" ]; then
-        echo "Setting hostname to ${NET_HOSTNAME}..."
-        hostnamectl set-hostname "$NET_HOSTNAME"
-        # Update /etc/hosts so sudo and other tools can resolve the hostname
-        sed -i "s/127\.0\.1\.1.*/127.0.1.1\t${NET_HOSTNAME}/" /etc/hosts
-        grep -q "127.0.1.1" /etc/hosts || echo -e "127.0.1.1\t${NET_HOSTNAME}" >> /etc/hosts
-        # Restart mDNS so the new hostname is advertised on the network
-        systemctl restart avahi-daemon 2>/dev/null || true
-    fi
-fi
-
 # Apply NTP setting
 NTP_ENABLED=$(parse_ini "$NETWORK_INI" network ntp)
 if [ "$NTP_ENABLED" = "false" ]; then
@@ -145,5 +131,20 @@ elif [ "$AP_ENABLED" = "false" ]; then
         echo "Disabling Wi-Fi AP..."
         nmcli con down "$AP_CON" 2>/dev/null || true
         nmcli con delete "$AP_CON"
+    fi
+fi
+
+# --- Hostname ---
+# Applied last so NetworkManager connection activations above cannot override it.
+if [ -n "$NET_HOSTNAME" ]; then
+    CURRENT_HOSTNAME=$(hostname)
+    if [ "$CURRENT_HOSTNAME" != "$NET_HOSTNAME" ]; then
+        echo "Setting hostname to ${NET_HOSTNAME}..."
+        hostnamectl set-hostname "$NET_HOSTNAME"
+        # Update /etc/hosts so sudo and other tools can resolve the hostname
+        sed -i "s/127\.0\.1\.1.*/127.0.1.1\t${NET_HOSTNAME}/" /etc/hosts
+        grep -q "127.0.1.1" /etc/hosts || echo -e "127.0.1.1\t${NET_HOSTNAME}" >> /etc/hosts
+        # Restart mDNS so the new hostname is advertised on the network
+        systemctl restart avahi-daemon 2>/dev/null || true
     fi
 fi

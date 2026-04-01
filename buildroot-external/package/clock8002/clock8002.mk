@@ -9,6 +9,15 @@ CLOCK8002_LICENSE = GPL-3.0
 CLOCK8002_LICENSE_FILES = LICENSE
 CLOCK8002_DEPENDENCIES = host-go sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf libltc
 
+CLOCK8002_GIT_DIR = $(realpath $(CLOCK8002_SITE)/..)
+CLOCK8002_GIT_TAG = $(shell cd $(CLOCK8002_GIT_DIR) && git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0.1")
+CLOCK8002_GIT_COMMIT = $(shell cd $(CLOCK8002_GIT_DIR) && git rev-list -1 HEAD 2>/dev/null || echo "unknown")
+CLOCK8002_BUILD_DATE = $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+CLOCK8002_ALSA_LTC_CFLAGS = -O2 \
+	-DALSA_LTC_GIT_TAG=\"$(CLOCK8002_GIT_TAG)\" \
+	-DALSA_LTC_GIT_COMMIT=\"$(CLOCK8002_GIT_COMMIT)\" \
+	-DALSA_LTC_BUILD_DATE=\"$(CLOCK8002_BUILD_DATE)\"
+
 define CLOCK8002_BUILD_CMDS
 	cd $(@D) && \
 		$(HOST_GO_TARGET_ENV) \
@@ -19,7 +28,7 @@ define CLOCK8002_BUILD_CMDS
 			-ldflags "-extldflags '-fuse-ld=bfd'" \
 			-o $(@D)/sdl-clock \
 			./cmd/sdl-clock
-	$(TARGET_CC) -O2 \
+	$(TARGET_CC) $(CLOCK8002_ALSA_LTC_CFLAGS) \
 		-I$(STAGING_DIR)/usr/include \
 		-o $(@D)/alsa-ltc $(@D)/alsa-ltc.c \
 		-L$(STAGING_DIR)/usr/lib -lasound -lltc
