@@ -11,6 +11,14 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	GENIMAGE_CFG="${BINARIES_DIR}/genimage.cfg"
 	rm -f "${GENIMAGE_CFG}"
 
+	# Always sync board config/cmdline over the rpi-firmware cached copies
+	# so image rebuilds pick up changes without rpi-firmware-dirclean.
+	for f in config.txt cmdline.txt; do
+		if [ -f "${BOARD_DIR}/${f}" ]; then
+			cp -f "${BOARD_DIR}/${f}" "${BINARIES_DIR}/rpi-firmware/${f}"
+		fi
+	done
+
 	# Promote rpi-firmware config/cmdline to the top-level binaries dir so
 	# genimage places them at the root of the FAT partition (/boot/firmware/).
 	if [ -f "${BINARIES_DIR}/rpi-firmware/config.txt" ]; then
