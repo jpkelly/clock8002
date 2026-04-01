@@ -4,7 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=simple
-User=pi
+User=root
 WorkingDirectory=/opt/clock8002
 Environment=SDL_VIDEODRIVER=kmsdrm
 Environment=XDG_RUNTIME_DIR=/run/user/%U
