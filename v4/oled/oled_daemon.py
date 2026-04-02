@@ -3,7 +3,6 @@ import sys
 import time
 import os
 import socket
-import subprocess
 import configparser
 import re
 from luma.core.interface.serial import i2c
@@ -204,12 +203,8 @@ flush_logo_buffer(logo_buf)
 
 def is_buildroot():
     try:
-        out = subprocess.check_output(
-            ['sh', '-c', "strings /opt/clock8002/sdl-clock | grep -qm1 'buildEnvironment=buildroot' && echo yes"],
-            stderr=subprocess.DEVNULL,
-            timeout=1.0,
-        )
-        return out.decode(errors='ignore').strip() == 'yes'
+        with open('/etc/os-release') as f:
+            return any(line.strip() in ('NAME=Buildroot', 'NAME="Buildroot"') for line in f)
     except Exception:
         return False
 
