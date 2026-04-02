@@ -259,11 +259,11 @@ func findSpareHDMIConnector(fd int) (connID, encID uint32, mode drmModeModeInfo,
 
 	// Build a set of connected HDMI connectors with their modes.
 	type hdmiConn struct {
-		connID    uint32
-		encID     uint32
-		typeID    uint32
-		crtcID    uint32
-		mode      drmModeModeInfo
+		connID uint32
+		encID  uint32
+		typeID uint32
+		crtcID uint32
+		mode   drmModeModeInfo
 	}
 	var candidates []hdmiConn
 
