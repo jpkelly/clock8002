@@ -49,6 +49,10 @@ const (
 
 	// DRM connector status
 	drmModeConnected = 1
+
+	// DRM_IOCTL_SET_MASTER / DROP_MASTER (_IO('d', 0x1e/0x1f))
+	drmIoctlSetMaster  = 0x641E
+	drmIoctlDropMaster = 0x641F
 )
 
 // DRM structures matching kernel ABI (linux/drm_mode.h).
@@ -387,6 +391,12 @@ func initDRMMirror() error {
 	}
 
 	// Set CRTC to display our framebuffer.
+	// We need DRM master to call SetCrtc. Become master (requires CAP_SYS_ADMIN / root),
+	// set the CRTC, then drop master so SDL can continue operating normally.
+	if err := drmIoctl(fd, drmIoctlSetMaster, nil); err != nil {
+		log.Printf("Warning: DRM mirror: SET_MASTER failed: %v (trying SetCrtc anyway)", err)
+	}
+
 	setCrtc := drmModeCrtc{
 		CrtcID:           crtcID,
 		FbID:             fb.FbID,
@@ -397,13 +407,18 @@ func initDRMMirror() error {
 		ModeValid:        1,
 		Mode:             mode,
 	}
-	if err := drmIoctl(fd, drmIoctlModeSetCrtc, unsafe.Pointer(&setCrtc)); err != nil {
+	setCrtcErr := drmIoctl(fd, drmIoctlModeSetCrtc, unsafe.Pointer(&setCrtc))
+
+	// Drop master immediately so SDL's rendering continues uninterrupted.
+	drmIoctl(fd, drmIoctlDropMaster, nil)
+
+	if setCrtcErr != nil {
 		syscall.Munmap(mmapBuf)
 		drmIoctl(fd, drmIoctlModeRmFB, unsafe.Pointer(&fb.FbID))
 		destroy := drmModeDestroyDumb{Handle: create.Handle}
 		drmIoctl(fd, drmIoctlModeDestroyDumb, unsafe.Pointer(&destroy))
 		syscall.Close(fd)
-		return fmt.Errorf("setCrtc: %w", err)
+		return fmt.Errorf("setCrtc: %w", setCrtcErr)
 	}
 
 	drmMirrorState = &drmMirror{
