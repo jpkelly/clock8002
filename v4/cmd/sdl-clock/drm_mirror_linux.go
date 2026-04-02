@@ -49,6 +49,10 @@ const (
 
 	// DRM connector status
 	drmModeConnected = 1
+
+	// DRM_IOCTL_SET_MASTER / DROP_MASTER (_IO('d', 0x1e/0x1f))
+	drmIoctlSetMaster  = 0x641E
+	drmIoctlDropMaster = 0x641F
 )
 
 // DRM structures matching kernel ABI (linux/drm_mode.h).
@@ -158,8 +162,8 @@ type drmModeFBCmd struct {
 
 // drmMirror holds state for the direct-DRM mirror output on HDMI-A-1.
 type drmMirror struct {
-	fd          int
-	ownsFd      bool
+	fd          int // our own fd — always close on destroy
+	sdlFd       int // SDL's master fd — never close
 	fbID        uint32
 	crtcID      uint32
 	connectorID uint32
@@ -181,12 +185,12 @@ func drmIoctl(fd int, request uint, arg unsafe.Pointer) error {
 	return nil
 }
 
-// findDRICard finds an open DRI card device that has HDMI connectors.
-// It first checks if SDL already has a master fd open (via /proc/self/fd),
-// and reuses that to avoid DRM master conflicts. Falls back to opening a new fd.
-func findDRICard() (fd int, cardPath string, ownsFd bool, err error) {
-	// First: try to find SDL's already-open master fd via /proc/self/fd.
-	// This avoids DRM master conflicts since SDL already holds master.
+// findDRICard locates SDL's DRM master fd and opens a separate mirror fd.
+// The mirror fd is used for all buffer/fb operations; SDL's fd is needed only
+// for the brief master swap during SetCrtc.
+func findDRICard() (mirrorFd, sdlFd int, cardPath string, err error) {
+	// Find SDL's existing master fd via /proc/self/fd.
+	sdlFd = -1
 	entries, _ := os.ReadDir("/proc/self/fd")
 	for _, e := range entries {
 		link, err := os.Readlink(filepath.Join("/proc/self/fd", e.Name()))
@@ -200,36 +204,28 @@ func findDRICard() (fd int, cardPath string, ownsFd bool, err error) {
 		if _, err := fmt.Sscanf(e.Name(), "%d", &fdNum); err != nil {
 			continue
 		}
-		// Check if this fd has connectors (is the right card).
 		var res drmModeCardRes
 		if drmIoctl(fdNum, drmIoctlModeGetResources, unsafe.Pointer(&res)) != nil {
 			continue
 		}
 		if res.CountConnectors > 0 {
-			log.Printf("Info: DRM mirror: reusing existing fd %d (%s)", fdNum, link)
-			return fdNum, link, false, nil
+			sdlFd = fdNum
+			cardPath = link
+			break
 		}
 	}
-
-	// Fallback: open a new fd.
-	for _, card := range []string{"/dev/dri/card1", "/dev/dri/card0"} {
-		fd, err := syscall.Open(card, syscall.O_RDWR|syscall.O_CLOEXEC, 0)
-		if err != nil {
-			continue
-		}
-
-		// Check if this card has connectors.
-		var res drmModeCardRes
-		if err := drmIoctl(fd, drmIoctlModeGetResources, unsafe.Pointer(&res)); err != nil {
-			syscall.Close(fd)
-			continue
-		}
-		if res.CountConnectors > 0 {
-			return fd, card, true, nil
-		}
-		syscall.Close(fd)
+	if sdlFd < 0 {
+		return -1, -1, "", fmt.Errorf("no SDL DRM master fd found in /proc/self/fd")
 	}
-	return -1, "", false, fmt.Errorf("no DRI card found with connectors")
+
+	// Open our own fd to the same card for mirror resources.
+	mirrorFd, err = syscall.Open(cardPath, syscall.O_RDWR|syscall.O_CLOEXEC, 0)
+	if err != nil {
+		return -1, -1, "", fmt.Errorf("open %s for mirror: %w", cardPath, err)
+	}
+
+	log.Printf("Info: DRM mirror: SDL master fd=%d, mirror fd=%d (%s)", sdlFd, mirrorFd, cardPath)
+	return mirrorFd, sdlFd, cardPath, nil
 }
 
 // findHDMI1Connector scans connectors to find HDMI-A-1 (type=HDMIA, type_id=1) that is connected.
@@ -332,25 +328,25 @@ func getCrtcForEncoder(fd int, encoderID uint32) (uint32, error) {
 }
 
 // initDRMMirror sets up a direct DRM framebuffer on HDMI-A-1 for mirror output.
+// It opens its own DRM fd for buffer resources and briefly steals DRM master from
+// SDL to call SetCrtc, then returns master to SDL. This keeps the mirror's CRTC
+// in our fd's context so SDL's atomic commits won't reclaim it.
 func initDRMMirror() error {
-	fd, cardPath, ownsFd, err := findDRICard()
+	fd, sdlFd, cardPath, err := findDRICard()
 	if err != nil {
 		return fmt.Errorf("findDRICard: %w", err)
 	}
 
-	connID, encID, mode, err := findHDMI1Connector(fd)
+	// Use SDL's fd for queries (guaranteed authenticated + master).
+	connID, encID, mode, err := findHDMI1Connector(sdlFd)
 	if err != nil {
-		if ownsFd {
-			syscall.Close(fd)
-		}
+		syscall.Close(fd)
 		return fmt.Errorf("findHDMI1: %w", err)
 	}
 
-	crtcID, err := getCrtcForEncoder(fd, encID)
+	crtcID, err := getCrtcForEncoder(sdlFd, encID)
 	if err != nil {
-		if ownsFd {
-			syscall.Close(fd)
-		}
+		syscall.Close(fd)
 		return fmt.Errorf("getCrtcForEncoder: %w", err)
 	}
 
@@ -362,24 +358,22 @@ func initDRMMirror() error {
 
 	// Save current CRTC state for cleanup.
 	saved := drmModeCrtc{CrtcID: crtcID}
-	if err := drmIoctl(fd, drmIoctlModeGetCrtc, unsafe.Pointer(&saved)); err != nil {
+	if err := drmIoctl(sdlFd, drmIoctlModeGetCrtc, unsafe.Pointer(&saved)); err != nil {
 		log.Printf("Warning: DRM mirror: could not save CRTC state: %v", err)
 	}
 
-	// Create dumb buffer (XRGB8888 = 32bpp, depth 24).
+	// Create dumb buffer on our fd (XRGB8888 = 32bpp, depth 24).
 	create := drmModeCreateDumb{
 		Width:  w,
 		Height: h,
 		Bpp:    32,
 	}
 	if err := drmIoctl(fd, drmIoctlModeCreateDumb, unsafe.Pointer(&create)); err != nil {
-		if ownsFd {
-			syscall.Close(fd)
-		}
+		syscall.Close(fd)
 		return fmt.Errorf("createDumb: %w", err)
 	}
 
-	// Add framebuffer.
+	// Add framebuffer on our fd.
 	fb := drmModeFBCmd{
 		Width:  w,
 		Height: h,
@@ -389,24 +383,19 @@ func initDRMMirror() error {
 		Handle: create.Handle,
 	}
 	if err := drmIoctl(fd, drmIoctlModeAddFB, unsafe.Pointer(&fb)); err != nil {
-		// Clean up dumb buffer.
 		destroy := drmModeDestroyDumb{Handle: create.Handle}
 		drmIoctl(fd, drmIoctlModeDestroyDumb, unsafe.Pointer(&destroy))
-		if ownsFd {
-			syscall.Close(fd)
-		}
+		syscall.Close(fd)
 		return fmt.Errorf("addFB: %w", err)
 	}
 
-	// Map dumb buffer for CPU access.
+	// Map dumb buffer for CPU access on our fd.
 	mapReq := drmModeMapDumb{Handle: create.Handle}
 	if err := drmIoctl(fd, drmIoctlModeMapDumb, unsafe.Pointer(&mapReq)); err != nil {
 		drmIoctl(fd, drmIoctlModeRmFB, unsafe.Pointer(&fb.FbID))
 		destroy := drmModeDestroyDumb{Handle: create.Handle}
 		drmIoctl(fd, drmIoctlModeDestroyDumb, unsafe.Pointer(&destroy))
-		if ownsFd {
-			syscall.Close(fd)
-		}
+		syscall.Close(fd)
 		return fmt.Errorf("mapDumb: %w", err)
 	}
 
@@ -416,9 +405,7 @@ func initDRMMirror() error {
 		drmIoctl(fd, drmIoctlModeRmFB, unsafe.Pointer(&fb.FbID))
 		destroy := drmModeDestroyDumb{Handle: create.Handle}
 		drmIoctl(fd, drmIoctlModeDestroyDumb, unsafe.Pointer(&destroy))
-		if ownsFd {
-			syscall.Close(fd)
-		}
+		syscall.Close(fd)
 		return fmt.Errorf("mmap: %w", err)
 	}
 
@@ -427,8 +414,19 @@ func initDRMMirror() error {
 		mmapBuf[i] = 0
 	}
 
-	// Set CRTC to display our framebuffer.
-	// When reusing SDL's master fd (ownsFd=false), we already have DRM master privileges.
+	// Brief master swap: drop master from SDL, acquire on our fd, SetCrtc, restore.
+	// This keeps the CRTC in our fd's context so SDL's atomic commits won't touch it.
+	if err := drmIoctl(sdlFd, drmIoctlDropMaster, nil); err != nil {
+		log.Printf("Warning: DRM mirror: DROP_MASTER on SDL fd %d: %v", sdlFd, err)
+	}
+
+	masterAcquired := false
+	if err := drmIoctl(fd, drmIoctlSetMaster, nil); err != nil {
+		log.Printf("Warning: DRM mirror: SET_MASTER on mirror fd: %v (trying SetCrtc anyway)", err)
+	} else {
+		masterAcquired = true
+	}
+
 	setCrtc := drmModeCrtc{
 		CrtcID:           crtcID,
 		FbID:             fb.FbID,
@@ -439,20 +437,28 @@ func initDRMMirror() error {
 		ModeValid:        1,
 		Mode:             mode,
 	}
-	if err := drmIoctl(fd, drmIoctlModeSetCrtc, unsafe.Pointer(&setCrtc)); err != nil {
+	setCrtcErr := drmIoctl(fd, drmIoctlModeSetCrtc, unsafe.Pointer(&setCrtc))
+
+	// Return master to SDL immediately.
+	if masterAcquired {
+		drmIoctl(fd, drmIoctlDropMaster, nil)
+	}
+	if err := drmIoctl(sdlFd, drmIoctlSetMaster, nil); err != nil {
+		log.Printf("Warning: DRM mirror: could not restore SDL master: %v", err)
+	}
+
+	if setCrtcErr != nil {
 		syscall.Munmap(mmapBuf)
 		drmIoctl(fd, drmIoctlModeRmFB, unsafe.Pointer(&fb.FbID))
 		destroy := drmModeDestroyDumb{Handle: create.Handle}
 		drmIoctl(fd, drmIoctlModeDestroyDumb, unsafe.Pointer(&destroy))
-		if ownsFd {
-			syscall.Close(fd)
-		}
-		return fmt.Errorf("setCrtc: %w", err)
+		syscall.Close(fd)
+		return fmt.Errorf("setCrtc: %w", setCrtcErr)
 	}
 
 	drmMirrorState = &drmMirror{
 		fd:          fd,
-		ownsFd:      ownsFd,
+		sdlFd:       sdlFd,
 		fbID:        fb.FbID,
 		crtcID:      crtcID,
 		connectorID: connID,
@@ -551,11 +557,6 @@ func destroyDRMMirror() {
 	}
 	drmMirrorState = nil
 
-	// Restore saved CRTC state if possible.
-	if m.savedCrtc != nil && m.savedCrtc.ModeValid != 0 {
-		drmIoctl(m.fd, drmIoctlModeSetCrtc, unsafe.Pointer(m.savedCrtc))
-	}
-
 	if m.mmapBuf != nil {
 		syscall.Munmap(m.mmapBuf)
 	}
@@ -566,9 +567,7 @@ func destroyDRMMirror() {
 	destroy := drmModeDestroyDumb{Handle: m.dumbHandle}
 	drmIoctl(m.fd, drmIoctlModeDestroyDumb, unsafe.Pointer(&destroy))
 
-	if m.ownsFd {
-		syscall.Close(m.fd)
-	}
+	syscall.Close(m.fd)
 	log.Printf("Info: DRM mirror: destroyed")
 }
 
