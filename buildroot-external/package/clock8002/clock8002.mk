@@ -13,6 +13,10 @@ CLOCK8002_GIT_DIR = $(realpath $(CLOCK8002_SITE)/..)
 CLOCK8002_GIT_TAG = $(shell cd $(CLOCK8002_GIT_DIR) && git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0.1")
 CLOCK8002_GIT_COMMIT = $(shell cd $(CLOCK8002_GIT_DIR) && git rev-list -1 HEAD 2>/dev/null || echo "unknown")
 CLOCK8002_BUILD_DATE = $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+CLOCK8002_VERSION_PKG = gitlab.com/clock-8001/clock-8001/v4/clock
+CLOCK8002_GO_LD_FLAGS = -X $(CLOCK8002_VERSION_PKG).gitCommit=$(CLOCK8002_GIT_COMMIT) \
+	-X $(CLOCK8002_VERSION_PKG).gitTag=$(CLOCK8002_GIT_TAG) \
+	-extldflags '-fuse-ld=bfd'
 CLOCK8002_ALSA_LTC_CFLAGS = -O2 \
 	-DALSA_LTC_GIT_TAG=\"$(CLOCK8002_GIT_TAG)\" \
 	-DALSA_LTC_GIT_COMMIT=\"$(CLOCK8002_GIT_COMMIT)\" \
@@ -25,7 +29,7 @@ define CLOCK8002_BUILD_CMDS
 		GOFLAGS=-mod=vendor \
 		$(HOST_DIR)/bin/go build \
 			-v \
-			-ldflags "-extldflags '-fuse-ld=bfd'" \
+			-ldflags "$(CLOCK8002_GO_LD_FLAGS)" \
 			-o $(@D)/sdl-clock \
 			./cmd/sdl-clock
 	$(TARGET_CC) $(CLOCK8002_ALSA_LTC_CFLAGS) \
