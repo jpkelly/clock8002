@@ -29,9 +29,6 @@ const (
 
 var lastSecondDisplayCueVisual = secondDisplayCueUnset
 
-var mirrorWindow *sdl.Window
-var mirrorRenderer *sdl.Renderer
-var mirrorTexture *sdl.Texture
 var mirrorPixels []byte
 
 const secondDisplayCueAssetVersion = "v2"
@@ -54,7 +51,7 @@ func probeSecondDisplayOutput() {
 			log.Printf("Info: framebuffer console unbound for second display icon mode")
 		}
 	} else {
-		// Mirror mode: stop any running fbi, reset cue state, unbind fbcon, start SDL mirror window.
+		// Mirror mode: stop any running fbi, reset cue state, unbind fbcon, start DRM mirror.
 		stopSecondDisplayImageProcesses()
 		lastSecondDisplayCueVisual = secondDisplayCueUnset
 		if err := setFramebufferConsoleBound(false); err != nil {
@@ -62,7 +59,13 @@ func probeSecondDisplayOutput() {
 		} else {
 			log.Printf("Info: framebuffer console unbound for second display mirror mode")
 		}
-		initSecondDisplayMirror()
+		if !isHDMI1Connected() {
+			log.Printf("Info: HDMI-A-1 not connected, mirror mode unavailable")
+			return
+		}
+		if err := initDRMMirror(); err != nil {
+			log.Printf("Warning: DRM mirror init failed: %v", err)
+		}
 		return
 	}
 
@@ -263,77 +266,8 @@ func syncSecondDisplayCueDisplay(state *clock.State) {
 	lastSecondDisplayCueVisual = desired
 }
 
-// initSecondDisplayMirror creates a fullscreen SDL window on display 1 (HDMI-2)
-// with a streaming texture that gets updated every frame.
-func initSecondDisplayMirror() {
-	if mirrorWindow != nil {
-		return
-	}
-	if !isHDMI2Connected() {
-		return
-	}
-
-	n, err := sdl.GetNumVideoDisplays()
-	if err != nil || n < 2 {
-		log.Printf("Info: second display mirror: %d display(s) detected, mirror unavailable", n)
-		return
-	}
-
-	bounds, err := sdl.GetDisplayBounds(1)
-	if err != nil {
-		log.Printf("Warning: second display mirror: cannot get display 1 bounds: %v", err)
-		return
-	}
-
-	mw, err := sdl.CreateWindow("", bounds.X, bounds.Y, bounds.W, bounds.H,
-		sdl.WINDOW_SHOWN|sdl.WINDOW_FULLSCREEN_DESKTOP)
-	if err != nil {
-		log.Printf("Warning: second display mirror: window creation failed: %v", err)
-		return
-	}
-
-	mr, err := sdl.CreateRenderer(mw, -1, sdl.RENDERER_ACCELERATED)
-	if err != nil {
-		log.Printf("Warning: second display mirror: renderer creation failed: %v", err)
-		mw.Destroy()
-		return
-	}
-
-	outW, outH, err := renderer.GetOutputSize()
-	if err != nil || outW <= 0 || outH <= 0 {
-		mr.Destroy()
-		mw.Destroy()
-		return
-	}
-
-	mt, err := mr.CreateTexture(sdl.PIXELFORMAT_ABGR8888, sdl.TEXTUREACCESS_STREAMING, outW, outH)
-	if err != nil {
-		log.Printf("Warning: second display mirror: texture creation failed: %v", err)
-		mr.Destroy()
-		mw.Destroy()
-		return
-	}
-
-	mirrorWindow = mw
-	mirrorRenderer = mr
-	mirrorTexture = mt
-	mirrorPixels = make([]byte, int(outW)*int(outH)*4)
-	log.Printf("Info: second display mirror initialized on display 1 (%dx%d)", bounds.W, bounds.H)
-}
-
 func destroySecondDisplayMirror() {
-	if mirrorTexture != nil {
-		mirrorTexture.Destroy()
-		mirrorTexture = nil
-	}
-	if mirrorRenderer != nil {
-		mirrorRenderer.Destroy()
-		mirrorRenderer = nil
-	}
-	if mirrorWindow != nil {
-		mirrorWindow.Destroy()
-		mirrorWindow = nil
-	}
+	destroyDRMMirror()
 	mirrorPixels = nil
 }
 
@@ -341,7 +275,7 @@ func syncSecondDisplayMirrorDisplay() {
 	if runtime.GOOS != "linux" || options.CueSecondDisplay || renderer == nil {
 		return
 	}
-	if mirrorRenderer == nil || mirrorTexture == nil {
+	if !isDRMMirrorActive() {
 		return
 	}
 
@@ -350,24 +284,19 @@ func syncSecondDisplayMirrorDisplay() {
 		return
 	}
 
-	needed := int(w) * int(h) * 4
+	srcPitch := int(w) * 4
+	needed := int(h) * srcPitch
 	if len(mirrorPixels) != needed {
 		mirrorPixels = make([]byte, needed)
 	}
 
-	if err := renderer.ReadPixels(nil, sdl.PIXELFORMAT_ABGR8888, unsafe.Pointer(&mirrorPixels[0]), int(w)*4); err != nil {
+	// ReadPixels as ARGB8888 (matches XRGB8888 dumb buffer — alpha byte ignored by display).
+	if err := renderer.ReadPixels(nil, sdl.PIXELFORMAT_ARGB8888, unsafe.Pointer(&mirrorPixels[0]), srcPitch); err != nil {
 		log.Printf("Warning: second display mirror ReadPixels failed: %v", err)
 		return
 	}
 
-	if err := mirrorTexture.Update(nil, unsafe.Pointer(&mirrorPixels[0]), int(w)*4); err != nil {
-		log.Printf("Warning: second display mirror texture update failed: %v", err)
-		return
-	}
-
-	mirrorRenderer.Clear()
-	_ = mirrorRenderer.Copy(mirrorTexture, nil, nil)
-	mirrorRenderer.Present()
+	syncDRMMirror(mirrorPixels, int(w), int(h), srcPitch)
 }
 
 func desiredSecondDisplayCueVisual(state *clock.State) secondDisplayCueVisual {
