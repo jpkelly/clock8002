@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-02
+Last updated: 2026-04-02 (evening)
 
 ## Current State
 
@@ -14,7 +14,7 @@ Last updated: 2026-04-02
 
 ## Buildroot Prototype (Issue #24)
 
-- Branch: `buildroot-prototype`, HEAD: `2ee57fa` (pushed)
+- Branch: `buildroot-prototype`, HEAD: `a5929ef` (pushed)
 - Test units: piclockBR.local — Pi 5 2GB (10.0.0.184), piclockT.local — Pi 5 1GB (Trixie, stability test)
 - SD card image: `piclockBR-772f5b3-sdcard.img` (768 MB), flashed and running on both units
 - Build host: pi@pi5start.local, `~/buildroot` (Buildroot 2025.02)
@@ -37,14 +37,17 @@ Last updated: 2026-04-02
 8. `renderSignal()` missing `SetRenderTarget(nil)` — real bug fix
 9. DRM mirror files: `drm_mirror_linux.go`, `drm_mirror_other.go` — new files, direct DRM/KMS mirror for second HDMI
 10. `second_display_probe.go` — updated mirror path: `isHDMI1Connected` → `isSpareHDMIConnected`, calls `findSpareHDMIConnector` instead of hardcoded HDMI-A-1
+11. DRM cue files: `drm_cue_linux.go`, `drm_cue_other.go` — `updateCueDRMBuffer()` writes icons directly into DRM dumb buffer (Option D)
+12. `second_display_probe.go` — cue mode now uses `initDRMMirror()` + `updateCueDRMBuffer()` instead of `fbi`+PNG; removes `bytes`, `image/png`, `os/exec` (fbi) dependency
 
 ### Fixed this session (2026-04-01 — EEPROM provisioning)
 - **rpi-eeprom package** (`772f5b3`): Added Buildroot external package for Pi 5 EEPROM management (rpi-eeprom-config, rpi-eeprom-update, rpi-eeprom-digest + BCM2712 firmware blobs). Reads EEPROM via nvmem — no vcgencmd needed.
 - **Red screen fix**: Changed `BOOT_ORDER` from `0xf461` (SD+NVMe+USB+restart) to `0xf1` (SD-only) on both test units via `rpi-eeprom-config --apply`. Eliminated the red PCIe probe screen caused by bootloader NVMe enumeration on quiet boot.
 - **1GB Pi 5 validation**: Image boots and runs on Pi 5 1GB (160MB used / 774MB available).
 
-### Fixed this session (2026-04-02 — DRM mirror)
+### Fixed this session (2026-04-02 — DRM mirror + cue mode)
 - **DRM mirror working** (`2ee57fa`): Root cause found — `findHDMI1Connector()` was hardcoded to target HDMI-A-1, but SDL already renders there. Fix: `findSpareHDMIConnector()` scans all connected HDMI outputs, identifies SDL's CRTC (highest fb_id), picks the other. Both displays now show the clock on piclockBR. DRM state confirmed: plane-2→crtc-92 (SDL, fb=685) + plane-3→crtc-104 (mirror, fb=682).
+- **DRM cue mode working** (`a5929ef`): Replaced `fbi`+PNG disk cache path with direct DRM dumb buffer writes (Option D). `probeSecondDisplayOutput()` cue branch calls `initDRMMirror()` then `updateCueDRMBuffer(off)`. `syncSecondDisplayCueDisplay()` calls `updateCueDRMBuffer(desired)` — renders icon via `renderCueVisualImage()` and writes XRGB8888 directly into the dumb buffer. No `fbi` binary or `/dev/fb0` required. Web GUI toggle (PerfectCue section) switches modes live without restart. Verified working on piclockBR at `a5929ef`.
 
 ### Remaining work
 - **EEPROM provisioning in image build** (TODO): Current image has leftover `recovery.bin` + `pieeprom.upd` from manual EEPROM fix — accidentally auto-provisions new Pis. Should be made intentional: add post-image hook or clock8002.mk step that pre-builds `pieeprom.upd` with `BOOT_ORDER=0xf1` and places it + `recovery.bin` on boot partition. Every fresh Pi gets provisioned on first boot (one slow boot, then clean forever).
@@ -54,15 +57,16 @@ Last updated: 2026-04-02
 
 ## Issue #23 Status (Dual HDMI Output)
 
-- **DRM mirror working on Buildroot** (`2ee57fa` on `buildroot-prototype`).
-- Implementation uses direct DRM/KMS ioctls (not SDL second window) for the mirror output.
-- Behavior now:
-  - `--cue-second-display`: HDMI-2 shows full-screen PerfectCue icons (forward/reverse/blank) via `fbi`.
+- **DRM mirror working on Buildroot** (`2ee57fa` on `buildroot-prototype`) ✓
+- **DRM cue mode working on Buildroot** (`a5929ef` on `buildroot-prototype`) ✓
+- Implementation uses direct DRM/KMS ioctls (not SDL second window) for both modes.
+- Behavior:
+  - `--cue-second-display`: HDMI-2 shows full-screen PerfectCue icons (forward/reverse/blank) written directly into DRM dumb buffer — no `fbi`, no `/dev/fb0`.
   - No flag (default): HDMI-2 mirrors the main clock via DRM dumb buffer + CPU pixel copy from SDL renderer.
-- Key files: `drm_mirror_linux.go` (DRM ioctls, buffer mgmt, pixel sync), `drm_mirror_other.go` (non-Linux stub), `second_display_probe.go` (dispatch).
+- Web GUI toggle (PerfectCue section checkbox) switches modes live — no restart required.
+- Key files: `drm_mirror_linux.go`, `drm_mirror_other.go`, `drm_cue_linux.go`, `drm_cue_other.go`, `second_display_probe.go`.
 - `findSpareHDMIConnector()` is fully dynamic — scans all HDMI outputs, identifies SDL's CRTC by highest fb_id, picks the spare. No hardcoded connector/CRTC IDs.
-- Trixie portability: DRM layer is portable as-is (same card numbering confirmed on piclockT). Main concern is fbcon rebinding — Trixie's systemd may re-bind vtcon1 after the app unbinds it.
-- Issue remains open pending robustness testing and Trixie validation.
+- Issue remains open pending Trixie validation and robustness testing.
 
 ## Hot-Plug Policy (Current Expected Behavior)
 
