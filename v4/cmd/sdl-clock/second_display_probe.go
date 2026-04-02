@@ -54,9 +54,14 @@ func probeSecondDisplayOutput() {
 			log.Printf("Info: framebuffer console unbound for second display icon mode")
 		}
 	} else {
-		// Mirror mode: stop any running fbi, reset cue state, start SDL mirror window.
+		// Mirror mode: stop any running fbi, reset cue state, unbind fbcon, start SDL mirror window.
 		stopSecondDisplayImageProcesses()
 		lastSecondDisplayCueVisual = secondDisplayCueUnset
+		if err := setFramebufferConsoleBound(false); err != nil {
+			log.Printf("Warning: could not disable framebuffer console binding for mirror mode: %v", err)
+		} else {
+			log.Printf("Info: framebuffer console unbound for second display mirror mode")
+		}
 		initSecondDisplayMirror()
 		return
 	}
