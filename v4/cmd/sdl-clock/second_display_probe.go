@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"image"
 	"image/color"
-	"image/png"
 	"log"
 	"os"
 	"os/exec"
@@ -30,8 +28,6 @@ const (
 var lastSecondDisplayCueVisual = secondDisplayCueUnset
 
 var mirrorPixels []byte
-
-const secondDisplayCueAssetVersion = "v2"
 
 // probeSecondDisplayOutput applies runtime second-display policy for issue #23.
 // It toggles fbcon bind state for live enable/disable behavior and logs HDMI-2 status.
@@ -88,8 +84,13 @@ func probeSecondDisplayOutput() {
 		return
 	}
 
-	log.Printf("Info: HDMI-A-2 is connected and ready for second display rendering")
-	showSecondDisplaySplashTest()
+	log.Printf("Info: HDMI-A-2 is connected, initialising DRM cue display")
+	if err := initDRMMirror(); err != nil {
+		log.Printf("Warning: DRM cue display init failed: %v", err)
+		return
+	}
+	updateCueDRMBuffer(secondDisplayCueOff)
+	log.Printf("Info: DRM cue display ready on HDMI-A-2")
 }
 
 func findHDMI2StatusPath() string {
@@ -194,33 +195,6 @@ func stopSecondDisplayImageProcesses() {
 	log.Printf("Info: stopped fbi processes for second display icon mode")
 }
 
-func showSecondDisplaySplashTest() {
-	fbiPath, err := exec.LookPath("fbi")
-	if err != nil {
-		log.Printf("Warning: unable to run second display splash test, fbi not found: %v", err)
-		return
-	}
-
-	splashPath := firstExistingPath(
-		"/opt/clock8002/bootsplash.png",
-		"/opt/clock8002/splash/bootsplash.png",
-	)
-	if splashPath == "" {
-		log.Printf("Warning: unable to run second display splash test, no splash image found")
-		return
-	}
-
-	go func() {
-		cmd := exec.Command(fbiPath, "-T", "1", "-d", "/dev/fb0", "-a", "-noverbose", "-1", "-t", "6", splashPath)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			log.Printf("Warning: second display splash test failed: %v (%s)", err, strings.TrimSpace(string(out)))
-			return
-		}
-		log.Printf("Info: second display splash test displayed from %s", splashPath)
-	}()
-}
-
 func syncSecondDisplayCueDisplay(state *clock.State) {
 	if runtime.GOOS != "linux" {
 		return
@@ -241,28 +215,8 @@ func syncSecondDisplayCueDisplay(state *clock.State) {
 		return
 	}
 
-	assetPath, ok := secondDisplayCueAssetPath(desired)
-	if !ok {
-		log.Printf("Warning: unable to resolve second display cue asset for state=%s", desired)
-		lastSecondDisplayCueVisual = desired
-		return
-	}
-
-	fbiPath, err := exec.LookPath("fbi")
-	if err != nil {
-		log.Printf("Warning: unable to update second display cue image, fbi not found: %v", err)
-		lastSecondDisplayCueVisual = desired
-		return
-	}
-
-	cmd := exec.Command(fbiPath, "-T", "1", "-d", "/dev/fb0", "-a", "-noverbose", "-1", assetPath)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		log.Printf("Warning: second display cue update failed (%s): %v (%s)", desired, err, strings.TrimSpace(string(out)))
-		lastSecondDisplayCueVisual = desired
-		return
-	}
-
-	log.Printf("Info: second display cue update: state=%s image=%s", desired, assetPath)
+	updateCueDRMBuffer(desired)
+	log.Printf("Info: second display cue update: state=%s", desired)
 	lastSecondDisplayCueVisual = desired
 }
 
@@ -333,32 +287,6 @@ func isHDMI2Connected() bool {
 	}
 
 	return strings.TrimSpace(string(statusBytes)) == "connected"
-}
-
-func secondDisplayCueAssetPath(visual secondDisplayCueVisual) (string, bool) {
-	baseDir := "/tmp/clock8002-cue"
-	if err := os.MkdirAll(baseDir, 0o755); err != nil {
-		log.Printf("Warning: unable to create second display cue asset directory: %v", err)
-		return "", false
-	}
-
-	assetPath := filepath.Join(baseDir, string(visual)+"-"+secondDisplayCueAssetVersion+".png")
-	if _, err := os.Stat(assetPath); err == nil {
-		return assetPath, true
-	}
-
-	img := renderCueVisualImage(visual, 1920, 1080)
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err != nil {
-		log.Printf("Warning: unable to encode second display cue image: %v", err)
-		return "", false
-	}
-	if err := os.WriteFile(assetPath, buf.Bytes(), 0o644); err != nil {
-		log.Printf("Warning: unable to write second display cue image: %v", err)
-		return "", false
-	}
-
-	return assetPath, true
 }
 
 func renderCueVisualImage(visual secondDisplayCueVisual, width, height int) *image.RGBA {
@@ -461,13 +389,4 @@ func minInt(a, b int) int {
 		return a
 	}
 	return b
-}
-
-func firstExistingPath(paths ...string) string {
-	for _, p := range paths {
-		if _, err := os.Stat(p); err == nil {
-			return p
-		}
-	}
-	return ""
 }
