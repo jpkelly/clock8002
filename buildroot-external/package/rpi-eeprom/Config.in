@@ -1,0 +1,14 @@
+config BR2_PACKAGE_RPI_EEPROM
+	bool "rpi-eeprom"
+	depends on BR2_PACKAGE_PYTHON3
+	depends on BR2_aarch64
+	help
+	  Raspberry Pi EEPROM bootloader configuration and update tools.
+
+	  Installs rpi-eeprom-config, rpi-eeprom-update, rpi-eeprom-digest,
+	  and the Pi 5 (BCM2712) firmware blobs needed for EEPROM updates.
+
+	  rpi-eeprom-config reads the current bootloader configuration via
+	  the kernel nvmem device (no vcgencmd required on Pi 5).
+
+	  https://github.com/raspberrypi/rpi-eeprom
