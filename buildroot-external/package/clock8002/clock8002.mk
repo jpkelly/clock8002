@@ -71,6 +71,8 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 	fi
 	$(INSTALL) -D -m 0644 $(@D)/splash/bootsplash.png \
 		$(TARGET_DIR)/opt/clock8002/bootsplash.png
+	$(INSTALL) -D -m 0755 $(@D)/splash/bootsplash.sh \
+		$(TARGET_DIR)/opt/clock8002/bootsplash.sh
 	$(INSTALL) -D -m 0644 $(@D)/splash/bootsplash-fbv.service \
 		$(TARGET_DIR)/usr/lib/systemd/system/bootsplash.service
 endef

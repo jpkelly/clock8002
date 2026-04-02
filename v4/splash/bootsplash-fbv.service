@@ -6,7 +6,7 @@ ConditionPathExists=/opt/clock8002/bootsplash.png
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/fbv -f -i -e /opt/clock8002/bootsplash.png
+ExecStart=/opt/clock8002/bootsplash.sh
 StandardInput=null
 StandardOutput=tty
 
