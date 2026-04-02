@@ -69,6 +69,10 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 		$(INSTALL) -D -m 0644 $(@D)/oled/oled.ini \
 			$(TARGET_DIR)/boot/piclock/oled.ini; \
 	fi
+	$(INSTALL) -D -m 0644 $(@D)/splash/bootsplash.png \
+		$(TARGET_DIR)/opt/clock8002/bootsplash.png
+	$(INSTALL) -D -m 0644 $(@D)/splash/bootsplash-fbv.service \
+		$(TARGET_DIR)/usr/lib/systemd/system/bootsplash.service
 endef
 
 $(eval $(generic-package))

@@ -61,6 +61,11 @@ ln -sf /boot/piclock/oled.ini "${TARGET_DIR}/opt/clock8002/oled/oled.ini"
 ln -sf /usr/lib/systemd/system/oled_daemon.service \
 	"${TARGET_DIR}/etc/systemd/system/multi-user.target.wants/oled_daemon.service"
 
+# Enable bootsplash service (fbv-based, shows splash until clock8002 takes over).
+mkdir -p "${TARGET_DIR}/etc/systemd/system/sysinit.target.wants"
+ln -sf /usr/lib/systemd/system/bootsplash.service \
+	"${TARGET_DIR}/etc/systemd/system/sysinit.target.wants/bootsplash.service"
+
 # Patch service files: Buildroot runs as root, not pi.
 # Also ensure stdout/stderr go to journal for crash diagnostics.
 for svc in clock8002.service alsa-ltc.service oled_daemon.service; do

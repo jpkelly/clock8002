@@ -1,1 +1,1 @@
-console=ttyAMA10,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 rootwait cfg80211.ieee80211_regdom=US
+console=ttyAMA10,115200 console=tty3 root=/dev/mmcblk0p2 rootfstype=ext4 rootwait cfg80211.ieee80211_regdom=US logo.nologo quiet loglevel=1
