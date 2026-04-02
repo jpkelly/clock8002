@@ -53,9 +53,17 @@ mkdir -p "${TARGET_DIR}/boot/piclock"
 mkdir -p "${TARGET_DIR}/root/.config/clock-8001"
 ln -sf /boot/piclock/clock.ini "${TARGET_DIR}/root/.config/clock-8001/clock.ini"
 
+# Symlink oled.ini so daemon finds config relative to its own directory.
+mkdir -p "${TARGET_DIR}/opt/clock8002/oled"
+ln -sf /boot/piclock/oled.ini "${TARGET_DIR}/opt/clock8002/oled/oled.ini"
+
+# Enable oled_daemon service.
+ln -sf /usr/lib/systemd/system/oled_daemon.service \
+	"${TARGET_DIR}/etc/systemd/system/multi-user.target.wants/oled_daemon.service"
+
 # Patch service files: Buildroot runs as root, not pi.
 # Also ensure stdout/stderr go to journal for crash diagnostics.
-for svc in clock8002.service alsa-ltc.service; do
+for svc in clock8002.service alsa-ltc.service oled_daemon.service; do
 	F="${TARGET_DIR}/usr/lib/systemd/system/${svc}"
 	if [ -f "${F}" ]; then
 		sed -i 's/^User=pi$/User=root/' "${F}"

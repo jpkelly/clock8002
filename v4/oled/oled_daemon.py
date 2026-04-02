@@ -39,9 +39,16 @@ if not OLED_ENABLED:
 
 serial = i2c(port=OLED_I2C_PORT, address=OLED_I2C_ADDRESS)
 device = ssd1306(serial, rotate=OLED_ROTATION)
-font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
+
+_FONT_CANDIDATES = [
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # Debian/Trixie
+    "/opt/clock8002/DejaVuSans.ttf",                     # Buildroot (bundled)
+]
+_FONT_PATH = next((p for p in _FONT_CANDIDATES if os.path.exists(p)), None)
+
+font = ImageFont.truetype(_FONT_PATH, 13) if _FONT_PATH else ImageFont.load_default()
 try:
-    logo_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 10)
+    logo_font = ImageFont.truetype(_FONT_PATH, 10) if _FONT_PATH else ImageFont.load_default()
 except Exception:
     logo_font = ImageFont.load_default()
 

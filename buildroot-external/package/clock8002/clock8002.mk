@@ -53,6 +53,14 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 		$(INSTALL) -D -m 0755 $(@D)/oled/oled_daemon.py \
 			$(TARGET_DIR)/opt/clock8002/oled/oled_daemon.py; \
 	fi
+	if [ -f $(@D)/oled/oled_daemon.service ]; then \
+		$(INSTALL) -D -m 0644 $(@D)/oled/oled_daemon.service \
+			$(TARGET_DIR)/usr/lib/systemd/system/oled_daemon.service; \
+	fi
+	if [ -f $(@D)/oled/piclockLogo.bin ]; then \
+		$(INSTALL) -D -m 0644 $(@D)/oled/piclockLogo.bin \
+			$(TARGET_DIR)/root/piclockLogo.bin; \
+	fi
 	if [ -f $(@D)/oled/oled.ini ]; then \
 		$(INSTALL) -D -m 0644 $(@D)/oled/oled.ini \
 			$(TARGET_DIR)/boot/piclock/oled.ini; \
