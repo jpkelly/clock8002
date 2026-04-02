@@ -9,6 +9,9 @@ arm_64bit=1
 # Disable compensation for displays with overscan
 disable_overscan=1
 
+# Suppress firmware rainbow/diagnostic splash screen
+disable_splash=1
+
 # Force D0-stepping DTB for Pi 5 Rev 1.1 (D0 silicon).  The base
 # bcm2712-rpi-5-b.dtb maps 0x30 bytes of pinctrl registers but D0 only
 # has 0x20 — accessing the extra range triggers an SError bus fault.
