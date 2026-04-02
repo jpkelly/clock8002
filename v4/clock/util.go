@@ -82,11 +82,13 @@ func VersionInfo() string {
 		commit = "unknown"
 	}
 
-	if info, ok := debug.ReadBuildInfo(); ok {
-		for _, s := range info.Settings {
-			if s.Key == "vcs.revision" && len(s.Value) >= 7 {
-				commit = s.Value[:7]
-				break
+	if commit == "unknown" {
+		if info, ok := debug.ReadBuildInfo(); ok {
+			for _, s := range info.Settings {
+				if s.Key == "vcs.revision" && len(s.Value) >= 7 {
+					commit = s.Value[:7]
+					break
+				}
 			}
 		}
 	}
