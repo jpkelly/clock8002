@@ -179,8 +179,10 @@ def parse_ini_settings():
 
 def get_ip():
     try:
-        # Get IP address using hostname -I
-        ip = subprocess.check_output(['hostname', '-I']).decode().split()[0]
+        out = subprocess.check_output(
+            ['ip', '-4', '-o', 'addr', 'show', 'scope', 'global'],
+            stderr=subprocess.DEVNULL).decode()
+        ip = out.split('inet ')[1].split('/')[0]
     except Exception:
         ip = 'No IP'
     return ip
