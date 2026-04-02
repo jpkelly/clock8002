@@ -268,6 +268,11 @@ func (engine *Engine) EnableInfo() {
 	engine.infoTimer.Reset(engine.showInfoDuration)
 }
 
+// InfoVisible returns whether the info overlay is currently active.
+func (engine *Engine) InfoVisible() bool {
+	return engine.showInfo
+}
+
 func (engine *Engine) sendUDPTimers() {
 	t := time.Now()
 	for i, conn := range engine.udpDests {

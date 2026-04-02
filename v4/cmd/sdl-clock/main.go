@@ -197,8 +197,10 @@ func main() {
 				}
 				key := t.Keysym.Sym
 				if key == sdl.K_i {
-					infoHidden = !infoHidden
-					if !infoHidden {
+					if engine.InfoVisible() && !infoHidden {
+						infoHidden = true
+					} else {
+						infoHidden = false
 						engine.EnableInfo()
 					}
 				} else if key == sdl.K_q {
