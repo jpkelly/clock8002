@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/veandco/go-sdl2/gfx"
-	"github.com/veandco/go-sdl2/sdl"
-	"github.com/veandco/go-sdl2/ttf"
-	"gitlab.com/clock-8001/clock-8001/v4/clock"
-	"gitlab.com/clock-8001/clock-8001/v4/debug"
 	"image/color"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/veandco/go-sdl2/gfx"
+	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/ttf"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
+	"gitlab.com/clock-8001/clock-8001/v4/debug"
 )
 
 type outputLine struct {
@@ -37,6 +38,34 @@ var textClock struct {
 	glyphRegexp *regexp.Regexp
 	tally       string
 	tallyTex    *sdl.Texture
+}
+
+var renderDiag struct {
+	copyErrors int
+	targetErrs int
+}
+
+func logRenderDiag(kind string, err error) {
+	if err == nil {
+		return
+	}
+
+	count := 0
+	switch kind {
+	case "copy":
+		renderDiag.copyErrors++
+		count = renderDiag.copyErrors
+	case "target":
+		renderDiag.targetErrs++
+		count = renderDiag.targetErrs
+	default:
+		log.Printf("SDL render diag (%s): %v", kind, err)
+		return
+	}
+
+	if count <= 10 || count%100 == 0 {
+		log.Printf("SDL render diag (%s #%d): %v", kind, count, err)
+	}
 }
 
 // Font sizes. Rpi <4 is limited to 2048x2048 texture size.
@@ -411,7 +440,8 @@ func copyIntoRect(t *sdl.Texture, r sdl.Rect) {
 		return
 	}
 	dest := centerRect(w, h, r)
-	renderer.Copy(t, nil, &dest)
+	err = renderer.Copy(t, nil, &dest)
+	logRenderDiag("copy", err)
 }
 
 func renderText(text string, font *ttf.Font, color sdl.Color) *sdl.Texture {
@@ -426,6 +456,7 @@ func renderText(text string, font *ttf.Font, color sdl.Color) *sdl.Texture {
 		t, err = font.RenderUTF8Blended("INVALID TEXT", color)
 		check(err)
 	}
+	t = surfaceToABGR8888(t)
 
 	tex, err := renderer.CreateTextureFromSurface(t)
 	if err != nil {
@@ -434,14 +465,32 @@ func renderText(text string, font *ttf.Font, color sdl.Color) *sdl.Texture {
 		t.Free()
 		t, err = font.RenderUTF8Blended("INVALID TEXT", color)
 		check(err)
+		t = surfaceToABGR8888(t)
 
 		tex, err = renderer.CreateTextureFromSurface(t)
 		check(err)
 	}
 	t.Free()
 	t = nil
+	err = tex.SetBlendMode(sdl.BLENDMODE_BLEND)
+	if err != nil {
+		log.Printf("renderText SetBlendMode error: %v", err)
+	}
 	tex.SetAlphaMod(color.A)
 	return tex
+}
+
+func surfaceToABGR8888(s *sdl.Surface) *sdl.Surface {
+	if s == nil {
+		return s
+	}
+	converted, err := s.ConvertFormat(sdl.PIXELFORMAT_ABGR8888, 0)
+	if err != nil {
+		log.Printf("surfaceToABGR8888 ConvertFormat error: %v", err)
+		return s
+	}
+	s.Free()
+	return converted
 }
 
 func preRenderFonts() {
@@ -488,32 +537,41 @@ func createRowTexture(i int, text string) {
 		}
 	}
 
-	textClock.r[i].textTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, texW, texH)
+	textClock.r[i].textTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, texW, texH)
 	textClock.r[i].textTex.SetBlendMode(sdl.BLENDMODE_BLEND)
 	check(err)
-	renderer.SetRenderTarget(textClock.r[i].textTex)
-	renderer.SetDrawColor(0, 0, 0, 0)
-	renderer.Clear()
-	renderer.SetRenderTarget(nil)
+	err = renderer.SetRenderTarget(textClock.r[i].textTex)
+	logRenderDiag("target", err)
+	err = renderer.SetDrawColor(0, 0, 0, 0)
+	logRenderDiag("target", err)
+	err = renderer.Clear()
+	logRenderDiag("target", err)
+	err = renderer.SetRenderTarget(nil)
+	logRenderDiag("target", err)
 }
 
 func renderFromGlyphs(i int, text string) {
+	var err error
 	target := sdl.Rect{}
 	target.H = textClock.r[i].fragmentRect.H
-	renderer.SetRenderTarget(textClock.r[i].textTex)
+	err = renderer.SetRenderTarget(textClock.r[i].textTex)
+	logRenderDiag("target", err)
 
 	for _, ch := range text {
 		if num, err := strconv.Atoi(string(ch)); err == nil {
 			target.W = textClock.r[i].fragmentRect.W
-			renderer.Copy(textClock.r[i].timeFragments[num], nil, &target)
+			err = renderer.Copy(textClock.r[i].timeFragments[num], nil, &target)
+			logRenderDiag("copy", err)
 			target.X += target.W
 		} else {
 			target.W = textClock.r[i].colonRect.W
-			renderer.Copy(textClock.r[i].colonTex, nil, &target)
+			err = renderer.Copy(textClock.r[i].colonTex, nil, &target)
+			logRenderDiag("copy", err)
 			target.X += target.W
 		}
 	}
-	renderer.SetRenderTarget(nil)
+	err = renderer.SetRenderTarget(nil)
+	logRenderDiag("target", err)
 }
 
 func renderNumbers(i int, text string, textColor sdl.Color) {
@@ -553,7 +611,7 @@ func renderIcon(row int, icon string, textColor sdl.Color) {
 			textClock.r[row].iconTex = renderText(icon, textClock.iconFont, colors.icon[row])
 		} else {
 			renderer.SetDrawColor(0, 0, 0, 0)
-			textClock.r[row].iconTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 1, 1)
+			textClock.r[row].iconTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 1, 1)
 			check(err)
 			err = textClock.r[row].iconTex.SetBlendMode(sdl.BLENDMODE_BLEND)
 			check(err)
@@ -571,13 +629,17 @@ func renderSignal(i int, newColor color.RGBA) {
 			textClock.r[i].signalTex.Destroy()
 		}
 		renderer.SetDrawColor(0, 0, 0, 0)
-		textClock.r[i].signalTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 150, 150)
+		textClock.r[i].signalTex, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 150, 150)
 		check(err)
 		err = textClock.r[i].signalTex.SetBlendMode(sdl.BLENDMODE_BLEND)
 		check(err)
-		renderer.SetRenderTarget(textClock.r[i].signalTex)
-		renderer.Clear()
+		err = renderer.SetRenderTarget(textClock.r[i].signalTex)
+		logRenderDiag("target", err)
+		err = renderer.Clear()
+		logRenderDiag("target", err)
 		gfx.FilledCircleColor(renderer, 75, 75, 74, c)
+		err = renderer.SetRenderTarget(nil)
+		logRenderDiag("target", err)
 		colors.signal[i] = c
 	}
 }

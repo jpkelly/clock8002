@@ -3,7 +3,6 @@ import sys
 import time
 import os
 import socket
-import subprocess
 import configparser
 import re
 from luma.core.interface.serial import i2c
@@ -39,9 +38,16 @@ if not OLED_ENABLED:
 
 serial = i2c(port=OLED_I2C_PORT, address=OLED_I2C_ADDRESS)
 device = ssd1306(serial, rotate=OLED_ROTATION)
-font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
+
+_FONT_CANDIDATES = [
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # Debian/Trixie
+    "/opt/clock8002/DejaVuSans.ttf",                     # Buildroot (bundled)
+]
+_FONT_PATH = next((p for p in _FONT_CANDIDATES if os.path.exists(p)), None)
+
+font = ImageFont.truetype(_FONT_PATH, 13) if _FONT_PATH else ImageFont.load_default()
 try:
-    logo_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 10)
+    logo_font = ImageFont.truetype(_FONT_PATH, 10) if _FONT_PATH else ImageFont.load_default()
 except Exception:
     logo_font = ImageFont.load_default()
 
@@ -172,8 +178,10 @@ def parse_ini_settings():
 
 def get_ip():
     try:
-        # Get IP address using hostname -I
-        ip = subprocess.check_output(['hostname', '-I']).decode().split()[0]
+        out = subprocess.check_output(
+            ['ip', '-4', '-o', 'addr', 'show', 'scope', 'global'],
+            stderr=subprocess.DEVNULL).decode()
+        ip = out.split('inet ')[1].split('/')[0]
     except Exception:
         ip = 'No IP'
     return ip
@@ -193,6 +201,15 @@ def get_stats():
 logo_buf = load_logo_buffer(LOGO_PATH)
 flush_logo_buffer(logo_buf)
 
+def is_buildroot():
+    try:
+        with open('/etc/os-release') as f:
+            return any(line.strip() in ('NAME=Buildroot', 'NAME="Buildroot"') for line in f)
+    except Exception:
+        return False
+
+BUILDROOT = is_buildroot()
+
 while True:
     image = Image.new("1", device.size)
     draw = ImageDraw.Draw(image)
@@ -201,6 +218,8 @@ while True:
     draw.text((0, 16), hostname, font=font, fill=255)
     draw.text((0, 32), f"User: {http_user}", font=font, fill=255)
     draw.text((0, 48), f"Pass: {http_pass}", font=font, fill=255)
+    if BUILDROOT:
+        draw.ellipse((OLED_WD - 9, 1, OLED_WD - 2, 8), fill=255)
     device.display(image)
     time.sleep(2)
 

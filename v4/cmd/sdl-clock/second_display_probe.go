@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"image"
 	"image/color"
-	"image/png"
 	"log"
 	"os"
 	"os/exec"
@@ -29,12 +27,7 @@ const (
 
 var lastSecondDisplayCueVisual = secondDisplayCueUnset
 
-var mirrorWindow *sdl.Window
-var mirrorRenderer *sdl.Renderer
-var mirrorTexture *sdl.Texture
 var mirrorPixels []byte
-
-const secondDisplayCueAssetVersion = "v2"
 
 // probeSecondDisplayOutput applies runtime second-display policy for issue #23.
 // It toggles fbcon bind state for live enable/disable behavior and logs HDMI-2 status.
@@ -54,10 +47,21 @@ func probeSecondDisplayOutput() {
 			log.Printf("Info: framebuffer console unbound for second display icon mode")
 		}
 	} else {
-		// Mirror mode: stop any running fbi, reset cue state, start SDL mirror window.
+		// Mirror mode: stop any running fbi, reset cue state, unbind fbcon, start DRM mirror.
 		stopSecondDisplayImageProcesses()
 		lastSecondDisplayCueVisual = secondDisplayCueUnset
-		initSecondDisplayMirror()
+		if err := setFramebufferConsoleBound(false); err != nil {
+			log.Printf("Warning: could not disable framebuffer console binding for mirror mode: %v", err)
+		} else {
+			log.Printf("Info: framebuffer console unbound for second display mirror mode")
+		}
+		if !isSpareHDMIConnected() {
+			log.Printf("Info: no spare HDMI connected, mirror mode unavailable")
+			return
+		}
+		if err := initDRMMirror(); err != nil {
+			log.Printf("Warning: DRM mirror init failed: %v", err)
+		}
 		return
 	}
 
@@ -80,8 +84,13 @@ func probeSecondDisplayOutput() {
 		return
 	}
 
-	log.Printf("Info: HDMI-A-2 is connected and ready for second display rendering")
-	showSecondDisplaySplashTest()
+	log.Printf("Info: HDMI-A-2 is connected, initialising DRM cue display")
+	if err := initDRMMirror(); err != nil {
+		log.Printf("Warning: DRM cue display init failed: %v", err)
+		return
+	}
+	updateCueDRMBuffer(secondDisplayCueOff)
+	log.Printf("Info: DRM cue display ready on HDMI-A-2")
 }
 
 func findHDMI2StatusPath() string {
@@ -186,33 +195,6 @@ func stopSecondDisplayImageProcesses() {
 	log.Printf("Info: stopped fbi processes for second display icon mode")
 }
 
-func showSecondDisplaySplashTest() {
-	fbiPath, err := exec.LookPath("fbi")
-	if err != nil {
-		log.Printf("Warning: unable to run second display splash test, fbi not found: %v", err)
-		return
-	}
-
-	splashPath := firstExistingPath(
-		"/opt/clock8002/bootsplash.png",
-		"/opt/clock8002/splash/bootsplash.png",
-	)
-	if splashPath == "" {
-		log.Printf("Warning: unable to run second display splash test, no splash image found")
-		return
-	}
-
-	go func() {
-		cmd := exec.Command(fbiPath, "-T", "1", "-d", "/dev/fb0", "-a", "-noverbose", "-1", "-t", "6", splashPath)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			log.Printf("Warning: second display splash test failed: %v (%s)", err, strings.TrimSpace(string(out)))
-			return
-		}
-		log.Printf("Info: second display splash test displayed from %s", splashPath)
-	}()
-}
-
 func syncSecondDisplayCueDisplay(state *clock.State) {
 	if runtime.GOOS != "linux" {
 		return
@@ -233,102 +215,13 @@ func syncSecondDisplayCueDisplay(state *clock.State) {
 		return
 	}
 
-	assetPath, ok := secondDisplayCueAssetPath(desired)
-	if !ok {
-		log.Printf("Warning: unable to resolve second display cue asset for state=%s", desired)
-		lastSecondDisplayCueVisual = desired
-		return
-	}
-
-	fbiPath, err := exec.LookPath("fbi")
-	if err != nil {
-		log.Printf("Warning: unable to update second display cue image, fbi not found: %v", err)
-		lastSecondDisplayCueVisual = desired
-		return
-	}
-
-	cmd := exec.Command(fbiPath, "-T", "1", "-d", "/dev/fb0", "-a", "-noverbose", "-1", assetPath)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		log.Printf("Warning: second display cue update failed (%s): %v (%s)", desired, err, strings.TrimSpace(string(out)))
-		lastSecondDisplayCueVisual = desired
-		return
-	}
-
-	log.Printf("Info: second display cue update: state=%s image=%s", desired, assetPath)
+	updateCueDRMBuffer(desired)
+	log.Printf("Info: second display cue update: state=%s", desired)
 	lastSecondDisplayCueVisual = desired
 }
 
-// initSecondDisplayMirror creates a fullscreen SDL window on display 1 (HDMI-2)
-// with a streaming texture that gets updated every frame.
-func initSecondDisplayMirror() {
-	if mirrorWindow != nil {
-		return
-	}
-	if !isHDMI2Connected() {
-		return
-	}
-
-	n, err := sdl.GetNumVideoDisplays()
-	if err != nil || n < 2 {
-		log.Printf("Info: second display mirror: %d display(s) detected, mirror unavailable", n)
-		return
-	}
-
-	bounds, err := sdl.GetDisplayBounds(1)
-	if err != nil {
-		log.Printf("Warning: second display mirror: cannot get display 1 bounds: %v", err)
-		return
-	}
-
-	mw, err := sdl.CreateWindow("", bounds.X, bounds.Y, bounds.W, bounds.H,
-		sdl.WINDOW_SHOWN|sdl.WINDOW_FULLSCREEN_DESKTOP)
-	if err != nil {
-		log.Printf("Warning: second display mirror: window creation failed: %v", err)
-		return
-	}
-
-	mr, err := sdl.CreateRenderer(mw, -1, sdl.RENDERER_ACCELERATED)
-	if err != nil {
-		log.Printf("Warning: second display mirror: renderer creation failed: %v", err)
-		mw.Destroy()
-		return
-	}
-
-	outW, outH, err := renderer.GetOutputSize()
-	if err != nil || outW <= 0 || outH <= 0 {
-		mr.Destroy()
-		mw.Destroy()
-		return
-	}
-
-	mt, err := mr.CreateTexture(sdl.PIXELFORMAT_ABGR8888, sdl.TEXTUREACCESS_STREAMING, outW, outH)
-	if err != nil {
-		log.Printf("Warning: second display mirror: texture creation failed: %v", err)
-		mr.Destroy()
-		mw.Destroy()
-		return
-	}
-
-	mirrorWindow = mw
-	mirrorRenderer = mr
-	mirrorTexture = mt
-	mirrorPixels = make([]byte, int(outW)*int(outH)*4)
-	log.Printf("Info: second display mirror initialized on display 1 (%dx%d)", bounds.W, bounds.H)
-}
-
 func destroySecondDisplayMirror() {
-	if mirrorTexture != nil {
-		mirrorTexture.Destroy()
-		mirrorTexture = nil
-	}
-	if mirrorRenderer != nil {
-		mirrorRenderer.Destroy()
-		mirrorRenderer = nil
-	}
-	if mirrorWindow != nil {
-		mirrorWindow.Destroy()
-		mirrorWindow = nil
-	}
+	destroyDRMMirror()
 	mirrorPixels = nil
 }
 
@@ -336,7 +229,7 @@ func syncSecondDisplayMirrorDisplay() {
 	if runtime.GOOS != "linux" || options.CueSecondDisplay || renderer == nil {
 		return
 	}
-	if mirrorRenderer == nil || mirrorTexture == nil {
+	if !isDRMMirrorActive() {
 		return
 	}
 
@@ -345,24 +238,19 @@ func syncSecondDisplayMirrorDisplay() {
 		return
 	}
 
-	needed := int(w) * int(h) * 4
+	srcPitch := int(w) * 4
+	needed := int(h) * srcPitch
 	if len(mirrorPixels) != needed {
 		mirrorPixels = make([]byte, needed)
 	}
 
-	if err := renderer.ReadPixels(nil, sdl.PIXELFORMAT_ABGR8888, unsafe.Pointer(&mirrorPixels[0]), int(w)*4); err != nil {
+	// ReadPixels as ARGB8888 (matches XRGB8888 dumb buffer — alpha byte ignored by display).
+	if err := renderer.ReadPixels(nil, sdl.PIXELFORMAT_ARGB8888, unsafe.Pointer(&mirrorPixels[0]), srcPitch); err != nil {
 		log.Printf("Warning: second display mirror ReadPixels failed: %v", err)
 		return
 	}
 
-	if err := mirrorTexture.Update(nil, unsafe.Pointer(&mirrorPixels[0]), int(w)*4); err != nil {
-		log.Printf("Warning: second display mirror texture update failed: %v", err)
-		return
-	}
-
-	mirrorRenderer.Clear()
-	_ = mirrorRenderer.Copy(mirrorTexture, nil, nil)
-	mirrorRenderer.Present()
+	syncDRMMirror(mirrorPixels, int(w), int(h), srcPitch)
 }
 
 func desiredSecondDisplayCueVisual(state *clock.State) secondDisplayCueVisual {
@@ -399,32 +287,6 @@ func isHDMI2Connected() bool {
 	}
 
 	return strings.TrimSpace(string(statusBytes)) == "connected"
-}
-
-func secondDisplayCueAssetPath(visual secondDisplayCueVisual) (string, bool) {
-	baseDir := "/tmp/clock8002-cue"
-	if err := os.MkdirAll(baseDir, 0o755); err != nil {
-		log.Printf("Warning: unable to create second display cue asset directory: %v", err)
-		return "", false
-	}
-
-	assetPath := filepath.Join(baseDir, string(visual)+"-"+secondDisplayCueAssetVersion+".png")
-	if _, err := os.Stat(assetPath); err == nil {
-		return assetPath, true
-	}
-
-	img := renderCueVisualImage(visual, 1920, 1080)
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err != nil {
-		log.Printf("Warning: unable to encode second display cue image: %v", err)
-		return "", false
-	}
-	if err := os.WriteFile(assetPath, buf.Bytes(), 0o644); err != nil {
-		log.Printf("Warning: unable to write second display cue image: %v", err)
-		return "", false
-	}
-
-	return assetPath, true
 }
 
 func renderCueVisualImage(visual secondDisplayCueVisual, width, height int) *image.RGBA {
@@ -527,13 +389,4 @@ func minInt(a, b int) int {
 		return a
 	}
 	return b
-}
-
-func firstExistingPath(paths ...string) string {
-	for _, p := range paths {
-		if _, err := os.Stat(p); err == nil {
-			return p
-		}
-	}
-	return ""
 }

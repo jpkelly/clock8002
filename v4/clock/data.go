@@ -26,6 +26,7 @@ const flashDuration = 200 * time.Millisecond
 // Will get overridden by ldflags in Makefile
 var gitCommit = "Unknown"
 var gitTag = "v0.0.1"
+var buildEnvironment = ""
 
 // Icons
 const (
@@ -295,6 +296,7 @@ type Engine struct {
 	background          int
 	info                string // Version, ip address etc
 	showInfo            bool
+	showInfoDuration    time.Duration
 	infoTimer           *timer.Timer
 	uuid                string // Clock unique id
 	titleTextColor      color.RGBA

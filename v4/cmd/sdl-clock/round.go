@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/veandco/go-sdl2/sdl"
-	"gitlab.com/Depili/go-rgb-led-matrix/bdf"
-	"gitlab.com/clock-8001/clock-8001/v4/clock"
 	"log"
 	"math"
 	"strconv"
+
+	"github.com/veandco/go-sdl2/sdl"
+	"gitlab.com/Depili/go-rgb-led-matrix/bdf"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
 )
 
 /*
@@ -35,7 +36,7 @@ func initRoundClock() {
 	clockTextures = make([]*sdl.Texture, 2)
 	for i := range clockTextures {
 		clockTextures[i], err = renderer.CreateTexture(
-			sdl.PIXELFORMAT_RGBA8888,
+			sdl.PIXELFORMAT_UNKNOWN,
 			sdl.TEXTUREACCESS_TARGET, 1080, 1080)
 		check(err)
 

@@ -192,9 +192,17 @@ func main() {
 				engine.Close()
 				os.Exit(0)
 			case *sdl.KeyboardEvent:
+				if t.Type != sdl.KEYDOWN {
+					break
+				}
 				key := t.Keysym.Sym
 				if key == sdl.K_i {
-					infoHidden = !infoHidden
+					if engine.InfoVisible() && !infoHidden {
+						infoHidden = true
+					} else {
+						infoHidden = false
+						engine.EnableInfo()
+					}
 				} else if key == sdl.K_q {
 					engine.Close()
 					os.Exit(0)
@@ -286,7 +294,7 @@ func updateInfoScreen(info string) {
 	lines := strings.Split(info, "\n")
 
 	height := infoFont.LineSkip() * (len(lines) + 1)
-	infoTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 1024, int32(height))
+	infoTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 1024, int32(height))
 	infoTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	check(err)
 

@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"image/color"
+	"log"
+	"os"
+
 	"github.com/veandco/go-sdl2/gfx"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
-	"image/color"
-	"log"
 )
 
 var colors struct {
@@ -44,6 +46,7 @@ var cueTexture *sdl.Texture
 // initSDL initializes the SDL library, creates a window and a hw accelerated renderer
 func initSDL() {
 	var err error
+	log.Printf("SDL startup env: SDL_VIDEODRIVER=%q SDL_RENDER_DRIVER=%q XDG_RUNTIME_DIR=%q", os.Getenv("SDL_VIDEODRIVER"), os.Getenv("SDL_RENDER_DRIVER"), os.Getenv("XDG_RUNTIME_DIR"))
 	sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "best")
 	sdl.SetHint(sdl.HINT_APP_NAME, "clock-8001")
 
@@ -68,11 +71,21 @@ func initSDL() {
 	err = ttf.Init()
 	check(err)
 
-	log.Printf("SDL init done\n")
+	log.Printf("SDL init done")
+	if currentDriver, driverErr := sdl.GetCurrentVideoDriver(); driverErr != nil {
+		log.Printf("SDL active video driver lookup failed: %v", driverErr)
+	} else {
+		log.Printf("SDL active video driver: %s", currentDriver)
+	}
 
 	rendererInfo, err := renderer.GetInfo()
 	check(err)
-	log.Printf("Renderer: %v\n", rendererInfo.Name)
+	log.Printf("SDL renderer: name=%s flags=0x%x", rendererInfo.Name, rendererInfo.Flags)
+	for i, f := range rendererInfo.TextureFormats {
+		if f != 0 {
+			log.Printf("SDL renderer texture format[%d]: 0x%08x (%s)", i, f, sdl.GetPixelFormatName(uint(f)))
+		}
+	}
 
 	infoFont, err = ttf.OpenFont(options.LabelFont, 50)
 	check(err)
@@ -173,7 +186,7 @@ func initTextures() {
 	if staticTexture != nil {
 		staticTexture.Destroy()
 	}
-	staticTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, textureSize, textureSize)
+	staticTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, textureSize, textureSize)
 	check(err)
 	err = staticTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	check(err)
@@ -201,7 +214,7 @@ func initTextures() {
 	if secTexture != nil {
 		secTexture.Destroy()
 	}
-	secTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, textureSize, textureSize)
+	secTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, textureSize, textureSize)
 	check(err)
 	err = secTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	check(err)
@@ -227,7 +240,7 @@ func initTextures() {
 	if cueTexture != nil {
 		cueTexture.Destroy()
 	}
-	cueTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 500, 500)
+	cueTexture, err = renderer.CreateTexture(sdl.PIXELFORMAT_UNKNOWN, sdl.TEXTUREACCESS_TARGET, 500, 500)
 	check(err)
 	err = cueTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	check(err)

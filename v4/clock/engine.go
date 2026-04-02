@@ -3,11 +3,6 @@ package clock
 import (
 	"context"
 	"fmt"
-	"github.com/chabad360/go-osc/osc"
-	"github.com/denisbrodbeck/machineid"
-	"github.com/desertbit/timer"
-	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
-	"gitlab.com/clock-8001/clock-8001/v4/udptime"
 	"image/color"
 	"log"
 	"net"
@@ -19,6 +14,12 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/chabad360/go-osc/osc"
+	"github.com/denisbrodbeck/machineid"
+	"github.com/desertbit/timer"
+	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
+	"gitlab.com/clock-8001/clock-8001/v4/udptime"
 )
 
 // MakeEngine creates a clock engine
@@ -90,7 +91,8 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 
 	engine.prepareInfo()
 
-	engine.infoTimer = timer.NewTimer(time.Duration(options.ShowInfo) * time.Second)
+	engine.showInfoDuration = time.Duration(options.ShowInfo) * time.Second
+	engine.infoTimer = timer.NewTimer(engine.showInfoDuration)
 	go engine.infoTimeout()
 	engine.showInfo = true
 	fmt.Printf(engine.info)
@@ -210,7 +212,7 @@ func detectNetworkMode() string {
 // interfaceAddresses returns labeled IP addresses for eth0 and wlan0
 func interfaceAddresses() string {
 	var ret string
-	for _, name := range []string{"eth0", "wlan0"} {
+	for _, name := range []string{"eth0", "end0", "wlan0"} {
 		iface, err := net.InterfaceByName(name)
 		if err != nil {
 			continue
@@ -258,6 +260,17 @@ func (engine *Engine) infoTimeout() {
 	for range engine.infoTimer.C {
 		engine.showInfo = false
 	}
+}
+
+// EnableInfo re-enables the info overlay and resets the auto-hide timer.
+func (engine *Engine) EnableInfo() {
+	engine.showInfo = true
+	engine.infoTimer.Reset(engine.showInfoDuration)
+}
+
+// InfoVisible returns whether the info overlay is currently active.
+func (engine *Engine) InfoVisible() bool {
+	return engine.showInfo
 }
 
 func (engine *Engine) sendUDPTimers() {

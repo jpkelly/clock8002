@@ -573,7 +573,7 @@ func syncHardwareClock() error {
 		return fmt.Errorf("hwclock command not found")
 	}
 
-	args := []string{"--systohc", "--utc"}
+	args := []string{"-w", "-u"}
 	hwCmd := exec.Command(hwclockPath, args...)
 	if err := hwCmd.Run(); err == nil {
 		return nil
@@ -629,10 +629,10 @@ func setTimeHandler(w http.ResponseWriter, r *http.Request) {
 		parsedTime = legacyTime
 	}
 
-	// Use @seconds.nanoseconds format for nanosecond precision.
-	dateString := fmt.Sprintf("@%d.%09d", parsedTime.Unix(), parsedTime.Nanosecond())
+	// Use short flags compatible with both GNU coreutils and BusyBox.
+	dateString := parsedTime.UTC().Format("2006-01-02 15:04:05")
 	log.Printf("Web UI settime: setting system date to %s (raw input: %s)", parsedTime.Format(time.RFC3339Nano), timeStr)
-	cmd := exec.Command("date", "--set", dateString) // #nosec strict validation above
+	cmd := exec.Command("date", "-u", "-s", dateString) // #nosec strict validation above
 	if err := cmd.Run(); err != nil {
 		log.Printf("Failed to set system time: %v", err)
 		http.Error(w, "Failed to set time", http.StatusInternalServerError)
