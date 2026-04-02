@@ -14,9 +14,9 @@ Last updated: 2026-04-01
 
 ## Buildroot Prototype (Issue #24)
 
-- Branch: `buildroot-prototype`, HEAD: `123d86c` (pushed)
-- Test unit: piclockBR.local (Pi 5 Rev 1.1 D0, DHCP IP 10.0.0.163)
-- SD card image: `piclockBR-123d86c-sdcard.img` (768 MB), flashed and running
+- Branch: `buildroot-prototype`, HEAD: `772f5b3` (pushed)
+- Test units: piclockBR.local — Pi 5 2GB (10.0.0.163), Pi 5 1GB (10.0.0.171)
+- SD card image: `piclockBR-772f5b3-sdcard.img` (768 MB), flashed and running on both units
 - Build host: pi@pi5start.local, `~/buildroot` (Buildroot 2025.02)
 - All Critical items complete — sdl-clock fully operational with GLES2/KMSDRM
 - Mesa 25.0.7 (upgraded from 24.0.9 — manual change on build host, not in git)
@@ -36,10 +36,15 @@ Last updated: 2026-04-01
 7. Import reordering (cosmetic, harmless)
 8. `renderSignal()` missing `SetRenderTarget(nil)` — real bug fix
 
+### Fixed this session (2026-04-01 — EEPROM provisioning)
+- **rpi-eeprom package** (`772f5b3`): Added Buildroot external package for Pi 5 EEPROM management (rpi-eeprom-config, rpi-eeprom-update, rpi-eeprom-digest + BCM2712 firmware blobs). Reads EEPROM via nvmem — no vcgencmd needed.
+- **Red screen fix**: Changed `BOOT_ORDER` from `0xf461` (SD+NVMe+USB+restart) to `0xf1` (SD-only) on both test units via `rpi-eeprom-config --apply`. Eliminated the red PCIe probe screen caused by bootloader NVMe enumeration on quiet boot.
+- **1GB Pi 5 validation**: Image boots and runs on Pi 5 1GB (160MB used / 774MB available).
+
 ### Remaining work
-- OLED daemon + oled.ini symlink
-- Boot splash
-- Wi-Fi AP mode testing
+- **EEPROM provisioning in image build** (TODO): Current image has leftover `recovery.bin` + `pieeprom.upd` from manual EEPROM fix — accidentally auto-provisions new Pis. Should be made intentional: add post-image hook or clock8002.mk step that pre-builds `pieeprom.upd` with `BOOT_ORDER=0xf1` and places it + `recovery.bin` on boot partition. Every fresh Pi gets provisioned on first boot (one slow boot, then clean forever).
+- Second HDMI output
+- Trixie regression testing
 
 ## Issue #23 Status (Dual HDMI Output)
 
