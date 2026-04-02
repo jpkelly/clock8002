@@ -219,6 +219,15 @@ func findHDMI1Connector(fd int) (connID, encID uint32, mode drmModeModeInfo, err
 	crtcIDs := make([]uint32, res.CountCrtcs)
 	res.CrtcIdPtr = uint64(uintptr(unsafe.Pointer(&crtcIDs[0])))
 
+	// Must provide buffers for all non-zero counts or the kernel returns EFAULT.
+	if res.CountFbs > 0 {
+		fbIDs := make([]uint32, res.CountFbs)
+		res.FbIdPtr = uint64(uintptr(unsafe.Pointer(&fbIDs[0])))
+	}
+	if res.CountEncoders > 0 {
+		encIDs := make([]uint32, res.CountEncoders)
+		res.EncoderIdPtr = uint64(uintptr(unsafe.Pointer(&encIDs[0])))
+	}
 	if err = drmIoctl(fd, drmIoctlModeGetResources, unsafe.Pointer(&res)); err != nil {
 		return 0, 0, mode, fmt.Errorf("getResources (fill): %w", err)
 	}
@@ -240,7 +249,8 @@ func findHDMI1Connector(fd int) (connID, encID uint32, mode drmModeModeInfo, err
 			continue
 		}
 
-		// Second call: get modes.
+		// Second call: get modes and encoders.
+		// Must provide buffers for all non-zero counts.
 		modes := make([]drmModeModeInfo, conn.CountModes)
 		if conn.CountModes > 0 {
 			conn.ModesPtr = uint64(uintptr(unsafe.Pointer(&modes[0])))
@@ -248,6 +258,12 @@ func findHDMI1Connector(fd int) (connID, encID uint32, mode drmModeModeInfo, err
 		encoders := make([]uint32, conn.CountEncoders)
 		if conn.CountEncoders > 0 {
 			conn.EncodersPtr = uint64(uintptr(unsafe.Pointer(&encoders[0])))
+		}
+		if conn.CountProps > 0 {
+			props := make([]uint32, conn.CountProps)
+			conn.PropsPtr = uint64(uintptr(unsafe.Pointer(&props[0])))
+			propValues := make([]uint64, conn.CountProps)
+			conn.PropValuesPtr = uint64(uintptr(unsafe.Pointer(&propValues[0])))
 		}
 
 		if err = drmIoctl(fd, drmIoctlModeGetConnector, unsafe.Pointer(&conn)); err != nil {
