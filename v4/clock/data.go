@@ -295,6 +295,7 @@ type Engine struct {
 	background          int
 	info                string // Version, ip address etc
 	showInfo            bool
+	showInfoDuration    time.Duration
 	infoTimer           *timer.Timer
 	uuid                string // Clock unique id
 	titleTextColor      color.RGBA

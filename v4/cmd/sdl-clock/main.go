@@ -192,9 +192,15 @@ func main() {
 				engine.Close()
 				os.Exit(0)
 			case *sdl.KeyboardEvent:
+				if t.Type != sdl.KEYDOWN {
+					break
+				}
 				key := t.Keysym.Sym
 				if key == sdl.K_i {
 					infoHidden = !infoHidden
+					if !infoHidden {
+						engine.EnableInfo()
+					}
 				} else if key == sdl.K_q {
 					engine.Close()
 					os.Exit(0)

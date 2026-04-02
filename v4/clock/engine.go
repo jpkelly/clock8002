@@ -91,7 +91,8 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 
 	engine.prepareInfo()
 
-	engine.infoTimer = timer.NewTimer(time.Duration(options.ShowInfo) * time.Second)
+	engine.showInfoDuration = time.Duration(options.ShowInfo) * time.Second
+	engine.infoTimer = timer.NewTimer(engine.showInfoDuration)
 	go engine.infoTimeout()
 	engine.showInfo = true
 	fmt.Printf(engine.info)
@@ -259,6 +260,12 @@ func (engine *Engine) infoTimeout() {
 	for range engine.infoTimer.C {
 		engine.showInfo = false
 	}
+}
+
+// EnableInfo re-enables the info overlay and resets the auto-hide timer.
+func (engine *Engine) EnableInfo() {
+	engine.showInfo = true
+	engine.infoTimer.Reset(engine.showInfoDuration)
 }
 
 func (engine *Engine) sendUDPTimers() {
