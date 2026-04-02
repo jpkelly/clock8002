@@ -202,6 +202,19 @@ def get_stats():
 logo_buf = load_logo_buffer(LOGO_PATH)
 flush_logo_buffer(logo_buf)
 
+def is_buildroot():
+    try:
+        out = subprocess.check_output(
+            ['sh', '-c', "strings /opt/clock8002/sdl-clock | grep -qm1 'buildEnvironment=buildroot' && echo yes"],
+            stderr=subprocess.DEVNULL,
+            timeout=1.0,
+        )
+        return out.decode(errors='ignore').strip() == 'yes'
+    except Exception:
+        return False
+
+BUILDROOT = is_buildroot()
+
 while True:
     image = Image.new("1", device.size)
     draw = ImageDraw.Draw(image)
@@ -210,6 +223,8 @@ while True:
     draw.text((0, 16), hostname, font=font, fill=255)
     draw.text((0, 32), f"User: {http_user}", font=font, fill=255)
     draw.text((0, 48), f"Pass: {http_pass}", font=font, fill=255)
+    if BUILDROOT:
+        draw.ellipse((OLED_WD - 9, 1, OLED_WD - 2, 8), fill=255)
     device.display(image)
     time.sleep(2)
 

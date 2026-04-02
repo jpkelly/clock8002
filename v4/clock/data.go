@@ -26,6 +26,7 @@ const flashDuration = 200 * time.Millisecond
 // Will get overridden by ldflags in Makefile
 var gitCommit = "Unknown"
 var gitTag = "v0.0.1"
+var buildEnvironment = ""
 
 // Icons
 const (

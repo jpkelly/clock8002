@@ -16,6 +16,7 @@ CLOCK8002_BUILD_DATE = $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 CLOCK8002_VERSION_PKG = gitlab.com/clock-8001/clock-8001/v4/clock
 CLOCK8002_GO_LD_FLAGS = -X $(CLOCK8002_VERSION_PKG).gitCommit=$(CLOCK8002_GIT_COMMIT) \
 	-X $(CLOCK8002_VERSION_PKG).gitTag=$(CLOCK8002_GIT_TAG) \
+	-X $(CLOCK8002_VERSION_PKG).buildEnvironment=buildroot \
 	-extldflags '-fuse-ld=bfd'
 CLOCK8002_ALSA_LTC_CFLAGS = -O2 \
 	-DALSA_LTC_GIT_TAG=\"$(CLOCK8002_GIT_TAG)\" \

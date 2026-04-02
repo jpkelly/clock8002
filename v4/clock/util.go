@@ -92,7 +92,15 @@ func VersionInfo() string {
 			}
 		}
 	}
+	if buildEnvironment == "buildroot" {
+		return fmt.Sprintf("Clock-8002 version %s (%s BR)", version, commit)
+	}
 	return fmt.Sprintf("Clock-8002 version %s (%s)", version, commit)
+}
+
+// IsBuildroot returns true when the binary was built by the Buildroot toolchain.
+func IsBuildroot() bool {
+	return buildEnvironment == "buildroot"
 }
 
 // AppVersionForConfig returns a stable app-version value for clock.ini.
