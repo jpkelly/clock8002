@@ -18,6 +18,6 @@ func drmMirrorSize() (width, height uint32) {
 	return 0, 0
 }
 
-func isHDMI1Connected() bool {
+func isSpareHDMIConnected() bool {
 	return false
 }

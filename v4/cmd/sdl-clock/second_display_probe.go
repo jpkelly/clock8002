@@ -59,8 +59,8 @@ func probeSecondDisplayOutput() {
 		} else {
 			log.Printf("Info: framebuffer console unbound for second display mirror mode")
 		}
-		if !isHDMI1Connected() {
-			log.Printf("Info: HDMI-A-1 not connected, mirror mode unavailable")
+		if !isSpareHDMIConnected() {
+			log.Printf("Info: no spare HDMI connected, mirror mode unavailable")
 			return
 		}
 		if err := initDRMMirror(); err != nil {

@@ -160,7 +160,7 @@ type drmModeFBCmd struct {
 	Handle uint32
 }
 
-// drmMirror holds state for the direct-DRM mirror output on HDMI-A-1.
+// drmMirror holds state for the direct-DRM mirror output on the spare HDMI connector.
 type drmMirror struct {
 	fd          int // our own fd — always close on destroy
 	sdlFd       int // SDL's master fd — never close
@@ -228,9 +228,9 @@ func findDRICard() (mirrorFd, sdlFd int, cardPath string, err error) {
 	return mirrorFd, sdlFd, cardPath, nil
 }
 
-// findHDMI1Connector scans connectors to find HDMI-A-1 (type=HDMIA, type_id=1) that is connected.
-// It returns the connector ID, encoder ID, and mode.
-func findHDMI1Connector(fd int) (connID, encID uint32, mode drmModeModeInfo, err error) {
+// findSpareHDMIConnector scans connectors to find a connected HDMI output that SDL is NOT using.
+// It skips the connector whose encoder is currently driving SDL's active CRTC.
+func findSpareHDMIConnector(fd int) (connID, encID uint32, mode drmModeModeInfo, err error) {
 	// First pass: get connector count.
 	var res drmModeCardRes
 	if err = drmIoctl(fd, drmIoctlModeGetResources, unsafe.Pointer(&res)); err != nil {
@@ -257,25 +257,29 @@ func findHDMI1Connector(fd int) (connID, encID uint32, mode drmModeModeInfo, err
 		return 0, 0, mode, fmt.Errorf("getResources (fill): %w", err)
 	}
 
+	// Build a set of connected HDMI connectors with their modes.
+	type hdmiConn struct {
+		connID    uint32
+		encID     uint32
+		typeID    uint32
+		crtcID    uint32
+		mode      drmModeModeInfo
+	}
+	var candidates []hdmiConn
+
 	for _, cid := range connIDs {
 		var conn drmModeGetConnector
 		conn.ConnectorID = cid
 
-		// First call: get counts.
 		if err = drmIoctl(fd, drmIoctlModeGetConnector, unsafe.Pointer(&conn)); err != nil {
 			continue
 		}
 
-		// We want HDMI-A type (11) with type_id 1 (i.e., HDMI-A-1).
-		if conn.ConnectorType != drmModeConnectorHDMIA || conn.ConnectorTypeID != 1 {
-			continue
-		}
-		if conn.Connection != drmModeConnected {
+		if conn.ConnectorType != drmModeConnectorHDMIA || conn.Connection != drmModeConnected {
 			continue
 		}
 
-		// Second call: get modes and encoders.
-		// Must provide buffers for all non-zero counts.
+		// Get modes and encoders.
 		modes := make([]drmModeModeInfo, conn.CountModes)
 		if conn.CountModes > 0 {
 			conn.ModesPtr = uint64(uintptr(unsafe.Pointer(&modes[0])))
@@ -294,12 +298,20 @@ func findHDMI1Connector(fd int) (connID, encID uint32, mode drmModeModeInfo, err
 		if err = drmIoctl(fd, drmIoctlModeGetConnector, unsafe.Pointer(&conn)); err != nil {
 			continue
 		}
-
 		if conn.CountModes == 0 {
-			return 0, 0, mode, fmt.Errorf("HDMI-A-1 connected but no modes available")
+			continue
 		}
 
-		// Use the first preferred mode, or fall back to the first mode.
+		// Resolve CRTC for this connector's current encoder.
+		var crtc uint32
+		if conn.EncoderID != 0 {
+			var enc drmModeGetEncoder
+			enc.EncoderID = conn.EncoderID
+			if drmIoctl(fd, drmIoctlModeGetEncoder, unsafe.Pointer(&enc)) == nil {
+				crtc = enc.CrtcID
+			}
+		}
+
 		selectedMode := modes[0]
 		for _, m := range modes {
 			if m.Type&(1<<3) != 0 { // DRM_MODE_TYPE_PREFERRED
@@ -308,10 +320,60 @@ func findHDMI1Connector(fd int) (connID, encID uint32, mode drmModeModeInfo, err
 			}
 		}
 
-		return cid, conn.EncoderID, selectedMode, nil
+		log.Printf("Info: DRM mirror: found HDMI-A-%d connector=%d encoder=%d crtc=%d",
+			conn.ConnectorTypeID, cid, conn.EncoderID, crtc)
+
+		candidates = append(candidates, hdmiConn{
+			connID: cid,
+			encID:  conn.EncoderID,
+			typeID: conn.ConnectorTypeID,
+			crtcID: crtc,
+			mode:   selectedMode,
+		})
 	}
 
-	return 0, 0, mode, fmt.Errorf("HDMI-A-1 connector not found or not connected")
+	if len(candidates) == 0 {
+		return 0, 0, mode, fmt.Errorf("no connected HDMI connectors found")
+	}
+
+	if len(candidates) == 1 {
+		// Only one HDMI connected — SDL is using it, no spare available.
+		return 0, 0, mode, fmt.Errorf("only one HDMI connected (HDMI-A-%d), no spare for mirror", candidates[0].typeID)
+	}
+
+	// Find which CRTC SDL is actively rendering to by checking fb ownership.
+	// The CRTC with the higher fb_id is likely SDL's (created after fbcon at boot).
+	// Pick the connector with the LOWER fb_id CRTC (fbcon/console).
+	var sdlCrtcID uint32
+	var bestFbID uint32
+	for _, c := range candidates {
+		if c.crtcID == 0 {
+			continue
+		}
+		var crtcInfo drmModeCrtc
+		crtcInfo.CrtcID = c.crtcID
+		if drmIoctl(fd, drmIoctlModeGetCrtc, unsafe.Pointer(&crtcInfo)) == nil {
+			if crtcInfo.FbID > bestFbID {
+				bestFbID = crtcInfo.FbID
+				sdlCrtcID = c.crtcID
+			}
+		}
+	}
+
+	log.Printf("Info: DRM mirror: SDL appears to be on crtc=%d (fb=%d)", sdlCrtcID, bestFbID)
+
+	// Pick the candidate that's NOT on SDL's CRTC.
+	for _, c := range candidates {
+		if c.crtcID != sdlCrtcID {
+			log.Printf("Info: DRM mirror: selected spare HDMI-A-%d connector=%d crtc=%d",
+				c.typeID, c.connID, c.crtcID)
+			return c.connID, c.encID, c.mode, nil
+		}
+	}
+
+	// Fallback: shouldn't reach here with 2 candidates.
+	c := candidates[0]
+	return c.connID, c.encID, c.mode, nil
 }
 
 // getCrtcForEncoder resolves the CRTC currently assigned to an encoder.
@@ -327,10 +389,8 @@ func getCrtcForEncoder(fd int, encoderID uint32) (uint32, error) {
 	return enc.CrtcID, nil
 }
 
-// initDRMMirror sets up a direct DRM framebuffer on HDMI-A-1 for mirror output.
-// It opens its own DRM fd for buffer resources and briefly steals DRM master from
-// SDL to call SetCrtc, then returns master to SDL. This keeps the mirror's CRTC
-// in our fd's context so SDL's atomic commits won't reclaim it.
+// initDRMMirror sets up a direct DRM framebuffer on the spare HDMI output for mirror display.
+// It finds the HDMI connector that SDL is NOT using and claims it.
 func initDRMMirror() error {
 	fd, sdlFd, cardPath, err := findDRICard()
 	if err != nil {
@@ -338,10 +398,10 @@ func initDRMMirror() error {
 	}
 
 	// Use SDL's fd for queries (guaranteed authenticated + master).
-	connID, encID, mode, err := findHDMI1Connector(sdlFd)
+	connID, encID, mode, err := findSpareHDMIConnector(sdlFd)
 	if err != nil {
 		syscall.Close(fd)
-		return fmt.Errorf("findHDMI1: %w", err)
+		return fmt.Errorf("findSpareHDMI: %w", err)
 	}
 
 	crtcID, err := getCrtcForEncoder(sdlFd, encID)
@@ -470,7 +530,7 @@ func initDRMMirror() error {
 		savedCrtc:   &saved,
 	}
 
-	log.Printf("Info: DRM mirror: initialized %dx%d XRGB8888 framebuffer on HDMI-A-1 (fb=%d)", w, h, fb.FbID)
+	log.Printf("Info: DRM mirror: initialized %dx%d XRGB8888 framebuffer on spare HDMI (fb=%d)", w, h, fb.FbID)
 	return nil
 }
 
@@ -585,29 +645,39 @@ func drmMirrorSize() (width, height uint32) {
 	return m.width, m.height
 }
 
-// findHDMI1StatusPath returns the sysfs path for HDMI-A-1 status.
-func findHDMI1StatusPath() string {
-	const explicitPath = "/sys/class/drm/card1-HDMI-A-1/status"
-	if _, err := os.Stat(explicitPath); err == nil {
-		return explicitPath
+// findSpareHDMIStatusPath returns the sysfs path for any HDMI status.
+func findSpareHDMIStatusPath() string {
+	// Check both HDMI outputs — we just need any second HDMI to be connected.
+	for _, name := range []string{"HDMI-A-2", "HDMI-A-1"} {
+		path := fmt.Sprintf("/sys/class/drm/card1-%s/status", name)
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+		matches, err := filepath.Glob(fmt.Sprintf("/sys/class/drm/*%s/status", name))
+		if err == nil && len(matches) > 0 {
+			return matches[0]
+		}
 	}
-
-	matches, err := filepath.Glob("/sys/class/drm/*HDMI-A-1/status")
-	if err != nil || len(matches) == 0 {
-		return ""
-	}
-	return matches[0]
+	return ""
 }
 
-// isHDMI1Connected checks if HDMI-A-1 is physically connected.
-func isHDMI1Connected() bool {
-	statusPath := findHDMI1StatusPath()
-	if statusPath == "" {
-		return false
+// isSpareHDMIConnected checks if there are at least 2 HDMI displays connected,
+// meaning there's a spare for the mirror.
+func isSpareHDMIConnected() bool {
+	connected := 0
+	for _, name := range []string{"HDMI-A-1", "HDMI-A-2"} {
+		path := fmt.Sprintf("/sys/class/drm/card1-%s/status", name)
+		if b, err := os.ReadFile(path); err == nil && strings.TrimSpace(string(b)) == "connected" {
+			connected++
+			continue
+		}
+		matches, _ := filepath.Glob(fmt.Sprintf("/sys/class/drm/*%s/status", name))
+		for _, m := range matches {
+			if b, err := os.ReadFile(m); err == nil && strings.TrimSpace(string(b)) == "connected" {
+				connected++
+				break
+			}
+		}
 	}
-	statusBytes, err := os.ReadFile(statusPath)
-	if err != nil {
-		return false
-	}
-	return strings.TrimSpace(string(statusBytes)) == "connected"
+	return connected >= 2
 }
