@@ -1,0 +1,18 @@
+# Auto-start alsa-ltc when any USB audio capture card appears, and stop it when removed.
+#
+# This rule matches any sound control device bound to the snd-usb-audio kernel driver,
+# covering all standard USB audio interfaces without requiring a specific VID:PID.
+#
+# To restrict to a specific USB audio device, add matching attributes to the ADD rule:
+#   ATTRS{idVendor}=="0d8c", ATTRS{idProduct}=="0014"
+# Run 'udevadm info -a /dev/snd/controlC<N>' to find your device's VID and PID.
+
+# Start alsa-ltc when a USB audio capture card enumerates
+SUBSYSTEM=="sound", ACTION=="add", KERNEL=="controlC*", \
+  SUBSYSTEMS=="usb", DRIVERS=="snd-usb-audio", \
+  TAG+="systemd", ENV{SYSTEMD_WANTS}+="alsa-ltc.service"
+
+# Stop alsa-ltc when the USB audio device is removed
+SUBSYSTEM=="sound", ACTION=="remove", KERNEL=="controlC*", \
+  SUBSYSTEMS=="usb", \
+  RUN+="/usr/bin/systemctl --no-block stop alsa-ltc.service"

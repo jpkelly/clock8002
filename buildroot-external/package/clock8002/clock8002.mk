@@ -47,6 +47,8 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 		$(TARGET_DIR)/usr/lib/systemd/system/clock8002.service
 	$(INSTALL) -D -m 0644 $(@D)/alsa-ltc.service \
 		$(TARGET_DIR)/usr/lib/systemd/system/alsa-ltc.service
+	$(INSTALL) -D -m 0644 $(@D)/99-alsa-ltc-usb.rules \
+		$(TARGET_DIR)/etc/udev/rules.d/99-alsa-ltc-usb.rules
 	$(INSTALL) -D -m 0644 $(@D)/clock.ini.default \
 		$(TARGET_DIR)/boot/piclock/clock.ini
 	$(INSTALL) -D -m 0644 $(@D)/network.ini.default \

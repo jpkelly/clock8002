@@ -168,11 +168,14 @@ if [ -f alsa-ltc.service ]; then
         sudo tee /etc/systemd/system/alsa-ltc.service > /dev/null
 fi
 
+# Install udev rule to auto-start/stop alsa-ltc when a USB audio device appears/disappears
+if [ -f 99-alsa-ltc-usb.rules ]; then
+    sudo install -m 0644 99-alsa-ltc-usb.rules /etc/udev/rules.d/99-alsa-ltc-usb.rules
+fi
+
 sudo systemctl daemon-reload
 sudo systemctl enable clock8002
-if [ -f /etc/systemd/system/alsa-ltc.service ]; then
-    sudo systemctl enable alsa-ltc
-fi
+sudo udevadm control --reload-rules
 
 # Install OLED display daemon if present
 if [ -d oled ]; then
@@ -258,7 +261,7 @@ echo ""
 echo "Starting services..."
 sudo systemctl start clock8002 2>/dev/null || true
 sudo systemctl start oled_daemon 2>/dev/null || true
-sudo systemctl start alsa-ltc 2>/dev/null || true
+# alsa-ltc is started automatically by udev when a USB audio device appears
 
 echo ""
 echo "Consistency report"

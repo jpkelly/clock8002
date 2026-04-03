@@ -1,7 +1,6 @@
 [Unit]
 Description=ALSA LTC Timecode Decoder
-After=sound.target
-Wants=sound.target
+StopWhenUnneeded=yes
 
 [Service]
 Type=simple
@@ -9,6 +8,3 @@ User=pi
 ExecStart=/opt/clock8002/alsa-ltc - 127.0.0.1 1245
 Restart=always
 RestartSec=30
-
-[Install]
-WantedBy=multi-user.target
