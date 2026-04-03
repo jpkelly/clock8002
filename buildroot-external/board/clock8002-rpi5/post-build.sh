@@ -39,13 +39,6 @@ ln -sf /etc/systemd/system/piclock-network.service \
 # Make piclock-network.sh executable.
 chmod +x "${TARGET_DIR}/opt/clock8002/piclock-network.sh"
 
-# Enable first-boot EEPROM provisioning service (sets BOOT_ORDER=0xf1).
-ln -sf /etc/systemd/system/eeprom-provision.service \
-	"${TARGET_DIR}/etc/systemd/system/multi-user.target.wants/eeprom-provision.service"
-
-# Make eeprom-provision.sh executable.
-chmod +x "${TARGET_DIR}/opt/clock8002/eeprom-provision.sh"
-
 # Mount boot partition at /boot so network.ini is accessible at runtime.
 mkdir -p "${TARGET_DIR}/boot"
 if ! grep -q '/boot' "${TARGET_DIR}/etc/fstab" 2>/dev/null; then
