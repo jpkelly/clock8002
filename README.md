@@ -16,6 +16,7 @@ This build is intended to be used with the piClock platform.
 - [Updating](#updating)
 - [Cloning the Image](#cloning-the-image)
 - [Configuration](#configuration)
+- [EEPROM Provisioning (Pi 5)](#eeprom-provisioning-pi-5)
 - [Platform](#platform)
 - [OSC Control](#osc-control)
 - [Troubleshooting](#troubleshooting)
@@ -52,14 +53,14 @@ If a release tarball is available, you can install without compiling:
 ### 1. Download the latest release
 
 ```bash
-wget https://github.com/jpkelly/clock8002/releases/download/v1.2.2/clock8002-v1.2.2-default-linux-arm64.tar.gz
+wget https://github.com/jpkelly/clock8002/releases/download/v1.2.3/clock8002-v1.2.3-default-linux-arm64.tar.gz
 ```
 
 ### 2. Extract and install
 
 ```bash
-tar xzf clock8002-v1.2.2-default-linux-arm64.tar.gz
-cd clock8002-v1.2.1-default-linux-arm64
+tar xzf clock8002-v1.2.3-default-linux-arm64.tar.gz
+cd clock8002-v1.2.3-default-linux-arm64
 ./install.sh
 ```
 
@@ -293,6 +294,26 @@ Notes:
 - `rpi-clone` overwrites the target disk. Confirm device name carefully before running.
 
 ## Configuration
+
+### EEPROM Provisioning (Pi 5)
+
+Factory Pi 5 units ship with `BOOT_ORDER=0xf461` (SD → USB → network → restart loop). For piClock, this should be changed to `BOOT_ORDER=0xf1` (SD-only) to eliminate boot delays and network install prompts.
+
+Any running Buildroot or Trixie image can provision the EEPROM. SSH into the Pi and run:
+
+```bash
+printf '[all]\nBOOT_UART=1\nBOOT_ORDER=0xf1\n' > /tmp/eeprom.cfg
+BLOB=$(ls /usr/lib/firmware/raspberrypi/bootloader-2712/default/pieeprom-*.bin | sort | tail -1)
+rpi-eeprom-config --config /tmp/eeprom.cfg --out /tmp/custom.bin "$BLOB" && rpi-eeprom-update -d -f /tmp/custom.bin && reboot
+```
+
+The first reboot applies the EEPROM update (may take ~15 seconds). Subsequent boots will be normal. Verify with:
+
+```bash
+rpi-eeprom-config
+```
+
+Expected output should show `BOOT_ORDER=0xf1`.
 
 ### Web UI
 

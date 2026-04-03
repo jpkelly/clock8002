@@ -1,3 +1,9 @@
+## Version 1.2.3
+* Buildroot
+  * Remove boot-partition EEPROM provisioning (`pieeprom.upd` + `recovery.bin` baked into image): approach causes a red screen loop when installed EEPROM firmware is same version or newer than Buildroot's blob — which is the case for any Pi 5 previously booted with Trixie. EEPROM provisioning is now a documented manual step (see README)
+* Documentation
+  * README: added "EEPROM Provisioning (Pi 5)" section with `rpi-eeprom-update -d -f` command sequence for setting `BOOT_ORDER=0xf1` on factory-fresh units
+
 ## Version 1.2.2
 * Bugfixes
   * `alsa-ltc`: start/stop via udev instead of boot-time service enable; fixes xHCI controller crash when USB audio device is behind a hub and not yet enumerated at `multi-user.target` start time
