@@ -220,7 +220,7 @@ while True:
     draw.text((0, 32), f"User: {http_user}", font=font, fill=255)
     draw.text((0, 48), f"Pass: {http_pass}", font=font, fill=255)
     if BUILDROOT:
-        draw.ellipse((OLED_WD - 9, 1, OLED_WD - 2, 8), fill=255)
+        draw.ellipse((OLED_WD - 5, 2, OLED_WD - 2, 5), fill=255)
     device.display(image)
     time.sleep(2)
 
