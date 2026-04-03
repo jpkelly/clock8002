@@ -1,3 +1,23 @@
+## Version 1.2.1
+* Bugfixes
+  * `clock8002.service`: add `CAP_SYS_ADMIN` to `AmbientCapabilities` so DRM mirror mode works when running as non-root (`User=pi`); fixes "permission denied" on `DRM_IOCTL_SET_MASTER` / `SetCrtc` for the spare HDMI connector
+
+## Version 1.2.0
+* Features
+  * Buildroot image variant: single SD card image with full clock8002 stack (sdl-clock, alsa-ltc, oled_daemon, bootsplash, Wi-Fi AP, power button shutdown)
+  * DRM/KMS second display: mirror clock to spare HDMI connector via direct DRM dumb buffer (no desktop required)
+  * PerfectCue second display mode: show full-screen cue icon on second HDMI
+  * Boot splash screen (Buildroot only): fbv PNG splash while DRM/KMS initialises
+  * Build environment indicator: `BR` badge on OLED splash and web GUI when running under Buildroot
+  * Wi-Fi AP support (Buildroot): dnsmasq + wpa_supplicant D-Bus, persisted US regdomain
+  * Power button shutdown (Buildroot): systemd-logind integration
+* Bugfixes
+  * Info overlay `I` key toggle now uses actual visibility state
+  * `Restart=on-failure` so Q-key exit stays stopped
+  * Version ldflags correctly passed to sdl-clock Go build under Buildroot
+  * Buildroot/Trixie runtime detection via `/etc/os-release` instead of binary string grep or ldflags
+  * OLED: restore `subprocess` import removed during `is_buildroot()` refactor
+
 ## Version 1.1.5
 * Bugfixes
   * Skip timer background preload when `DynamicBG` is disabled
