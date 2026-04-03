@@ -1,0 +1,10 @@
+[Unit]
+Description=First-boot EEPROM provisioning (BOOT_ORDER=0xf1)
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/clock8002/eeprom-provision.sh
+
+[Install]
+WantedBy=multi-user.target

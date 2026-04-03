@@ -148,28 +148,6 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 		done
 	fi
 
-	# Bake EEPROM provisioning files into the boot FAT partition.
-	# On first boot, the Pi 5 firmware detects pieeprom.upd + recovery.bin at
-	# the FAT root, flashes BOOT_ORDER=0xf1 (SD-only, no NVMe probe), renames
-	# the files, and reboots once.  All subsequent boots are clean.
-	# If the EEPROM already has the correct config the firmware skips the flash.
-	EEPROM_FW_DIR="${TARGET_DIR}/usr/lib/firmware/raspberrypi/bootloader-2712/default"
-	EEPROM_BLOB=$(ls "${EEPROM_FW_DIR}"/pieeprom-*.bin 2>/dev/null | sort | tail -1)
-	if [ -n "${EEPROM_BLOB}" ] && [ -f "${EEPROM_FW_DIR}/recovery.bin" ]; then
-		EEPROM_CFG=$(mktemp)
-		printf '[all]\nBOOT_UART=1\nBOOT_ORDER=0xf1\n' > "${EEPROM_CFG}"
-		python3 "${TARGET_DIR}/usr/bin/rpi-eeprom-config" \
-			--config "${EEPROM_CFG}" \
-			--out "${BINARIES_DIR}/pieeprom.upd" \
-			"${EEPROM_BLOB}"
-		rm -f "${EEPROM_CFG}"
-		cp "${EEPROM_FW_DIR}/recovery.bin" "${BINARIES_DIR}/recovery.bin"
-		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
-			"${BINARIES_DIR}/pieeprom.upd" ::
-		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
-			"${BINARIES_DIR}/recovery.bin" ::
-	fi
-
 	# Patch sdcard.img with the updated boot.vfat (boot partition at LBA 1 = byte 512).
 	dd if="${BOOT_IMG}" of="${BINARIES_DIR}/sdcard.img" bs=512 seek=1 conv=notrunc
 fi
