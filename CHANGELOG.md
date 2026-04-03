@@ -1,3 +1,8 @@
+## Version 1.2.2
+* Bugfixes
+  * `alsa-ltc`: start/stop via udev instead of boot-time service enable; fixes xHCI controller crash when USB audio device is behind a hub and not yet enumerated at `multi-user.target` start time
+  * New file `99-alsa-ltc-usb.rules`: triggers `alsa-ltc.service` start when any `snd-usb-audio` device appears; stops service on device removal
+
 ## Version 1.2.1
 * Bugfixes
   * `clock8002.service`: add `CAP_SYS_ADMIN` to `AmbientCapabilities` so DRM mirror mode works when running as non-root (`User=pi`); fixes "permission denied" on `DRM_IOCTL_SET_MASTER` / `SetCrtc` for the spare HDMI connector
