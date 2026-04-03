@@ -3,6 +3,7 @@ import sys
 import time
 import os
 import socket
+import subprocess
 import configparser
 import re
 from luma.core.interface.serial import i2c
