@@ -12,7 +12,7 @@ Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=/opt/clock8002/sdl-clock --fullscreen
 Restart=on-failure
 RestartSec=5
-AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_SYS_TIME
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_SYS_TIME CAP_SYS_ADMIN
 
 [Install]
 WantedBy=multi-user.target
