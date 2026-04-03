@@ -33,8 +33,8 @@ if [ -z "$EEPROM_BLOB" ]; then
 fi
 
 # Build custom blob with desired config.
-TMPBLOB=$(mktemp /tmp/pieeprom-custom.XXXXXX.bin)
-TMPCFG=$(mktemp /tmp/eeprom-cfg.XXXXXX)
+TMPBLOB=$(mktemp /tmp/pieeprom-XXXXXX)
+TMPCFG=$(mktemp /tmp/eeprom-cfg-XXXXXX)
 trap 'rm -f "$TMPBLOB" "$TMPCFG"' EXIT
 
 cat > "$TMPCFG" <<EOF
