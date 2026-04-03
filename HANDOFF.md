@@ -6,11 +6,11 @@ Last updated: 2026-04-02 (evening)
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- Latest release published: v1.1.7
-- Test machine deployment status: v1.1.7 gerry installed on piclock.local, services active (`clock8002`, `alsa-ltc`, `oled_daemon`)
-- Deployed commit on piclock: `c46dd4d`
-- Issue #23 implementation is merged to `master` via squash commit `d62c48e`
-- README update for 2nd HDMI feature wording is on `master` at `c4f67b5`
+- Latest release published: **v1.2.3** (commit `65af133`)
+- Trixie tarballs: `clock8002-v1.2.3-default-linux-arm64.tar.gz`, `clock8002-v1.2.3-gerry-linux-arm64.tar.gz`
+- Buildroot SD card image: `piclockBR-65af133-sdcard.img` (on Mac Desktop)
+- Test unit piclockBR.local: running `65af133`, `BOOT_ORDER=0xf1`
+- Test unit piclockt.local (Pi 5 1GB, 10.0.0.162): running `65af133`, `BOOT_ORDER=0xf1` (manually provisioned)
 
 ## Buildroot Prototype (Issue #24)
 
@@ -45,12 +45,17 @@ Last updated: 2026-04-02 (evening)
 - **Red screen fix**: Changed `BOOT_ORDER` from `0xf461` (SD+NVMe+USB+restart) to `0xf1` (SD-only) on both test units via `rpi-eeprom-config --apply`. Eliminated the red PCIe probe screen caused by bootloader NVMe enumeration on quiet boot.
 - **1GB Pi 5 validation**: Image boots and runs on Pi 5 1GB (160MB used / 774MB available).
 
+### Fixed this session (2026-04-02 — EEPROM provisioning final resolution)
+- **Boot-partition EEPROM approach removed** (`65af133`): After extensive testing, the `pieeprom.upd` + `recovery.bin` approach baked into the image was proven unreliable. Any Pi 5 whose EEPROM firmware is the same version or newer than Buildroot's blob (Dec 2025) will enter a red screen loop every other boot — the firmware repeatedly tries and fails to apply the downgrade. This includes any unit previously booted with Trixie (which auto-updated EEPROM to Jan 2026).
+- **Correct approach**: Manual provisioning via `rpi-eeprom-update -d -f` with a custom config blob. Works unconditionally regardless of installed firmware version. One slow boot (~15s), then clean forever. Documented in README "EEPROM Provisioning (Pi 5)" section.
+- **piclockt.local (Pi 5 1GB)** provisioned manually to `BOOT_ORDER=0xf1` ✅ — no more red screen.
+- **Issue #26**: Closed — EEPROM provisioning documented as manual step; boot-partition approach removed.
+
 ### Fixed this session (2026-04-02 — DRM mirror + cue mode)
 - **DRM mirror working** (`2ee57fa`): Root cause found — `findHDMI1Connector()` was hardcoded to target HDMI-A-1, but SDL already renders there. Fix: `findSpareHDMIConnector()` scans all connected HDMI outputs, identifies SDL's CRTC (highest fb_id), picks the other. Both displays now show the clock on piclockBR. DRM state confirmed: plane-2→crtc-92 (SDL, fb=685) + plane-3→crtc-104 (mirror, fb=682).
 - **DRM cue mode working** (`a5929ef`): Replaced `fbi`+PNG disk cache path with direct DRM dumb buffer writes (Option D). `probeSecondDisplayOutput()` cue branch calls `initDRMMirror()` then `updateCueDRMBuffer(off)`. `syncSecondDisplayCueDisplay()` calls `updateCueDRMBuffer(desired)` — renders icon via `renderCueVisualImage()` and writes XRGB8888 directly into the dumb buffer. No `fbi` binary or `/dev/fb0` required. Web GUI toggle (PerfectCue section) switches modes live without restart. Verified working on piclockBR at `a5929ef`.
 
 ### Remaining work
-- **EEPROM provisioning in image build** (TODO): Current image has leftover `recovery.bin` + `pieeprom.upd` from manual EEPROM fix — accidentally auto-provisions new Pis. Should be made intentional: add post-image hook or clock8002.mk step that pre-builds `pieeprom.upd` with `BOOT_ORDER=0xf1` and places it + `recovery.bin` on boot partition. Every fresh Pi gets provisioned on first boot (one slow boot, then clean forever).
 - DRM mirror simplification: master swap dance (DROP/SET_MASTER) may be unnecessary now — targeting fbcon's CRTC, not SDL's
 - DRM mirror robustness testing: service restart, HDMI hot-plug, extended runtime
 - Trixie regression testing
