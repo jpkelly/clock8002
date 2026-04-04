@@ -71,8 +71,7 @@ The install script will:
 - Install SDL2, Mesa GL, LTC, and OLED runtime libraries
 - Copy the binary, alsa-ltc, OLED daemon, and assets to `/opt/clock8002`
 - Install a default `clock.ini` config (quad face with world clocks)
-- Set up OLED display daemon (SSD1306 I2C) if present
-- Enable I2C for OLED
+- Set up OLED display daemon (SSD1306 I2C) and enable I2C, if present
 - Add your user to video/render groups
 - Install and enable the systemd services
 
