@@ -126,7 +126,7 @@ rpi-eeprom-config --config /tmp/eeprom.cfg --out /tmp/custom.bin "$BLOB" && sudo
 The first reboot applies the EEPROM update (may take ~15 seconds). Subsequent boots will be normal. Verify with:
 
 ```bash
-rpi-eeprom-config
+sudo rpi-eeprom-config
 ```
 
 Expected output should show `BOOT_ORDER=0xf1`.
