@@ -336,7 +336,7 @@ All clock settings — face type, colors, sources, timers, OSC, GPIO — can be 
 
 ### Config file
 
-Edit `~/.config/clock-8001/clock.ini` directly. To generate a fresh default config:
+Edit `/boot/piclock/clock.ini` directly (or via the symlink at `~/.config/clock-8001/clock.ini` — both point to the same file on the boot partition). To generate a fresh default config:
 
 ```bash
 cd ~/clock8002/v4
