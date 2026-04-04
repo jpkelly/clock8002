@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-02 (evening)
+Last updated: 2026-04-04 (morning)
 
 ## Current State
 
@@ -9,17 +9,23 @@ Last updated: 2026-04-02 (evening)
 - Latest release published: **v1.2.3** (commit `65af133`)
 - Trixie tarballs: `clock8002-v1.2.3-default-linux-arm64.tar.gz`, `clock8002-v1.2.3-gerry-linux-arm64.tar.gz`
 - Buildroot SD card image: `piclockBR-65af133-sdcard.img` (on Mac Desktop)
+- master HEAD: `86b2f77` (docs update)
+- `buildroot-prototype` branch: fully merged into master — `origin/buildroot-prototype` and `origin/master` point to same commit
 - Test unit piclockBR.local: running `65af133`, `BOOT_ORDER=0xf1`
-- Test unit piclockt.local (Pi 5 1GB, 10.0.0.162): running `65af133`, `BOOT_ORDER=0xf1` (manually provisioned)
+- Test unit piclockT.local (Pi 5 1GB, 10.0.0.162): running `65af133`, stability test in progress since 2026-04-03 06:27 UTC
 
-## Buildroot Prototype (Issue #24)
+## Buildroot Status (post-merge)
 
-- Branch: `buildroot-prototype`, HEAD: `a5929ef` (pushed)
-- Test units: piclockBR.local — Pi 5 2GB (10.0.0.184), piclockT.local — Pi 5 1GB (Trixie, stability test)
-- SD card image: `piclockBR-772f5b3-sdcard.img` (768 MB), flashed and running on both units
+- `buildroot-prototype` branch merged into `master` at `afbbc01` — all Buildroot work is now on master
+- Tracking issue: **#28** "Buildroot: post-merge validation and remaining work" (replaces closed #24 and #25)
 - Build host: pi@pi5start.local, `~/buildroot` (Buildroot 2025.02)
-- All Critical items complete — sdl-clock fully operational with GLES2/KMSDRM
-- Mesa 25.0.7 (upgraded from 24.0.9 — manual change on build host, not in git)
+- Mesa 25.0.7 (upgraded from 24.0.9 — manual change on build host, not in git — tracked in #29)
+- SSH: personal key hardcoded in `post-build.sh` — fix tracked in #30 (use `BR2_PICLOCKKEY` env var; default password `clockworkadmin`)
+
+### Open Buildroot issues
+- **#28**: Post-merge validation — Trixie regression test, `broadcast.go` leak fix, boot splash, Wi-Fi AP test
+- **#29**: Mesa 25.0.7 + host-xz manual patches not in git — capture in a setup script
+- **#30**: SSH — remove hardcoded dev key; set default root password (`clockworkadmin`)
 
 ### Fixed this session (2026-04-01 evening)
 - **Sync Time button** (`6f76320`): switched `date --set "@epoch"` → `date -u -s "YYYY-MM-DD HH:MM:SS"` and `hwclock --systohc --utc` → `hwclock -w -u`. POSIX short flags work on both GNU coreutils (Trixie) and BusyBox (Buildroot). Verified: system clock and RTC both set correctly.
@@ -182,12 +188,31 @@ ssh pi@piclock.local 'systemctl is-active clock8002'
 
 ## Buildroot Known Issues
 
-- **Sync Time button broken**: BusyBox `date` doesn't support `--set "@epoch"` (needs `-s`); BusyBox `hwclock` doesn't support `--systohc --utc` (needs `-w -u`). Running as root means sudo fallback is unnecessary. Fix: update `setTimeHandler()` and `syncHardwareClock()` in `v4/cmd/sdl-clock/http.go`.
-- **System clock wrong after boot**: Shows Oct 2024 — no NTP or manual time set. Depends on sync time fix.
-- **Mesa 25.0.7 changes not in git**: Manual modifications on pi5start build host — must be re-applied after clean Buildroot checkout.
-- **host-xz libtool bug**: `acl_cv_wl="-Wl,"` workaround in xz.mk — also not in git.
+- **Mesa 25.0.7 changes not in git**: Manual modifications on pi5start build host — must be re-applied after clean Buildroot checkout. Tracked in #29.
+- **host-xz libtool bug**: `acl_cv_wl="-Wl,"` workaround in xz.mk — also not in git. Tracked in #29.
+- **SSH key hardcoded**: Personal SSH public key in `post-build.sh` — should be env-var driven. Tracked in #30.
+- **No root password set**: Buildroot images have blank root password → SSH password login blocked on release images. Tracked in #30 (fix: `clockworkadmin`).
+- **`broadcast.go` UDP socket leak**: `singleAddr()`/`broadcastAll()` replace connections without closing old ones — ~1.9 MB/hr leak on Buildroot with stable alsa-ltc; much faster with crash-looping alsa-ltc. Tracked in #28.
+
+## Stability Test — piclockT.local (in progress)
+
+- Unit: Pi 5 1GB, Buildroot image `65af133` (v1.2.3), no swap
+- Started: 2026-04-03 06:27 UTC
+- Baseline RSS: ~44 MB; leak rate: ~1.9 MB/hr
+- 21h checkpoint (03:27 UTC): RSS 86 MB, all services active, no OOM
+- 24h checkpoint due: ~2026-04-04 06:27 UTC
+- Monitor: `ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@piclockT.local 'cat /root/stability.log'`
+- Pass criteria: RSS ±50 MB from baseline, no OOM, mem-avail > 400 MB, all services active
+
+## Documentation updated this session (2026-04-04)
+
+- `README.md`: restructured — Platform folded into Requirements, EEPROM moved to top-level section, Service Operations trimmed, Creating a Release removed, config files table added
+- `RELEASING.md`: new — full Trixie + Buildroot release procedure
+- `buildroot-external/README.buildroot.md`: new — Buildroot build/flash/SSH/config reference
+- `buildroot-external/README.buildroot.txt`: deleted (superseded)
+- Release procedure now lives in `RELEASING.md`; see also `buildroot-external/README.buildroot.md`
 
 ## Next Suggested Release
 
 - No immediate release pending.
-- Before next release: complete issue #23 hard testing/hot-plug matrix and document results in issue #23.
+- Prerequisites before next release: resolve #28 (Trixie regression test + broadcast.go fix), #29 (build host patches), #30 (SSH/password).
