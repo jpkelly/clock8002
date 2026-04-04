@@ -10,6 +10,8 @@ For raspberry pi hats the serial device to use is `/dev/ttyAMA0`
 
 ### Wiring
 
+See the [piClock wiring diagram (PDF)](docs/piClockWiring.pdf) for an overview of all connections.
+
 The XLR and RJ45 connectors in the perfect cue follow the same general pinout as limitimer. The communication on the unit I had access to is quite close to rs485, but not quite.
 
 It is suggested to first try with connecting to a RS-485 adapter or hat like one would with a limitimer system. If that doesn't work try connecting perfect cue A signal to A on the RS-485 adapter and perfect cue GND to B on the adapter.

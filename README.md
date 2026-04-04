@@ -133,6 +133,8 @@ Expected output should show `BOOT_ORDER=0xf1`.
 
 ## GPIO/UART Serial Connections
 
+See the [piClock wiring diagram (PDF)](docs/piClockWiring.pdf) for a visual overview of UART, RS-485, LTC, and HDMI connections.
+
 The Pi 5 has multiple UART serial interfaces available via GPIO pins. `install.sh` enables them by default by adding the following device tree overlays to `/boot/firmware/config.txt`:
 
 - `dtoverlay=uart1`, `dtoverlay=uart2`, `dtoverlay=uart3` — Secondary UARTs

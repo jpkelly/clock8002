@@ -12,6 +12,8 @@ For raspberry pi hats the serial device to use is `/dev/ttyAMA0`
 
 ### Wiring
 
+See the [piClock wiring diagram (PDF)](docs/piClockWiring.pdf) for an overview of all connections.
+
 The complete RS-485 differential pair signal is only available on the rj-45 (ethernet) connectors from limitimer. The pinout of the connector is as follows:
 
 1. +12V
