@@ -120,7 +120,7 @@ Any running Buildroot or Trixie image can provision the EEPROM. SSH into the Pi 
 ```bash
 printf '[all]\nBOOT_UART=1\nBOOT_ORDER=0xf1\n' > /tmp/eeprom.cfg
 BLOB=$(ls /usr/lib/firmware/raspberrypi/bootloader-2712/default/pieeprom-*.bin | sort | tail -1)
-rpi-eeprom-config --config /tmp/eeprom.cfg --out /tmp/custom.bin "$BLOB" && rpi-eeprom-update -d -f /tmp/custom.bin && reboot
+rpi-eeprom-config --config /tmp/eeprom.cfg --out /tmp/custom.bin "$BLOB" && sudo rpi-eeprom-update -d -f /tmp/custom.bin && sudo reboot
 ```
 
 The first reboot applies the EEPROM update (may take ~15 seconds). Subsequent boots will be normal. Verify with:
