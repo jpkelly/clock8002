@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-04 (morning)
+Last updated: 2026-04-03 (afternoon)
 
 ## Current State
 
@@ -9,7 +9,7 @@ Last updated: 2026-04-04 (morning)
 - Latest release published: **v1.2.3** (commit `65af133`)
 - Trixie tarballs: `clock8002-v1.2.3-default-linux-arm64.tar.gz`, `clock8002-v1.2.3-gerry-linux-arm64.tar.gz`
 - Buildroot SD card image: `piclockBR-65af133-sdcard.img` (on Mac Desktop)
-- master HEAD: `86b2f77` (docs update)
+- master HEAD: `f9a0411` (docs accuracy audit complete)
 - `buildroot-prototype` branch: fully merged into master — `origin/buildroot-prototype` and `origin/master` point to same commit
 - Test unit piclockBR.local: running `65af133`, `BOOT_ORDER=0xf1`
 - Test unit piclockT.local (Pi 5 1GB, 10.0.0.162): running `65af133`, stability test in progress since 2026-04-03 06:27 UTC
@@ -204,13 +204,20 @@ ssh pi@piclock.local 'systemctl is-active clock8002'
 - Monitor: `ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@piclockT.local 'cat /root/stability.log'`
 - Pass criteria: RSS ±50 MB from baseline, no OOM, mem-avail > 400 MB, all services active
 
-## Documentation updated this session (2026-04-04)
+## Documentation updated this session (2026-04-03)
 
 - `README.md`: restructured — Platform folded into Requirements, EEPROM moved to top-level section, Service Operations trimmed, Creating a Release removed, config files table added
 - `RELEASING.md`: new — full Trixie + Buildroot release procedure
 - `buildroot-external/README.buildroot.md`: new — Buildroot build/flash/SSH/config reference
 - `buildroot-external/README.buildroot.txt`: deleted (superseded)
 - Release procedure now lives in `RELEASING.md`; see also `buildroot-external/README.buildroot.md`
+
+### README accuracy audit (2026-04-03 afternoon) — all claims now verified
+- Fixed: oled.ini description (`1e33012`)
+- Fixed: OLED daemon + I2C enable merged into one conditional bullet (`06839ab`)
+- Fixed: clock.ini path clarified as `/boot/piclock/clock.ini`; symlink at `~/.config/clock-8001/clock.ini` noted (`8a675fd`)
+- Fixed: `--dump-config` moved from Config section to Building from Source section (`f9a0411`)
+- Verified correct: web UI credentials (admin/clockwork), network.ini description, installer bullet list, config file paths
 
 ## Next Suggested Release
 
