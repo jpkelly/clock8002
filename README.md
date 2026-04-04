@@ -17,6 +17,7 @@ This build is intended to be used with the piClock platform.
 - [Updating](#updating)
 - [Cloning the Image](#cloning-the-image)
 - [Configuration](#configuration)
+  - [Config files overview](#config-files-overview)
 - [OSC Control](#osc-control)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
@@ -314,6 +315,18 @@ Notes:
 - `rpi-clone` overwrites the target disk. Confirm device name carefully before running.
 
 ## Configuration
+
+### Config files overview
+
+All three config files live on the SD card's FAT32 boot partition at `/boot/piclock/`, making them editable from any Mac or PC without booting the Pi.
+
+| File | Location | Purpose |
+|---|---|---|
+| `clock.ini` | `/boot/piclock/clock.ini` | Main clock config — face, colors, sources, timers, OSC, GPIO, web UI port |
+| `network.ini` | `/boot/piclock/network.ini` | Network config — DHCP/static IP, hostname, Wi-Fi AP mode |
+| `oled.ini` | `/boot/piclock/oled.ini` | OLED display config — brightness, scroll speed, display items |
+
+Changes to `network.ini` and `oled.ini` take effect on reboot (or by running `sudo /opt/clock8002/piclock-network.sh` for network changes). Changes to `clock.ini` take effect on service restart.
 
 ### Web UI
 
