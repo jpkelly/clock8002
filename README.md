@@ -237,6 +237,12 @@ The clock should appear on the HDMI display. A startup overlay shows the version
 
 On first run, a default config is created at `~/.config/clock-8001/clock.ini`. Logs are written to `~/.config/clock-8001/clock.log`.
 
+To regenerate a fresh default config at any time:
+
+```bash
+SDL_VIDEODRIVER=kmsdrm ./sdl-clock --dump-config > ~/.config/clock-8001/clock.ini
+```
+
 ### 7. Install as a system service
 
 ```bash
@@ -335,12 +341,7 @@ All clock settings — face type, colors, sources, timers, OSC, GPIO — can be 
 
 ### Config file
 
-Edit `/boot/piclock/clock.ini` directly (or via the symlink at `~/.config/clock-8001/clock.ini` — both point to the same file on the boot partition). To generate a fresh default config:
-
-```bash
-cd ~/clock8002/v4
-SDL_VIDEODRIVER=kmsdrm ./sdl-clock --dump-config > ~/.config/clock-8001/clock.ini
-```
+Edit `/boot/piclock/clock.ini` directly (or via the symlink at `~/.config/clock-8001/clock.ini` — both point to the same file on the boot partition).
 
 Key settings:
 
