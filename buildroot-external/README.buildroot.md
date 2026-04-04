@@ -179,6 +179,14 @@ reboot
 
 This is a one-time operation per unit. After reboot, boot is clean with no red screen.
 
+To verify the current EEPROM settings at any time:
+
+```bash
+rpi-eeprom-config
+```
+
+Expected output should include `BOOT_ORDER=0xf1`.
+
 ## SSH Access
 
 Default credentials on release images (tracked in issue #30):
