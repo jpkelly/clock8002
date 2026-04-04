@@ -246,7 +246,7 @@ Config files live on the boot partition under `/boot/piclock/`:
 |---|---|
 | `/boot/piclock/clock.ini` | Main clock config |
 | `/boot/piclock/network.ini` | Network / Wi-Fi config |
-| `/boot/piclock/oled.ini` | OLED display config |
+| `/boot/piclock/oled.ini` | OLED hardware config — enable/disable, I2C port, I2C address, rotation |
 
 `/opt/clock8002/clock.ini` and `/opt/clock8002/oled/oled.ini` are symlinks into `/boot/piclock/`, so edits survive service restarts.
 
