@@ -10,17 +10,15 @@ This build is intended to be used with the piClock platform.
 - [What changed from clock-8001](#what-changed-from-clock-8001)
 - [Requirements](#requirements)
 - [Quick Install (pre-built binary)](#quick-install-pre-built-binary)
+- [EEPROM Provisioning (Pi 5)](#eeprom-provisioning-pi-5)
 - [GPIO/UART Serial Connections](#gpiouart-serial-connections)
 - [Building from Source](#building-from-source)
 - [Service Operations](#service-operations)
 - [Updating](#updating)
 - [Cloning the Image](#cloning-the-image)
 - [Configuration](#configuration)
-- [EEPROM Provisioning (Pi 5)](#eeprom-provisioning-pi-5)
-- [Platform](#platform)
 - [OSC Control](#osc-control)
 - [Troubleshooting](#troubleshooting)
-- [Creating a Release](#creating-a-release)
 - [License](#license)
 
 ## Acknowledgements
@@ -42,9 +40,13 @@ Please consider supporting the original clock-8001 development: https://www.payp
 
 ## Requirements
 
-- Raspberry Pi 5 running **Raspberry Pi OS Lite (64-bit)** based on Debian Trixie, or a custom Buildroot image (see `buildroot-prototype` branch)
-- HDMI display
-- Network connection (for OSC control and web configuration)
+Built for the **piClock platform** on Raspberry Pi 5, arm64.
+
+- **OS**: Raspberry Pi OS Lite (64-bit) / Debian Trixie, or a custom Buildroot image (see [Buildroot image](buildroot-external/README.buildroot.md))
+- **Display**: HDMI via SDL2 KMSDRM (headless, no desktop required)
+- **Language**: Go with SDL2 CGo bindings
+- **Web UI**: Built-in HTTP server on port 8080
+- Network connection required for OSC control and web configuration
 
 ## Quick Install (pre-built binary)
 
@@ -108,6 +110,26 @@ ap_channel=6                       # Wi-Fi channel
 - To apply changes without rebooting: `sudo /opt/clock8002/piclock-network.sh`
 - NTP defaults to disabled so OSC `settime` commands can hold the system clock reliably
 - The Wi-Fi AP shares the wired connection; both work simultaneously
+
+## EEPROM Provisioning (Pi 5)
+
+Factory Pi 5 units ship with `BOOT_ORDER=0xf461` (SD → USB → network → restart loop). For piClock, this should be changed to `BOOT_ORDER=0xf1` (SD-only) to eliminate boot delays and network install prompts.
+
+Any running Buildroot or Trixie image can provision the EEPROM. SSH into the Pi and run:
+
+```bash
+printf '[all]\nBOOT_UART=1\nBOOT_ORDER=0xf1\n' > /tmp/eeprom.cfg
+BLOB=$(ls /usr/lib/firmware/raspberrypi/bootloader-2712/default/pieeprom-*.bin | sort | tail -1)
+rpi-eeprom-config --config /tmp/eeprom.cfg --out /tmp/custom.bin "$BLOB" && rpi-eeprom-update -d -f /tmp/custom.bin && reboot
+```
+
+The first reboot applies the EEPROM update (may take ~15 seconds). Subsequent boots will be normal. Verify with:
+
+```bash
+rpi-eeprom-config
+```
+
+Expected output should show `BOOT_ORDER=0xf1`.
 
 ## GPIO/UART Serial Connections
 
@@ -233,11 +255,10 @@ For runtime service commands, see [Service Operations](#service-operations).
 ### Clock service
 
 ```bash
-sudo systemctl status clock8002       # check status
-sudo systemctl start clock8002        # start clock service
+sudo systemctl start clock8002        # start
+sudo systemctl stop clock8002         # stop
 sudo systemctl restart clock8002      # restart after config changes
-sudo systemctl stop clock8002         # stop the clock
-sudo systemctl enable clock8002       # enable on boot
+sudo systemctl status clock8002       # check status
 journalctl -u clock8002 -f            # live service logs
 cat ~/.config/clock-8001/clock.log    # application log file
 ```
@@ -245,10 +266,9 @@ cat ~/.config/clock-8001/clock.log    # application log file
 ### LTC service
 
 ```bash
-sudo systemctl enable alsa-ltc       # enable on boot
-sudo systemctl start alsa-ltc        # start LTC decoder
-sudo systemctl restart alsa-ltc      # restart LTC decoder
-sudo systemctl stop alsa-ltc         # stop LTC decoder
+sudo systemctl start alsa-ltc        # start
+sudo systemctl stop alsa-ltc         # stop
+sudo systemctl restart alsa-ltc      # restart
 sudo systemctl status alsa-ltc       # check status
 journalctl -u alsa-ltc -f            # live LTC logs
 ```
@@ -295,26 +315,6 @@ Notes:
 
 ## Configuration
 
-### EEPROM Provisioning (Pi 5)
-
-Factory Pi 5 units ship with `BOOT_ORDER=0xf461` (SD → USB → network → restart loop). For piClock, this should be changed to `BOOT_ORDER=0xf1` (SD-only) to eliminate boot delays and network install prompts.
-
-Any running Buildroot or Trixie image can provision the EEPROM. SSH into the Pi and run:
-
-```bash
-printf '[all]\nBOOT_UART=1\nBOOT_ORDER=0xf1\n' > /tmp/eeprom.cfg
-BLOB=$(ls /usr/lib/firmware/raspberrypi/bootloader-2712/default/pieeprom-*.bin | sort | tail -1)
-rpi-eeprom-config --config /tmp/eeprom.cfg --out /tmp/custom.bin "$BLOB" && rpi-eeprom-update -d -f /tmp/custom.bin && reboot
-```
-
-The first reboot applies the EEPROM update (may take ~15 seconds). Subsequent boots will be normal. Verify with:
-
-```bash
-rpi-eeprom-config
-```
-
-Expected output should show `BOOT_ORDER=0xf1`.
-
 ### Web UI
 
 Access the web configuration interface at `http://<pi-ip>:8080`. Default credentials: **admin** / **clockwork**.
@@ -343,13 +343,6 @@ Key settings:
 | `ListenAddr` | OSC listen address | `0.0.0.0:1245` |
 | `HTTPPort` | Web config interface port | `:8080` |
 
-## Platform
-
-- **Target**: Raspberry Pi 5, arm64, Raspberry Pi OS Lite (64-bit) / Debian Trixie
-- **Display**: HDMI via SDL2 KMSDRM (headless, no desktop)
-- **Language**: Go with SDL2 CGo bindings
-- **Web UI**: Built-in HTTP server on port 8080
-
 ## OSC Control
 
 See the [original clock-8001 OSC documentation](https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md) for the full list of OSC commands.
@@ -363,31 +356,6 @@ See the [original clock-8001 OSC documentation](https://gitlab.com/clock-8001/cl
 | Clock exits silently | Check `~/.config/clock-8001/clock.log` for errors |
 | Web UI not accessible | Verify the service is running with `systemctl status clock8002` and check firewall |
 | Config changes not applied | Restart the service: `sudo systemctl restart clock8002` |
-
-## Creating a Release
-
-On the Pi (where the binary is built natively):
-
-```bash
-cd ~/clock8002/v4
-git tag vX.X.X
-git push origin vX.X.X
-make release-all
-```
-
-This produces `clock8002-vX.X.X-default-linux-arm64.tar.gz` and `clock8002-vX.X.X-gerry-linux-arm64.tar.gz`, each containing sdl-clock, alsa-ltc, the selected config set, fonts, voices, service files, and install script.
-
-Upload to GitHub Releases:
-
-```bash
-# Install gh CLI if needed: sudo apt install gh
-gh auth login
-gh release create vX.X.X \
-	clock8002-vX.X.X-default-linux-arm64.tar.gz \
-	clock8002-vX.X.X-gerry-linux-arm64.tar.gz \
-	--title "vX.X.X" \
-	--notes "Release notes"
-```
 
 ## License
 
