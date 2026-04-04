@@ -169,10 +169,11 @@ The boot-partition `pieeprom.upd`/`recovery.bin` approach was removed in `65af13
 # SSH into the running unit
 ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@piclockBR.local
 
-# Extract current config, edit BOOT_ORDER, apply
-rpi-eeprom-config > /tmp/eeprom.cfg
-# Edit /tmp/eeprom.cfg: set BOOT_ORDER=0xf1
-rpi-eeprom-update -d -f /tmp/eeprom-custom.bin   # see rpi-eeprom-config --help
+# Write config, build patched firmware blob, apply
+printf '[all]\nBOOT_UART=1\nBOOT_ORDER=0xf1\n' > /tmp/eeprom.cfg
+BLOB=$(ls /usr/lib/firmware/raspberrypi/bootloader-2712/default/pieeprom-*.bin | sort | tail -1)
+rpi-eeprom-config --config /tmp/eeprom.cfg --out /tmp/custom.bin "$BLOB"
+rpi-eeprom-update -d -f /tmp/custom.bin
 reboot
 ```
 
