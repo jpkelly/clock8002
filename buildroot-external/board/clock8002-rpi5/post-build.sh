@@ -80,12 +80,15 @@ if [ -f "${TARGET_DIR}/etc/ssh/sshd_config" ]; then
 	sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' "${TARGET_DIR}/etc/ssh/sshd_config"
 fi
 
-# Install SSH authorized key for passwordless root login.
-mkdir -p "${TARGET_DIR}/root/.ssh"
-echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIYrTQK4a861rEy89P2Uo+tbmINrjXJuyh88wvibrHeB jp_kelly@mac.com' \
-	> "${TARGET_DIR}/root/.ssh/authorized_keys"
-chmod 700 "${TARGET_DIR}/root/.ssh"
-chmod 600 "${TARGET_DIR}/root/.ssh/authorized_keys"
+# Install SSH authorized key for passwordless root login (dev builds only).
+# Set BR2_PICLOCKKEY to a public key string before building to inject it.
+# Release builds: leave BR2_PICLOCKKEY unset — no key is baked into the image.
+if [ -n "${BR2_PICLOCKKEY:-}" ]; then
+        mkdir -p "${TARGET_DIR}/root/.ssh"
+        echo "${BR2_PICLOCKKEY}" > "${TARGET_DIR}/root/.ssh/authorized_keys"
+        chmod 700 "${TARGET_DIR}/root/.ssh"
+        chmod 600 "${TARGET_DIR}/root/.ssh/authorized_keys"
+fi
 
 # Mask depmod.service — the build-time depmod (host-kmod with +XZ) produces
 # correct modules.alias for .ko.xz modules. The target's kmod may lack XZ

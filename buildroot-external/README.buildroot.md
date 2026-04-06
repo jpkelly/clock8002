@@ -106,19 +106,31 @@ ssh pi@pi5start.local 'tail -f /tmp/br-build.log'
 | `rpi-firmware` / `config.txt` | `make rpi-firmware-dirclean && make` (or just `make` — post-image.sh force-syncs config.txt) |
 | Rootfs overlay only | `make` |
 
-### Dev builds with SSH key injection
+### Release build (password only, no SSH key)
 
-To bake your personal SSH public key into a dev image, set `BR2_PICLOCKKEY` before building:
+This is the standard release build. No SSH key is baked into the image — users log in with the default root password.
 
 ```bash
-# On pi5start — store in a local untracked file, e.g. ~/buildroot-keys.env
-export BR2_PICLOCKKEY="ssh-ed25519 AAAA... you@host"
-
-# Then build
-source ~/buildroot-keys.env && make clock8002-dirclean && make > /tmp/br-build.log 2>&1
+ssh pi@pi5start.local 'cd ~/clock8002 && git pull --ff-only && cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
 ```
 
-Release builds: run `make` without the env set — no key is injected.
+### Dev build (SSH key + password)
+
+Bakes your personal SSH public key into the image for passwordless login. `BR2_PICLOCKKEY` must be set at build time.
+
+**One-time setup on pi5start** — store your key in a local untracked file:
+
+```bash
+ssh pi@pi5start.local 'echo "export BR2_PICLOCKKEY=\"ssh-ed25519 AAAA... you@host\"" > ~/buildroot-keys.env && chmod 600 ~/buildroot-keys.env'
+```
+
+**Dev build command:**
+
+```bash
+ssh pi@pi5start.local 'source ~/buildroot-keys.env && cd ~/clock8002 && git pull --ff-only && cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
+```
+
+The key is injected into `/root/.ssh/authorized_keys` in the image. The root password is also set, so both auth methods work on dev images.
 
 ### Defconfig notes
 
@@ -189,7 +201,7 @@ Expected output should include `BOOT_ORDER=0xf1`.
 
 ## SSH Access
 
-Default credentials on release images (tracked in issue #30):
+Default credentials on all images:
 
 | | Value |
 |---|---|
@@ -265,7 +277,7 @@ Config files live on the boot partition under `/boot/piclock/`:
 |---|---|
 | [#28](https://github.com/jpkelly/clock8002/issues/28) | Post-merge validation: Trixie regression test, broadcast.go leak fix, boot splash, Wi-Fi AP test |
 | [#29](https://github.com/jpkelly/clock8002/issues/29) | Mesa 25.0.7 + host-xz manual patches — not in git, must be re-applied after clean checkout |
-| [#30](https://github.com/jpkelly/clock8002/issues/30) | SSH: remove hardcoded dev key, set default root password (`clockworkadmin`) |
+| [#30](https://github.com/jpkelly/clock8002/issues/30) | SSH: hardcoded dev key replaced with `BR2_PICLOCKKEY` env var; default root password set |
 
 ## Test Units
 
