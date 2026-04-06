@@ -10,7 +10,7 @@
 # Start alsa-ltc when a USB audio capture card enumerates
 SUBSYSTEM=="sound", ACTION=="add", KERNEL=="controlC*", \
   SUBSYSTEMS=="usb", DRIVERS=="snd-usb-audio", \
-  TAG+="systemd", ENV{SYSTEMD_WANTS}+="alsa-ltc.service"
+  RUN+="/usr/bin/systemctl --no-block start alsa-ltc.service"
 
 # Stop alsa-ltc when the USB audio device is removed
 SUBSYSTEM=="sound", ACTION=="remove", KERNEL=="controlC*", \
