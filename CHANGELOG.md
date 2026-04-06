@@ -1,3 +1,13 @@
+## Version 1.2.4
+* Install
+  * `install.sh`: seed `network.ini` hostname from system hostname on first install — avoids hardcoded `piClock` default when user sets a custom hostname via RPi Imager
+* Buildroot
+  * Remove hardcoded dev SSH public key from `post-build.sh`; SSH key now optional via `BR2_PICLOCKKEY` environment variable at build time — release images are password-only
+* Documentation
+  * README: add "Preparing the SD Card" section covering RPi Imager OS setup (username, password, SSH)
+  * README.buildroot.md: add table of contents; separate Release build and Dev build command sections
+  * RELEASING.md: document rule that Buildroot release images must never include an SSH key
+
 ## Version 1.2.3
 * Buildroot
   * Remove boot-partition EEPROM provisioning (`pieeprom.upd` + `recovery.bin` baked into image): approach causes a red screen loop when installed EEPROM firmware is same version or newer than Buildroot's blob — which is the case for any Pi 5 previously booted with Trixie. EEPROM provisioning is now a documented manual step (see README)
