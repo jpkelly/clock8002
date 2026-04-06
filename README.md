@@ -9,6 +9,7 @@ This build is intended to be used with the piClock platform.
 - [Acknowledgements](#acknowledgements)
 - [What changed from clock-8001](#what-changed-from-clock-8001)
 - [Requirements](#requirements)
+- [Preparing the SD Card (Trixie)](#preparing-the-sd-card-trixie)
 - [Quick Install (pre-built binary)](#quick-install-pre-built-binary)
 - [EEPROM Provisioning (Pi 5)](#eeprom-provisioning-pi-5)
 - [GPIO/UART Serial Connections](#gpiouart-serial-connections)
@@ -48,6 +49,38 @@ Built for the **piClock platform** on Raspberry Pi 5, arm64.
 - **Language**: Go with SDL2 CGo bindings
 - **Web UI**: Built-in HTTP server on port 8080
 - Network connection required for OSC control and web configuration
+
+## Preparing the SD Card (Trixie)
+
+Before installing clock8002, flash a base OS and configure SSH access using **Raspberry Pi Imager**.
+
+### Flash with RPi Imager
+
+1. Select **Raspberry Pi OS Lite (64-bit)** (Debian Trixie) as the OS.
+2. Open **OS Customisation** (the pencil/edit button) and configure:
+
+**General tab:**
+- Set hostname (e.g. `piclock`)
+- Set username: `pi`
+- Set a password — this enables both SSH password login and local console login
+
+**Services tab:**
+- Enable SSH
+- Choose **"Allow public-key authentication only"** if you want key-only access, or **"Password authentication"** if you want password-only access (or set both in General + Services for both methods)
+
+> Both a password and an SSH key can be set simultaneously — they are independent options.
+
+3. Flash to SD card, insert into Pi, and boot.
+
+### Verify SSH access before installing
+
+```bash
+ssh pi@piclock.local
+```
+
+Once you can SSH in, proceed with the clock8002 install below.
+
+---
 
 ## Quick Install (pre-built binary)
 
