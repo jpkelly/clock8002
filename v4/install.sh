@@ -172,10 +172,8 @@ if [ -f alsa-ltc.service ]; then
         sudo tee /etc/systemd/system/alsa-ltc.service > /dev/null
 fi
 
-# Install udev rule to auto-start/stop alsa-ltc when a USB audio device appears/disappears
-if [ -f 99-alsa-ltc-usb.rules ]; then
-    sudo install -m 0644 99-alsa-ltc-usb.rules /etc/udev/rules.d/99-alsa-ltc-usb.rules
-fi
+# Remove legacy udev rule (alsa-ltc is now managed as a plain systemd service)
+sudo rm -f /etc/udev/rules.d/99-alsa-ltc-usb.rules
 
 sudo systemctl daemon-reload
 sudo systemctl enable clock8002
