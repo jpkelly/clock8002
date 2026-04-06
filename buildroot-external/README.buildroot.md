@@ -2,6 +2,32 @@
 
 This document covers building, flashing, and maintaining the Buildroot-based SD card image for clock8002 on Raspberry Pi 5. This is separate from the Debian/Trixie install.sh deployment path described in the main README.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Build Host Setup](#build-host-setup)
+  - [Manual Build-Host Patches (not in git)](#manual-build-host-patches-not-in-git)
+    - [1. Mesa 25.0.7 upgrade](#1-mesa-2507-upgrade)
+    - [2. host-xz libtool workaround](#2-host-xz-libtool-workaround)
+- [Building an Image](#building-an-image)
+  - [Full image build](#full-image-build)
+  - [Partial rebuilds](#partial-rebuilds-when-to-use-each)
+  - [Release build (password only, no SSH key)](#release-build-password-only-no-ssh-key)
+  - [Dev build (SSH key + password)](#dev-build-ssh-key--password)
+  - [Defconfig notes](#defconfig-notes)
+- [Flashing an Image](#flashing-an-image)
+  - [Copy image to Mac](#copy-image-to-mac)
+  - [Flash to SD card](#flash-to-sd-card-run-manually--never-automated)
+- [EEPROM Provisioning (Pi 5)](#eeprom-provisioning-pi-5)
+- [SSH Access](#ssh-access)
+- [Deploying a Binary (Without Reflash)](#deploying-a-binary-without-reflash)
+- [BusyBox Compatibility Notes](#busybox-compatibility-notes)
+- [Service Management](#service-management)
+- [Config Files](#config-files)
+- [Known Issues / Open Work](#known-issues--open-work)
+- [Test Units](#test-units)
+
 ## Overview
 
 The Buildroot image produces a minimal, deterministic SD card image. Key properties:
