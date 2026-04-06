@@ -92,6 +92,7 @@ Key points:
 - Build host: `pi@pi5start.local` — apply manual patches (Mesa 25.0.7, host-xz) before building (issue #29)
 - Image naming: `piclockBR-<7-char-commit-hash>-sdcard.img`
 - Both images (default and Gerry) are Trixie tarballs only — the Buildroot image is config-neutral (config lives on the boot partition)
+- **Release images must never include an SSH key** — always build without `BR2_PICLOCKKEY` set. Password-only access (`clockworkadmin`) is the only auth method on release images. The `BR2_PICLOCKKEY` mechanism is for dev builds only and must never be used when cutting a release.
 
 ---
 
