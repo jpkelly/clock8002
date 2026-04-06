@@ -80,9 +80,12 @@ if [ -f "${TARGET_DIR}/etc/ssh/sshd_config" ]; then
 	sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' "${TARGET_DIR}/etc/ssh/sshd_config"
 fi
 
-# Install SSH authorized key for passwordless root login (dev builds only).
-# Set BR2_PICLOCKKEY to a public key string before building to inject it.
+# SSH authorized key (dev builds only).
+# Always remove any stale key from prior builds first — output/target is not
+# wiped by clock8002-dirclean, so an old key can persist across rebuilds.
+# Only inject a key if BR2_PICLOCKKEY is explicitly set at build time.
 # Release builds: leave BR2_PICLOCKKEY unset — no key is baked into the image.
+rm -f "${TARGET_DIR}/root/.ssh/authorized_keys"
 if [ -n "${BR2_PICLOCKKEY:-}" ]; then
         mkdir -p "${TARGET_DIR}/root/.ssh"
         echo "${BR2_PICLOCKKEY}" > "${TARGET_DIR}/root/.ssh/authorized_keys"
