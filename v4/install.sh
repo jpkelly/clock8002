@@ -110,6 +110,10 @@ fi
 if [ ! -f "${BOOT_CONFIG_DIR}/network.ini" ] && [ -f network.ini ]; then
     echo "Installing sample network.ini to ${BOOT_CONFIG_DIR}/..."
     sudo cp network.ini "${BOOT_CONFIG_DIR}/network.ini"
+    # Seed hostname from the system hostname set during OS setup (e.g. via RPi Imager).
+    SYSTEM_HOSTNAME="$(hostname)"
+    sudo sed -i "s/^hostname=.*/hostname=${SYSTEM_HOSTNAME}/" "${BOOT_CONFIG_DIR}/network.ini"
+    echo "  Hostname set to: ${SYSTEM_HOSTNAME}"
 fi
 
 # Enable Wi-Fi radio and set regulatory domain (persistent)
