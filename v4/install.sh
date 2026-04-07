@@ -229,6 +229,10 @@ sudo rm -f /etc/udev/rules.d/99-alsa-ltc-usb.rules
 # will be restored by alsa-restore.service at boot, preventing alsa-ltc from opening
 # the audio device. Remove it so ALSA uses clean device defaults on next boot.
 sudo rm -f /var/lib/alsa/asound.state
+# Mask alsa-store/alsa-restore so a future crash-loop can never write or replay a
+# corrupt state file. alsa-ltc sets all hw_params programmatically; there is no
+# mixer state worth preserving on these units.
+sudo systemctl mask alsa-store.service alsa-restore.service 2>/dev/null || true
 
 sudo systemctl daemon-reload
 sudo systemctl enable clock8002
