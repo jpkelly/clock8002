@@ -134,11 +134,13 @@ ssh pi@pi5start.local 'tail -f /tmp/br-build.log'
 
 ### Release build (password only, no SSH key)
 
-This is the standard release build. No SSH key is baked into the image — users log in with the default root password.
+Release builds must use `make clean` — not `clock8002-dirclean` — to wipe `output/target/` completely. `clock8002-dirclean` only cleans the package build dir; stale files (including SSH keys from prior dev builds) persist in `output/target/` across partial rebuilds. `post-build.sh` also actively purges any stale key, but `make clean` ensures a provably clean rootfs.
 
 ```bash
-ssh pi@pi5start.local 'cd ~/clock8002 && git pull --ff-only && cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
+ssh pi@pi5start.local 'cd ~/clock8002 && git fetch --tags origin && git checkout vX.X.X && cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
 ```
+
+> Replace `vX.X.X` with the release tag. `make clean` is slower (full rebuild of all packages) but required for release integrity.
 
 ### Dev build (SSH key + password)
 
@@ -156,7 +158,7 @@ ssh pi@pi5start.local 'echo "export BR2_PICLOCKKEY=\"ssh-ed25519 AAAA... you@hos
 ssh pi@pi5start.local 'source ~/buildroot-keys.env && cd ~/clock8002 && git pull --ff-only && cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
 ```
 
-The key is injected into `/root/.ssh/authorized_keys` in the image. The root password is also set, so both auth methods work on dev images.
+> Dev builds can use `clock8002-dirclean` for speed. The SSH key is re-injected on every build by `post-build.sh` when `BR2_PICLOCKKEY` is set.
 
 ### Defconfig notes
 
