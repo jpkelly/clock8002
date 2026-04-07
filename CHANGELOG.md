@@ -2,6 +2,8 @@
 * alsa-ltc
   * Return non-zero exit code on error — systemd `Restart=on-failure` now triggers correctly instead of treating all exits as success
   * Add `snd_pcm_drop()` before `snd_pcm_close()` for clean capture teardown — prevents potential hang on broken USB device
+* Buildroot
+  * Remove deleted `99-alsa-ltc-usb.rules` from package recipe — Buildroot image builds were failing with `install: cannot stat '99-alsa-ltc-usb.rules': No such file or directory`
 
 ## Version 1.2.5
 * Install

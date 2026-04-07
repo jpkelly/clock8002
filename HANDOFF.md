@@ -1,31 +1,40 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-03 (afternoon)
+Last updated: 2026-04-07
 
 ## Current State
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- Latest release published: **v1.2.3** (commit `65af133`)
-- Trixie tarballs: `clock8002-v1.2.3-default-linux-arm64.tar.gz`, `clock8002-v1.2.3-gerry-linux-arm64.tar.gz`
-- Buildroot SD card image: `piclockBR-65af133-sdcard.img` (on Mac Desktop)
-- master HEAD: `f9a0411` (docs accuracy audit complete)
-- `buildroot-prototype` branch: fully merged into master — `origin/buildroot-prototype` and `origin/master` point to same commit
-- Test unit piclockBR.local: running `65af133`, `BOOT_ORDER=0xf1`
-- Test unit piclockT.local (Pi 5 1GB, 10.0.0.162): running `65af133`, stability test in progress since 2026-04-03 06:27 UTC
+- Latest tagged release: **v1.2.6** (commit `8a4c562`) — Trixie tarballs on GitHub
+- master HEAD: `71c2321` (buildroot: remove deleted 99-alsa-ltc-usb.rules from package recipe)
+- Buildroot SD card image: `piclockBR-71c2321-sdcard.img` (on Mac Desktop) — contains v1.2.6 binaries
+- Trixie tarballs: `clock8002-v1.2.6-default-linux-arm64.tar.gz`, `clock8002-v1.2.6-gerry-linux-arm64.tar.gz`
+- Test unit piclockBR.local: running Buildroot image built from `759dafe` (pre-v1.2.6); stability test in progress
+- Test unit piclockTX.local: running Trixie v1.2.5; stability test in progress
+- piClockN.local: Trixie v1.2.6, shorter USB cable (intermittent failures), usb-monitor service running
+- piclockM.local: Trixie v1.2.6, longer USB cable (fails every boot), usb-monitor service running
+- `buildroot-prototype` branch: fully merged into master
 
 ## Buildroot Status (post-merge)
 
 - `buildroot-prototype` branch merged into `master` at `afbbc01` — all Buildroot work is now on master
-- Tracking issue: **#28** "Buildroot: post-merge validation and remaining work" (replaces closed #24 and #25)
+- Tracking issue: **#28** "Buildroot: post-merge validation and remaining work"
 - Build host: pi@pi5start.local, `~/buildroot` (Buildroot 2025.02)
 - Mesa 25.0.7 (upgraded from 24.0.9 — manual change on build host, not in git — tracked in #29)
-- SSH: personal key hardcoded in `post-build.sh` — fix tracked in #30 (use `BR2_PICLOCKKEY` env var; default password `clockworkadmin`)
+- SSH: `BR2_PICLOCKKEY` env var for optional key injection; release images are password-only (`clockworkadmin`)
+- **Note**: Mesa 25.0.7 changes and host-xz libtool workaround are NOT in git — must be re-applied after any clean Buildroot checkout on pi5start
+
+### Fixed this session (2026-04-06/07)
+- **alsa-ltc exit code** (`8a4c562`): All `goto cleanup` paths previously returned 0 — systemd never triggered `Restart=on-failure`. Now defaults to exit code 1; set to 0 only after successful setup; set back to 1 on unrecoverable error (10 consecutive read failures).
+- **alsa-ltc snd_pcm_drop** (`8a4c562`): Added `snd_pcm_drop(capture)` before `snd_pcm_close(capture)` to prevent potential hang on broken USB device.
+- **Buildroot package recipe** (`71c2321`): Removed `99-alsa-ltc-usb.rules` install line from `clock8002.mk` — file was deleted in v1.2.5 but recipe was not updated, causing Buildroot image builds to fail with `install: cannot stat ... No such file or directory`.
+- **USB cable root cause**: piClockN and piclockM failures traced to flat ribbon USB cable (no twisted D+/D- pairs). Shorter twisted cable = intermittent; longer cable = fails every boot. Software recovery: sysfs authorized toggle (`echo 0/1 > /sys/bus/usb/devices/1-1.1/authorized`) proven to clear stuck C-Media capture state.
+- **usb-monitor service**: Deployed on piClockN and piclockM — `/home/pi/usb-monitor.sh`, 60s interval, logs USB hub + audio device presence and alsa-ltc restart count.
 
 ### Open Buildroot issues
 - **#28**: Post-merge validation — Trixie regression test, `broadcast.go` leak fix, boot splash, Wi-Fi AP test
 - **#29**: Mesa 25.0.7 + host-xz manual patches not in git — capture in a setup script
-- **#30**: SSH — remove hardcoded dev key; set default root password (`clockworkadmin`)
 
 ### Fixed this session (2026-04-01 evening)
 - **Sync Time button** (`6f76320`): switched `date --set "@epoch"` → `date -u -s "YYYY-MM-DD HH:MM:SS"` and `hwclock --systohc --utc` → `hwclock -w -u`. POSIX short flags work on both GNU coreutils (Trixie) and BusyBox (Buildroot). Verified: system clock and RTC both set correctly.
