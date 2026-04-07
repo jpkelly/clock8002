@@ -175,6 +175,11 @@ fi
 # Remove legacy udev rule (alsa-ltc is now managed as a plain systemd service)
 sudo rm -f /etc/udev/rules.d/99-alsa-ltc-usb.rules
 
+# Remove stale ALSA state file — a corrupt asound.state written during a crash-loop
+# will be restored by alsa-restore.service at boot, preventing alsa-ltc from opening
+# the audio device. Remove it so ALSA uses clean device defaults on next boot.
+sudo rm -f /var/lib/alsa/asound.state
+
 sudo systemctl daemon-reload
 sudo systemctl enable clock8002
 sudo udevadm control --reload-rules
