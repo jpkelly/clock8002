@@ -1,3 +1,19 @@
+## Version 1.2.5
+* Install
+  * Config files moved to `/boot/firmware/piclock/` (FAT32 boot partition) — now accessible from Mac/PC when SD card is inserted (appears as `bootfs` volume with a `piclock/` folder)
+  * `install.sh` migrates existing config files from `/boot/piclock/` to `/boot/firmware/piclock/` and updates symlinks on existing units
+  * `install.sh` configures `/boot/firmware` with correct `uid`/`gid` mount options so the web UI can write back to `clock.ini` on the FAT32 partition
+  * `install.sh` removes stale `/var/lib/alsa/asound.state` on install to prevent alsa-ltc `Input/output error` caused by corrupt ALSA state from a prior crash-loop
+  * `install.sh` now uses `$SUDO_USER` to correctly identify the invoking user when run via `sudo bash install.sh` — fixes `User=` in service files, config symlinks, and fstab uid/gid
+* alsa-ltc
+  * Added `[Install]/WantedBy=multi-user.target` to `alsa-ltc.service` — `systemctl enable/disable alsa-ltc` now works correctly
+  * Removed `99-alsa-ltc-usb.rules` udev rule — alsa-ltc is now a plain boot-time service
+* Buildroot
+  * `/boot/piclock/` config files were already on FAT32 in Buildroot (no change needed)
+* Documentation
+  * Updated all config path references from `/boot/piclock/` to `/boot/firmware/piclock/`
+  * Removed `chown` from Gerry deploy commands (FAT32 does not support per-file ownership)
+
 ## Version 1.2.4
 * Install
   * `install.sh`: seed `network.ini` hostname from system hostname on first install — avoids hardcoded `piClock` default when user sets a custom hostname via RPi Imager
