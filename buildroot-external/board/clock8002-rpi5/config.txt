@@ -37,9 +37,6 @@ dtparam=i2c_arm=on
 # Enable Pi 5 RTC battery charging at 3.0V
 dtparam=rtc_bbat_vchg=3000000
 
-# USB OTG host mode
-dtoverlay=dwc2,dr_mode=host
-
 # Enable UART interfaces for serial peripherals
 dtoverlay=uart1
 dtoverlay=uart2
