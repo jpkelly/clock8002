@@ -16,14 +16,15 @@ if [ "$(uname -s)" != "Linux" ] || [ "$(uname -m)" != "aarch64" ]; then
     [ "$reply" != "y" ] && exit 1
 fi
 
-# Resolve the real invoking user — install.sh must be run via 'sudo bash install.sh'.
-# $USER and $HOME resolve to root under sudo; use $SUDO_USER to get the actual user.
+# Determine the user on whose behalf we are installing.
+# install.sh must be run via 'sudo bash install.sh'; $USER/$HOME resolve to root
+# under sudo, so we use $SUDO_USER to recover the actual invoking user.
 if [ -n "${SUDO_USER:-}" ] && [ "${SUDO_USER}" != "root" ]; then
-    REAL_USER="${SUDO_USER}"
-    REAL_HOME="$(getent passwd "${SUDO_USER}" | cut -d: -f6)"
+    INSTALL_USER="${SUDO_USER}"
+    INSTALL_HOME="$(getent passwd "${SUDO_USER}" | cut -d: -f6)"
 else
-    REAL_USER="${USER}"
-    REAL_HOME="${HOME}"
+    INSTALL_USER="${USER}"
+    INSTALL_HOME="${HOME}"
 fi
 
 # Stop running services before copying binaries
@@ -70,13 +71,13 @@ if [ -f alsa-ltc ]; then
 fi
 
 # Add current user to video and render groups
-echo "Adding $REAL_USER to video and render groups..."
-sudo usermod -aG video,render "$REAL_USER"
+echo "Adding $INSTALL_USER to video and render groups..."
+sudo usermod -aG video,render "$INSTALL_USER"
 
 # Install config to boot partition with symlink
 # Pi OS Bookworm/Trixie: /boot/firmware is the FAT32 boot partition, accessible on Mac/PC.
 BOOT_CONFIG_DIR="/boot/firmware/piclock"
-CONFIG_DIR="$REAL_HOME/.config/clock-8001"
+CONFIG_DIR="$INSTALL_HOME/.config/clock-8001"
 
 sudo mkdir -p "${BOOT_CONFIG_DIR}"
 mkdir -p "${CONFIG_DIR}"
@@ -84,10 +85,10 @@ mkdir -p "${CONFIG_DIR}"
 # Allow the current user to write to the FAT32 boot partition (enables web UI config saves).
 # vfat does not support per-file ownership; uid/gid mount options control effective ownership.
 if grep -qE '[[:space:]]/boot/firmware[[:space:]]' /etc/fstab; then
-    BOOT_UID="$(id -u "${REAL_USER}")"
-    BOOT_GID="$(id -g "${REAL_USER}")"
+    BOOT_UID="$(id -u "${INSTALL_USER}")"
+    BOOT_GID="$(id -g "${INSTALL_USER}")"
     if ! grep -E '[[:space:]]/boot/firmware[[:space:]]' /etc/fstab | grep -q "uid=${BOOT_UID}"; then
-        echo "Configuring /boot/firmware to be writable by $REAL_USER..."
+        echo "Configuring /boot/firmware to be writable by $INSTALL_USER..."
         sudo sed -i "/[[:space:]]\/boot\/firmware[[:space:]]/ s/defaults/defaults,uid=${BOOT_UID},gid=${BOOT_GID}/" /etc/fstab
     fi
 fi
@@ -126,19 +127,19 @@ elif [ -f "${CONFIG_DIR}/clock.ini" ]; then
     # Existing config at old location — migrate to boot partition
     echo "Migrating existing config to ${BOOT_CONFIG_DIR}/clock.ini..."
     sudo cp "${CONFIG_DIR}/clock.ini" "${BOOT_CONFIG_DIR}/clock.ini"
-    sudo chown "$REAL_USER":"$REAL_USER" "${BOOT_CONFIG_DIR}/clock.ini" 2>/dev/null || true
+    sudo chown "$INSTALL_USER":"$INSTALL_USER" "${BOOT_CONFIG_DIR}/clock.ini" 2>/dev/null || true
     rm "${CONFIG_DIR}/clock.ini"
     ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
 elif [ -f "${BOOT_CONFIG_DIR}/clock.ini" ]; then
     # Config on boot partition but no symlink yet
     echo "Found config on boot partition, creating symlink..."
-    sudo chown "$REAL_USER":"$REAL_USER" "${BOOT_CONFIG_DIR}/clock.ini" 2>/dev/null || true
+    sudo chown "$INSTALL_USER":"$INSTALL_USER" "${BOOT_CONFIG_DIR}/clock.ini" 2>/dev/null || true
     ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
 else
     # Fresh install — copy default to boot partition and symlink
     echo "Installing default configuration to ${BOOT_CONFIG_DIR}/clock.ini..."
     sudo cp clock.ini "${BOOT_CONFIG_DIR}/clock.ini"
-    sudo chown "$REAL_USER":"$REAL_USER" "${BOOT_CONFIG_DIR}/clock.ini" 2>/dev/null || true
+    sudo chown "$INSTALL_USER":"$INSTALL_USER" "${BOOT_CONFIG_DIR}/clock.ini" 2>/dev/null || true
     ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
 fi
 
@@ -203,11 +204,13 @@ fi
 
 sed "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" "${SERVICE_FILE}" | \
     sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl-clock --fullscreen|" | \
-    sed "s|User=.*|User=$REAL_USER|" | \
+    sed "s|User=.*|User=$INSTALL_USER|" | \
+    sudo tee /etc/systemd/system/clock8002.service > /dev/null
+
 echo "Installing restricted hwclock sudoers rule..."
 printf '%s\n' \
-    "Defaults:${REAL_USER} !requiretty" \
-    "${REAL_USER} ALL=(root) NOPASSWD: /usr/sbin/hwclock --systohc --utc, /sbin/hwclock --systohc --utc" | \
+    "Defaults:${INSTALL_USER} !requiretty" \
+    "${INSTALL_USER} ALL=(root) NOPASSWD: /usr/sbin/hwclock --systohc --utc, /sbin/hwclock --systohc --utc" | \
     sudo tee /etc/sudoers.d/clock8002-hwclock > /dev/null
 sudo chmod 440 /etc/sudoers.d/clock8002-hwclock
 sudo visudo -cf /etc/sudoers.d/clock8002-hwclock
@@ -215,7 +218,7 @@ sudo visudo -cf /etc/sudoers.d/clock8002-hwclock
 # Install alsa-ltc service if present
 if [ -f alsa-ltc.service ]; then
     sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/alsa-ltc - 127.0.0.1 1245|" alsa-ltc.service | \
-        sed "s|User=.*|User=$REAL_USER|" | \
+        sed "s|User=.*|User=$INSTALL_USER|" | \
         sudo tee /etc/systemd/system/alsa-ltc.service > /dev/null
 fi
 
@@ -256,8 +259,8 @@ if [ -d oled ]; then
     fi
 
     # Copy splash logo to user home
-    if [ -f oled/piclockLogo.bin ] && [ ! -f "$REAL_HOME/piclockLogo.bin" ]; then
-        cp oled/piclockLogo.bin "$REAL_HOME/piclockLogo.bin"
+    if [ -f oled/piclockLogo.bin ] && [ ! -f "$INSTALL_HOME/piclockLogo.bin" ]; then
+        cp oled/piclockLogo.bin "$INSTALL_HOME/piclockLogo.bin"
     fi
 
     # Enable I2C if not already enabled
@@ -269,7 +272,7 @@ if [ -d oled ]; then
     # Install OLED systemd service
     if [ -f oled/oled_daemon.service ]; then
         sed "s|ExecStart=.*|ExecStart=/usr/bin/python3 ${INSTALL_DIR}/oled/oled_daemon.py|" oled/oled_daemon.service | \
-            sed "s|User=.*|User=$REAL_USER|" | \
+            sed "s|User=.*|User=$INSTALL_USER|" | \
             sudo tee /etc/systemd/system/oled_daemon.service > /dev/null
         sudo systemctl daemon-reload
         sudo systemctl enable oled_daemon
