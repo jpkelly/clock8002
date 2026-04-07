@@ -50,7 +50,6 @@ release: sdl-clock alsa-ltc ## Package a release tarball for NETWORK_CONFIG vari
 	@cp -r splash $(RELEASE_DIR)/
 	@cp clock8002.service $(RELEASE_DIR)/
 	@cp alsa-ltc.service $(RELEASE_DIR)/
-	@cp 99-alsa-ltc-usb.rules $(RELEASE_DIR)/
 	@cp piclock-network.sh $(RELEASE_DIR)/
 	@cp piclock-network.service $(RELEASE_DIR)/
 	@cp install.sh $(RELEASE_DIR)/
