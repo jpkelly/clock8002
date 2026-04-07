@@ -79,7 +79,7 @@ Report the deployed short commit hash (first 7 characters).
 **For Gerry variant:** force-apply the Gerry config pair after installing the default:
 
 ```bash
-ssh pi@piclock.local 'sudo cp /tmp/clock8002-vX.X.X-gerry-linux-arm64/clock.ini /boot/piclock/clock.ini && sudo cp /tmp/clock8002-vX.X.X-gerry-linux-arm64/network.ini /boot/piclock/network.ini && sudo chown pi:pi /boot/piclock/clock.ini /boot/piclock/network.ini && sudo reboot'
+ssh pi@piclock.local 'sudo cp /tmp/clock8002-vX.X.X-gerry-linux-arm64/clock.ini /boot/firmware/piclock/clock.ini && sudo cp /tmp/clock8002-vX.X.X-gerry-linux-arm64/network.ini /boot/firmware/piclock/network.ini && sudo reboot'
 ```
 
 ---

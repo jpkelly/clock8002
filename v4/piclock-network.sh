@@ -1,8 +1,14 @@
 #!/bin/bash
-# Apply network settings from /boot/piclock/network.ini
+# Apply network settings from the boot partition network.ini
 # Runs at boot via piclock-network.service
-
-NETWORK_INI="/boot/piclock/network.ini"
+#
+# Pi OS Bookworm/Trixie: /boot/firmware is the FAT32 boot partition.
+# Buildroot: /boot is the FAT32 boot partition (mounted from mmcblk0p1).
+if [ -d /boot/firmware ]; then
+    NETWORK_INI="/boot/firmware/piclock/network.ini"
+else
+    NETWORK_INI="/boot/piclock/network.ini"
+fi
 
 [ -f "$NETWORK_INI" ] || exit 0
 

@@ -136,8 +136,8 @@ Last updated: 2026-04-03 (afternoon)
 
 - Build host rule: build/release artifacts for clock8002 are authoritative only when built on `pi@pi5start.local` from a fresh clone at target ref.
 - Do not use Mac local build results for release/deploy validation.
-- Gerry variant rule: deployment is only valid when both `/boot/piclock/clock.ini` and `/boot/piclock/network.ini` match Gerry settings.
-- Installer behavior note: `install.sh` preserves existing `/boot/piclock/clock.ini` and only installs packaged clock.ini on fresh install; existing units may require explicit config copy.
+- Gerry variant rule: deployment is only valid when both `/boot/firmware/piclock/clock.ini` and `/boot/firmware/piclock/network.ini` match Gerry settings.
+- Installer behavior note: `install.sh` preserves existing `/boot/firmware/piclock/clock.ini` and only installs packaged clock.ini on fresh install; existing units may require explicit config copy.
 
 ## Useful Commands
 
@@ -152,7 +152,7 @@ Last updated: 2026-04-03 (afternoon)
 - Verify services on piclock:
   - `ssh pi@piclock.local 'systemctl is-active clock8002 alsa-ltc oled_daemon'`
 - Force-apply gerry config pair on existing unit:
-  - `ssh pi@piclock.local 'sudo cp /tmp/clock8002-v1.x.y-gerry-linux-arm64/clock.ini /boot/piclock/clock.ini && sudo cp /tmp/clock8002-v1.x.y-gerry-linux-arm64/network.ini /boot/piclock/network.ini && sudo chown pi:pi /boot/piclock/clock.ini /boot/piclock/network.ini && sudo reboot'`
+  - `ssh pi@piclock.local 'sudo cp /tmp/clock8002-v1.x.y-gerry-linux-arm64/clock.ini /boot/firmware/piclock/clock.ini && sudo cp /tmp/clock8002-v1.x.y-gerry-linux-arm64/network.ini /boot/firmware/piclock/network.ini && sudo reboot'`
 
 ## Release Notes Template Workflow
 

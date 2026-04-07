@@ -112,13 +112,13 @@ The installer starts the clock service automatically. Then open `http://<pi-ip>:
 
 ### Pre-boot Network Configuration (optional)
 
-Edit `/boot/piclock/network.ini` on the SD card's FAT32 boot partition (mountable on Mac/PC) to configure the Pi without SSH. Settings apply automatically on boot via the `piclock-network` service.
+Edit `/boot/firmware/piclock/network.ini` on the SD card's FAT32 boot partition (visible on Mac/PC as `bootfs`) to configure the Pi without SSH. Settings apply automatically on boot via the `piclock-network` service.
 
 Example `network.ini` with common configurations:
 
 ```ini
 # Clock-8002 Network Configuration
-# Place this file at /boot/piclock/network.ini and reboot to apply
+# Place this file at /boot/firmware/piclock/network.ini and reboot to apply
 
 [network]
 mode=dhcp                          # dhcp or static
@@ -358,13 +358,13 @@ Notes:
 
 ### Config files overview
 
-All three config files live on the SD card's FAT32 boot partition at `/boot/piclock/`, making them editable from any Mac or PC without booting the Pi.
+All three config files live on the SD card's FAT32 boot partition at `/boot/firmware/piclock/`, making them editable from any Mac or PC (the partition appears as `bootfs` when the SD card is inserted).
 
 | File | Location | Purpose |
 |---|---|---|
-| `clock.ini` | `/boot/piclock/clock.ini` | Main clock config — face, colors, sources, timers, OSC, GPIO, web UI port |
-| `network.ini` | `/boot/piclock/network.ini` | Network config — DHCP/static IP, hostname, Wi-Fi AP mode |
-| `oled.ini` | `/boot/piclock/oled.ini` | OLED hardware config — enable/disable, I2C port, I2C address, rotation |
+| `clock.ini` | `/boot/firmware/piclock/clock.ini` | Main clock config — face, colors, sources, timers, OSC, GPIO, web UI port |
+| `network.ini` | `/boot/firmware/piclock/network.ini` | Network config — DHCP/static IP, hostname, Wi-Fi AP mode |
+| `oled.ini` | `/boot/firmware/piclock/oled.ini` | OLED hardware config — enable/disable, I2C port, I2C address, rotation |
 
 Changes to `network.ini` and `oled.ini` take effect on reboot (or by running `sudo /opt/clock8002/piclock-network.sh` for network changes). Changes to `clock.ini` take effect on service restart.
 
@@ -376,7 +376,7 @@ All clock settings — face type, colors, sources, timers, OSC, GPIO — can be 
 
 ### Config file
 
-Edit `/boot/piclock/clock.ini` directly (or via the symlink at `~/.config/clock-8001/clock.ini` — both point to the same file on the boot partition).
+Edit `/boot/firmware/piclock/clock.ini` directly (or via the symlink at `~/.config/clock-8001/clock.ini` — both point to the same file on the boot partition).
 
 Key settings:
 

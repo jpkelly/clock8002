@@ -64,11 +64,50 @@ echo "Adding $USER to video and render groups..."
 sudo usermod -aG video,render "$USER"
 
 # Install config to boot partition with symlink
-BOOT_CONFIG_DIR="/boot/piclock"
+# Pi OS Bookworm/Trixie: /boot/firmware is the FAT32 boot partition, accessible on Mac/PC.
+BOOT_CONFIG_DIR="/boot/firmware/piclock"
 CONFIG_DIR="$HOME/.config/clock-8001"
 
 sudo mkdir -p "${BOOT_CONFIG_DIR}"
 mkdir -p "${CONFIG_DIR}"
+
+# Allow the current user to write to the FAT32 boot partition (enables web UI config saves).
+# vfat does not support per-file ownership; uid/gid mount options control effective ownership.
+if grep -qE '[[:space:]]/boot/firmware[[:space:]]' /etc/fstab; then
+    BOOT_UID="$(id -u)"
+    BOOT_GID="$(id -g)"
+    if ! grep -E '[[:space:]]/boot/firmware[[:space:]]' /etc/fstab | grep -q "uid=${BOOT_UID}"; then
+        echo "Configuring /boot/firmware to be writable by $USER..."
+        sudo sed -i "/[[:space:]]\/boot\/firmware[[:space:]]/ s/defaults/defaults,uid=${BOOT_UID},gid=${BOOT_GID}/" /etc/fstab
+    fi
+fi
+
+# Migrate config files from legacy /boot/piclock/ (ext4) to /boot/firmware/piclock/ (FAT32).
+# Previously config files were installed to /boot/piclock/ on ext4, not accessible from Mac/PC.
+OLD_BOOT_DIR="/boot/piclock"
+if [ -d "${OLD_BOOT_DIR}" ] && [ "${OLD_BOOT_DIR}" != "${BOOT_CONFIG_DIR}" ]; then
+    echo "Migrating config files from ${OLD_BOOT_DIR} to ${BOOT_CONFIG_DIR}..."
+    for ini in clock.ini network.ini oled.ini; do
+        if [ -f "${OLD_BOOT_DIR}/${ini}" ] && [ ! -f "${BOOT_CONFIG_DIR}/${ini}" ]; then
+            sudo cp "${OLD_BOOT_DIR}/${ini}" "${BOOT_CONFIG_DIR}/${ini}"
+            echo "  Migrated ${ini}"
+        fi
+    done
+    # Update clock.ini symlink if it still points to the old location.
+    if [ -L "${CONFIG_DIR}/clock.ini" ]; then
+        case "$(readlink "${CONFIG_DIR}/clock.ini")" in
+            "${OLD_BOOT_DIR}/"*) ln -sf "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"; echo "  Updated clock.ini symlink" ;;
+        esac
+    fi
+    # Update oled.ini symlink if it still points to the old location.
+    if [ -L "${INSTALL_DIR}/oled/oled.ini" ]; then
+        case "$(readlink "${INSTALL_DIR}/oled/oled.ini")" in
+            "${OLD_BOOT_DIR}/"*) sudo ln -sf "${BOOT_CONFIG_DIR}/oled.ini" "${INSTALL_DIR}/oled/oled.ini"; echo "  Updated oled.ini symlink" ;;
+        esac
+    fi
+    # Remove old directory if now empty.
+    sudo rmdir "${OLD_BOOT_DIR}" 2>/dev/null || true
+fi
 
 if [ -L "${CONFIG_DIR}/clock.ini" ]; then
     # Already a symlink (previous install migrated it)
@@ -77,19 +116,19 @@ elif [ -f "${CONFIG_DIR}/clock.ini" ]; then
     # Existing config at old location — migrate to boot partition
     echo "Migrating existing config to ${BOOT_CONFIG_DIR}/clock.ini..."
     sudo cp "${CONFIG_DIR}/clock.ini" "${BOOT_CONFIG_DIR}/clock.ini"
-    sudo chown "$USER":"$USER" "${BOOT_CONFIG_DIR}/clock.ini"
+    sudo chown "$USER":"$USER" "${BOOT_CONFIG_DIR}/clock.ini" 2>/dev/null || true
     rm "${CONFIG_DIR}/clock.ini"
     ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
 elif [ -f "${BOOT_CONFIG_DIR}/clock.ini" ]; then
     # Config on boot partition but no symlink yet
     echo "Found config on boot partition, creating symlink..."
-    sudo chown "$USER":"$USER" "${BOOT_CONFIG_DIR}/clock.ini"
+    sudo chown "$USER":"$USER" "${BOOT_CONFIG_DIR}/clock.ini" 2>/dev/null || true
     ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
 else
     # Fresh install — copy default to boot partition and symlink
     echo "Installing default configuration to ${BOOT_CONFIG_DIR}/clock.ini..."
     sudo cp clock.ini "${BOOT_CONFIG_DIR}/clock.ini"
-    sudo chown "$USER":"$USER" "${BOOT_CONFIG_DIR}/clock.ini"
+    sudo chown "$USER":"$USER" "${BOOT_CONFIG_DIR}/clock.ini" 2>/dev/null || true
     ln -s "${BOOT_CONFIG_DIR}/clock.ini" "${CONFIG_DIR}/clock.ini"
 fi
 
@@ -257,8 +296,8 @@ echo ""
 echo "Installation complete!"
 echo ""
 echo "  Install directory: ${INSTALL_DIR}"
-echo "  Config file:       /boot/piclock/clock.ini"
-echo "  Network config:    /boot/piclock/network.ini"
+echo "  Config file:       /boot/firmware/piclock/clock.ini"
+echo "  Network config:    /boot/firmware/piclock/network.ini"
 echo "  Config symlink:    ~/.config/clock-8001/clock.ini"
 echo "  Web UI:            http://$(hostname -I | awk '{print $1}'):8080"
 echo "  Credentials:       admin / clockwork"
