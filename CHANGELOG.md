@@ -1,3 +1,8 @@
+## Version 1.2.6
+* alsa-ltc
+  * Return non-zero exit code on error — systemd `Restart=on-failure` now triggers correctly instead of treating all exits as success
+  * Add `snd_pcm_drop()` before `snd_pcm_close()` for clean capture teardown — prevents potential hang on broken USB device
+
 ## Version 1.2.5
 * Install
   * Config files moved to `/boot/firmware/piclock/` (FAT32 boot partition) — now accessible from Mac/PC when SD card is inserted (appears as `bootfs` volume with a `piclock/` folder)

@@ -158,6 +158,7 @@ int main(int argc, char *argv[]) {
     int rc;
     char *device = NULL;
     int device_allocated = 0;
+    int exit_code = 1;  /* assume error; set to 0 only on clean shutdown */
 
     if (argc == 2 && strcmp(argv[1], "--version") == 0) {
         print_version(stdout, argv[0]);
@@ -307,6 +308,9 @@ int main(int argc, char *argv[]) {
     dest.sin_addr.s_addr = inet_addr(osc_ip);
 
     /* Main capture loop */
+    /* If we reach the main loop, setup succeeded — a clean SIGTERM exit is success */
+    exit_code = 0;
+
     char prev_tc[16] = "";
     ltc_off_t total_samples = 0;
     int consecutive_errors = 0;
@@ -324,6 +328,7 @@ int main(int argc, char *argv[]) {
                     /* Truly unrecoverable — exit so systemd can restart */
                     fprintf(stderr, "audio device unrecoverable after %d errors, exiting\n",
                             consecutive_errors);
+                    exit_code = 1;
                     goto cleanup;
                 }
                 /* prepare failed but haven't hit limit yet — keep trying */
@@ -372,6 +377,7 @@ cleanup:
         fprintf(stdout, "buffer freed\n");
     }
     if (capture) {
+        snd_pcm_drop(capture);
         snd_pcm_close(capture);
         fprintf(stdout, "audio interface closed\n");
     }
@@ -382,5 +388,5 @@ cleanup:
     if (device_allocated && device)
         free(device);
 
-    return 0;
+    return exit_code;
 }
