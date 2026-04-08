@@ -91,7 +91,7 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 	engine.infoTimer = timer.NewTimer(time.Duration(options.ShowInfo) * time.Second)
 	go engine.infoTimeout()
 	engine.showInfo = true
-	fmt.Printf(engine.info)
+	fmt.Print(engine.info)
 
 	engine.initPicturall(options)
 	engine.initVmix(options)
