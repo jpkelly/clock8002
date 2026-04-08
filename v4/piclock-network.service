@@ -2,6 +2,7 @@
 Description=Apply PiClock network configuration
 After=NetworkManager.service network-online.target
 Wants=NetworkManager.service
+RequiresMountsFor=/boot
 
 [Service]
 Type=oneshot
