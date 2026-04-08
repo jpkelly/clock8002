@@ -54,11 +54,11 @@ unit_tests_v4:
 #   only:
 #   - master
 
-lint_code:
-  stage: test
-  script:
-    - cd v3
-    - make lint
+# lint_code:
+#   stage: test
+#   script:
+#     - cd v3
+#     - make lint
 
 lint_code_v4:
   stage: test
@@ -89,22 +89,22 @@ create_config_4:
             - v4/clock_port80.ini
             - v4/clock_port8080.ini
 
-build:
-    image: registry.gitlab.com/clock-8001/clock-8001-build:master
-    stage: build
-    script:
-      - cd v3
-      - make build
-    artifacts:
-      paths:
-        - v3/matrix-clock
-        - v3/sdl-clock
-        - v3/clock-bridge
-        - v3/clock.ini
-        - v3/clock_port80.ini
-        - fonts/7x13.bdf
+# build:
+#     image: registry.gitlab.com/clock-8001/clock-8001-build:master
+#     stage: build
+#     script:
+#       - cd v3
+#       - make build
+#     artifacts:
+#       paths:
+#         - v3/matrix-clock
+#         - v3/sdl-clock
+#         - v3/clock-bridge
+#         - v3/clock.ini
+#         - v3/clock_port80.ini
+#         - fonts/7x13.bdf
 
-# Build the linux armhf variant mainly for raspberry pi
+# Build the linux armhf variant legacy sdl-clock mainly for raspberry pi
 build_v4:
   image: registry.gitlab.com/clock-8001/clock-8001-build:master
   stage: build
@@ -114,10 +114,11 @@ build_v4:
   artifacts:
      paths:
       - v4/sdl-clock
+      - v4/sdl3-clock
       - v4/clock_port80.ini
       - v4/clock_port8080.ini
 
-# Build the linux amd64 variant
+# Build the linux amd64 variant legacy sdl-clock
 build_v4_amd64_linux:
   stage: build
   script:
@@ -130,6 +131,19 @@ build_v4_amd64_linux:
       - v4/clock_port80.ini
       - v4/clock_port8080.ini
 
+
+# Build the linux sdl3 clock
+build_v4_linux:
+  stage: build
+  script:
+    - cd v4
+    - make linux
+  artifacts:
+     paths:
+      - v4/sdl3-clock_linux_amd64
+      - v4/sdl3-clock_linux_arm64
+
+
 build_v4_windows:
   stage: build
   script:
@@ -137,28 +151,24 @@ build_v4_windows:
     - make windows
   artifacts:
     paths:
-      - v4/sdl-clock.exe
+      - v4/sdl3-clock.exe
       - v4/clock-8001.msi
 
-build_macos:
+build_v4_macos:
     stage: build
-    image: registry.gitlab.com/clock-8001/clock-8001/osxcross:latest
     script:
       - cd v4
-      - make osxcross
+      - make macos
     artifacts:
       paths:
-        - v4/sdl-clock_amd64_darwin
+        - v4/sdl3-clock_amd64_darwin
+        - v4/sdl3-clock_amd64_darwin
 
 package_v4_debian:
   stage: package
   script:
     - cd v4
-    - touch sdl-clock
-    - touch clock_port8080.ini
-    - make debian_armhf
-    - mv sdl-clock_amd64_linux sdl-clock
-    - touch clock_port8080.ini
+    - make debian_arm64
     - make debian_amd64
   artifacts:
     paths:
@@ -175,6 +185,7 @@ deploy_latest:
         - export SSHPASS=$USER_PASS
         - export TS=$(date +%Y-%m-%d-%H%M%S)
         - sshpass -e scp -o stricthostkeychecking=no sdl-clock clock8001@kissa.depili.fi:/var/www/html/clock-8001/testing/sdl-clock-$TS
+        - sshpass -e scp -o stricthostkeychecking=no sdl3-clock_linux_arm64 clock8001@kissa.depili.fi:/var/www/html/clock-8001/testing/sdl3-clock_linux_arm64-$TS
         - sshpass -e scp -o stricthostkeychecking=no clock-8001.msi clock8001@kissa.depili.fi:/var/www/html/clock-8001/testing/clock-8001-$TS.msi
     only:
         - master

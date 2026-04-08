@@ -9,11 +9,9 @@ version: ${GIT_TAG}
 section: "default"
 priority: "extra"
 depends:
-- libsdl2-2.0-0
-- libsdl2-gfx-1.0-0
-- libsdl2-image-2.0-0
-- libsdl2-ttf-2.0-0
-- libsdl2-mixer-2.0-0
+- libsdl3-0
+- libsdl3-image0
+- libsdl3-ttf0
 maintainer: "Vesa-Pekka Palmu <vpalmu@depili.fi>"
 description: |
   A OSC controlled stage and production timer
@@ -21,8 +19,8 @@ vendor: "Vesa-Pekka Palmu"
 homepage: "https://gitlbab.com/clock-8001/clock-8001"
 license: "GPL2"
 contents:
-- src: ./sdl-clock
-  dst: /usr/bin/sdl-clock
+- src: ./sdl3-clock_linux.tmp
+  dst: /usr/bin/sd3l-clock
 - src: ./fonts
   dst: /usr/share/clock-8001/fonts
 - src: ./ttf_fonts

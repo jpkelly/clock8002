@@ -1,8 +1,9 @@
 module gitlab.com/clock-8001/clock-8001/v4
 
-go 1.17
+go 1.24.0
 
 require (
+	github.com/Zyko0/go-sdl3 v0.1.0
 	github.com/chabad360/go-osc v0.0.0-20220217020417-1229c4fc60a5
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f
@@ -19,10 +20,12 @@ require (
 )
 
 require (
+	github.com/Zyko0/purego-gen v0.0.0-20250727121216-3bcd331a1e0c // indirect
+	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/husl-colors/husl-go v2.0.0+incompatible // indirect
 	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3 // indirect
 	github.com/stianeikeland/go-rpio/v4 v4.6.0 // indirect
-	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
+	golang.org/x/sys v0.7.0 // indirect
 	periph.io/x/conn/v3 v3.6.7 // indirect
 	periph.io/x/host/v3 v3.6.7 // indirect
 )
