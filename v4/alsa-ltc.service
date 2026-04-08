@@ -1,5 +1,6 @@
 [Unit]
 Description=ALSA LTC Timecode Decoder
+After=sound.target
 
 [Service]
 Type=simple
