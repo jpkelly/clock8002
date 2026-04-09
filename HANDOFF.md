@@ -6,7 +6,7 @@ Last updated: 2026-04-09
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- Latest tagged release: **v1.2.7** (commit TBD) — Trixie tarballs on GitHub
+- Latest tagged release: **v1.2.7** (commit `cbe963a`) — Trixie tarballs on GitHub
 - Trixie tarballs: `clock8002-v1.2.7-default-linux-arm64.tar.gz`, `clock8002-v1.2.7-gerry-linux-arm64.tar.gz`
 - Buildroot SD card image: `piclockBR-71c2321-sdcard.img` (on Mac Desktop) — contains v1.2.6 binaries
 - Test unit piclockBR.local: running Buildroot image built from `759dafe` (pre-v1.2.6); stability test in progress
