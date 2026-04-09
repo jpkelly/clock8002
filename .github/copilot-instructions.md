@@ -40,10 +40,14 @@ Release management note:
 - When cutting a new release, update README quick-install download/extract commands to the new release URL/version.
 
 Buildroot image workflow note:
-- Branch: `buildroot-prototype`. Test unit: `root@piclockBR.local`. Build host: `pi@pi5start.local` (~/buildroot).
+- Branch: `master` (NEVER use `buildroot-prototype` — it is historical only and permanently diverged).
+- Test unit: `root@piclockBR.local`. Build host: `pi@pi5start.local` (~/buildroot).
 - Buildroot sources sdl-clock/alsa-ltc directly from `~/clock8002/v4` on pi5start — always `git pull --ff-only` in `~/clock8002` before any `make`.
-- Build: `ssh pi@pi5start.local 'cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
+- Before building, verify pi5start is on master: `ssh pi@pi5start.local 'cd ~/clock8002 && git branch --show-current'`
+- Dev builds (with SSH key): `ssh pi@pi5start.local "cd ~/buildroot && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make clock8002-dirclean && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:\$?"`
+- Release builds (no SSH key): `ssh pi@pi5start.local 'cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
 - Monitor: `ssh pi@pi5start.local 'tail -f /tmp/br-build.log'`
+- Always provide the monitor command after starting a build.
 - Image transfer: `scp pi@pi5start.local:~/buildroot/output/images/sdcard.img ~/Desktop/piclockBR-<COMMIT>-sdcard.img`
 - Image naming convention: `piclockBR-<7-char-commit-hash>-sdcard.img`
 - Flash command format (user runs manually — never run dd from agent): `diskutil unmountDisk /dev/diskN && sudo dd if=/Users/jp/Desktop/piclockBR-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress && diskutil eject /dev/diskN`
