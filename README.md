@@ -110,6 +110,8 @@ The install script will:
 
 The installer starts the clock service automatically. Then open `http://<pi-ip>:8080` to configure (default: **admin** / **clockwork**).
 
+> **Note:** A reboot is recommended after a fresh install to ensure all mount options and display outputs are fully initialized.
+
 ### Pre-boot Network Configuration (optional)
 
 Edit `/boot/firmware/piclock/network.ini` on the SD card's FAT32 boot partition (visible on Mac/PC as `bootfs`) to configure the Pi without SSH. Settings apply automatically on boot via the `piclock-network` service.
