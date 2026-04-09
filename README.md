@@ -110,7 +110,7 @@ The install script will:
 
 The installer starts the clock service automatically. Then open `http://<pi-ip>:8080` to configure (default: **admin** / **clockwork**).
 
-> **Note:** A reboot is recommended after a fresh install to ensure all mount options and display outputs are fully initialized.
+> **Note:** A reboot is recommended after a fresh install to ensure all mount options and display outputs are fully initialized (see [#34](https://github.com/jpkelly/clock8002/issues/34)).
 
 ### Pre-boot Network Configuration (optional)
 
