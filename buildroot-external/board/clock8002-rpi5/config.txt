@@ -37,11 +37,10 @@ dtparam=i2c_arm=on
 # Enable Pi 5 RTC battery charging at 3.0V
 dtparam=rtc_bbat_vchg=3000000
 
-# Enable host mode on the built-in xHCI USB controller.  Without this the
-# firmware leaves the USB-C port in a state that interferes with VL805
-# PCIe xHCI operation, causing usb_set_interface timeouts on USB audio.
+# Enable host mode on the built-in xHCI USB controller.  This matches the
+# Trixie default and disables the legacy dwc2 gadget controller, keeping
+# VL805 USB bus assignment consistent.
 otg_mode=1
-dtoverlay=dwc2,dr_mode=host
 
 # Enable UART interfaces for serial peripherals
 dtoverlay=uart1
