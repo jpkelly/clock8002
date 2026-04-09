@@ -91,6 +91,8 @@ if grep -qE '[[:space:]]/boot/firmware[[:space:]]' /etc/fstab; then
         echo "Configuring /boot/firmware to be writable by $INSTALL_USER..."
         sudo sed -i "/[[:space:]]\/boot\/firmware[[:space:]]/ s/defaults/defaults,uid=${BOOT_UID},gid=${BOOT_GID}/" /etc/fstab
     fi
+    # Apply uid/gid mount options immediately so config saves work without a reboot.
+    sudo umount /boot/firmware && sudo mount /boot/firmware || true
 fi
 
 # Migrate config files from legacy /boot/piclock/ (ext4) to /boot/firmware/piclock/ (FAT32).
@@ -236,6 +238,7 @@ sudo systemctl mask alsa-store.service alsa-restore.service 2>/dev/null || true
 
 sudo systemctl daemon-reload
 sudo systemctl enable clock8002
+sudo systemctl enable alsa-ltc
 sudo udevadm control --reload-rules
 
 # Install OLED display daemon if present
