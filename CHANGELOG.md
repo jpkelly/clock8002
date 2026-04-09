@@ -1,3 +1,17 @@
+## Version 1.2.7
+* alsa-ltc
+  * Internal retry loop for USB audio device detection — polls for device and PCM handle for up to 15 seconds on startup instead of failing immediately
+* Buildroot
+  * Pin kernel to Trixie commit `359f37f0` (6.12.47) — prevents untested kernel regressions
+  * Fast alsa-ltc restart with USB autosuspend disable in rootfs overlay
+  * Fix hostname race — add `RequiresMountsFor=/boot` to rootfs-overlay network service
+  * Add `alsa-ucm-conf`, `alsactl`, `amixer` to defconfig for proper ALSA card naming
+  * Remove deleted `99-alsa-ltc-usb.rules` from package recipe
+* Install
+  * Mask `alsa-store.service` and `alsa-restore.service` to prevent corrupt ALSA state file from poisoning C-Media mixer on boot
+* Network
+  * `piclock-network.service`: add `RequiresMountsFor=/boot` to fix hostname race on Trixie
+
 ## Version 1.2.6
 * alsa-ltc
   * Return non-zero exit code on error — systemd `Restart=on-failure` now triggers correctly instead of treating all exits as success

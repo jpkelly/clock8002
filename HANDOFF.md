@@ -1,15 +1,14 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-07
+Last updated: 2026-04-09
 
 ## Current State
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- Latest tagged release: **v1.2.6** (commit `8a4c562`) — Trixie tarballs on GitHub
-- master HEAD: `71c2321` (buildroot: remove deleted 99-alsa-ltc-usb.rules from package recipe)
+- Latest tagged release: **v1.2.7** (commit TBD) — Trixie tarballs on GitHub
+- Trixie tarballs: `clock8002-v1.2.7-default-linux-arm64.tar.gz`, `clock8002-v1.2.7-gerry-linux-arm64.tar.gz`
 - Buildroot SD card image: `piclockBR-71c2321-sdcard.img` (on Mac Desktop) — contains v1.2.6 binaries
-- Trixie tarballs: `clock8002-v1.2.6-default-linux-arm64.tar.gz`, `clock8002-v1.2.6-gerry-linux-arm64.tar.gz`
 - Test unit piclockBR.local: running Buildroot image built from `759dafe` (pre-v1.2.6); stability test in progress
 - Test unit piclockTX.local: running Trixie v1.2.5; stability test in progress
 - piClockN.local: Trixie v1.2.6, shorter USB cable (intermittent failures), usb-monitor service running
