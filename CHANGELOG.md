@@ -1,3 +1,8 @@
+## Version 1.2.8
+* Install
+  * Fix FAT32 `/boot/firmware` remount after fstab update — config saves via web UI now work immediately without requiring a reboot
+  * Enable `alsa-ltc.service` during install — was missing, service file was copied but never enabled
+
 ## Version 1.2.7
 * alsa-ltc
   * Internal retry loop for USB audio device detection — polls for device and PCM handle for up to 15 seconds on startup instead of failing immediately
