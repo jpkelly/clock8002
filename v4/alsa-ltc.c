@@ -180,26 +180,53 @@ int main(int argc, char *argv[]) {
 
     print_version(stdout, argv[0]);
 
-    /* Device selection */
-    if (strcmp(argv[1], "-") == 0) {
-        device = detect_device();
-        if (device == NULL) {
-            fprintf(stderr, "No suitable capture device found\n");
+    /* Device selection — with retry loop for USB audio boot timing.
+     *
+     * On Pi 5 with VL805 xHCI, the CM108 USB audio device becomes
+     * unresponsive to SET_INTERFACE ~20s after enumeration if no active
+     * USB traffic exists.  We must detect the device and start streaming
+     * within that window.  Poll every 1s for up to 15s so we catch
+     * the device the moment snd-usb-audio finishes probing.
+     */
+#define DETECT_TIMEOUT_S  15
+#define DETECT_INTERVAL_S  1
+
+    int use_autodetect = (strcmp(argv[1], "-") == 0);
+
+    for (int attempt = 0; ; attempt++) {
+        if (!running) return 0;
+
+        if (use_autodetect) {
+            device = detect_device();
+            if (device == NULL) {
+                if (attempt * DETECT_INTERVAL_S < DETECT_TIMEOUT_S) {
+                    if (attempt == 0)
+                        fprintf(stdout, "No capture device found, waiting for USB audio...\n");
+                    sleep(DETECT_INTERVAL_S);
+                    continue;
+                }
+                fprintf(stderr, "No suitable capture device found after %ds\n", DETECT_TIMEOUT_S);
+                return 1;
+            }
+            device_allocated = 1;
+        } else {
+            device = argv[1];
+        }
+
+        /* Open ALSA capture */
+        rc = snd_pcm_open(&capture, device, SND_PCM_STREAM_CAPTURE, 0);
+        if (rc < 0) {
+            fprintf(stderr, "cannot open audio device %s (%s)\n", device, snd_strerror(rc));
+            if (device_allocated) { free(device); device = NULL; device_allocated = 0; }
+            if (use_autodetect && attempt * DETECT_INTERVAL_S < DETECT_TIMEOUT_S) {
+                sleep(DETECT_INTERVAL_S);
+                continue;
+            }
             return 1;
         }
-        device_allocated = 1;
-    } else {
-        device = argv[1];
+        fprintf(stdout, "audio interface opened\n");
+        break;  /* successfully opened */
     }
-
-    /* Open ALSA capture */
-    rc = snd_pcm_open(&capture, device, SND_PCM_STREAM_CAPTURE, 0);
-    if (rc < 0) {
-        fprintf(stderr, "cannot open audio device %s (%s)\n", device, snd_strerror(rc));
-        if (device_allocated) free(device);
-        return 1;
-    }
-    fprintf(stdout, "audio interface opened\n");
 
     /* Configure hardware parameters */
     snd_pcm_hw_params_t *hw_params;
