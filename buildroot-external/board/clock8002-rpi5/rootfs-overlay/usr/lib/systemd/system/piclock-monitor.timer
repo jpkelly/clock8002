@@ -1,0 +1,9 @@
+[Unit]
+Description=Clock8002 Health Monitor Timer
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=30min
+
+[Install]
+WantedBy=timers.target
