@@ -38,6 +38,7 @@ Release management note:
 - For each new release, be sure to include both a default and a Gerry version.
 - Versioning must follow this repository's own tag line (`v1.x` and onward); ignore inherited upstream `v4.x` tags from the fork source.
 - When cutting a new release, update README quick-install download/extract commands to the new release URL/version.
+- When tagging a release, always update HANDOFF.md to reflect the new latest tag, commit hash, and any relevant status changes before or as part of the release commit.
 
 Buildroot image workflow note:
 - Branch: `master` (NEVER use `buildroot-prototype` — it is historical only and permanently diverged).
