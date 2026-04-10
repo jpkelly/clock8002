@@ -4,7 +4,7 @@ Description=ALSA LTC Timecode Decoder
 [Service]
 Type=simple
 User=pi
-ExecStart=/opt/clock8002/alsa-ltc - 127.0.0.1 1245
+ExecStart=/opt/clock8002/alsa-ltc - 255.255.255.255 1245
 Restart=always
 RestartSec=30
 

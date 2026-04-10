@@ -219,7 +219,7 @@ sudo visudo -cf /etc/sudoers.d/clock8002-hwclock
 
 # Install alsa-ltc service if present
 if [ -f alsa-ltc.service ]; then
-    sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/alsa-ltc - 127.0.0.1 1245|" alsa-ltc.service | \
+    sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/alsa-ltc - 255.255.255.255 1245|" alsa-ltc.service | \
         sed "s|User=.*|User=$INSTALL_USER|" | \
         sudo tee /etc/systemd/system/alsa-ltc.service > /dev/null
 fi
