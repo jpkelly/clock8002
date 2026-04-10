@@ -95,6 +95,13 @@ if grep -qE '[[:space:]]/boot/firmware[[:space:]]' /etc/fstab; then
     sudo umount /boot/firmware && sudo mount /boot/firmware || true
 fi
 
+# Label the boot partition so it appears as "piClock" when mounted on Mac/PC.
+if [ -b /dev/mmcblk0p1 ]; then
+    sudo fatlabel /dev/mmcblk0p1 piClock 2>/dev/null || true
+elif [ -b /dev/sda1 ]; then
+    sudo fatlabel /dev/sda1 piClock 2>/dev/null || true
+fi
+
 # Migrate config files from legacy /boot/piclock/ (ext4) to /boot/firmware/piclock/ (FAT32).
 # Previously config files were installed to /boot/piclock/ on ext4, not accessible from Mac/PC.
 OLD_BOOT_DIR="/boot/piclock"

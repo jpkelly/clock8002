@@ -1,5 +1,6 @@
 image boot.vfat {
 	vfat {
+		label = "piClock"
 		files = {
 #BOOT_FILES#
 		}
