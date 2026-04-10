@@ -28,6 +28,7 @@ define CLOCK8002_BUILD_CMDS
 		$(HOST_GO_TARGET_ENV) \
 		CGO_ENABLED=1 \
 		GOFLAGS=-mod=vendor \
+		PKG_CONFIG=$(HOST_DIR)/bin/pkg-config \
 		$(HOST_DIR)/bin/go build \
 			-v \
 			-ldflags "$(CLOCK8002_GO_LD_FLAGS)" \
