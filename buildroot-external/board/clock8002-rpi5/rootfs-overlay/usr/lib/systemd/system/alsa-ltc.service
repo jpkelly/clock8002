@@ -1,5 +1,7 @@
 [Unit]
 Description=ALSA LTC Timecode Decoder
+After=dev-snd-by\x2did-usb\x2dC\x2dMedia_Electronics_Inc._USB_Audio_Device\x2d00.device
+BindsTo=dev-snd-by\x2did-usb\x2dC\x2dMedia_Electronics_Inc._USB_Audio_Device\x2d00.device
 
 [Service]
 Type=simple
