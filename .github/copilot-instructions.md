@@ -55,5 +55,4 @@ Buildroot image workflow note:
 - BusyBox on target: no bash (use `sh`), no `tar -z` (use `gzip -d -c | tar x`), no `--ignore-missing` on sha256sum.
 - SSH to Buildroot target: `root@piclockBR.local` with `-o IdentitiesOnly=yes -i ~/.ssh/id_ed25519`.
 - Deploy binary directly (no install.sh on BR): `systemctl stop clock8002 && cp <binary> /opt/clock8002/sdl-clock && systemctl start clock8002`.
-- Mesa 25.0.7 changes on pi5start are NOT in git — must be re-applied after any clean Buildroot checkout on the build host.
-- host-xz libtool bug workaround (`acl_cv_wl="-Wl,"` in xz.mk) is also NOT in git — must be re-applied after clean Buildroot checkout.
+- After a fresh Buildroot checkout, always run `buildroot-external/scripts/apply-build-host-patches.sh ~/buildroot` before building — this applies the Mesa 25.0.7 upgrade and host-xz libtool workaround (see issue #29).
