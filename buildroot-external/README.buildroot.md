@@ -68,21 +68,27 @@ buildroot-external/
 **Buildroot path:** `~/buildroot`  
 **External tree:** `~/clock8002/buildroot-external` (via `BR2_EXTERNAL`)
 
-### Manual Build-Host Patches (not in git)
+### Manual Build-Host Patches
 
-Two changes must be applied manually to `~/buildroot/` after any clean Buildroot checkout. These are tracked in issue #29.
+Two changes must be applied to `~/buildroot/` after any clean Buildroot checkout. Run the script from this repo:
+
+```bash
+buildroot-external/scripts/apply-build-host-patches.sh ~/buildroot
+```
+
+The script is idempotent — safe to run multiple times. See issue #29 for background.
 
 #### 1. Mesa 25.0.7 upgrade
 
 Mesa 24.0.9 (Buildroot 2025.02 default) has a V3D GLES2 alpha blending bug that makes text rendering invisible on Pi 5. Mesa 25.0.7 fixes it.
 
-Changes to apply in `~/buildroot/package/mesa3d/`:
+The script applies these changes to `~/buildroot/package/mesa3d/`:
 
 - `mesa3d.mk`: `version = 24.0.9` → `25.0.7`
-- `mesa3d.hash`: update sha256/sha512 for new tarball
-- `mesa3d.mk`: add `host-python-pyyaml` to dependencies
-- `mesa3d.mk`: remove deprecated meson options: `gallium-omx`, `dri3`, `gallium-vc4-neon`
-- `patches/`: move 4 incompatible patches to `patches-backup/` (OpenCL/uClibc/ARM32 NEON — not needed for glibc aarch64)
+- `mesa3d.hash`: sha256/sha512 updated for new tarball
+- `mesa3d.mk`: adds `host-python-pyyaml` dependency (required by Mesa 25.0.7)
+- `mesa3d.mk`: removes deprecated meson options: `gallium-omx`, `dri3`, `gallium-vc4-neon`
+- `patches/`: removes 4 incompatible patches (OpenCL/uClibc/ARM32 NEON — not needed for glibc aarch64)
 
 **Failure mode if missing:** image builds successfully but text rendering is invisible on display.
 
@@ -90,17 +96,13 @@ Changes to apply in `~/buildroot/package/mesa3d/`:
 
 host-xz 5.6.4 has a libtool bug where `acl_cv_wl` is set to `""` instead of `"-Wl,"`.
 
-In `~/buildroot/package/xz/xz.mk`, line 69, add `acl_cv_wl="-Wl,"` to the configure env:
+The script adds `acl_cv_wl="-Wl,"` to the configure env in `~/buildroot/package/xz/xz.mk`:
 
 ```makefile
 CXX="$(HOSTCXX_NOCCACHE)" acl_cv_wl="-Wl,"
 ```
 
 **Failure mode if missing:** build fails during host-xz compilation.
-
----
-
-> **Note:** A script to automate re-applying these patches is tracked in issue #29.
 
 ## Building an Image
 

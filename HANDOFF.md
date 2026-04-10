@@ -20,9 +20,9 @@ Last updated: 2026-04-09
 - `buildroot-prototype` branch merged into `master` at `afbbc01` — all Buildroot work is now on master
 - Tracking issue: **#28** "Buildroot: post-merge validation and remaining work"
 - Build host: pi@pi5start.local, `~/buildroot` (Buildroot 2025.02)
-- Mesa 25.0.7 (upgraded from 24.0.9 — manual change on build host, not in git — tracked in #29)
+- Mesa 25.0.7 (upgraded from 24.0.9 — applied via `buildroot-external/scripts/apply-build-host-patches.sh` — see #29)
 - SSH: `BR2_PICLOCKKEY` env var for optional key injection; release images are password-only (`clockworkadmin`)
-- **Note**: Mesa 25.0.7 changes and host-xz libtool workaround are NOT in git — must be re-applied after any clean Buildroot checkout on pi5start
+- **After any clean Buildroot checkout**, run: `buildroot-external/scripts/apply-build-host-patches.sh ~/buildroot`
 
 ### Fixed this session (2026-04-06/07)
 - **alsa-ltc exit code** (`8a4c562`): All `goto cleanup` paths previously returned 0 — systemd never triggered `Restart=on-failure`. Now defaults to exit code 1; set to 0 only after successful setup; set back to 1 on unrecoverable error (10 consecutive read failures).
@@ -33,7 +33,7 @@ Last updated: 2026-04-09
 
 ### Open Buildroot issues
 - **#28**: Post-merge validation — Trixie regression test, `broadcast.go` leak fix, boot splash, Wi-Fi AP test
-- **#29**: Mesa 25.0.7 + host-xz manual patches not in git — capture in a setup script
+- **#29**: Mesa 25.0.7 + host-xz manual patches — now automated via `buildroot-external/scripts/apply-build-host-patches.sh` (closed)
 
 ### Fixed this session (2026-04-01 evening)
 - **Sync Time button** (`6f76320`): switched `date --set "@epoch"` → `date -u -s "YYYY-MM-DD HH:MM:SS"` and `hwclock --systohc --utc` → `hwclock -w -u`. POSIX short flags work on both GNU coreutils (Trixie) and BusyBox (Buildroot). Verified: system clock and RTC both set correctly.
@@ -196,8 +196,7 @@ ssh pi@piclock.local 'systemctl is-active clock8002'
 
 ## Buildroot Known Issues
 
-- **Mesa 25.0.7 changes not in git**: Manual modifications on pi5start build host — must be re-applied after clean Buildroot checkout. Tracked in #29.
-- **host-xz libtool bug**: `acl_cv_wl="-Wl,"` workaround in xz.mk — also not in git. Tracked in #29.
+- **Mesa 25.0.7 + host-xz patches**: Automated via `buildroot-external/scripts/apply-build-host-patches.sh ~/buildroot` — run after any clean Buildroot checkout. See #29 (closed).
 - **SSH key hardcoded**: Personal SSH public key in `post-build.sh` — should be env-var driven. Tracked in #30.
 - **No root password set**: Buildroot images have blank root password → SSH password login blocked on release images. Tracked in #30 (fix: `clockworkadmin`).
 - **`broadcast.go` UDP socket leak**: `singleAddr()`/`broadcastAll()` replace connections without closing old ones — ~1.9 MB/hr leak on Buildroot with stable alsa-ltc; much faster with crash-looping alsa-ltc. Tracked in #28.
