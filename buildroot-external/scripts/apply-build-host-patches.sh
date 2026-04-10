@@ -35,7 +35,8 @@ fi
 
 # 2. Add host-python-pyyaml dependency (required by Mesa 25.0.7 build system)
 if ! grep -q "host-python-pyyaml" "$MESA3D_MK"; then
-    sed -i '/host-python-mako \\/a\\	host-python-pyyaml \\' "$MESA3D_MK"
+    # Use awk to insert after host-python-mako line (sed \t is not portable across shells)
+    awk '/host-python-mako \\/{print; print "\thost-python-pyyaml \\"; next}1' "$MESA3D_MK" > "${MESA3D_MK}.tmp" && mv "${MESA3D_MK}.tmp" "$MESA3D_MK"
     echo "  mesa3d.mk: host-python-pyyaml dependency added"
 else
     echo "  mesa3d.mk: host-python-pyyaml already present (skipping)"
