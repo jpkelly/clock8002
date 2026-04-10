@@ -6,7 +6,8 @@ BindsTo=dev-snd-by\x2did-usb\x2dC\x2dMedia_Electronics_Inc._USB_Audio_Device\x2d
 [Service]
 Type=simple
 User=root
-ExecStart=/opt/clock8002/alsa-ltc - 127.0.0.1 1245
+ExecStartPre=/bin/sh -c 'until grep -q Device /proc/asound/cards; do sleep 1; done; sleep 2'
+ExecStart=/opt/clock8002/alsa-ltc - 255.255.255.255 1245
 Restart=always
 RestartSec=3
 StandardOutput=journal
