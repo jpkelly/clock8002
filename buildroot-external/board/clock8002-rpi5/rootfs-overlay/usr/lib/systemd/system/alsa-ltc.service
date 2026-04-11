@@ -8,7 +8,7 @@ StartLimitIntervalSec=60
 Type=simple
 User=root
 ExecStartPre=/bin/sh -c 'until grep -q Device /proc/asound/cards; do sleep 1; done; sleep 2'
-ExecStart=/opt/clock8002/alsa-ltc -v - 255.255.255.255 1245
+ExecStart=/opt/clock8002/alsa-ltc - 255.255.255.255 1245
 ExecStopPost=+/bin/sh -c 'for dev in /sys/bus/usb/devices/*/product; do if grep -q "C-Media" "$$dev" 2>/dev/null; then p=$$(dirname "$$dev"); echo 0 > "$$p/authorized"; sleep 1; echo 1 > "$$p/authorized"; echo "alsa-ltc: USB reset $$p"; fi; done'
 Restart=on-failure
 RestartSec=5

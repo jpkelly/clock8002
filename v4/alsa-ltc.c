@@ -7,7 +7,7 @@
  *
  * Usage: alsa-ltc [-v] <alsa-device> <OSC destination ip> <OSC port> [sample-rate]
  *        Use "-" for device to auto-detect on Raspberry Pi (bcm2835)
- *        -v enables verbose mode (prints "." to stdout for each decoded LTC frame)
+ *        -v enables verbose mode (activity dots, ALSA details, signal levels)
  *        sample-rate defaults to 44100 if not specified
  *
  * Build: gcc -O2 -o alsa-ltc alsa-ltc.c -lasound -lltc
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
 
     if (argc - argoff < 3 || argc - argoff > 4) {
         fprintf(stderr, "Usage:  %s [-v] <alsa-device> <OSC destination ip> <OSC port> [sample-rate]\n", argv[0]);
-        fprintf(stderr, "  -v            Verbose mode: print '.' for each decoded LTC frame\n");
+        fprintf(stderr, "  -v            Verbose mode: activity dots, ALSA details, signal levels\n");
         fprintf(stderr, "  sample-rate   Audio sample rate in Hz (default: %d)\n", DEFAULT_SAMPLE_RATE);
         fprintf(stderr, "  Use - for device for automatic detection on raspberry pi\n");
         fprintf(stderr, "  Use --version to display build information\n");
@@ -242,8 +242,8 @@ int main(int argc, char *argv[]) {
         }
         fprintf(stdout, "audio interface opened\n");
 
-        /* Print ALSA card info for USB diagnostics */
-        if (verbose) {
+        /* Print ALSA card info for diagnostics (always) */
+        {
             snd_pcm_info_t *pcm_info;
             snd_pcm_info_alloca(&pcm_info);
             if (snd_pcm_info(capture, pcm_info) == 0) {
@@ -319,6 +319,16 @@ int main(int argc, char *argv[]) {
     }
     fprintf(stdout, "hw_params setted\n");
 
+    if (verbose) {
+        snd_pcm_uframes_t buf_sz, per_sz;
+        unsigned int periods;
+        snd_pcm_hw_params_get_buffer_size(hw_params, &buf_sz);
+        snd_pcm_hw_params_get_period_size(hw_params, &per_sz, NULL);
+        snd_pcm_hw_params_get_periods(hw_params, &periods, NULL);
+        fprintf(stdout, "  buffer_size=%lu period_size=%lu periods=%u\n",
+                (unsigned long)buf_sz, (unsigned long)per_sz, periods);
+    }
+
     snd_pcm_hw_params_free(hw_params);
     fprintf(stdout, "hw_params freed\n");
 
@@ -375,6 +385,8 @@ int main(int argc, char *argv[]) {
     int consecutive_errors = 0;
     time_t last_heartbeat = time(NULL);
     unsigned long heartbeat_frames = 0;
+    unsigned long heartbeat_ltc_frames = 0;
+    short peak_level = 0;
 
     while (running) {
         snd_pcm_sframes_t frames = snd_pcm_readi(capture, audiobuf, BUF_SIZE);
@@ -409,13 +421,25 @@ int main(int argc, char *argv[]) {
         consecutive_errors = 0;
         heartbeat_frames += frames;
 
-        /* Periodic verbose heartbeat */
+        /* Track peak audio level for verbose heartbeat */
         if (verbose) {
+            for (snd_pcm_sframes_t i = 0; i < frames; i++) {
+                short s = audiobuf[i] < 0 ? -audiobuf[i] : audiobuf[i];
+                if (s > peak_level) peak_level = s;
+            }
+        }
+
+        /* Periodic heartbeat (always on; verbose adds signal level) */
+        {
             time_t now = time(NULL);
             if (now - last_heartbeat >= HEARTBEAT_INTERVAL_S) {
-                fprintf(stdout, "\n[heartbeat] %lu frames captured, %d errors, device %s\n",
-                        heartbeat_frames, consecutive_errors, device);
+                fprintf(stdout, "\n[heartbeat] %lu frames, %lu ltc decoded, %d errors, device %s",
+                        heartbeat_frames, heartbeat_ltc_frames, consecutive_errors, device);
+                if (verbose)
+                    fprintf(stdout, ", peak=%d", peak_level);
+                fprintf(stdout, "\n");
                 fflush(stdout);
+                peak_level = 0;
                 last_heartbeat = now;
             }
         }
@@ -425,6 +449,7 @@ int main(int argc, char *argv[]) {
 
         LTCFrameExt frame;
         while (ltc_decoder_read(decoder, &frame)) {
+            heartbeat_ltc_frames++;
             SMPTETimecode tc;
             ltc_frame_to_time(&tc, &frame.ltc, 1);
 

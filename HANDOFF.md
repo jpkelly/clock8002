@@ -19,7 +19,7 @@ Last updated: 2026-04-11
 
 - `buildroot-prototype` branch merged into `master` at `afbbc01` — all Buildroot work is now on master
 - Tracking issue: **#28** "Buildroot: post-merge validation and remaining work"
-- Build host: pi@pi5start.local, `~/buildroot` (Buildroot 2025.02)
+- Build host: pi@cm5.local, `~/buildroot` (Buildroot 2025.02)
 - Mesa 25.0.7 (upgraded from 24.0.9 — applied via `buildroot-external/scripts/apply-build-host-patches.sh` — see #29)
 - SSH: `BR2_PICLOCKKEY` env var for optional key injection; release images are password-only (`clockworkadmin`)
 - **After any clean Buildroot checkout**, run: `buildroot-external/scripts/apply-build-host-patches.sh ~/buildroot`
@@ -226,27 +226,34 @@ ssh pi@piclock.local 'systemctl is-active clock8002'
 - Fixed: `--dump-config` moved from Config section to Building from Source section (`f9a0411`)
 - Verified correct: web UI credentials (admin/clockwork), network.ini description, installer bullet list, config file paths
 
-## alsa-ltc Enhancements (2026-04-11, uncommitted)
+## alsa-ltc Enhancements (2026-04-11)
 
-Changes in `v4/alsa-ltc.c` and `v4/alsa-ltc.service` — not yet committed, built, or tested:
+Committed changes in `v4/alsa-ltc.c`, `v4/alsa-ltc.service`, and Buildroot overlay.
 
 ### Binary changes (`alsa-ltc.c`)
-- **`-v` verbose flag**: Activity dot (`.` per decoded frame), ALSA card info at startup, 30s heartbeat with frame count and error tally.
+- **Always-on diagnostics** (no flag needed): ALSA card info at startup, 30s heartbeat with frame count, LTC decode count, and error tally.
+- **`-v` verbose flag**: Activity dots (`.` per decoded LTC frame), ALSA hardware params (buffer_size/period_size/periods) at startup, peak audio signal level (0–32767) in heartbeat.
 - **Configurable sample rate**: Default changed 48000 → 44100 (matches upstream). Optional 4th positional arg `[sample-rate]`. Prints warning if hardware negotiates different rate.
 - **Early DISCONNECT exit**: `snd_pcm_state()` checked on read errors — if `DISCONNECTED` or `-ENODEV`, exits immediately with explicit message instead of burning 10 retries. PCM state name added to all error log lines.
 - Usage: `alsa-ltc [-v] <device> <ip> <port> [sample-rate]`
-- Backwards compatible: existing `alsa-ltc - 255.255.255.255 1245` works unchanged.
 
-### Service file changes (`alsa-ltc.service`)
-- **`-v` enabled by default**: Verbose diagnostics captured in journal for USB troubleshooting.
+### Service file changes (`alsa-ltc.service` + Buildroot overlay)
+- **`-v` removed from production**: Heartbeat and card info are always-on; add `-v` to command line for USB debugging.
 - **`ExecStopPost=+` USB reset**: On failure exit, scans for C-Media USB devices and toggles sysfs `authorized` 0→1 to reset the dongle before the next restart.
-- **`Restart=on-failure`**: Replaces `always` — restarts only on error exits (code 1), not clean stops (code 0). Leverages proper exit codes added in v1.2.6.
-- **`RestartSec=5`**: Reduced from 30s — faster recovery now that early DISCONNECT exit avoids wasted retries.
-- **`StartLimitBurst=5` / `StartLimitIntervalSec=60`**: Caps restart attempts — prevents infinite crash-loop if CM108 is deeply locked (sysfs reset can't recover).
+- **`Restart=on-failure`**: Replaces `always` — restarts only on error exits, not clean stops.
+- **`RestartSec=5`**: Reduced from 30s — faster recovery with early DISCONNECT exit.
+- **`StartLimitBurst=5` / `StartLimitIntervalSec=60`**: Caps restart attempts on deeply locked hardware.
+- **Dual service file rule**: Both `v4/alsa-ltc.service` and `buildroot-external/.../rootfs-overlay/.../alsa-ltc.service` must be kept in sync.
+
+### Hardware debugging (piclockBR CM108 lockup)
+- **Root cause**: Faulty PCIe ribbon cable between Pi 5 SoC and VL805 xHCI USB controller.
+- Symptom: `usb_set_interface failed (-110/-62)` after 30-100s on every boot.
+- Isolation: swapped dongle (still fails), swapped Pi board (works), swapped PCIe ribbon (works) → cable was the fault.
+- Resolution: replaced ribbon cable; CM108 stable past 119s+ on original board.
 
 ### Documentation
-- CHANGELOG.md: added "Version 1.2.10 (unreleased)" section.
-- README.md: added "alsa-ltc command-line options" subsection with usage and argument table.
+- CHANGELOG.md: "Version 1.2.10 (unreleased)" section.
+- README.md: "alsa-ltc command-line options" table, "USB recovery" subsection.
 
 ### Upstream binary analysis (root@192.168.8.245)
 - Buildroot 2025.11, kernel 6.12.41-v8, BusyBox init, 22KB stripped aarch64
