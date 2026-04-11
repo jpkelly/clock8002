@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-10
+Last updated: 2026-04-11
 
 ## Current State
 
@@ -226,7 +226,40 @@ ssh pi@piclock.local 'systemctl is-active clock8002'
 - Fixed: `--dump-config` moved from Config section to Building from Source section (`f9a0411`)
 - Verified correct: web UI credentials (admin/clockwork), network.ini description, installer bullet list, config file paths
 
+## alsa-ltc Enhancements (2026-04-11, uncommitted)
+
+Changes in `v4/alsa-ltc.c` and `v4/alsa-ltc.service` — not yet committed, built, or tested:
+
+### Binary changes (`alsa-ltc.c`)
+- **`-v` verbose flag**: Activity dot (`.` per decoded frame), ALSA card info at startup, 30s heartbeat with frame count and error tally.
+- **Configurable sample rate**: Default changed 48000 → 44100 (matches upstream). Optional 4th positional arg `[sample-rate]`. Prints warning if hardware negotiates different rate.
+- **Early DISCONNECT exit**: `snd_pcm_state()` checked on read errors — if `DISCONNECTED` or `-ENODEV`, exits immediately with explicit message instead of burning 10 retries. PCM state name added to all error log lines.
+- Usage: `alsa-ltc [-v] <device> <ip> <port> [sample-rate]`
+- Backwards compatible: existing `alsa-ltc - 255.255.255.255 1245` works unchanged.
+
+### Service file changes (`alsa-ltc.service`)
+- **`-v` enabled by default**: Verbose diagnostics captured in journal for USB troubleshooting.
+- **`ExecStopPost=+` USB reset**: On failure exit, scans for C-Media USB devices and toggles sysfs `authorized` 0→1 to reset the dongle before the next restart.
+- **`Restart=on-failure`**: Replaces `always` — restarts only on error exits (code 1), not clean stops (code 0). Leverages proper exit codes added in v1.2.6.
+- **`RestartSec=5`**: Reduced from 30s — faster recovery now that early DISCONNECT exit avoids wasted retries.
+- **`StartLimitBurst=5` / `StartLimitIntervalSec=60`**: Caps restart attempts — prevents infinite crash-loop if CM108 is deeply locked (sysfs reset can't recover).
+
+### Documentation
+- CHANGELOG.md: added "Version 1.2.10 (unreleased)" section.
+- README.md: added "alsa-ltc command-line options" subsection with usage and argument table.
+
+### Upstream binary analysis (root@192.168.8.245)
+- Buildroot 2025.11, kernel 6.12.41-v8, BusyBox init, 22KB stripped aarch64
+- Sample rate 44100 confirmed via `objdump -s -j .data`
+- Activity dot always on; OSC pretty-printer is dead code
+- Missing: retry loop, plughw, snd_pcm_drop, error counter, --version, SO_BROADCAST, signal handler
+
+### Stability test (Apr 11, ~6h)
+- piclockBR: clean — 0 USB errors
+- piclockTG (Trixie): CM108 lockup at ~6h (`usb_set_interface -110`), rebooted to recover
+
 ## Next Suggested Release
 
 - No immediate release pending.
 - Prerequisites before next release: resolve #28 (Trixie regression test + broadcast.go fix), #29 (build host patches), #30 (SSH/password).
+- alsa-ltc enhancements above should be included in next release after build/test validation.

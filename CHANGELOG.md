@@ -1,3 +1,18 @@
+## Version 1.2.10 (unreleased)
+* alsa-ltc
+  * Add `-v` verbose flag — prints activity dot (`.`) for each decoded frame, ALSA card info at startup, and a status heartbeat every 30 seconds
+  * Change default sample rate from 48000 to 44100 to match upstream hardware
+  * Add optional `[sample-rate]` argument — overrides the default without rebuilding
+  * Print warning when hardware negotiates a different sample rate than requested
+  * Detect USB audio disconnect (`SND_PCM_STATE_DISCONNECTED` / `-ENODEV`) and exit immediately instead of retrying — lets systemd restart with a fresh device handle
+  * Include ALSA PCM state name in all read-error log lines for USB troubleshooting
+* Service (`alsa-ltc.service`)
+  * Enable `-v` verbose mode by default — USB diagnostics now captured in the journal automatically
+  * Add `ExecStopPost` USB reset — on failure exit, toggles sysfs `authorized` on C-Media devices to reset the dongle before the next restart attempt
+  * Change `Restart=always` to `Restart=on-failure` — only restarts on error exits, not clean stops
+  * Reduce `RestartSec` from 30s to 5s — faster recovery now that early disconnect detection avoids wasted retries
+  * Add `StartLimitBurst=5` / `StartLimitIntervalSec=60` — prevents infinite crash-loop when USB hardware is deeply locked
+
 ## Version 1.2.8
 * Install
   * Fix FAT32 `/boot/firmware` remount after fstab update — config saves via web UI now work immediately without requiring a reboot

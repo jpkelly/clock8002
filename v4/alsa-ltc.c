@@ -5,8 +5,10 @@
  * using libltc, and sends the timecode as OSC messages to a specified
  * destination. Designed for use with clock-8001/8002.
  *
- * Usage: alsa-ltc <alsa-device> <OSC destination ip> <OSC port>
+ * Usage: alsa-ltc [-v] <alsa-device> <OSC destination ip> <OSC port> [sample-rate]
  *        Use "-" for device to auto-detect on Raspberry Pi (bcm2835)
+ *        -v enables verbose mode (prints "." to stdout for each decoded LTC frame)
+ *        sample-rate defaults to 44100 if not specified
  *
  * Build: gcc -O2 -o alsa-ltc alsa-ltc.c -lasound -lltc
  * Dependencies: libasound2-dev, libltc-dev
@@ -17,15 +19,17 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <time.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <alsa/asoundlib.h>
 #include <ltc.h>
 
-#define SAMPLE_RATE 48000
+#define DEFAULT_SAMPLE_RATE 44100
 #define FPS         25
 #define CHANNELS    1
 #define BUF_SIZE    1024
+#define HEARTBEAT_INTERVAL_S 30
 
 #ifndef ALSA_LTC_GIT_TAG
 #define ALSA_LTC_GIT_TAG "dev"
@@ -159,21 +163,33 @@ int main(int argc, char *argv[]) {
     char *device = NULL;
     int device_allocated = 0;
     int exit_code = 1;  /* assume error; set to 0 only on clean shutdown */
+    int verbose = 0;
+    unsigned int sample_rate = DEFAULT_SAMPLE_RATE;
 
-    if (argc == 2 && strcmp(argv[1], "--version") == 0) {
+    /* Parse optional -v flag */
+    int argoff = 1;
+    if (argc >= 2 && strcmp(argv[1], "--version") == 0) {
         print_version(stdout, argv[0]);
         return 0;
     }
+    if (argc >= 2 && strcmp(argv[1], "-v") == 0) {
+        verbose = 1;
+        argoff = 2;
+    }
 
-    if (argc != 4) {
-        fprintf(stderr, "Usage:  %s <alsa-device> <OSC destination ip> <OSC port>\n", argv[0]);
-        fprintf(stderr, "Use - for device for automatic detection on raspberry pi\n");
-        fprintf(stderr, "Use --version to display build information\n");
+    if (argc - argoff < 3 || argc - argoff > 4) {
+        fprintf(stderr, "Usage:  %s [-v] <alsa-device> <OSC destination ip> <OSC port> [sample-rate]\n", argv[0]);
+        fprintf(stderr, "  -v            Verbose mode: print '.' for each decoded LTC frame\n");
+        fprintf(stderr, "  sample-rate   Audio sample rate in Hz (default: %d)\n", DEFAULT_SAMPLE_RATE);
+        fprintf(stderr, "  Use - for device for automatic detection on raspberry pi\n");
+        fprintf(stderr, "  Use --version to display build information\n");
         return 1;
     }
 
-    const char *osc_ip = argv[2];
-    int osc_port = atoi(argv[3]);
+    const char *osc_ip = argv[argoff + 1];
+    int osc_port = atoi(argv[argoff + 2]);
+    if (argc - argoff == 4)
+        sample_rate = (unsigned int)atoi(argv[argoff + 3]);
 
     signal(SIGINT, sighandler);
     signal(SIGTERM, sighandler);
@@ -191,7 +207,7 @@ int main(int argc, char *argv[]) {
 #define DETECT_TIMEOUT_S  15
 #define DETECT_INTERVAL_S  1
 
-    int use_autodetect = (strcmp(argv[1], "-") == 0);
+    int use_autodetect = (strcmp(argv[argoff], "-") == 0);
 
     for (int attempt = 0; ; attempt++) {
         if (!running) return 0;
@@ -210,7 +226,7 @@ int main(int argc, char *argv[]) {
             }
             device_allocated = 1;
         } else {
-            device = argv[1];
+            device = argv[argoff];
         }
 
         /* Open ALSA capture */
@@ -225,6 +241,19 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         fprintf(stdout, "audio interface opened\n");
+
+        /* Print ALSA card info for USB diagnostics */
+        if (verbose) {
+            snd_pcm_info_t *pcm_info;
+            snd_pcm_info_alloca(&pcm_info);
+            if (snd_pcm_info(capture, pcm_info) == 0) {
+                fprintf(stdout, "Card: %s\n", snd_pcm_info_get_name(pcm_info));
+                fprintf(stdout, "Device: %s (subdevice %d)\n",
+                        snd_pcm_info_get_subdevice_name(pcm_info),
+                        snd_pcm_info_get_subdevice(pcm_info));
+            }
+        }
+
         break;  /* successfully opened */
     }
 
@@ -262,14 +291,17 @@ int main(int argc, char *argv[]) {
     }
     fprintf(stdout, "hw_params format setted\n");
 
-    unsigned int rate = SAMPLE_RATE;
+    unsigned int rate = sample_rate;
     rc = snd_pcm_hw_params_set_rate_near(capture, hw_params, &rate, 0);
     if (rc < 0) {
         fprintf(stderr, "cannot set sample rate (%s)\n", snd_strerror(rc));
         snd_pcm_hw_params_free(hw_params);
         goto cleanup;
     }
-    fprintf(stdout, "hw_params rate setted\n");
+    if (rate != sample_rate)
+        fprintf(stdout, "hw_params rate: requested %u, got %u\n", sample_rate, rate);
+    else
+        fprintf(stdout, "hw_params rate setted\n");
 
     rc = snd_pcm_hw_params_set_channels(capture, hw_params, CHANNELS);
     if (rc < 0) {
@@ -306,7 +338,7 @@ int main(int argc, char *argv[]) {
     fprintf(stdout, "buffer allocated\n");
 
     /* Initialize LTC decoder */
-    decoder = ltc_decoder_create(SAMPLE_RATE * FPS / BUF_SIZE, 32);
+    decoder = ltc_decoder_create(sample_rate * FPS / BUF_SIZE, 32);
     if (decoder == NULL) {
         fprintf(stderr, "cannot create LTC decoder\n");
         goto cleanup;
@@ -341,13 +373,25 @@ int main(int argc, char *argv[]) {
     char prev_tc[16] = "";
     ltc_off_t total_samples = 0;
     int consecutive_errors = 0;
+    time_t last_heartbeat = time(NULL);
+    unsigned long heartbeat_frames = 0;
 
     while (running) {
         snd_pcm_sframes_t frames = snd_pcm_readi(capture, audiobuf, BUF_SIZE);
         if (frames < 0) {
             consecutive_errors++;
-            fprintf(stderr, "read from audio interface failed (%s) [%d]\n",
-                    snd_strerror(frames), consecutive_errors);
+
+            /* Check PCM state — DISCONNECTED means the USB device is gone */
+            snd_pcm_state_t pcm_state = snd_pcm_state(capture);
+            if (pcm_state == SND_PCM_STATE_DISCONNECTED || frames == -ENODEV) {
+                fprintf(stderr, "USB audio device disconnected, exiting for systemd restart\n");
+                exit_code = 1;
+                goto cleanup;
+            }
+
+            fprintf(stderr, "read from audio interface failed (%s) [%d] pcm_state=%s\n",
+                    snd_strerror(frames), consecutive_errors,
+                    snd_pcm_state_name(pcm_state));
             /* USB devices may need a moment to settle — sleep before prepare */
             sleep(1);
             if (snd_pcm_prepare(capture) < 0) {
@@ -363,6 +407,18 @@ int main(int argc, char *argv[]) {
             continue;
         }
         consecutive_errors = 0;
+        heartbeat_frames += frames;
+
+        /* Periodic verbose heartbeat */
+        if (verbose) {
+            time_t now = time(NULL);
+            if (now - last_heartbeat >= HEARTBEAT_INTERVAL_S) {
+                fprintf(stdout, "\n[heartbeat] %lu frames captured, %d errors, device %s\n",
+                        heartbeat_frames, consecutive_errors, device);
+                fflush(stdout);
+                last_heartbeat = now;
+            }
+        }
 
         ltc_decoder_write_s16(decoder, audiobuf, frames, total_samples);
         total_samples += frames;
@@ -392,7 +448,10 @@ int main(int argc, char *argv[]) {
                     }
                 }
 
-                fflush(stdout);
+                if (verbose) {
+                    putchar('.');
+                    fflush(stdout);
+                }
             }
         }
     }

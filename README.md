@@ -318,6 +318,27 @@ journalctl -u alsa-ltc -f            # live LTC logs
 
 The LTC decoder auto-detects USB audio capture devices and sends decoded timecode via OSC to the clock. Enable LTC on a source in the web UI or config file (`source1.ltc=true`).
 
+#### alsa-ltc command-line options
+
+```
+alsa-ltc [-v] <alsa-device> <OSC-destination-ip> <OSC-port> [sample-rate]
+```
+
+| Argument | Description |
+|---|---|
+| `-v` | Verbose mode — prints `.` for each decoded LTC frame, ALSA card info at startup, and a status heartbeat every 30 seconds. Useful for USB troubleshooting. |
+| `<alsa-device>` | ALSA capture device name, or `-` for auto-detect (Raspberry Pi). |
+| `<OSC-destination-ip>` | IP address to send decoded timecode OSC messages to. |
+| `<OSC-port>` | UDP port for OSC output. |
+| `[sample-rate]` | Audio sample rate in Hz (default: 44100). Optional. |
+| `--version` | Print build version and exit. |
+
+The systemd service file uses `alsa-ltc -v - 255.255.255.255 1245` (verbose, auto-detect, broadcast, port 1245). Verbose mode is enabled by default so USB diagnostics are captured in the journal.
+
+#### USB recovery
+
+When alsa-ltc detects a USB audio disconnect, it exits immediately. The service file automatically attempts a USB device reset (sysfs `authorized` toggle) before restarting. If the device fails 5 times in 60 seconds, systemd stops retrying to avoid an infinite crash-loop — check `systemctl status alsa-ltc` and the journal for details.
+
 ## Updating
 
 After pulling new changes, rebuild and restart:
