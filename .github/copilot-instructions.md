@@ -1,8 +1,8 @@
 Repository workflow note:
-- Build machine: pi@pi5start.local
+- Build machine: pi@cm5.local (CM5, 8GB RAM, NVMe — replaces pi5start.local)
 - Test machine: pi@piclock.local
-- Keep build machine current: before any build/release task on pi5start.local, use a fresh clone at the target tag/branch or run `git fetch --tags origin` + `git pull --ff-only` in the working copy.
-- Source-of-truth rule: for build/test/release on pi5start.local, create a clean clone from `https://github.com/jpkelly/clock8002.git` (or verify the working copy matches that origin and target ref) before running commands.
+- Keep build machine current: before any build/release task on cm5.local, use a fresh clone at the target tag/branch or run `git fetch --tags origin` + `git pull --ff-only` in the working copy.
+- Source-of-truth rule: for build/test/release on cm5.local, create a clean clone from `https://github.com/jpkelly/clock8002.git` (or verify the working copy matches that origin and target ref) before running commands.
 
 Dev-deploy workflow note (feature branch testing, NOT a release):
 - `install.sh` must be run on the TARGET machine (piclock) from a flat release directory — never from the source tree.
@@ -13,8 +13,8 @@ Dev-deploy workflow note (feature branch testing, NOT a release):
   - Run installer as `sudo bash install.sh > /tmp/<install-log>.log 2>&1` and check `INSTALL_EXIT` before restarting services.
   - After installer completion, explicitly start and verify `clock8002`, `alsa-ltc`, and `oled_daemon` service state.
 - Steps:
-  1. Clone branch and build on pi5start: `ssh pi@pi5start.local 'cd /tmp && rm -rf clock8002-build && git clone --depth 1 --branch BRANCH https://github.com/jpkelly/clock8002.git clock8002-build && cd clock8002-build/v4 && make release NETWORK_CONFIG=default'`
-  2. Relay tarball to piclock (note: GIT_TAG defaults to nearest ancestor tag, e.g. v1.0.3): `scp pi@pi5start.local:/tmp/clock8002-build/v4/clock8002-*-default-linux-arm64.tar.gz /tmp/ && scp /tmp/clock8002-*-default-linux-arm64.tar.gz pi@piclock.local:/tmp/`
+  1. Clone branch and build on cm5: `ssh pi@cm5.local 'cd /tmp && rm -rf clock8002-build && git clone --depth 1 --branch BRANCH https://github.com/jpkelly/clock8002.git clock8002-build && cd clock8002-build/v4 && make release NETWORK_CONFIG=default'`
+  2. Relay tarball to piclock (note: GIT_TAG defaults to nearest ancestor tag, e.g. v1.0.3): `scp pi@cm5.local:/tmp/clock8002-build/v4/clock8002-*-default-linux-arm64.tar.gz /tmp/ && scp /tmp/clock8002-*-default-linux-arm64.tar.gz pi@piclock.local:/tmp/`
   3. Install on piclock: `ssh pi@piclock.local 'cd /tmp && tar xzf clock8002-*-default-linux-arm64.tar.gz && cd clock8002-*-default-linux-arm64 && sudo bash install.sh'`
 - After deploying to the test unit, always report the short GitHub commit hash (first 7 characters) that was deployed.
 
@@ -42,15 +42,15 @@ Release management note:
 
 Buildroot image workflow note:
 - Branch: `master` (NEVER use `buildroot-prototype` — it is historical only and permanently diverged).
-- Test unit: `root@piclockBR.local`. Build host: `pi@pi5start.local` (~/buildroot).
-- Buildroot sources sdl-clock/alsa-ltc directly from `~/clock8002/v4` on pi5start — always `git pull --ff-only` in `~/clock8002` before any `make`.
-- Before building, verify pi5start is on master: `ssh pi@pi5start.local 'cd ~/clock8002 && git branch --show-current'`
+- Test unit: `root@piclockBR.local`. Build host: `pi@cm5.local` (~/buildroot).
+- Buildroot sources sdl-clock/alsa-ltc directly from `~/clock8002/v4` on cm5 — always `git pull --ff-only` in `~/clock8002` before any `make`.
+- Before building, verify cm5 is on master: `ssh pi@cm5.local 'cd ~/clock8002 && git branch --show-current'`
 - Dual service file rule: service files that exist in both `v4/` (Trixie) and `buildroot-external/board/clock8002-rpi5/rootfs-overlay/` (Buildroot) must be kept in sync. When editing a service file in `v4/`, always check for a Buildroot overlay copy and update it with the same changes (adjusting for platform differences like `User=root`). The overlay overwrites the package-installed copy at image build time.
-- Dev builds (with SSH key): `ssh pi@pi5start.local "cd ~/buildroot && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make clock8002-dirclean && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:\$?"`
-- Release builds (no SSH key): `ssh pi@pi5start.local 'cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
-- Monitor: `ssh pi@pi5start.local 'tail -f /tmp/br-build.log'`
+- Dev builds (with SSH key): `ssh pi@cm5.local "cd ~/buildroot && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make clock8002-dirclean && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:\$?"`
+- Release builds (no SSH key): `ssh pi@cm5.local 'cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
+- Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-build.log'`
 - Always provide the monitor command after starting a build.
-- Image transfer: `scp pi@pi5start.local:~/buildroot/output/images/sdcard.img ~/Desktop/piclockBR-<COMMIT>-sdcard.img`
+- Image transfer: `scp pi@cm5.local:~/buildroot/output/images/sdcard.img ~/Desktop/piclockBR-<COMMIT>-sdcard.img`
 - Image naming convention: `piclockBR-<7-char-commit-hash>-sdcard.img`
 - Flash command format (user runs manually — never run dd from agent): `diskutil unmountDisk /dev/diskN && sudo dd if=/Users/jp/Desktop/piclockBR-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress && diskutil eject /dev/diskN`
 - Always verify disk number with `diskutil list external physical` before giving flash commands.
