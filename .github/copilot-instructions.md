@@ -45,6 +45,7 @@ Buildroot image workflow note:
 - Test unit: `root@piclockBR.local`. Build host: `pi@pi5start.local` (~/buildroot).
 - Buildroot sources sdl-clock/alsa-ltc directly from `~/clock8002/v4` on pi5start — always `git pull --ff-only` in `~/clock8002` before any `make`.
 - Before building, verify pi5start is on master: `ssh pi@pi5start.local 'cd ~/clock8002 && git branch --show-current'`
+- Dual service file rule: service files that exist in both `v4/` (Trixie) and `buildroot-external/board/clock8002-rpi5/rootfs-overlay/` (Buildroot) must be kept in sync. When editing a service file in `v4/`, always check for a Buildroot overlay copy and update it with the same changes (adjusting for platform differences like `User=root`). The overlay overwrites the package-installed copy at image build time.
 - Dev builds (with SSH key): `ssh pi@pi5start.local "cd ~/buildroot && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make clock8002-dirclean && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:\$?"`
 - Release builds (no SSH key): `ssh pi@pi5start.local 'cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
 - Monitor: `ssh pi@pi5start.local 'tail -f /tmp/br-build.log'`
