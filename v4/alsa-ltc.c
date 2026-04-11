@@ -5,10 +5,11 @@
  * using libltc, and sends the timecode as OSC messages to a specified
  * destination. Designed for use with clock-8001/8002.
  *
- * Usage: alsa-ltc [-v] <alsa-device> <OSC destination ip> <OSC port> [sample-rate]
+ * Usage: alsa-ltc [-v] <alsa-device> <OSC destination ip> <OSC port> [sample-rate] [fps]
  *        Use "-" for device to auto-detect on Raspberry Pi (bcm2835)
  *        -v enables verbose mode (activity dots, ALSA details, signal levels)
  *        sample-rate defaults to 44100 if not specified
+ *        fps defaults to 25 if not specified
  *
  * Build: gcc -O2 -o alsa-ltc alsa-ltc.c -lasound -lltc
  * Dependencies: libasound2-dev, libltc-dev
@@ -26,10 +27,11 @@
 #include <ltc.h>
 
 #define DEFAULT_SAMPLE_RATE 44100
-#define FPS         25
+#define DEFAULT_FPS 25
 #define CHANNELS    1
 #define BUF_SIZE    1024
 #define HEARTBEAT_INTERVAL_S 30
+#define LTC_GAP_THRESHOLD_MS 1000
 
 #ifndef ALSA_LTC_GIT_TAG
 #define ALSA_LTC_GIT_TAG "dev"
@@ -165,6 +167,7 @@ int main(int argc, char *argv[]) {
     int exit_code = 1;  /* assume error; set to 0 only on clean shutdown */
     int verbose = 0;
     unsigned int sample_rate = DEFAULT_SAMPLE_RATE;
+    unsigned int fps = DEFAULT_FPS;
 
     /* Parse optional -v flag */
     int argoff = 1;
@@ -177,10 +180,11 @@ int main(int argc, char *argv[]) {
         argoff = 2;
     }
 
-    if (argc - argoff < 3 || argc - argoff > 4) {
-        fprintf(stderr, "Usage:  %s [-v] <alsa-device> <OSC destination ip> <OSC port> [sample-rate]\n", argv[0]);
+    if (argc - argoff < 3 || argc - argoff > 5) {
+        fprintf(stderr, "Usage:  %s [-v] <alsa-device> <OSC destination ip> <OSC port> [sample-rate] [fps]\n", argv[0]);
         fprintf(stderr, "  -v            Verbose mode: activity dots, ALSA details, signal levels\n");
         fprintf(stderr, "  sample-rate   Audio sample rate in Hz (default: %d)\n", DEFAULT_SAMPLE_RATE);
+        fprintf(stderr, "  fps           LTC frame rate: 24, 25, or 30 (default: %d)\n", DEFAULT_FPS);
         fprintf(stderr, "  Use - for device for automatic detection on raspberry pi\n");
         fprintf(stderr, "  Use --version to display build information\n");
         return 1;
@@ -188,8 +192,10 @@ int main(int argc, char *argv[]) {
 
     const char *osc_ip = argv[argoff + 1];
     int osc_port = atoi(argv[argoff + 2]);
-    if (argc - argoff == 4)
+    if (argc - argoff >= 4)
         sample_rate = (unsigned int)atoi(argv[argoff + 3]);
+    if (argc - argoff >= 5)
+        fps = (unsigned int)atoi(argv[argoff + 4]);
 
     signal(SIGINT, sighandler);
     signal(SIGTERM, sighandler);
@@ -348,13 +354,13 @@ int main(int argc, char *argv[]) {
     fprintf(stdout, "buffer allocated\n");
 
     /* Initialize LTC decoder */
-    decoder = ltc_decoder_create(sample_rate * FPS / BUF_SIZE, 32);
+    decoder = ltc_decoder_create(sample_rate * fps / BUF_SIZE, 32);
     if (decoder == NULL) {
         fprintf(stderr, "cannot create LTC decoder\n");
         goto cleanup;
     }
     fprintf(stdout, "LTC decoder initialized: sample rate: %d, fps: %d / %d\n",
-            rate, FPS, BUF_SIZE);
+            rate, fps, BUF_SIZE);
 
     /* Create UDP socket for OSC output */
     sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -387,6 +393,8 @@ int main(int argc, char *argv[]) {
     unsigned long heartbeat_frames = 0;
     unsigned long heartbeat_ltc_frames = 0;
     short peak_level = 0;
+    struct timespec last_ltc_ts = {0, 0};
+    int ltc_active = 0;  /* set after first decode */
 
     while (running) {
         snd_pcm_sframes_t frames = snd_pcm_readi(capture, audiobuf, BUF_SIZE);
@@ -450,6 +458,21 @@ int main(int argc, char *argv[]) {
         LTCFrameExt frame;
         while (ltc_decoder_read(decoder, &frame)) {
             heartbeat_ltc_frames++;
+
+            /* LTC gap detection (always on) */
+            struct timespec now_ts;
+            clock_gettime(CLOCK_MONOTONIC, &now_ts);
+            if (ltc_active) {
+                long gap_ms = (now_ts.tv_sec - last_ltc_ts.tv_sec) * 1000
+                            + (now_ts.tv_nsec - last_ltc_ts.tv_nsec) / 1000000;
+                if (gap_ms > LTC_GAP_THRESHOLD_MS) {
+                    fprintf(stdout, "\n[gap] no LTC decoded for %ldms\n", gap_ms);
+                    fflush(stdout);
+                }
+            }
+            last_ltc_ts = now_ts;
+            ltc_active = 1;
+
             SMPTETimecode tc;
             ltc_frame_to_time(&tc, &frame.ltc, 1);
 

@@ -321,7 +321,7 @@ The LTC decoder auto-detects USB audio capture devices and sends decoded timecod
 #### alsa-ltc command-line options
 
 ```
-alsa-ltc [-v] <alsa-device> <OSC-destination-ip> <OSC-port> [sample-rate]
+alsa-ltc [-v] <alsa-device> <OSC-destination-ip> <OSC-port> [sample-rate] [fps]
 ```
 
 | Argument | Description |
@@ -331,6 +331,7 @@ alsa-ltc [-v] <alsa-device> <OSC-destination-ip> <OSC-port> [sample-rate]
 | `<OSC-destination-ip>` | IP address to send decoded timecode OSC messages to. |
 | `<OSC-port>` | UDP port for OSC output. |
 | `[sample-rate]` | Audio sample rate in Hz (default: 44100). Optional. |
+| `[fps]` | LTC frame rate: 24, 25, or 30 (default: 25). Optional. |
 | `--version` | Print build version and exit. |
 
 The systemd service file uses `alsa-ltc - 255.255.255.255 1245` (auto-detect, broadcast, port 1245). Card info and a 30-second heartbeat are always logged to the journal. Add `-v` to the command line for activity dots, ALSA details, and signal levels when troubleshooting USB issues.

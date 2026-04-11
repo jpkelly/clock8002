@@ -8,6 +8,8 @@
   * Detect USB audio disconnect (`SND_PCM_STATE_DISCONNECTED` / `-ENODEV`) and exit immediately instead of retrying — lets systemd restart with a fresh device handle
   * Include ALSA PCM state name in all read-error log lines for USB troubleshooting
   * Add LTC decode count to heartbeat output
+  * Add optional `[fps]` argument — configures LTC decoder frame rate (24, 25, or 30; default: 25)
+  * Add LTC gap detection — logs `[gap] no LTC decoded for Xms` when timecode decode gap exceeds 1 second (always on)
 * Service (`alsa-ltc.service`)
   * Run without `-v` by default — heartbeat and card info are always on; add `-v` to the command line when USB debugging is needed
   * Add `ExecStopPost` USB reset — on failure exit, toggles sysfs `authorized` on C-Media devices to reset the dongle before the next restart attempt

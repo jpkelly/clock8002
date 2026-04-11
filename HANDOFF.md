@@ -9,11 +9,18 @@ Last updated: 2026-04-11
 - Latest tagged release: **v1.2.9** — Trixie tarballs on GitHub
 - Trixie tarballs: `clock8002-v1.2.9-default-linux-arm64.tar.gz`, `clock8002-v1.2.9-gerry-linux-arm64.tar.gz`
 - Buildroot SD card image: `piclockBR-71c2321-sdcard.img` (on Mac Desktop) — contains v1.2.6 binaries
-- Test unit piclockBR.local: running Buildroot image built from `759dafe` (pre-v1.2.6); stability soak test in progress (started 2026-04-09)
+- Test unit piclockBR.local: running Buildroot image `piclockBR-c7e3a60-sdcard.img` on replacement Board B (Board A retired — faulty VL805/PCIe); runtime overrides: `-v`, sample rate 48000
 - Test unit piclockG.local: running Trixie, stability soak test in progress (started 2026-04-09)
 - piClockN.local: Trixie v1.2.6, shorter USB cable (intermittent failures), usb-monitor service running
 - piclockM.local: Trixie v1.2.6, longer USB cable (fails every boot), usb-monitor service running
 - `buildroot-prototype` branch: fully merged into master
+
+### Fixed this session (2026-04-10/11 — alsa-ltc enhancements + hardware debugging)
+- **`-v` verbose split** (`c7e3a60`): Card info and 30s heartbeat (frames, LTC count, errors) now always on. `-v` adds activity dots, ALSA HW params, and peak signal level.
+- **Configurable `[fps]` argument**: LTC decoder frame rate configurable via CLI (default 25). TouchDesigner source is 30fps.
+- **LTC gap detection**: Logs warning when no LTC frame decoded for >1 second. Always on, only fires on anomalies.
+- **Hardware fault isolated**: piclockBR Board A (Pi 5) has faulty VL805/PCIe — CM108 USB lockup after 30-100s regardless of dongle, ribbon cable, or software image. Board B is stable. Board A retired.
+- **Removed `-v` from service files**: Both Trixie and Buildroot overlay service files updated.
 
 ## Buildroot Status (post-merge)
 
