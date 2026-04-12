@@ -7,7 +7,7 @@ Last updated: 2026-04-12
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
 - Latest tagged release: **v1.2.9** — Trixie tarballs on GitHub
-- master HEAD: `666882e` (alsa-ltc: fix grammar setted→set + suppress OSC send error flood)
+- master HEAD: `d991f58` (tools: vl805-soak-monitor + docs)
 - Trixie tarballs: `clock8002-v1.2.9-default-linux-arm64.tar.gz`, `clock8002-v1.2.9-gerry-linux-arm64.tar.gz`
 - Buildroot SD card image on Mac Desktop:
   - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
