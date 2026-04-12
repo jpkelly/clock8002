@@ -16,6 +16,11 @@
   * Change `Restart=always` to `Restart=on-failure` — only restarts on error exits, not clean stops
   * Reduce `RestartSec` from 30s to 5s — faster recovery now that early disconnect detection avoids wasted retries
   * Add `StartLimitBurst=5` / `StartLimitIntervalSec=60` — prevents infinite crash-loop when USB hardware is deeply locked
+* Grammar / logging
+  * Fix `setted` → `set` in hw_params log messages
+  * Suppress OSC send error flood — logs once on first failure, then a recovery message with suppressed count when sending resumes
+* Tools
+  * Add `tools/vl805-soak-monitor.sh` — continuous soak test monitor that tracks xHCI errors, alsa-ltc restarts, LTC decode gaps, and temperature every 30 seconds with real-time alerting
 
 ## Version 1.2.8
 * Install

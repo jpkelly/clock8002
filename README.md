@@ -340,6 +340,19 @@ The systemd service file uses `alsa-ltc - 255.255.255.255 1245` (auto-detect, br
 
 When alsa-ltc detects a USB audio disconnect, it exits immediately. The service file automatically attempts a USB device reset (sysfs `authorized` toggle) before restarting. If the device fails 5 times in 60 seconds, systemd stops retrying to avoid an infinite crash-loop — check `systemctl status alsa-ltc` and the journal for details.
 
+#### Soak test monitor
+
+`tools/vl805-soak-monitor.sh` is a continuous monitor for long-running stability tests. It polls every 30 seconds and logs to `/tmp/vl805-monitor.log`, alerting on xHCI USB errors, alsa-ltc service restarts, and LTC decode gaps.
+
+```bash
+# Deploy and run on a test unit
+scp tools/vl805-soak-monitor.sh pi@<host>:/tmp/
+ssh pi@<host> 'chmod +x /tmp/vl805-soak-monitor.sh && nohup /tmp/vl805-soak-monitor.sh &'
+
+# Check log remotely
+ssh pi@<host> 'tail -20 /tmp/vl805-monitor.log'
+```
+
 ## Updating
 
 After pulling new changes, rebuild and restart:
