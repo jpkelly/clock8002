@@ -23,6 +23,8 @@
 #include <time.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <ifaddrs.h>
+#include <net/if.h>
 #include <alsa/asoundlib.h>
 #include <ltc.h>
 
@@ -46,6 +48,47 @@
 #endif
 
 static volatile int running = 1;
+
+/* Resolve 255.255.255.255 to the subnet broadcast address of the first
+ * non-loopback IPv4 interface.  Prefers wired interfaces (eth*, end*) over
+ * wireless so the Wi-Fi AP doesn't shadow the production network.
+ * Returns 1 if dest was updated, 0 otherwise. */
+static int resolve_subnet_broadcast(struct sockaddr_in *dest) {
+    struct ifaddrs *ifap, *ifa;
+    if (getifaddrs(&ifap) != 0)
+        return 0;
+    struct ifaddrs *wired = NULL, *fallback = NULL;
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+        if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET)
+            continue;
+        if (ifa->ifa_flags & IFF_LOOPBACK)
+            continue;
+        if (!(ifa->ifa_flags & IFF_BROADCAST) || !ifa->ifa_broadaddr)
+            continue;
+        if (!fallback)
+            fallback = ifa;
+        if (strncmp(ifa->ifa_name, "eth", 3) == 0 ||
+            strncmp(ifa->ifa_name, "end", 3) == 0) {
+            wired = ifa;
+            break;
+        }
+    }
+    ifa = wired ? wired : fallback;
+    int changed = 0;
+    if (ifa) {
+        struct sockaddr_in *bcast = (struct sockaddr_in *)ifa->ifa_broadaddr;
+        if (bcast->sin_addr.s_addr != dest->sin_addr.s_addr) {
+            dest->sin_addr = bcast->sin_addr;
+            char resolved[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &dest->sin_addr, resolved, sizeof(resolved));
+            fprintf(stderr, "OSC destination: 255.255.255.255 -> %s (subnet broadcast via %s)\n",
+                    resolved, ifa->ifa_name);
+            changed = 1;
+        }
+    }
+    freeifaddrs(ifap);
+    return changed;
+}
 
 static void print_version(FILE *out, const char *prog) {
     fprintf(out,
@@ -382,6 +425,12 @@ int main(int argc, char *argv[]) {
     dest.sin_port = htons(osc_port);
     dest.sin_addr.s_addr = inet_addr(osc_ip);
 
+    /* Track whether we were asked to use broadcast, so we can re-resolve
+     * the subnet broadcast address if the network changes. */
+    int use_subnet_broadcast = (dest.sin_addr.s_addr == htonl(INADDR_BROADCAST));
+    if (use_subnet_broadcast)
+        resolve_subnet_broadcast(&dest);
+
     /* Main capture loop */
     /* If we reach the main loop, setup succeeded — a clean SIGTERM exit is success */
     exit_code = 0;
@@ -447,6 +496,8 @@ int main(int argc, char *argv[]) {
                     fprintf(stdout, ", peak=%d", peak_level);
                 fprintf(stdout, "\n");
                 fflush(stdout);
+                if (use_subnet_broadcast)
+                    resolve_subnet_broadcast(&dest);
                 peak_level = 0;
                 last_heartbeat = now;
             }
@@ -497,6 +548,8 @@ int main(int argc, char *argv[]) {
                         if (osc_fail_count == 1) {
                             fprintf(stderr, "Failed to send OSC packet! (suppressing further errors)\n");
                         }
+                        if (use_subnet_broadcast)
+                            resolve_subnet_broadcast(&dest);
                     } else if (osc_fail_count > 0) {
                         fprintf(stderr, "OSC send recovered after %d failure%s\n",
                                 osc_fail_count, osc_fail_count == 1 ? "" : "s");
