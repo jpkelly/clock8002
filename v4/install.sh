@@ -367,3 +367,6 @@ if [ -f /etc/systemd/system/alsa-ltc.service ]; then
     systemctl is-enabled alsa-ltc 2>/dev/null || true
     systemctl is-active alsa-ltc 2>/dev/null || true
 fi
+
+echo ""
+echo "Reboot to finish installation: sudo reboot"
