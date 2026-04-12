@@ -287,7 +287,7 @@ int main(int argc, char *argv[]) {
         snd_pcm_hw_params_free(hw_params);
         goto cleanup;
     }
-    fprintf(stdout, "hw_params access setted\n");
+    fprintf(stdout, "hw_params access set\n");
 
     rc = snd_pcm_hw_params_set_format(capture, hw_params, SND_PCM_FORMAT_S16_LE);
     if (rc < 0) {
@@ -295,7 +295,7 @@ int main(int argc, char *argv[]) {
         snd_pcm_hw_params_free(hw_params);
         goto cleanup;
     }
-    fprintf(stdout, "hw_params format setted\n");
+    fprintf(stdout, "hw_params format set\n");
 
     unsigned int rate = sample_rate;
     rc = snd_pcm_hw_params_set_rate_near(capture, hw_params, &rate, 0);
@@ -307,7 +307,7 @@ int main(int argc, char *argv[]) {
     if (rate != sample_rate)
         fprintf(stdout, "hw_params rate: requested %u, got %u\n", sample_rate, rate);
     else
-        fprintf(stdout, "hw_params rate setted\n");
+        fprintf(stdout, "hw_params rate set\n");
 
     rc = snd_pcm_hw_params_set_channels(capture, hw_params, CHANNELS);
     if (rc < 0) {
@@ -315,7 +315,7 @@ int main(int argc, char *argv[]) {
         snd_pcm_hw_params_free(hw_params);
         goto cleanup;
     }
-    fprintf(stdout, "hw_params channels setted\n");
+    fprintf(stdout, "hw_params channels set\n");
 
     rc = snd_pcm_hw_params(capture, hw_params);
     if (rc < 0) {
@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
         snd_pcm_hw_params_free(hw_params);
         goto cleanup;
     }
-    fprintf(stdout, "hw_params setted\n");
+    fprintf(stdout, "hw_params set\n");
 
     if (verbose) {
         snd_pcm_uframes_t buf_sz, per_sz;
@@ -491,8 +491,16 @@ int main(int argc, char *argv[]) {
                 if (len > 0) {
                     ssize_t sent = sendto(sock, osc_buf, len, 0,
                                           (struct sockaddr *)&dest, sizeof(dest));
+                    static int osc_fail_count = 0;
                     if (sent < 0) {
-                        fprintf(stderr, "Failed to send OSC packet!\n");
+                        osc_fail_count++;
+                        if (osc_fail_count == 1) {
+                            fprintf(stderr, "Failed to send OSC packet! (suppressing further errors)\n");
+                        }
+                    } else if (osc_fail_count > 0) {
+                        fprintf(stderr, "OSC send recovered after %d failure%s\n",
+                                osc_fail_count, osc_fail_count == 1 ? "" : "s");
+                        osc_fail_count = 0;
                     }
                 }
 
