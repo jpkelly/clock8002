@@ -1,21 +1,57 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-11
+Last updated: 2026-04-12
 
 ## Current State
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
 - Latest tagged release: **v1.2.9** — Trixie tarballs on GitHub
+- master HEAD: `666882e` (alsa-ltc: fix grammar setted→set + suppress OSC send error flood)
 - Trixie tarballs: `clock8002-v1.2.9-default-linux-arm64.tar.gz`, `clock8002-v1.2.9-gerry-linux-arm64.tar.gz`
-- Buildroot SD card image: `piclockBR-71c2321-sdcard.img` (on Mac Desktop) — contains v1.2.6 binaries
-- Test unit piclockBR.local: running Buildroot image `piclockBR-c7e3a60-sdcard.img` on replacement Board B (Board A retired — faulty VL805/PCIe); runtime overrides: `-v`, sample rate 48000
-- Test unit piclockG.local: running Trixie, stability soak test in progress (started 2026-04-09)
-- piClockN.local: Trixie v1.2.6, shorter USB cable (intermittent failures), usb-monitor service running
-- piclockM.local: Trixie v1.2.6, longer USB cable (fails every boot), usb-monitor service running
+- Buildroot SD card image on Mac Desktop:
+  - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
+- Buildroot release tarballs on Mac Desktop:
+  - `clock8002-v0.0.1-default-linux-arm64.tar.gz`
+  - `clock8002-v0.0.1-gerry-linux-arm64.tar.gz`
+- **1GB Pi 5** (piclockBR.local): running Buildroot image `ce6526b`. Healthy — 0 xHCI errors.
+- **2GB Pi 5** (piclockTG.local): running Trixie. **VL805 xHCI crash now reproducing on Trixie too** — see investigation below. Currently soak-testing after fresh power cycle.
 - `buildroot-prototype` branch: fully merged into master
 
-### Fixed this session (2026-04-10/11 — alsa-ltc enhancements + hardware debugging)
+### Active investigation: VL805 xHCI crash on 2GB Pi 5 (Issue #39)
+
+**Key development (2026-04-12): VL805 crash now reproduces on Trixie — NOT Buildroot-specific.**
+
+The 2GB board crashed with `usb_set_interface failed (-110)` at ~12 min (kernel time 702s) while running Trixie. This was previously thought to be Buildroot-only (Trixie ran 13+ hours clean on the same hardware in an earlier session). The VL805 crash is now confirmed to affect both OSes on the 2GB board.
+
+**Timeline of the Trixie crash (2026-04-12):**
+- Boot at 14:07, alsa-ltc healthy by 14:07:59, decoding LTC with 0 errors
+- First `usb_set_interface failed (-110)` at kernel time 702s (~14:19)
+- 22 total xHCI errors accumulated, alsa-ltc went into restart loop (11 restarts)
+- Each restart: device enumerates, hw_params succeeds, but `snd_pcm_hw_params()` times out on the isochronous endpoint
+- Temperature 48.8°C, throttled=0x0 — no thermal issue
+- Board power cycled, now soak testing again (baseline: 0 errors at 3 min uptime)
+
+**Hypotheses eliminated this session:**
+- NUMA/DMA above 1GB — disproven (`mem=1G` still crashed at 30 min)
+- Kernel source commit — both use `359f37f0`
+- Kernel config — identical between Buildroot and Trixie
+- config.txt differences — tested Trixie-like config on Buildroot, still crashes
+- `otg_mode=1` — removing it made crash worse (1 min vs 30 min)
+- Service file differences — Buildroot is more cautious, not less
+- OSC send race — completely isolated from USB (UDP sendto)
+- **Buildroot-specific bug — DISPROVEN. Trixie crashes too on the 2GB board.**
+
+**Remaining suspects:**
+- Hardware degradation on the 2GB board (VL805, USB hub, C-Media dongle, or expansion board)
+- The rapid crash/reboot cycles during Buildroot testing may have stressed the VL805
+- The previous 13-hour clean Trixie run may have been an outlier
+- Swap C-Media dongle with a known-good spare to isolate dongle vs VL805
+
+**1GB board (piclockBR.local) comparison:** Buildroot running, 0 xHCI errors, alsa-ltc stable.
+
+### Fixed this session (2026-04-10/11/12 — alsa-ltc enhancements + hardware debugging)
+- **alsa-ltc grammar fix + OSC suppression** (`666882e`): Fixed `setted` → `set` in 5 hw_params log messages. Suppressed OSC send error flood — logs once on first failure, logs recovery message with count when send succeeds again.
 - **`-v` verbose split** (`c7e3a60`): Card info and 30s heartbeat (frames, LTC count, errors) now always on. `-v` adds activity dots, ALSA HW params, and peak signal level.
 - **Configurable `[fps]` argument**: LTC decoder frame rate configurable via CLI (default 25). TouchDesigner source is 30fps.
 - **LTC gap detection**: Logs warning when no LTC frame decoded for >1 second. Always on, only fires on anomalies.
