@@ -336,6 +336,8 @@ alsa-ltc [-v] <alsa-device> <OSC-destination-ip> <OSC-port> [sample-rate] [fps]
 
 The systemd service file uses `alsa-ltc - 255.255.255.255 1245` (auto-detect, broadcast, port 1245). Card info and a 30-second heartbeat are always logged to the journal. Add `-v` to the command line for activity dots, ALSA details, and signal levels when troubleshooting USB issues.
 
+When `255.255.255.255` is configured, `alsa-ltc` resolves it to the active interface's subnet broadcast (for example `192.168.8.255` or `10.0.0.255`) and re-resolves on network changes. This avoids static-IP/no-gateway `ENETUNREACH` failures. Broadcast delivery remains subnet-local; use a unicast destination IP for cross-subnet receivers.
+
 #### USB recovery
 
 When alsa-ltc detects a USB audio disconnect, it exits immediately. The service file automatically attempts a USB device reset (sysfs `authorized` toggle) before restarting. If the device fails 5 times in 60 seconds, systemd stops retrying to avoid an infinite crash-loop — check `systemctl status alsa-ltc` and the journal for details.
