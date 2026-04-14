@@ -6,6 +6,25 @@
 
 ---
 
+## Contents
+
+- [Strategic Decision](#strategic-decision)
+- [Upstream Remote](#upstream-remote)
+- [Runtime SDL3 Library Versions](#runtime-sdl3-library-versions)
+- [Migration Phases](#migration-phases)
+  - [✅ Phase 1 — Branch established](#-phase-1--branch-established-commit-485f801)
+  - [✅ Phase 2 — SDL3 Buildroot packages](#-phase-2--sdl3-buildroot-packages-commit-dbbab85)
+  - [✅ Phase 3 — Port clock8002 additions](#-phase-3--port-clock8002-additions-commits-1624c60852a99-2026-04-1314)
+  - [⬜ Phase 4 — Hardware validation](#-phase-4--hardware-validation-on-piclockbr---next)
+  - [⬜ Phase 5 — Read-only rootfs](#-phase-5--read-only-rootfs-appliance-hardening)
+- [What Carries Forward UNCHANGED](#what-carries-forward-unchanged)
+- [What Changes](#what-changes)
+- [SDL3 Architecture Notes](#sdl3-architecture-notes)
+  - [libudev — intentionally disabled](#libudev--intentionally-disabled--dsdl_libudevoff)
+- [Build Workflow](#build-workflow-unchanged-from-master)
+
+---
+
 ## Strategic Decision
 
 clock8002 is migrating from SDL2 (CGO, complex cross-compilation) to SDL3 via the
