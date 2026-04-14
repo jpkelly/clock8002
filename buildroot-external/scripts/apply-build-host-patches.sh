@@ -88,6 +88,40 @@ else
     echo "  xz.mk: acl_cv_wl already present (skipping)"
 fi
 
+# ---------------------------------------------------------------------------
+# Go 1.24.2 upgrade (package/go/)
+# Required: v4/go.mod needs go >= 1.24.0; Buildroot 2025.02 ships 1.23.7
+# ---------------------------------------------------------------------------
+GO_MK="$BUILDROOT/package/go/go.mk"
+
+if grep -q "GO_VERSION = 1.23.7" "$GO_MK"; then
+    sed -i 's/GO_VERSION = 1.23.7/GO_VERSION = 1.24.2/' "$GO_MK"
+    echo "  go.mk: version bumped to 1.24.2"
+else
+    echo "  go.mk: version already updated (skipping)"
+fi
+
+for HFILE in \
+    "$BUILDROOT/package/go/go.hash" \
+    "$BUILDROOT/package/go/go-bin/go-bin.hash" \
+    "$BUILDROOT/package/go/go-src/go-src.hash"; do
+    if ! grep -q "go1.24.2.linux-arm64.tar.gz" "$HFILE"; then
+        cat >> "$HFILE" << 'GOHASHES'
+sha256  9dc77ffadc16d837a1bf32d99c624cb4df0647cee7b119edd9e7b1bcc05f2e00  go1.24.2.src.tar.gz
+sha256  4c382776d52313266f3026236297a224a6688751256a2dffa3f524d8d6f6c0ba  go1.24.2.linux-386.tar.gz
+sha256  68097bd680839cbc9d464a0edce4f7c333975e27a90246890e9f1078c7e702ad  go1.24.2.linux-amd64.tar.gz
+sha256  756274ea4b68fa5535eb9fe2559889287d725a8da63c6aae4d5f23778c229f4b  go1.24.2.linux-arm64.tar.gz
+sha256  438d5d3d7dcb239b58d893a715672eabe670b9730b1fd1c8fc858a46722a598a  go1.24.2.linux-armv6l.tar.gz
+sha256  5fff857791d541c71d8ea0171c73f6f99770d15ff7e2ad979104856d01f36563  go1.24.2.linux-ppc64le.tar.gz
+sha256  1cb3448166d6abb515a85a3ee5afbdf932081fb58ad7143a8fb666fbc06146d9  go1.24.2.linux-s390x.tar.gz
+GOHASHES
+        echo "  $(basename "$HFILE"): go1.24.2 hashes appended"
+    else
+        echo "  $(basename "$HFILE"): go1.24.2 already present (skipping)"
+    fi
+done
+
 echo ""
 echo "Done. All build-host patches applied."
 echo "If mesa3d was already in output/build/, run: make mesa3d-dirclean"
+echo "If go was already in output/build/, run: make host-go-dirclean"
