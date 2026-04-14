@@ -1,0 +1,1 @@
+logo.nologo consoleblank=0 console=tty1

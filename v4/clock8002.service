@@ -1,0 +1,18 @@
+[Unit]
+Description=Clock 8002 SDL Display
+After=multi-user.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/clock8002
+Environment=SDL_VIDEODRIVER=kmsdrm
+Environment=XDG_RUNTIME_DIR=/run/user/%U
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/opt/clock8002/sdl3-clock --fullscreen
+Restart=on-failure
+RestartSec=5
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_SYS_TIME CAP_SYS_ADMIN
+
+[Install]
+WantedBy=multi-user.target

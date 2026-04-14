@@ -1,0 +1,49 @@
+# clock8002 Buildroot boot config for Raspberry Pi 5
+
+# Buildroot kernel image
+kernel=Image
+
+# Run in 64-bit mode
+arm_64bit=1
+
+# Disable compensation for displays with overscan
+disable_overscan=1
+
+# Suppress firmware rainbow/diagnostic splash screen
+disable_splash=1
+
+# Force D0-stepping DTB for Pi 5 Rev 1.1 (D0 silicon).  The base
+# bcm2712-rpi-5-b.dtb maps 0x30 bytes of pinctrl registers but D0 only
+# has 0x20 — accessing the extra range triggers an SError bus fault.
+device_tree=bcm2712d0-rpi-5-b.dtb
+
+# Skip Pi 5 OS compatibility check (newer EEPROM bootloaders require this
+# for non-RPiOS images whose DTB lacks the expected brcm,bcm2712 compatible)
+os_check=0
+
+# Let firmware auto-detect displays and enable the GPU DT node.
+display_auto_detect=1
+
+# Enable KMS/DRM graphics — required for /dev/dri and SDL2 KMSDRM backend.
+# Pi 5 uses its own overlay variant (not the generic vc4-kms-v3d).
+dtoverlay=vc4-kms-v3d-pi5
+
+# Fix D0-stepping GPU compatible string so vc4-drm binds the display pipeline.
+dtoverlay=gpu-enable
+
+# Enable I2C bus (for OLED, sensors, etc.)
+dtparam=i2c_arm=on
+
+# Enable Pi 5 RTC battery charging at 3.0V
+dtparam=rtc_bbat_vchg=3000000
+
+# Enable host mode on the built-in xHCI USB controller.  This matches the
+# Trixie default and disables the legacy dwc2 gadget controller, keeping
+# VL805 USB bus assignment consistent.
+otg_mode=1
+
+# Enable UART interfaces for serial peripherals
+dtoverlay=uart1
+dtoverlay=uart2
+dtoverlay=uart3
+dtparam=uart0=on

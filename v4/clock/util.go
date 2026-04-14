@@ -1,13 +1,17 @@
 package clock
 
 import (
+	"bufio"
 	"fmt"
-	"github.com/chabad360/go-osc/osc"
-	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
 	"image/color"
 	"log"
-	"net"
+	"os"
+	"runtime/debug"
+	"strings"
 	"time"
+
+	"github.com/chabad360/go-osc/osc"
+	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
 )
 
 /*
@@ -31,27 +35,6 @@ func oscListenerSetup(listenAddr string) *Server {
 
 	log.Printf("OSC: listening on %v", oscServer.Addr)
 	return &server
-}
-
-func clockAddresses() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		log.Printf("Failed to get interface addresses")
-		return ""
-	}
-	var ret string
-	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
-		if err != nil {
-			continue
-		}
-		if ip.IsLoopback() {
-			continue
-		} else if ip.To4() != nil {
-			ret += fmt.Sprintf("    %v\n", ip)
-		}
-	}
-	return ret
 }
 
 func formatDuration(diff time.Duration) string {
@@ -88,6 +71,57 @@ func parseColor(s string) (c *color.RGBA, err error) {
 
 // VersionInfo returns the clock engine version and git commit as a string
 func VersionInfo() string {
-	version := fmt.Sprintf("Clock version %s (%s)", gitTag, gitCommit)
-	return version
+	version := Version
+	if gitTag != "" && gitTag != "v0.0.1" && gitTag != "Unknown" {
+		version = gitTag
+	}
+
+	commit := gitCommit
+	if len(commit) > 7 {
+		commit = commit[:7]
+	}
+	if commit == "" || commit == "Unknown" {
+		commit = "unknown"
+	}
+
+	if commit == "unknown" {
+		if info, ok := debug.ReadBuildInfo(); ok {
+			for _, s := range info.Settings {
+				if s.Key == "vcs.revision" && len(s.Value) >= 7 {
+					commit = s.Value[:7]
+					break
+				}
+			}
+		}
+	}
+	if IsBuildroot() {
+		return fmt.Sprintf("Clock-8002 version %s (%s BR)", version, commit)
+	}
+	return fmt.Sprintf("Clock-8002 version %s (%s)", version, commit)
+}
+
+// IsBuildroot returns true when the OS is Buildroot (reads /etc/os-release).
+func IsBuildroot() bool {
+	f, err := os.Open("/etc/os-release")
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "NAME=Buildroot" || line == `NAME="Buildroot"` {
+			return true
+		}
+	}
+	return false
+}
+
+// AppVersionForConfig returns a stable app-version value for clock.ini.
+// Prefer the injected git tag and normalize it to x.y.z (without leading "v").
+func AppVersionForConfig() string {
+	if gitTag != "" && gitTag != "v0.0.1" && gitTag != "Unknown" {
+		return strings.TrimPrefix(gitTag, "v")
+	}
+	return Version
 }

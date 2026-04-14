@@ -1,0 +1,14 @@
+[Unit]
+Description=Apply PiClock network configuration
+After=NetworkManager.service network-online.target
+Wants=NetworkManager.service
+RequiresMountsFor=/boot
+
+[Service]
+Type=oneshot
+ExecStart=/opt/clock8002/piclock-network.sh
+TimeoutStartSec=60
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

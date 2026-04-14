@@ -1,0 +1,14 @@
+[Unit]
+Description=Bootsplash screen (fbv)
+After=systemd-modules-load.service local-fs.target
+Before=clock8002.service
+ConditionPathExists=/opt/clock8002/bootsplash.png
+
+[Service]
+Type=oneshot
+ExecStart=/opt/clock8002/bootsplash.sh
+StandardInput=null
+StandardOutput=tty
+
+[Install]
+WantedBy=multi-user.target

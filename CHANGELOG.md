@@ -1,3 +1,148 @@
+## Version 1.3.1
+* Install
+  * Fix `~/.config/clock-8001/` directory created as root when running `sudo bash install.sh` — sdl-clock would fail immediately with "permission denied" on the log file
+
+## Version 1.3.0
+* alsa-ltc
+  * Add `-v` verbose flag — prints activity dot (`.`) for each decoded frame, ALSA hardware params (buffer/period sizes), and peak signal level in heartbeat
+  * Card info and 30-second heartbeat are now always on (no flag needed); `-v` adds activity dots, ALSA negotiation details, and signal levels
+  * Change default sample rate from 48000 to 44100 to match upstream hardware
+  * Add optional `[sample-rate]` argument — overrides the default without rebuilding
+  * Print warning when hardware negotiates a different sample rate than requested
+  * Detect USB audio disconnect (`SND_PCM_STATE_DISCONNECTED` / `-ENODEV`) and exit immediately instead of retrying — lets systemd restart with a fresh device handle
+  * Include ALSA PCM state name in all read-error log lines for USB troubleshooting
+  * Add LTC decode count to heartbeat output
+  * Add optional `[fps]` argument — configures LTC decoder frame rate (24, 25, or 30; default: 25)
+  * Add LTC gap detection — logs `[gap] no LTC decoded for Xms` when timecode decode gap exceeds 1 second (always on)
+* Service (`alsa-ltc.service`)
+  * Run without `-v` by default — heartbeat and card info are always on; add `-v` to the command line when USB debugging is needed
+  * Add `ExecStopPost` USB reset — on failure exit, toggles sysfs `authorized` on C-Media devices to reset the dongle before the next restart attempt
+  * Change `Restart=always` to `Restart=on-failure` — only restarts on error exits, not clean stops
+  * Reduce `RestartSec` from 30s to 5s — faster recovery now that early disconnect detection avoids wasted retries
+  * Add `StartLimitBurst=5` / `StartLimitIntervalSec=60` — prevents infinite crash-loop when USB hardware is deeply locked
+* Grammar / logging
+  * Fix `setted` → `set` in hw_params log messages
+  * Suppress OSC send error flood — logs once on first failure, then a recovery message with suppressed count when sending resumes
+* Tools
+  * Add `tools/vl805-soak-monitor.sh` — continuous soak test monitor that tracks xHCI errors, alsa-ltc restarts, LTC decode gaps, and temperature every 30 seconds with real-time alerting
+
+## Version 1.2.8
+* Install
+  * Fix FAT32 `/boot/firmware` remount after fstab update — config saves via web UI now work immediately without requiring a reboot
+  * Enable `alsa-ltc.service` during install — was missing, service file was copied but never enabled
+
+## Version 1.2.7
+* alsa-ltc
+  * Internal retry loop for USB audio device detection — polls for device and PCM handle for up to 15 seconds on startup instead of failing immediately
+* Buildroot
+  * Pin kernel to Trixie commit `359f37f0` (6.12.47) — prevents untested kernel regressions
+  * Fast alsa-ltc restart with USB autosuspend disable in rootfs overlay
+  * Fix hostname race — add `RequiresMountsFor=/boot` to rootfs-overlay network service
+  * Add `alsa-ucm-conf`, `alsactl`, `amixer` to defconfig for proper ALSA card naming
+  * Remove deleted `99-alsa-ltc-usb.rules` from package recipe
+* Install
+  * Mask `alsa-store.service` and `alsa-restore.service` to prevent corrupt ALSA state file from poisoning C-Media mixer on boot
+* Network
+  * `piclock-network.service`: add `RequiresMountsFor=/boot` to fix hostname race on Trixie
+
+## Version 1.2.6
+* alsa-ltc
+  * Return non-zero exit code on error — systemd `Restart=on-failure` now triggers correctly instead of treating all exits as success
+  * Add `snd_pcm_drop()` before `snd_pcm_close()` for clean capture teardown — prevents potential hang on broken USB device
+* Buildroot
+  * Remove deleted `99-alsa-ltc-usb.rules` from package recipe — Buildroot image builds were failing with `install: cannot stat '99-alsa-ltc-usb.rules': No such file or directory`
+
+## Version 1.2.5
+* Install
+  * Config files moved to `/boot/firmware/piclock/` (FAT32 boot partition) — now accessible from Mac/PC when SD card is inserted (appears as `bootfs` volume with a `piclock/` folder)
+  * `install.sh` migrates existing config files from `/boot/piclock/` to `/boot/firmware/piclock/` and updates symlinks on existing units
+  * `install.sh` configures `/boot/firmware` with correct `uid`/`gid` mount options so the web UI can write back to `clock.ini` on the FAT32 partition
+  * `install.sh` removes stale `/var/lib/alsa/asound.state` on install to prevent alsa-ltc `Input/output error` caused by corrupt ALSA state from a prior crash-loop
+  * `install.sh` now uses `$SUDO_USER` to correctly identify the invoking user when run via `sudo bash install.sh` — fixes `User=` in service files, config symlinks, and fstab uid/gid
+* alsa-ltc
+  * Added `[Install]/WantedBy=multi-user.target` to `alsa-ltc.service` — `systemctl enable/disable alsa-ltc` now works correctly
+  * Removed `99-alsa-ltc-usb.rules` udev rule — alsa-ltc is now a plain boot-time service
+* Buildroot
+  * `/boot/piclock/` config files were already on FAT32 in Buildroot (no change needed)
+* Documentation
+  * Updated all config path references from `/boot/piclock/` to `/boot/firmware/piclock/`
+  * Removed `chown` from Gerry deploy commands (FAT32 does not support per-file ownership)
+
+## Version 1.2.4
+* Install
+  * `install.sh`: seed `network.ini` hostname from system hostname on first install — avoids hardcoded `piClock` default when user sets a custom hostname via RPi Imager
+* Buildroot
+  * Remove hardcoded dev SSH public key from `post-build.sh`; SSH key now optional via `BR2_PICLOCKKEY` environment variable at build time — release images are password-only
+* Documentation
+  * README: add "Preparing the SD Card" section covering RPi Imager OS setup (username, password, SSH)
+  * README.buildroot.md: add table of contents; separate Release build and Dev build command sections
+  * RELEASING.md: document rule that Buildroot release images must never include an SSH key
+
+## Version 1.2.3
+* Buildroot
+  * Remove boot-partition EEPROM provisioning (`pieeprom.upd` + `recovery.bin` baked into image): approach causes a red screen loop when installed EEPROM firmware is same version or newer than Buildroot's blob — which is the case for any Pi 5 previously booted with Trixie. EEPROM provisioning is now a documented manual step (see README)
+* Documentation
+  * README: added "EEPROM Provisioning (Pi 5)" section with `rpi-eeprom-update -d -f` command sequence for setting `BOOT_ORDER=0xf1` on factory-fresh units
+
+## Version 1.2.2
+* Bugfixes
+  * `alsa-ltc`: start/stop via udev instead of boot-time service enable; fixes xHCI controller crash when USB audio device is behind a hub and not yet enumerated at `multi-user.target` start time
+  * New file `99-alsa-ltc-usb.rules`: triggers `alsa-ltc.service` start when any `snd-usb-audio` device appears; stops service on device removal
+
+## Version 1.2.1
+* Bugfixes
+  * `clock8002.service`: add `CAP_SYS_ADMIN` to `AmbientCapabilities` so DRM mirror mode works when running as non-root (`User=pi`); fixes "permission denied" on `DRM_IOCTL_SET_MASTER` / `SetCrtc` for the spare HDMI connector
+
+## Version 1.2.0
+* Features
+  * Buildroot image variant: single SD card image with full clock8002 stack (sdl-clock, alsa-ltc, oled_daemon, bootsplash, Wi-Fi AP, power button shutdown)
+  * DRM/KMS second display: mirror clock to spare HDMI connector via direct DRM dumb buffer (no desktop required)
+  * PerfectCue second display mode: show full-screen cue icon on second HDMI
+  * Boot splash screen (Buildroot only): fbv PNG splash while DRM/KMS initialises
+  * Build environment indicator: `BR` badge on OLED splash and web GUI when running under Buildroot
+  * Wi-Fi AP support (Buildroot): dnsmasq + wpa_supplicant D-Bus, persisted US regdomain
+  * Power button shutdown (Buildroot): systemd-logind integration
+* Bugfixes
+  * Info overlay `I` key toggle now uses actual visibility state
+  * `Restart=on-failure` so Q-key exit stays stopped
+  * Version ldflags correctly passed to sdl-clock Go build under Buildroot
+  * Buildroot/Trixie runtime detection via `/etc/os-release` instead of binary string grep or ldflags
+  * OLED: restore `subprocess` import removed during `is_buildroot()` refactor
+
+## Version 1.1.5
+* Bugfixes
+  * Skip timer background preload when `DynamicBG` is disabled
+  * Skip static background load when `Background` is empty
+* Ops / workflow
+  * Documented deploy reliability rules to avoid SSH session drops and partial installs during remote deployment
+
+## Version 1.1.4
+* Bugfixes
+  * Web config: clarify the full-screen cue icon setting as an overlay on the clock
+* Documentation
+  * README quick install updated for v1.1.4
+  * README release workflow updated to publish both default and Gerry variants
+
+## Version 1.0.3
+* Bugfixes
+  * Installer consistency report now prints `sdl-clock` version from embedded build metadata when `--version` is unsupported
+* Documentation
+  * Added reusable release notes template workflow for GitHub releases
+
+## Version 1.0.2
+* Documentation
+  * README: specify Raspberry Pi OS Lite (64-bit) based on Debian Trixie
+
+## Version 1.0.1
+* Bugfixes
+  * OLED splash version display now works with v1.x+ release tags
+
+## Version 1.0.0
+* First stable release under clock8002 versioning (v1.x)
+* Features
+  * OLED splash screen with build version overlay (lower-right corner)
+  * alsa-ltc version reporting via `--version` flag
+
 ## Version 4.24.2
 * Bugfixes
   * `/clock/timer/*/set` and negative seconds

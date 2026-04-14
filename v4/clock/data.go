@@ -2,8 +2,10 @@ package clock
 
 import (
 	"context"
+
 	"github.com/desertbit/timer"
 	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
+
 	// "gitlab.com/Depili/go-osc/osc"
 	"github.com/chabad360/go-osc/osc"
 
@@ -14,7 +16,7 @@ import (
 )
 
 // Version is the current clock engine version
-const Version = "4.0.0"
+const Version = "1.1.8"
 
 // State feedback timer
 const stateTimer = time.Second / 2
@@ -23,7 +25,8 @@ const flashDuration = 200 * time.Millisecond
 
 // Will get overridden by ldflags in Makefile
 var gitCommit = "Unknown"
-var gitTag = "v4.0.0"
+var gitTag = "v0.0.1"
+var buildEnvironment = ""
 
 // Icons
 const (
@@ -293,6 +296,7 @@ type Engine struct {
 	background          int
 	info                string // Version, ip address etc
 	showInfo            bool
+	showInfoDuration    time.Duration
 	infoTimer           *timer.Timer
 	uuid                string // Clock unique id
 	titleTextColor      color.RGBA

@@ -1,0 +1,48 @@
+# Please note that this is only a sample, we recommend you to change it to fit
+# your needs.
+# You should override this file using a post-build script.
+# See http://buildroot.org/manual.html#rootfs-custom
+# and http://elinux.org/RPiconfig for a description of config.txt syntax
+
+kernel=zImage
+boot_delay=0
+
+# To use an external initramfs file
+#initramfs rootfs.cpio.gz
+
+# Disable overscan assuming the display supports displaying the full resolution
+# If the text shown on the screen disappears off the edge, comment this out
+disable_overscan=1
+
+# How much memory in MB to assign to the GPU on Pi models having
+# 256, 512 or 1024 MB total memory
+gpu_mem_256=100
+gpu_mem_512=100
+gpu_mem_1024=100
+
+#1080p
+#hdmi_group=1
+#hdmi_mode=16
+#hdmi_force_hotplug=1
+
+# fixes rpi3 ttyAMA0 serial console
+dtoverlay=pi3-miniuart-bt
+
+# Hifiberry DAC+ ADC Pro for LTC reception
+dtoverlay=hifiberry-dacplusadcpro
+
+# Hyperpixel rectangular
+dtoverlay=hyperpixel4-r
+overscan_left=0
+overscan_right=0
+overscan_top=0
+overscan_bottom=0
+framebuffer_width=800
+framebuffer_height=480
+enable_dpi_lcd=1
+display_default_lcd=1
+dpi_group=2
+dpi_mode=87
+dpi_output_format=0x7f216
+display_rotate=1
+hdmi_timings=480 0 10 16 59 800 0 15 113 15 0 0 0 60 0 32000000 6

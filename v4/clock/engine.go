@@ -3,20 +3,23 @@ package clock
 import (
 	"context"
 	"fmt"
-	"github.com/chabad360/go-osc/osc"
-	"github.com/denisbrodbeck/machineid"
-	"github.com/desertbit/timer"
-	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
-	"gitlab.com/clock-8001/clock-8001/v4/udptime"
 	"image/color"
 	"log"
 	"net"
+	"os"
+	"os/exec"
 	"regexp"
 	db "runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/chabad360/go-osc/osc"
+	"github.com/denisbrodbeck/machineid"
+	"github.com/desertbit/timer"
+	"gitlab.com/clock-8001/clock-8001/v4/oscutil"
+	"gitlab.com/clock-8001/clock-8001/v4/udptime"
 )
 
 // MakeEngine creates a clock engine
@@ -88,10 +91,11 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 
 	engine.prepareInfo()
 
-	engine.infoTimer = timer.NewTimer(time.Duration(options.ShowInfo) * time.Second)
+	engine.showInfoDuration = time.Duration(options.ShowInfo) * time.Second
+	engine.infoTimer = timer.NewTimer(engine.showInfoDuration)
 	go engine.infoTimeout()
 	engine.showInfo = true
-	fmt.Print(engine.info)
+	fmt.Printf(engine.info)
 
 	engine.initPicturall(options)
 	engine.initVmix(options)
@@ -159,9 +163,22 @@ func (engine *Engine) listenUDPTime() {
 }
 
 func (engine *Engine) prepareInfo() {
-	info := fmt.Sprintf("Clock-8001 version: %v\n\n", gitTag)
-	info += fmt.Sprintf("ID: %v\n", engine.uuid[len(engine.uuid)-8:])
-	info += fmt.Sprintf("IP-addresses:\n%s", clockAddresses())
+	commit := gitCommit
+	if len(commit) > 7 {
+		commit = commit[:7]
+	}
+	info := fmt.Sprintf("Clock-8002 %v (%v)\n\n", gitTag, commit)
+
+	if hostname, err := os.Hostname(); err == nil {
+		info += fmt.Sprintf("Hostname: %s.local\n", hostname)
+	}
+
+	info += fmt.Sprintf("Network: %s\n", detectNetworkMode())
+	info += interfaceAddresses()
+
+	if ap := detectWifiAP(); ap != "" {
+		info += ap
+	}
 
 	if engine.oscServer.Addr != "" {
 		info += fmt.Sprintf("OSC-listen: %s\n", engine.oscServer.Addr)
@@ -170,10 +187,90 @@ func (engine *Engine) prepareInfo() {
 	engine.info = info
 }
 
+func detectNetworkMode() string {
+	// Get the first active connection name
+	nameOut, err := exec.Command("nmcli", "-t", "-f", "NAME", "con", "show", "--active").Output()
+	if err != nil {
+		return "Unknown"
+	}
+	conName := strings.TrimSpace(strings.Split(string(nameOut), "\n")[0])
+	if conName == "" {
+		return "Unknown"
+	}
+	// Query ipv4.method for that connection
+	out, err := exec.Command("nmcli", "-g", "ipv4.method", "con", "show", conName).Output()
+	if err != nil {
+		return "Unknown"
+	}
+	method := strings.TrimSpace(string(out))
+	if method == "manual" {
+		return "Static"
+	}
+	return "DHCP"
+}
+
+// interfaceAddresses returns labeled IP addresses for eth0 and wlan0
+func interfaceAddresses() string {
+	var ret string
+	for _, name := range []string{"eth0", "end0", "wlan0"} {
+		iface, err := net.InterfaceByName(name)
+		if err != nil {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			ip, _, err := net.ParseCIDR(addr.String())
+			if err != nil || ip.To4() == nil {
+				continue
+			}
+			label := "Ethernet"
+			if name == "wlan0" {
+				label = "Wi-Fi"
+			}
+			ret += fmt.Sprintf("%s: %v\n", label, ip)
+		}
+	}
+	return ret
+}
+
+// detectWifiAP returns AP SSID line if piclock-ap is active, empty string otherwise
+func detectWifiAP() string {
+	out, err := exec.Command("nmcli", "-t", "-f", "GENERAL.STATE", "con", "show", "piclock-ap").Output()
+	if err != nil {
+		return ""
+	}
+	if !strings.Contains(string(out), "activated") {
+		return ""
+	}
+	ssidOut, err := exec.Command("nmcli", "-g", "802-11-wireless.ssid", "con", "show", "piclock-ap").Output()
+	if err != nil {
+		return ""
+	}
+	ssid := strings.TrimSpace(string(ssidOut))
+	if ssid != "" {
+		return fmt.Sprintf("AP SSID: %s\n", ssid)
+	}
+	return ""
+}
+
 func (engine *Engine) infoTimeout() {
 	for range engine.infoTimer.C {
 		engine.showInfo = false
 	}
+}
+
+// EnableInfo re-enables the info overlay and resets the auto-hide timer.
+func (engine *Engine) EnableInfo() {
+	engine.showInfo = true
+	engine.infoTimer.Reset(engine.showInfoDuration)
+}
+
+// InfoVisible returns whether the info overlay is currently active.
+func (engine *Engine) InfoVisible() bool {
+	return engine.showInfo
 }
 
 func (engine *Engine) sendUDPTimers() {
@@ -435,7 +532,7 @@ func (engine *Engine) printVersion() {
 	} else {
 		log.Printf("Error reading BuildInfo, version data unavailable")
 	}
-	log.Printf("Clock-8001 engine version %s git: %s\n", gitTag, gitCommit)
+	log.Printf("Clock-8002 engine version %s git: %s\n", gitTag, gitCommit)
 }
 
 // initCounters initializes the countdown and count up timers

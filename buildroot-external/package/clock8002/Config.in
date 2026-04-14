@@ -1,0 +1,15 @@
+config BR2_PACKAGE_CLOCK8002
+	bool "clock8002"
+	help
+	  clock8002 appliance package placeholder.
+	  This prototype installs runtime files and service units into the image.
+
+if BR2_PACKAGE_CLOCK8002
+
+config BR2_PACKAGE_CLOCK8002_SOURCE_DIR
+	string "clock8002 source directory"
+	default "$(TOPDIR)/../clock8002/v4"
+	help
+	  Local source tree path used by the package (site method local).
+
+endif
