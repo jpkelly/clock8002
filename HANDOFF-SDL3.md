@@ -196,9 +196,23 @@ hotplug events. We explicitly disable it (`SDL3_CONF_OPTS += -DSDL_LIBUDEV=OFF`,
 # On Mac — edit, commit, push
 git push origin feature/sdl3-migration
 
-# On cm5
-cd ~/clock8002 && git pull --ff-only
-cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1
+# On cm5 — pull latest and start/restart build inside screen
+ssh pi@cm5.local
+screen -S sdl3-build          # create new session (or use -r to reattach)
+cd ~/clock8002 && git pull --ff-only origin feature/sdl3-migration
+cd ~/buildroot && make BR2_EXTERNAL=~/clock8002/buildroot-external clock8002_rpi5_defconfig
+make > /tmp/br-sdl3-build.log 2>&1
+
+# Detach from screen without killing: Ctrl-A then D
+
+# On Mac — monitor build log without attaching to screen
+ssh pi@cm5.local 'tail -f /tmp/br-sdl3-build.log'
+
+# Reattach to screen from Mac
+ssh pi@cm5.local 'screen -r sdl3-build'
+
+# Check if build finished (tail last 20 lines)
+ssh pi@cm5.local 'tail -20 /tmp/br-sdl3-build.log'
 
 # Transfer image
 scp pi@cm5.local:~/buildroot/output/images/sdcard.img \
