@@ -1,0 +1,21 @@
+- kerättiin kaikki pdf:t internetistä
+  - rj45 pinout, rs-485
+  - myös 3pin xlr, pinout
+- kaapeleiden tekeminen
+- yleismittarilla varmistus
+  - oletetut parit yhdessä
+  - xlr:n pinout väärin dokumentaatiossa
+  - jännitteet ja data oikeassa paikassa
+- sigrok-kaappaus
+  - baudrate
+  - pakettejen formaatti
+- datan kaappaaminen
+- checksum
+  - selvästi jotain muuta kuin yksinkertainen summa
+  - reveng -yritykset
+  - crccalc
+  - reveng -valaistuminen
+- dekooderint teko
+  - kirjataan oletetut vakiodatat yhdestä paketista
+  - katsotaan muutoksia järjestelmällisesti ja pähkäillään
+  - live-dekooderilla viimeisten tuntemattomien metsästys

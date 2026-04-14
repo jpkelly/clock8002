@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for file in captures/*
+do
+	./decode "$file"
+done
