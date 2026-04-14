@@ -84,6 +84,8 @@ All clock8002-specific additions from `master` ported onto this branch:
 | `893d522` | buildroot: clock8002 Config.in add `select` for SDL3/SDL3_ttf/SDL3_image/libltc |
 | `f887949` | buildroot: external Config.in add SDL3 package sources |
 | `85d2a99` | buildroot: sdl3 Config.in remove `select BR2_PACKAGE_EUDEV` (conflicts with systemd udev) |
+| `52c832c` | buildroot: sdl3 drop udev dependency, disable `SDL_LIBUDEV` (sdl3.mk had `eudev` in `SDL3_DEPENDENCIES`) |
+| `df7a7fb` | docs: HANDOFF-SDL3 document libudev disabled rationale |
 
 **What was ported:**
 - `buildroot-external/` — full directory (clock8002 package, configs, board overlay, scripts)
@@ -119,7 +121,7 @@ GOOS=linux GOARCH=arm64 go build ./cmd/sdl3-clock
 - `buildroot-external/Config.in`: sourced SDL3, SDL3_ttf, SDL3_image packages (were missing, caused "dependency chain" error)
 - `sdl3/Config.in`: removed `select BR2_PACKAGE_EUDEV` (eudev conflicts with systemd, which already provides udev)
 
-**State after Phase 3:** Branch HEAD `85d2a99` on `feature/sdl3-migration`. cm5 `~/buildroot/configs/clock8002_rpi5_defconfig` updated directly with SDL3 entries. **Next: pull on cm5 and attempt Buildroot build.**
+**State after Phase 3:** Branch HEAD `df7a7fb` on `feature/sdl3-migration`. cm5 `~/buildroot/configs/clock8002_rpi5_defconfig` updated directly with SDL3 entries. **Build confirmed running on cm5 as of 2026-04-14. Next: wait for build to complete → flash piclockBR → Phase 4 hardware validation.**
 
 ### ⬜ Phase 4 — Hardware validation on piclockBR  ← **NEXT**
 Key items to verify:
