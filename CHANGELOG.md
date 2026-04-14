@@ -1,3 +1,7 @@
+## Version 1.3.1
+* Install
+  * Fix `~/.config/clock-8001/` directory created as root when running `sudo bash install.sh` — sdl-clock would fail immediately with "permission denied" on the log file
+
 ## Version 1.3.0
 * alsa-ltc
   * Add `-v` verbose flag — prints activity dot (`.`) for each decoded frame, ALSA hardware params (buffer/period sizes), and peak signal level in heartbeat

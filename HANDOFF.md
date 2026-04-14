@@ -6,7 +6,7 @@ Last updated: 2026-04-13
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- Latest tagged release: **v1.3.0** — Trixie tarballs on GitHub (default + gerry)
+- Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - master HEAD: **`0ab4933`** (README: document subnet-broadcast resolution for alsa-ltc)
 - Buildroot SD card image on Mac Desktop:
   - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
