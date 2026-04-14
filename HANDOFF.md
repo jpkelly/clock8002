@@ -7,13 +7,21 @@ Last updated: 2026-04-13
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
-- master HEAD: **`0ab4933`** (README: document subnet-broadcast resolution for alsa-ltc)
+- master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
 - Buildroot SD card image on Mac Desktop:
   - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
 - **1GB Pi 5** (piclockBR.local): running Buildroot image `ce6526b`. Healthy — 0 xHCI errors.
-- **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.0 gerry binary installed. Post-release soak.
-- **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.0 default binary installed. Post-release soak. LTC source connected.
+- **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry binary. Fresh-installed from GitHub by user. Post-release cook. Testing modifications applied.
+- **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.1 default binary. Fresh-installed from GitHub by user. Post-release cook. LTC source connected.
 - `buildroot-prototype` branch: fully merged into master
+
+### v1.3.1 — install.sh fix (2026-04-13)
+
+**Bug (`install.sh`):** `~/.config/clock-8001/` was created as root when running `sudo bash install.sh` on a fresh system — `sdl-clock` (running as `User=pi`) could not open the log file and exited immediately on every restart attempt. Only affected fresh installs where the directory didn't already exist.
+
+**Fix (`16302b4`):** Added `chown "${INSTALL_USER}:${INSTALL_USER}" "${CONFIG_DIR}"` after `mkdir -p`. One line.
+
+**Process note:** v1.3.0 was released without catching this because soak test units had the directory from a prior deploy. Fresh-install smoke test step added to RELEASING.md (step 7) to prevent recurrence.
 
 ### Resolved: VL805 xHCI crash on 2GB Pi 5 (Issue #39)
 
