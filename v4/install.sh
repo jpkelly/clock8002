@@ -81,6 +81,7 @@ CONFIG_DIR="$INSTALL_HOME/.config/clock-8001"
 
 sudo mkdir -p "${BOOT_CONFIG_DIR}"
 mkdir -p "${CONFIG_DIR}"
+chown "${INSTALL_USER}:${INSTALL_USER}" "${CONFIG_DIR}"
 
 # Allow the current user to write to the FAT32 boot partition (enables web UI config saves).
 # vfat does not support per-file ownership; uid/gid mount options control effective ownership.
