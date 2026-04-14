@@ -1,0 +1,15 @@
+config BR2_PACKAGE_SDL3_IMAGE
+	bool "sdl3-image"
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	depends on BR2_USE_MMU
+	select BR2_PACKAGE_SDL3
+	select BR2_PACKAGE_LIBPNG
+	select BR2_PACKAGE_JPEG
+	help
+	  SDL3_image is an image file loading library for SDL3,
+	  supporting PNG, JPEG, and other formats.
+
+	  Required at runtime by sdl3-clock via purego dlopen for
+	  background image loading.
+
+	  https://github.com/libsdl-org/SDL_image
