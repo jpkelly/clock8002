@@ -1,5 +1,9 @@
 config BR2_PACKAGE_CLOCK8002
 	bool "clock8002"
+	select BR2_PACKAGE_SDL3
+	select BR2_PACKAGE_SDL3_TTF
+	select BR2_PACKAGE_SDL3_IMAGE
+	select BR2_PACKAGE_LIBLTC
 	help
 	  clock8002 appliance package placeholder.
 	  This prototype installs runtime files and service units into the image.
