@@ -70,44 +70,58 @@ Three packages created in `buildroot-external/package/`:
 
 Config.in registration deferred to Phase 3 (arrives with full buildroot-external port).
 
-### ⬜ Phase 3 — Port clock8002 additions
-Port these from `master` onto `feature/sdl3-migration` as discrete commits:
+### ✅ Phase 3 — Port clock8002 additions (commits `1624c60`–`85d2a99`, 2026-04-13/14)
 
-**Additive (new files/dirs, no upstream conflict):**
-- `buildroot-external/` — entire directory (minus SDL2-specific parts of clock8002.mk)
+All clock8002-specific additions from `master` ported onto this branch:
+
+**Commits in this phase:**
+
+| Commit | Description |
+|---|---|
+| `1624c60` | phase3: port clock8002 additions from master (alsa-ltc, install.sh, oled, Makefile, service files, tools, pi345build, configs) |
+| `f00734e` | vendor: regenerate vendor directory (`go mod vendor`) |
+| `5a9c063` | buildroot: defconfig.sample SDL2 → SDL3 |
+| `893d522` | buildroot: clock8002 Config.in add `select` for SDL3/SDL3_ttf/SDL3_image/libltc |
+| `f887949` | buildroot: external Config.in add SDL3 package sources |
+| `85d2a99` | buildroot: sdl3 Config.in remove `select BR2_PACKAGE_EUDEV` (conflicts with systemd udev) |
+
+**What was ported:**
+- `buildroot-external/` — full directory (clock8002 package, configs, board overlay, scripts)
 - `v4/alsa-ltc.c`, `v4/alsa-ltc.service`
-- `v4/install.sh`
+- `v4/install.sh` — binary name updated: `sdl-clock` → `sdl3-clock`
 - `v4/clock.ini.gerry`, `v4/clock_g.ini`, `v4/network.ini.gerry`
 - `v4/piclock-network.sh`, `v4/piclock-network.service`
-- `v4/clock8002.service` (update binary: `sdl-clock` → `sdl3-clock`)
+- `v4/clock8002.service` — `ExecStart` updated to `sdl3-clock`
 - `v4/oled/` daemon
 - `tools/`, `pi345build/`
-- `HANDOFF.md`, `RELEASING.md`
+- `v4/Makefile` — merged master release infra (release, gerry variant, alsa-ltc) + SDL3 build targets
+- `v4/clock/` Go files from master (clock-8002 branding, network detection)
 
-**Makefile additions:**
-- `release` target, gerry variant, alsa-ltc build
-- Update `sdl-clock` references → `sdl3-clock`
-
-**clock8002.mk changes (Phase 3b):**
-
-Current (complex, CGO):
+**clock8002.mk change (Phase 3b, included in `1624c60`):**  
+Dropped CGO entirely. Was:
 ```makefile
 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc \
   CGO_CFLAGS="-I$(STAGING)/usr/include/SDL2" \
   CGO_LDFLAGS="-L$(STAGING)/usr/lib -lSDL2" \
   GOOS=linux GOARCH=arm64 go build ./cmd/sdl-clock
 ```
-
-New (trivial, no CGO):
+Now:
 ```makefile
 GOOS=linux GOARCH=arm64 go build ./cmd/sdl3-clock
 ```
 
-**defconfig changes (Phase 3c):**
-- Remove: `BR2_PACKAGE_SDL2`, Mesa 25.0.7 manual patch
-- Add: `BR2_PACKAGE_SDL3=y`, `BR2_PACKAGE_SDL3_TTF=y`, `BR2_PACKAGE_SDL3_IMAGE=y`
+**defconfig changes (Phase 3c, `5a9c063`):**
+- Removed: `BR2_PACKAGE_SDL2` and related Mesa 25.0.7 manual patch entries
+- Added: `BR2_PACKAGE_SDL3=y`, `BR2_PACKAGE_SDL3_IMAGE=y`, `BR2_PACKAGE_SDL3_TTF=y`
 
-### ⬜ Phase 4 — Hardware validation on piclockBR
+**Buildroot Config.in fixes (`893d522`, `f887949`, `85d2a99`):**
+- `clock8002/Config.in`: added `select` statements for all SDL3 + libltc deps (required by Buildroot dependency checker)
+- `buildroot-external/Config.in`: sourced SDL3, SDL3_ttf, SDL3_image packages (were missing, caused "dependency chain" error)
+- `sdl3/Config.in`: removed `select BR2_PACKAGE_EUDEV` (eudev conflicts with systemd, which already provides udev)
+
+**State after Phase 3:** Branch HEAD `85d2a99` on `feature/sdl3-migration`. cm5 `~/buildroot/configs/clock8002_rpi5_defconfig` updated directly with SDL3 entries. **Next: pull on cm5 and attempt Buildroot build.**
+
+### ⬜ Phase 4 — Hardware validation on piclockBR  ← **NEXT**
 Key items to verify:
 - Clock renders on HDMI via KMSDRM (no GLES2 patches needed — SDL3 handles natively)
 - USB audio / alsa-ltc working (C code unchanged)
