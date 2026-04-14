@@ -2,6 +2,32 @@
 
 Last updated: 2026-04-14
 
+## Contents
+
+- [Current State](#current-state)
+  - [Active Investigation: VL805 xHCI crash on piclockTG](#active-investigation-vl805-xhci-crash-on-piclocktg-2026-04-14)
+  - [VL805 xHCI crash — EEPROM firmware implicated (Issue #39)](#vl805-xhci-crash--eeprom-firmware-implicated-issue-39-re-opened-2026-04-14)
+  - [Resolved: Static IP timecode not displaying](#resolved-static-ip-timecode-not-displaying)
+  - [Fixed in v1.3.0](#fixed-in-v130-2026-04-1011213--alsa-ltc-enhancements--hardware-debugging--subnet-broadcast)
+- [Hardware & Firmware Notes](#hardware--firmware-notes)
+  - [Pi 5 EEPROM Firmware — VL805 Stability](#pi-5-eeprom-firmware--vl805-stability-2026-04-14)
+- [Buildroot Status](#buildroot-status-post-merge)
+- [Issue #23 Status (Dual HDMI Output)](#issue-23-status-dual-hdmi-output)
+- [Hot-Plug Policy](#hot-plug-policy-current-expected-behavior)
+- [Recent Release Notes](#recent-release-notes)
+- [OLED Splash Version Overlay](#oled-splash-version-overlay)
+- [Release Process](#release-process-current)
+- [Repository Instructions Already Added](#repository-instructions-already-added)
+- [Hard Rules (Do Not Skip)](#hard-rules-do-not-skip)
+- [Useful Commands](#useful-commands)
+- [Release Notes Template Workflow](#release-notes-template-workflow)
+- [Dev-Deploy Workflow](#dev-deploy-workflow-feature-branch-testing)
+- [Buildroot Known Issues](#buildroot-known-issues)
+- [alsa-ltc Enhancements](#alsa-ltc-enhancements-2026-04-11)
+- [Next Suggested Release](#next-suggested-release)
+
+---
+
 ## Current State
 
 - Repository: jpkelly/clock8002
