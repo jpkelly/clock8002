@@ -97,29 +97,32 @@ After reboot, verify:
 
 Do not skip this step. Previous releases missed installer bugs that only appear on fresh systems because test units already had directories with correct ownership.
 
-### 8. Deploy to test unit and verify
+### 8. Install on test units and verify
 
-Relay the tarball to piclock.local and run the installer:
+After the GitHub release is published, install on both test units from GitHub exactly as an end user would. **The user does this manually — never agent-deploy releases.**
 
+**Default variant on piclockTD:**
 ```bash
-# Copy default tarball through Mac to piclock
-scp pi@pi5start.local:/tmp/clock8002-build/v4/clock8002-vX.X.X-default-linux-arm64.tar.gz /tmp/
-scp /tmp/clock8002-vX.X.X-default-linux-arm64.tar.gz pi@piclock.local:/tmp/
-
-# Install on piclock
-ssh pi@piclock.local 'cd /tmp && tar xzf clock8002-vX.X.X-default-linux-arm64.tar.gz && cd clock8002-vX.X.X-default-linux-arm64 && sudo bash install.sh > /tmp/install-vX.X.X.log 2>&1; echo INSTALL_EXIT:$?'
-
-# Start and verify services
-ssh pi@piclock.local 'sudo systemctl start clock8002 alsa-ltc oled_daemon && systemctl is-active clock8002 alsa-ltc oled_daemon'
+wget https://github.com/jpkelly/clock8002/releases/download/vX.X.X/clock8002-vX.X.X-default-linux-arm64.tar.gz
+tar xzf clock8002-vX.X.X-default-linux-arm64.tar.gz
+cd clock8002-vX.X.X-default-linux-arm64
+sudo bash install.sh
+sudo reboot
 ```
 
-Report the deployed short commit hash (first 7 characters).
-
-**For Gerry variant:** force-apply the Gerry config pair after installing the default:
-
+**Gerry variant on piclockTG:**
 ```bash
-ssh pi@piclock.local 'sudo cp /tmp/clock8002-vX.X.X-gerry-linux-arm64/clock.ini /boot/firmware/piclock/clock.ini && sudo cp /tmp/clock8002-vX.X.X-gerry-linux-arm64/network.ini /boot/firmware/piclock/network.ini && sudo reboot'
+wget https://github.com/jpkelly/clock8002/releases/download/vX.X.X/clock8002-vX.X.X-gerry-linux-arm64.tar.gz
+tar xzf clock8002-vX.X.X-gerry-linux-arm64.tar.gz
+cd clock8002-vX.X.X-gerry-linux-arm64
+sudo bash install.sh
+sudo reboot
 ```
+
+After reboot on each unit, verify:
+- Clock face is visible on HDMI
+- `systemctl is-active clock8002 alsa-ltc oled_daemon` → all `active`
+- Web UI responds on port 8080
 
 ---
 
@@ -128,7 +131,7 @@ ssh pi@piclock.local 'sudo cp /tmp/clock8002-vX.X.X-gerry-linux-arm64/clock.ini 
 See [buildroot-external/README.buildroot.md](buildroot-external/README.buildroot.md) for the full build and flash workflow.
 
 Key points:
-- Build host: `pi@pi5start.local` — apply manual patches (Mesa 25.0.7, host-xz) before building (issue #29)
+- Build host: `pi@cm5.local` — apply manual patches (Mesa 25.0.7, host-xz) before building (issue #29)
 - Image naming: `piclockBR-<version>-sdcard.img` (e.g. `piclockBR-v1.2.4-sdcard.img`)
 - Both images (default and Gerry) are Trixie tarballs only — the Buildroot image is config-neutral (config lives on the boot partition)
 - **Release images must never include an SSH key** — always build without `BR2_PICLOCKKEY` set. Password-only access (`clockworkadmin`) is the only auth method on release images. The `BR2_PICLOCKKEY` mechanism is for dev builds only and must never be used when cutting a release.
