@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-13
+Last updated: 2026-04-14
 
 ## Current State
 
@@ -11,11 +11,33 @@ Last updated: 2026-04-13
 - Buildroot SD card image on Mac Desktop:
   - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
 - **1GB Pi 5** (piclockBR.local): running Buildroot image `ce6526b`. Healthy — 0 xHCI errors.
-- **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry binary. Fresh-installed from GitHub by user. Post-release cook. Testing modifications applied.
-- **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.1 default binary. Fresh-installed from GitHub by user. Post-release cook. LTC source connected.
+- **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry. EEPROM downgraded to 2025-05-08. Soak in progress (started ~09:10 2026-04-14). Monitor running.
+- **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.1 default. Stable. EEPROM 2025-05-08.
 - `buildroot-prototype` branch: fully merged into master
 
-### v1.3.1 — install.sh fix (2026-04-13)
+### Active Investigation: VL805 xHCI crash on piclockTG (2026-04-14)
+
+**Symptom:** VL805 xHCI controller dies with `Host System Error` / `HC died` at random intervals (~55min, ~6h50m). USB hub and audio device disappear. alsa-ltc crash-loops. Requires hard power cycle to recover.
+
+**Root cause finding:** Two differentiators from piclockTD (stable):
+1. `[4.9s] Undervoltage detected!` in TG dmesg on every boot — TD has none
+2. TG was running EEPROM firmware **2025-12-08** (`2226a853`); TD has **2025-05-08** (`69471177`)
+
+**Key observation:** After downgrading TG EEPROM to 2025-05-08, the undervoltage event **disappeared** on the same PSU and hardware. This implicates the newer firmware as the primary driver — it likely draws more current during VL805 init (different ASPM / power sequencing), pushing the PSU below threshold and triggering the PCIe bus fault.
+
+**Action taken (2026-04-14):**
+- Hard power cycled TG to recover USB
+- Downgraded TG EEPROM: `sudo rpi-eeprom-update -d -f /lib/firmware/raspberrypi/bootloader-2712/stable/pieeprom-2025-05-08.bin`
+- Rebooted — firmware confirmed `69471177`, no undervoltage, throttle `0x0`, USB healthy
+- 1-minute monitor running (`~/monitor.sh` → `~/monitor.log`)
+
+**Decision gates:**
+- 6h: check TG monitor log for usb-hub=0 / usb-audio=0 / usb-errors
+- 24h: final determination
+- If TG survives → firmware was the cause → document and close
+- If TG still fails → PSU is the cause → swap PSU between TD and TG
+
+**Monitor restart (after any reboot):** `nohup bash /home/pi/monitor.sh > /dev/null 2>&1 & echo "PID=$!"`
 
 **Bug (`install.sh`):** `~/.config/clock-8001/` was created as root when running `sudo bash install.sh` on a fresh system — `sdl-clock` (running as `User=pi`) could not open the log file and exited immediately on every restart attempt. Only affected fresh installs where the directory didn't already exist.
 
@@ -23,11 +45,11 @@ Last updated: 2026-04-13
 
 **Process note:** v1.3.0 was released without catching this because soak test units had the directory from a prior deploy. Fresh-install smoke test step added to RELEASING.md (step 7) to prevent recurrence.
 
-### Resolved: VL805 xHCI crash on 2GB Pi 5 (Issue #39)
+### VL805 xHCI crash — EEPROM firmware implicated (Issue #39, re-opened 2026-04-14)
 
-**Resolution (2026-04-12):** Reflashed piclockTG with fresh Trixie (stock kernel 6.12.47). USB audio immediately stable — multiple reboots, zero xHCI errors. The pre-reflash system had accumulated kernel upgrade (6.12.47→6.12.75), module blacklisting, and cmdline modifications from debugging. One or more of these mutations caused the VL805 failures. Not a hardware defect — resolved by clean OS install.
+**Prior resolution (2026-04-12):** Reflashed piclockTG with fresh Trixie — appeared stable. Both boards soaking.
 
-**Note:** piclockTD (2GB board #2) experienced one VL805 `HC died` at ~3.8 min on its first boot with the default card. Power cycle (SD card swap) recovered it and it has been stable since. Both boards now soak testing.
+**Re-occurrence (2026-04-14):** piclockTG failed again — VL805 xHCI `HC died` at ~55min. Root cause investigation found new differentiator: TG had EEPROM firmware **2025-12-08** (`2226a853`) vs TD's **2025-05-08** (`69471177`). Pre-downgrade: TG showed `Undervoltage detected!` at boot on same PSU. Post-downgrade: undervoltage gone, throttle `0x0`. EEPROM downgraded to 2025-05-08 and soak restarted. See "Active Investigation" section above.
 
 ### Resolved: Static IP timecode not displaying
 
