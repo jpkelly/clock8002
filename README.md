@@ -89,14 +89,14 @@ If a release tarball is available, you can install without compiling:
 ### 1. Download the latest release
 
 ```bash
-wget https://github.com/jpkelly/clock8002/releases/download/v1.2.9/clock8002-v1.2.9-default-linux-arm64.tar.gz
+wget https://github.com/jpkelly/clock8002/releases/download/v1.3.0/clock8002-v1.3.0-default-linux-arm64.tar.gz
 ```
 
 ### 2. Extract and install
 
 ```bash
-tar xzf clock8002-v1.2.9-default-linux-arm64.tar.gz
-cd clock8002-v1.2.9-default-linux-arm64
+tar xzf clock8002-v1.3.0-default-linux-arm64.tar.gz
+cd clock8002-v1.3.0-default-linux-arm64
 ./install.sh
 ```
 

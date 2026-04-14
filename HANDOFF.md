@@ -1,62 +1,41 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-12
+Last updated: 2026-04-13
 
 ## Current State
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- Latest tagged release: **v1.2.9** — Trixie tarballs on GitHub
-- master HEAD: `d991f58` (tools: vl805-soak-monitor + docs)
-- Trixie tarballs: `clock8002-v1.2.9-default-linux-arm64.tar.gz`, `clock8002-v1.2.9-gerry-linux-arm64.tar.gz`
+- Latest tagged release: **v1.3.0** — Trixie tarballs on GitHub (default + gerry)
+- master HEAD: **`0ab4933`** (README: document subnet-broadcast resolution for alsa-ltc)
 - Buildroot SD card image on Mac Desktop:
   - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
-- Buildroot release tarballs on Mac Desktop:
-  - `clock8002-v0.0.1-default-linux-arm64.tar.gz`
-  - `clock8002-v0.0.1-gerry-linux-arm64.tar.gz`
 - **1GB Pi 5** (piclockBR.local): running Buildroot image `ce6526b`. Healthy — 0 xHCI errors.
-- **2GB Pi 5** (piclockTG.local): running Trixie. **VL805 xHCI crash now reproducing on Trixie too** — see investigation below. Currently soak-testing after fresh power cycle.
+- **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.0 gerry binary installed. Post-release soak.
+- **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.0 default binary installed. Post-release soak. LTC source connected.
 - `buildroot-prototype` branch: fully merged into master
 
-### Active investigation: VL805 xHCI crash on 2GB Pi 5 (Issue #39)
+### Resolved: VL805 xHCI crash on 2GB Pi 5 (Issue #39)
 
-**Key development (2026-04-12): VL805 crash now reproduces on Trixie — NOT Buildroot-specific.**
+**Resolution (2026-04-12):** Reflashed piclockTG with fresh Trixie (stock kernel 6.12.47). USB audio immediately stable — multiple reboots, zero xHCI errors. The pre-reflash system had accumulated kernel upgrade (6.12.47→6.12.75), module blacklisting, and cmdline modifications from debugging. One or more of these mutations caused the VL805 failures. Not a hardware defect — resolved by clean OS install.
 
-The 2GB board crashed with `usb_set_interface failed (-110)` at ~12 min (kernel time 702s) while running Trixie. This was previously thought to be Buildroot-only (Trixie ran 13+ hours clean on the same hardware in an earlier session). The VL805 crash is now confirmed to affect both OSes on the 2GB board.
+**Note:** piclockTD (2GB board #2) experienced one VL805 `HC died` at ~3.8 min on its first boot with the default card. Power cycle (SD card swap) recovered it and it has been stable since. Both boards now soak testing.
 
-**Timeline of the Trixie crash (2026-04-12):**
-- Boot at 14:07, alsa-ltc healthy by 14:07:59, decoding LTC with 0 errors
-- First `usb_set_interface failed (-110)` at kernel time 702s (~14:19)
-- 22 total xHCI errors accumulated, alsa-ltc went into restart loop (11 restarts)
-- Each restart: device enumerates, hw_params succeeds, but `snd_pcm_hw_params()` times out on the isochronous endpoint
-- Temperature 48.8°C, throttled=0x0 — no thermal issue
-- Board power cycled, now soak testing again (baseline: 0 errors at 3 min uptime)
+### Resolved: Static IP timecode not displaying
 
-**Hypotheses eliminated this session:**
-- NUMA/DMA above 1GB — disproven (`mem=1G` still crashed at 30 min)
-- Kernel source commit — both use `359f37f0`
-- Kernel config — identical between Buildroot and Trixie
-- config.txt differences — tested Trixie-like config on Buildroot, still crashes
-- `otg_mode=1` — removing it made crash worse (1 min vs 30 min)
-- Service file differences — Buildroot is more cautious, not less
-- OSC send race — completely isolated from USB (UDP sendto)
-- **Buildroot-specific bug — DISPROVEN. Trixie crashes too on the 2GB board.**
+**Root cause (2026-04-12):** `sendto(255.255.255.255)` returns `ENETUNREACH` when no default gateway is configured. The gerry `network.ini` comments out the gateway line.
 
-**Remaining suspects:**
-- Hardware degradation on the 2GB board (VL805, USB hub, C-Media dongle, or expansion board)
-- The rapid crash/reboot cycles during Buildroot testing may have stressed the VL805
-- The previous 13-hour clean Trixie run may have been an outlier
-- Swap C-Media dongle with a known-good spare to isolate dongle vs VL805
+**Fix (`f584ec2`):** Added `resolve_subnet_broadcast()` to `alsa-ltc.c` — uses `getifaddrs()` to resolve `255.255.255.255` → actual subnet broadcast address (e.g., `192.168.8.255`). Prefers wired interfaces (eth*/end*) over wireless. Re-resolves on `sendto()` failure and on every 30s heartbeat (catches DHCP subnet changes). Tested: DHCP reboot x2 ✅, Static reboot ✅.
 
-**1GB board (piclockBR.local) comparison:** Buildroot running, 0 xHCI errors, alsa-ltc stable.
-
-### Fixed this session (2026-04-10/11/12 — alsa-ltc enhancements + hardware debugging)
+### Fixed in v1.3.0 (2026-04-10/11/12/13 — alsa-ltc enhancements + hardware debugging + subnet broadcast)
 - **alsa-ltc grammar fix + OSC suppression** (`666882e`): Fixed `setted` → `set` in 5 hw_params log messages. Suppressed OSC send error flood — logs once on first failure, logs recovery message with count when send succeeds again.
 - **`-v` verbose split** (`c7e3a60`): Card info and 30s heartbeat (frames, LTC count, errors) now always on. `-v` adds activity dots, ALSA HW params, and peak signal level.
 - **Configurable `[fps]` argument**: LTC decoder frame rate configurable via CLI (default 25). TouchDesigner source is 30fps.
 - **LTC gap detection**: Logs warning when no LTC frame decoded for >1 second. Always on, only fires on anomalies.
 - **Hardware fault isolated**: piclockBR Board A (Pi 5) has faulty VL805/PCIe — CM108 USB lockup after 30-100s regardless of dongle, ribbon cable, or software image. Board B is stable. Board A retired.
 - **Removed `-v` from service files**: Both Trixie and Buildroot overlay service files updated.
+- **Subnet broadcast resolution** (`f584ec2`): `resolve_subnet_broadcast()` using `getifaddrs()` — fixes timecode not displaying when static IP has no default gateway. Prefers wired interfaces, re-resolves on failure and every 30s heartbeat.
+- **Install reboot prompt** (`38e74d8`): Added "Reboot to finish installation: sudo reboot" message at end of install.sh output.
 
 ## Buildroot Status (post-merge)
 

@@ -1,4 +1,4 @@
-## Version 1.2.10 (unreleased)
+## Version 1.3.0
 * alsa-ltc
   * Add `-v` verbose flag — prints activity dot (`.`) for each decoded frame, ALSA hardware params (buffer/period sizes), and peak signal level in heartbeat
   * Card info and 30-second heartbeat are now always on (no flag needed); `-v` adds activity dots, ALSA negotiation details, and signal levels

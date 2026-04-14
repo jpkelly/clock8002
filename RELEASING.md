@@ -9,6 +9,26 @@ This document covers cutting a new clock8002 release. Every release includes bot
 
 ---
 
+## Soak Gate (Required Before Release)
+
+Run both a **default** and **gerry** variant on separate 2GB Pi 5 boards with `vl805-soak-monitor.sh` for at least 12h.
+
+**12h checkpoint** — record status table (uptime, USB errors, LTC decoded, restarts, temp). If both boards are clean, continue soak.
+
+**24h checkpoint** — repeat status table. Approve release only if:
+- Both boards: `xhci_err: 0`, `restarts: 0`, no `HC died` events
+- Both boards: `alsa-ltc` continuously active with LTC decoding (or stably awaiting a source)
+
+If either board fails the gate, hold release and investigate.
+
+Soak monitor commands:
+```bash
+ssh pi@piclockTD.local 'tail -5 /tmp/vl805-monitor.log'
+ssh pi@piclockTG.local 'tail -5 /tmp/vl805-monitor.log'
+```
+
+---
+
 ## Trixie Release (install.sh)
 
 ### 1. Update CHANGELOG.md
@@ -28,12 +48,12 @@ git tag vX.X.X
 git push origin master vX.X.X
 ```
 
-### 4. Build on pi5start from a fresh clone
+### 4. Build on cm5 from a fresh clone
 
-**Always build on `pi@pi5start.local` from a fresh clone at the target tag — never from a local Mac build.**
+**Always build on `pi@cm5.local` from a fresh clone at the target tag — never from a local Mac build. Use a full (non-shallow) clone so `git describe` resolves correctly.**
 
 ```bash
-ssh pi@pi5start.local 'cd /tmp && rm -rf clock8002-build && git clone https://github.com/jpkelly/clock8002.git clock8002-build && cd clock8002-build/v4 && git checkout vX.X.X && make release-all GIT_TAG=vX.X.X'
+ssh pi@cm5.local 'cd /tmp && rm -rf clock8002-build && git clone https://github.com/jpkelly/clock8002.git clock8002-build && cd clock8002-build/v4 && git checkout vX.X.X && make release NETWORK_CONFIG=default && make release NETWORK_CONFIG=gerry'
 ```
 
 This produces:
