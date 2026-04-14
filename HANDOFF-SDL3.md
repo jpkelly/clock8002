@@ -227,8 +227,9 @@ make > /tmp/br-sdl3-build.log 2>&1
 # On Mac — monitor build log without attaching to screen
 ssh pi@cm5.local 'tail -f /tmp/br-sdl3-build.log'
 
-# Reattach to screen from Mac
-ssh pi@cm5.local 'screen -r sdl3-build'
+# Reattach to screen — must SSH interactively first, then reattach
+ssh pi@cm5.local
+screen -r sdl3-build
 
 # Check if build finished (tail last 20 lines)
 ssh pi@cm5.local 'tail -20 /tmp/br-sdl3-build.log'
