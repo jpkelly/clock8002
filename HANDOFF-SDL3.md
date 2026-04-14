@@ -55,21 +55,20 @@ purego/dlopen — NOT linked at build time.
 
 ## Migration Phases
 
-### ✅ Phase 1 — Branch established
+### ✅ Phase 1 — Branch established (commit `485f801`)
 - `upstream` remote added
 - `feature/sdl3-migration` created from `f0412525`, pushed to GitHub
 
-### ⬜ Phase 2 — SDL3 Buildroot packages
-Three new packages needed in `buildroot-external/package/`:
+### ✅ Phase 2 — SDL3 Buildroot packages (commit `dbbab85`)
+Three packages created in `buildroot-external/package/`:
 
-| Package | Provides | Build deps |
-|---|---|---|
-| `sdl3` | libSDL3.so | libdrm, mesa, udev, libinput |
-| `sdl3-ttf` | libSDL3_ttf.so | sdl3, freetype, harfbuzz |
-| `sdl3-image` | libSDL3_image.so | sdl3, libpng, libjpeg |
+| Package | Provides | Version | Notes |
+|---|---|---|---|
+| `sdl3` | libSDL3.so | 3.4.0 | KMSDRM backend, ALSA, no X11/Wayland/OpenGL |
+| `sdl3-ttf` | libSDL3_ttf.so | 3.2.2 | harfbuzz + freetype |
+| `sdl3-image` | libSDL3_image.so | 3.2.6 | PNG + JPEG only |
 
-All use CMake. SDL3 needs `SDL_VIDEO_DRIVER_KMSDRM=ON` and `SDL_VIDEO_DRIVER_OFFSCREEN=ON`.
-SDL2 packages can be removed from defconfig once these are in.
+Config.in registration deferred to Phase 3 (arrives with full buildroot-external port).
 
 ### ⬜ Phase 3 — Port clock8002 additions
 Port these from `master` onto `feature/sdl3-migration` as discrete commits:
