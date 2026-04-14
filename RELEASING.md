@@ -78,7 +78,26 @@ gh release create "${VERSION}" \
     --notes-file "/tmp/release-notes-${VERSION}.md"
 ```
 
-### 7. Deploy to test unit and verify
+### 7. Fresh-install smoke test (required)
+
+Flash a clean Trixie SD card, boot, and install from the GitHub release exactly as an end user would:
+
+```bash
+wget https://github.com/jpkelly/clock8002/releases/download/vX.X.X/clock8002-vX.X.X-default-linux-arm64.tar.gz
+tar xzf clock8002-vX.X.X-default-linux-arm64.tar.gz
+cd clock8002-vX.X.X-default-linux-arm64
+sudo bash install.sh
+sudo reboot
+```
+
+After reboot, verify:
+- Clock face is visible on HDMI (not a console)
+- `systemctl is-active clock8002 alsa-ltc oled_daemon` → all `active`
+- Web UI responds on port 8080
+
+Do not skip this step. Previous releases missed installer bugs that only appear on fresh systems because test units already had directories with correct ownership.
+
+### 8. Deploy to test unit and verify
 
 Relay the tarball to piclock.local and run the installer:
 
