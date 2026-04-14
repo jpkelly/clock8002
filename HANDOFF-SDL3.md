@@ -172,6 +172,20 @@ Everything that was painful to get working in Buildroot is retained:
 - `arm64` Linux not on go-sdl3's official supported list, but upstream CI builds it successfully
 - Hardware validation (Phase 4) needed to confirm KMSDRM works on Pi 5
 
+### libudev — intentionally disabled (`-DSDL_LIBUDEV=OFF`)
+
+SDL3's KMSDRM backend optionally uses libudev to watch `/dev/input` for joystick/gamepad
+hotplug events. We explicitly disable it (`SDL3_CONF_OPTS += -DSDL_LIBUDEV=OFF`, no
+`eudev` in `SDL3_DEPENDENCIES`) because:
+
+- The clock appliance has no joysticks or HID input devices to enumerate.
+- The Buildroot image uses systemd (which provides udev); adding eudev as a separate
+  dependency causes a hard Buildroot error ("both systemd and eudev selected as udev
+  providers").
+- SDL3's ALSA audio backend (`-DSDL_ALSA=ON`) uses libasound directly — it does not go
+  through libudev. The LTC USB audio device is handled entirely by the separate `alsa-ltc`
+  binary via libasound and is unaffected by this setting.
+
 ---
 
 ## Build Workflow (unchanged from master)
