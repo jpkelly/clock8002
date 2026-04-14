@@ -3,7 +3,6 @@ config BR2_PACKAGE_SDL3
 	depends on BR2_TOOLCHAIN_HAS_THREADS
 	depends on BR2_USE_MMU
 	select BR2_PACKAGE_LIBDRM
-	select BR2_PACKAGE_EUDEV
 	help
 	  SDL3 is a cross-platform development library for low-level
 	  access to audio, keyboard, mouse, joystick, and graphics
