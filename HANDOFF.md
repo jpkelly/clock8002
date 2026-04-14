@@ -67,6 +67,39 @@ Last updated: 2026-04-14
 - **Subnet broadcast resolution** (`f584ec2`): `resolve_subnet_broadcast()` using `getifaddrs()` — fixes timecode not displaying when static IP has no default gateway. Prefers wired interfaces, re-resolves on failure and every 30s heartbeat.
 - **Install reboot prompt** (`38e74d8`): Added "Reboot to finish installation: sudo reboot" message at end of install.sh output.
 
+## Hardware & Firmware Notes
+
+### Pi 5 EEPROM Firmware — VL805 Stability (2026-04-14)
+
+**Finding:** Pi 5 EEPROM firmware **2025-12-08 (`2226a853`)** causes VL805 xHCI instability
+on units with marginally-rated PSUs. Symptoms: `Undervoltage detected!` at every boot,
+`Host System Error` / `HC died` after 55min–7h, USB hub and audio device disappear from bus.
+
+**Root cause:** Newer firmware draws more current during VL805/PCIe init (different ASPM or
+power-sequencing), pushing the PSU below threshold and triggering a PCIe bus-level fault.
+
+**Fix:** Downgrade EEPROM to **2025-05-08 (`69471177`)**:
+```bash
+sudo rpi-eeprom-update -d -f /lib/firmware/raspberrypi/bootloader-2712/stable/pieeprom-2025-05-08.bin
+sudo reboot
+```
+
+**Diagnostic signal:** Check `dmesg | grep Undervoltage` after boot. If present on same PSU
+that worked with older firmware, the firmware is the driver. After downgrade, the undervoltage
+event should disappear.
+
+**Known-good firmware:** `2025-05-08 (69471177)` — stable on both 2GB board #1 and #2.
+
+**rpi-eeprom package:** Both units ship `rpi-eeprom` **28.9-1**, which includes
+`pieeprom-2025-05-08.bin` through `pieeprom-2025-11-27.bin`. The Dec 2025 firmware was
+flashed from a newer package that has since been removed.
+
+**Monitor tool:** `tools/vl805-usb-health-monitor.sh` — logs temp, USB hub presence,
+USB audio presence, alsa-ltc restarts, USB dmesg -110 errors. 1-minute interval.
+Redeploy after reboot: `nohup bash /home/pi/monitor.sh > /dev/null 2>&1 & echo "PID=$!"`
+
+---
+
 ## Buildroot Status (post-merge)
 
 - `buildroot-prototype` branch merged into `master` at `afbbc01` — all Buildroot work is now on master
