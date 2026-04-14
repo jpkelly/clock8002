@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-14
+Last updated: 2026-04-14 (~09:15 local)
 
 ## Contents
 
@@ -23,6 +23,7 @@ Last updated: 2026-04-14
 - [Release Notes Template Workflow](#release-notes-template-workflow)
 - [Dev-Deploy Workflow](#dev-deploy-workflow-feature-branch-testing)
 - [Buildroot Known Issues](#buildroot-known-issues)
+- [SDL3 Migration Status](#sdl3-migration-status)
 - [alsa-ltc Enhancements](#alsa-ltc-enhancements-2026-04-11)
 - [Next Suggested Release](#next-suggested-release)
 
@@ -33,7 +34,8 @@ Last updated: 2026-04-14
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
-- master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
+- master HEAD: **`1f8d018`**
+- **SDL3 migration**: `feature/sdl3-migration` HEAD `cd26fde` — Phase 3 complete, Buildroot build running on cm5. See [SDL3 Migration Status](#sdl3-migration-status) and HANDOFF-SDL3.md.
 - Buildroot SD card image on Mac Desktop:
   - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
 - **1GB Pi 5** (piclockBR.local): running Buildroot image `ce6526b`. Healthy — 0 xHCI errors.
@@ -375,6 +377,26 @@ Committed changes in `v4/alsa-ltc.c`, `v4/alsa-ltc.service`, and Buildroot overl
 ### Stability test (Apr 11, ~6h)
 - piclockBR: clean — 0 USB errors
 - piclockTG (Trixie): CM108 lockup at ~6h (`usb_set_interface -110`), rebooted to recover
+
+## SDL3 Migration Status
+
+**Branch:** `feature/sdl3-migration` — HEAD `cd26fde`  
+**Full details:** [HANDOFF-SDL3.md](HANDOFF-SDL3.md)
+
+| Phase | Status | Notes |
+|---|---|---|
+| Phase 1 — Branch established | ✅ | From upstream `f0412525` |
+| Phase 2 — SDL3 Buildroot packages | ✅ | sdl3, sdl3-ttf, sdl3-image packages created |
+| Phase 3 — Port clock8002 additions | ✅ | All master additions ported; Buildroot configs fixed |
+| Phase 4 — Hardware validation | 🔄 | Buildroot build running on cm5 (`screen -r sdl3-build`) |
+| Phase 5 — Read-only rootfs | ⬜ | Deferred until Phase 4 proven |
+
+**Buildroot build on cm5:** Running as of ~09:00 2026-04-14. Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-sdl3-build.log'`
+
+**Key changes from SDL2:**
+- CGO eliminated — `GOOS=linux GOARCH=arm64 go build` only
+- Binary: `sdl-clock` → `sdl3-clock`
+- SDL3 loaded via purego/dlopen at runtime (libSDL3.so v3.4.0, libSDL3_ttf.so v3.2.2, libSDL3_image.so v3.2.6)
 
 ## Next Suggested Release
 
