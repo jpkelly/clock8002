@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-14 (~09:15 local)
+Last updated: 2026-04-15 (~08:00 UTC)
 
 ## Contents
 
@@ -35,49 +35,49 @@ Last updated: 2026-04-14 (~09:15 local)
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - master HEAD: **`1f8d018`**
-- **SDL3 migration**: `feature/sdl3-migration` HEAD `cd26fde` — Phase 3 complete, Buildroot build running on cm5. See [SDL3 Migration Status](#sdl3-migration-status) and HANDOFF-SDL3.md.
-- Buildroot SD card image on Mac Desktop:
-  - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
-- **1GB Pi 5** (piclockBR.local): running Buildroot image `ce6526b`. Healthy — 0 xHCI errors.
-- **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry. EEPROM downgraded to 2025-05-08. Soak in progress (started ~09:10 2026-04-14). Monitor running.
-- **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.1 default. Stable. EEPROM 2025-05-08.
+- **SDL3 migration**: `feature/sdl3-migration` — Buildroot SDL3 image **BUILT** on cm5 (`a6756f3`). Image `piclockBR-a6756f3-sdcard.img` on Mac Desktop (768 MB). Awaiting flash to piclockBR for hardware validation (Phase 4). See [SDL3 Migration Status](#sdl3-migration-status) and HANDOFF-SDL3.md.
+- **1GB Pi 5 board A** (piclockBR.local): running Buildroot SDL2 image `piclockBR-c7e3a60-sdcard.img`. Will be flashed with SDL3 image when ready.
+- **1GB Pi 5 board B** (piclockR.local): Trixie, v1.3.1 default. EEPROM 2025-08-28 (factory, not downgraded — canary). Monitor running.
+- **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry. EEPROM **upgraded to 2025-08-27** (2026-04-15). Soak in progress (started ~06:38 UTC 2026-04-15). Monitor running.
+- **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.1 default. EEPROM 2025-05-08 (control, unchanged). ~17h clean as of 2026-04-15 06:43 UTC. Monitor running.
 - `buildroot-prototype` branch: fully merged into master
+- **VPN note**: `.local` mDNS does not resolve over VPN. Use IPs: TG=10.0.0.128, TD=10.0.0.131, piclockR=10.0.0.121, cm5=10.0.0.101
 
-### Active Investigation: VL805 xHCI crash on piclockTG (2026-04-14)
+### Active Investigation: VL805 xHCI Instability — EEPROM Firmware (Issue #39)
 
-**Symptom:** VL805 xHCI controller dies with `Host System Error` / `HC died` at random intervals (~55min, ~6h50m). USB hub and audio device disappear. alsa-ltc crash-loops. Requires hard power cycle to recover.
+**Current status (2026-04-15):** Multi-unit soak in progress to identify the stable EEPROM version. Three units running with monitors, results below.
 
-**Root cause finding:** Two differentiators from piclockTD (stable):
-1. `[4.9s] Undervoltage detected!` in TG dmesg on every boot — TD has none
-2. TG was running EEPROM firmware **2025-12-08** (`2226a853`); TD has **2025-05-08** (`69471177`)
+**Failure history on piclockTG (board #1):**
+- Event 1 (2026-04-14): Failed at ~6h50m on EEPROM 2025-07-17 — HC died, required hard power cycle
+- Event 2 (2026-04-15 ~01:12 UTC): Failed at ~19h12m on EEPROM 2025-05-08 — usb_set_interface -110 storm, no HC died, recoverable via soft reboot. 733 errors, 366 alsa-ltc restarts.
 
-**Key observation:** After downgrading TG EEPROM to 2025-05-08, the undervoltage event **disappeared** on the same PSU and hardware. This implicates the newer firmware as the primary driver — it likely draws more current during VL805 init (different ASPM / power sequencing), pushing the PSU below threshold and triggering the PCIe bus fault.
+**Current soak matrix (as of 2026-04-15 06:43 UTC):**
+| Unit | IP | RAM | EEPROM | Firmware ID | Role | Uptime | Status |
+|------|-----|-----|--------|-------------|------|--------|--------|
+| piclockTG | 10.0.0.128 | 2GB | **2025-08-27 (upgraded)** | `000d3ca2` | Test | 4 min | ✅ |
+| piclockTD | 10.0.0.131 | 2GB | 2025-05-08 (control) | `69471177` | Control | 17h20m | ✅ |
+| piclockR | 10.0.0.121 | 1GB | 2025-08-28 (factory) | `000d3ca2` | Reference | ~20h | ✅ |
 
-**Action taken (2026-04-14):**
-- Hard power cycled TG to recover USB
-- Downgraded TG EEPROM: `sudo rpi-eeprom-update -d -f /lib/firmware/raspberrypi/bootloader-2712/stable/pieeprom-2025-05-08.bin`
-- Rebooted — firmware confirmed `69471177`, no undervoltage, throttle `0x0`, USB healthy
-- 1-minute monitor running (`~/monitor.sh` → `~/monitor.log`)
+**Revised firmware analysis (from official rpi-eeprom release notes):**
+- **2025-07-17** — worst: unintended watchdog behavior side effect from `dtoverlay_is_enabled` fix
+- **2025-05-08** — partial fix: eliminates undervoltage, extends window but doesn't fully resolve -110 on marginal board
+- **2025-08-13** — key fix: "Fix read for cached copy of PMIC sequencer status — previously overwritten by RTC event status." PMIC sequencer controls VL805 power rail sequencing.
+- **2025-08-27/28** — best available: includes PMIC sequencer fix + improved HAT+ current reporting (more headroom on 5V rail)
+- **Revised hypothesis**: 2025-08-27 is likely the optimal firmware. piclockR on factory 2025-08-28 has been clean at 20h+ while TG on 2025-05-08 failed at 19h. TG now upgraded to 2025-08-27 for direct comparison.
 
-**Decision gates:**
-- 6h: check TG monitor log for usb-hub=0 / usb-audio=0 / usb-errors
-- 24h: final determination
-- If TG survives → firmware was the cause → document and close
-- If TG still fails → PSU is the cause → swap PSU between TD and TG
+**Key test point:** Watch TG at ~01:40 UTC April 16 (~19h mark from 06:38 UTC reboot). If clean past that, EEPROM 2025-08-27 is confirmed as the fix.
 
-**Monitor restart (after any reboot):** `nohup bash /home/pi/monitor.sh > /dev/null 2>&1 & echo "PID=$!"`
+**Monitor restart command (use IP, not .local — mDNS fails over VPN):**
+```bash
+ssh pi@<IP> 'nohup bash ~/monitor.sh >/dev/null 2>&1 </dev/null & sleep 0.5'
+```
+Note: monitor does NOT survive reboot — restart manually after each reboot.
 
 **Bug (`install.sh`):** `~/.config/clock-8001/` was created as root when running `sudo bash install.sh` on a fresh system — `sdl-clock` (running as `User=pi`) could not open the log file and exited immediately on every restart attempt. Only affected fresh installs where the directory didn't already exist.
 
 **Fix (`16302b4`):** Added `chown "${INSTALL_USER}:${INSTALL_USER}" "${CONFIG_DIR}"` after `mkdir -p`. One line.
 
 **Process note:** v1.3.0 was released without catching this because soak test units had the directory from a prior deploy. Fresh-install smoke test step added to RELEASING.md (step 7) to prevent recurrence.
-
-### VL805 xHCI crash — EEPROM firmware implicated (Issue #39, re-opened 2026-04-14)
-
-**Prior resolution (2026-04-12):** Reflashed piclockTG with fresh Trixie — appeared stable. Both boards soaking.
-
-**Re-occurrence (2026-04-14):** piclockTG failed again — VL805 xHCI `HC died` at ~55min. Root cause investigation found new differentiator: TG had EEPROM firmware **2025-12-08** (`2226a853`) vs TD's **2025-05-08** (`69471177`). Pre-downgrade: TG showed `Undervoltage detected!` at boot on same PSU. Post-downgrade: undervoltage gone, throttle `0x0`. EEPROM downgraded to 2025-05-08 and soak restarted. See "Active Investigation" section above.
 
 ### Resolved: Static IP timecode not displaying
 
@@ -97,34 +97,33 @@ Last updated: 2026-04-14 (~09:15 local)
 
 ## Hardware & Firmware Notes
 
-### Pi 5 EEPROM Firmware — VL805 Stability (2026-04-14)
+### Pi 5 EEPROM Firmware — VL805 Stability (updated 2026-04-15)
 
-**Finding:** Pi 5 EEPROM firmware **2025-12-08 (`2226a853`)** causes VL805 xHCI instability
-on units with marginally-rated PSUs. Symptoms: `Undervoltage detected!` at every boot,
-`Host System Error` / `HC died` after 55min–7h, USB hub and audio device disappear from bus.
+**Summary of findings across three failure events and three soak units:**
 
-**Root cause:** Newer firmware draws more current during VL805/PCIe init (different ASPM or
-power-sequencing), pushing the PSU below threshold and triggering a PCIe bus-level fault.
+- **2025-07-17** — DO NOT USE. Worst stability. Unintended side effect from `dtoverlay_is_enabled` watchdog fix causes HC died at ~6h50m on board #1.
+- **2025-05-08** — Partial improvement. Eliminates undervoltage event. Extends clean window to ~19h on marginal board but does not fully resolve -110. Missing key PMIC sequencer fix.
+- **2025-08-27/28** — Recommended. Includes PMIC sequencer status fix (2025-08-13: "Fix read for cached copy of PMIC sequencer status — previously overwritten by RTC event status") and improved PMIC current reporting. piclockR running factory 2025-08-28 clean at 20h+ while TG on 2025-05-08 failed at 19h.
 
-**Fix:** Downgrade EEPROM to **2025-05-08 (`69471177`)**:
+**Upgrade to 2025-08-27 (remote, via SSH):**
+```bash
+sudo rpi-eeprom-update -d -f /lib/firmware/raspberrypi/bootloader-2712/stable/pieeprom-2025-08-27.bin
+sudo reboot
+# Verify:
+vcgencmd bootloader_version  # → 2025/08/27
+```
+
+**Legacy downgrade to 2025-05-08 (still better than 2025-07-17 or newer up to 2025-12-08):**
 ```bash
 sudo rpi-eeprom-update -d -f /lib/firmware/raspberrypi/bootloader-2712/stable/pieeprom-2025-05-08.bin
 sudo reboot
 ```
 
-**Diagnostic signal:** Check `dmesg | grep Undervoltage` after boot. If present on same PSU
-that worked with older firmware, the firmware is the driver. After downgrade, the undervoltage
-event should disappear.
+**Diagnostic signal:** `dmesg | grep Undervoltage` — if present, firmware is drawing too much current during VL805 init. Should be empty on 2025-05-08 and 2025-08-27.
 
-**Known-good firmware:** `2025-05-08 (69471177)` — stable on both 2GB board #1 and #2.
-
-**rpi-eeprom package:** Both units ship `rpi-eeprom` **28.9-1**, which includes
-`pieeprom-2025-05-08.bin` through `pieeprom-2025-11-27.bin`. The Dec 2025 firmware was
-flashed from a newer package that has since been removed.
-
-**Monitor tool:** `tools/vl805-usb-health-monitor.sh` — logs temp, USB hub presence,
-USB audio presence, alsa-ltc restarts, USB dmesg -110 errors. 1-minute interval.
-Redeploy after reboot: `nohup bash /home/pi/monitor.sh > /dev/null 2>&1 & echo "PID=$!"`
+**Monitor tool:** `tools/vl805-usb-health-monitor.sh` — logs temp, USB hub/audio presence, alsa-ltc restarts, USB dmesg errors. 1-minute interval.
+Restart after reboot: `ssh pi@<IP> 'nohup bash ~/monitor.sh >/dev/null 2>&1 </dev/null & sleep 0.5'`
+(Use IP not .local — mDNS unreliable over VPN)
 
 ---
 
@@ -388,10 +387,10 @@ Committed changes in `v4/alsa-ltc.c`, `v4/alsa-ltc.service`, and Buildroot overl
 | Phase 1 — Branch established | ✅ | From upstream `f0412525` |
 | Phase 2 — SDL3 Buildroot packages | ✅ | sdl3, sdl3-ttf, sdl3-image packages created |
 | Phase 3 — Port clock8002 additions | ✅ | All master additions ported; Buildroot configs fixed |
-| Phase 4 — Hardware validation | 🔄 | Buildroot build running on cm5 (`screen -r sdl3-build`) |
+| Phase 4 — Hardware validation | 🔄 | Image built (`a6756f3`); on Mac Desktop — awaiting flash to piclockBR |
 | Phase 5 — Read-only rootfs | ⬜ | Deferred until Phase 4 proven |
 
-**Buildroot build on cm5:** Running as of ~09:00 2026-04-14. Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-sdl3-build.log'`
+**Buildroot image:** `piclockBR-a6756f3-sdcard.img` on Mac Desktop (768 MB). Build completed 2026-04-14. Flash manually to piclockBR SD card to begin Phase 4 hardware validation.
 
 **Key changes from SDL2:**
 - CGO eliminated — `GOOS=linux GOARCH=arm64 go build` only
