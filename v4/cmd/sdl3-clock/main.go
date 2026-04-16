@@ -3,12 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/Zyko0/go-sdl3/sdl"
-	"github.com/desertbit/timer"
-	"github.com/jessevdk/go-flags"
-	"gitlab.com/clock-8001/clock-8001/v4/clock"
-	"gitlab.com/clock-8001/clock-8001/v4/debug"
-	"gitlab.com/clock-8001/clock-8001/v4/util"
 	"image/color"
 	"io"
 	"log"
@@ -21,6 +15,13 @@ import (
 	"text/template"
 	"time"
 	_ "time/tzdata"
+
+	"github.com/Zyko0/go-sdl3/sdl"
+	"github.com/desertbit/timer"
+	"github.com/jessevdk/go-flags"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
+	"gitlab.com/clock-8001/clock-8001/v4/debug"
+	"gitlab.com/clock-8001/clock-8001/v4/util"
 )
 
 var parser = flags.NewParser(&options, flags.Default)
@@ -388,6 +389,14 @@ func parseOptions() {
 }
 
 func computeDerivedOptions() {
+	loadedVersion := options.AppVersion
+	if loadedVersion == "" {
+		log.Printf("Info: clock.ini has no app-version; will update file after migration")
+	} else if loadedVersion != clock.Version {
+		log.Printf("Info: clock.ini app-version %q differs from binary version %q; will update file", loadedVersion, clock.Version)
+	}
+	options.AppVersion = clock.Version
+
 	switch options.Face {
 	case "max":
 		options.textClock = true
@@ -445,6 +454,13 @@ func computeDerivedOptions() {
 	// Dump the current config to stdout
 	if options.DumpConfig {
 		dumpConfig()
+	}
+
+	// If the config file is out of date, rewrite it so it gains any new
+	// keys and the correct app-version stamp.
+	if loadedVersion != clock.Version && options.configFile != "" && options.Face != "" {
+		log.Printf("Info: rewriting %s to update app-version to %s", options.configFile, clock.Version)
+		options.writeConfig(options.configFile)
 	}
 }
 

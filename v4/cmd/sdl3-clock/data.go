@@ -1,10 +1,11 @@
 package main
 
 import (
-	"gitlab.com/clock-8001/clock-8001/v4/clock"
-	"gitlab.com/clock-8001/clock-8001/v4/util"
 	htmlTemplate "html/template"
 	"image/color"
+
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
+	"gitlab.com/clock-8001/clock-8001/v4/util"
 )
 
 var winTitle = "clock-8001"
@@ -54,6 +55,7 @@ var outputModules []outputModule = make([]outputModule, 0)
 
 type clockOptions struct {
 	Config          func(s string) error `short:"C" long:"config" description:"read config from a file"`
+	AppVersion      string               `long:"app-version" description:"App version that wrote this config"`
 	Face            string               `long:"face" description:"Select the clock face to use" default:"round" choice:"round" choice:"dual-round" choice:"small" choice:"text" choice:"single" choice:"max" choice:"countdown" choice:"144" choice:"192" choice:"288x144"`
 	Debug           bool                 `long:"debug" description:"Enable debug output"`
 	HTTPPort        string               `long:"http-port" description:"Port to listen on for the http configuration interface" default:":8080"`

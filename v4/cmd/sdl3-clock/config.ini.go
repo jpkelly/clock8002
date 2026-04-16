@@ -4,6 +4,9 @@ const configTemplate = `# Example configuration file for clock-8001
 # Lines starting with '#' are comments and
 # are ignored by clock-8001
 
+# App version that wrote this config file
+app-version={{.AppVersion}}
+
 # Clock face to use. (countdown, round, dual-round, text, single or small)
 Face={{.Face}}
 
