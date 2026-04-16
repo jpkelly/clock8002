@@ -113,7 +113,8 @@ type clockOptions struct {
 	HideHours       bool   `long:"hide-hours" description:"Only show minutes and seconds on counters"`
 	CountdownTarget string `long:"countdown-target" default:"2020-12-24 00:00:00"`
 
-	CueFullScreen bool `long:"cue-fullscreen" description:"Show cue changes as full screen icons"`
+	CueFullScreen    bool `long:"cue-fullscreen" description:"Show cue changes as full screen icons"`
+	CueSecondDisplay bool `long:"cue-second-display" description:"Enable second HDMI output for PerfectCue display"`
 
 	DynamicBG bool `long:"dynamic-bg"`
 
