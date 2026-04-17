@@ -42,10 +42,6 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 	$(INSTALL) -d $(TARGET_DIR)/opt/clock8002
 	$(INSTALL) -m 0755 $(@D)/sdl3-clock $(TARGET_DIR)/opt/clock8002/sdl3-clock
 	$(INSTALL) -m 0755 $(@D)/alsa-ltc $(TARGET_DIR)/opt/clock8002/alsa-ltc
-	$(INSTALL) -D -m 0644 $(@D)/clock8002.service \
-		$(TARGET_DIR)/usr/lib/systemd/system/clock8002.service
-	$(INSTALL) -D -m 0644 $(@D)/alsa-ltc.service \
-		$(TARGET_DIR)/usr/lib/systemd/system/alsa-ltc.service
 	$(INSTALL) -D -m 0644 $(@D)/clock.ini.default \
 		$(TARGET_DIR)/boot/piclock/clock.ini
 	$(INSTALL) -D -m 0644 $(@D)/network.ini.default \
@@ -56,10 +52,6 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 	if [ -f $(@D)/oled/oled_daemon.py ]; then \
 		$(INSTALL) -D -m 0755 $(@D)/oled/oled_daemon.py \
 			$(TARGET_DIR)/opt/clock8002/oled/oled_daemon.py; \
-	fi
-	if [ -f $(@D)/oled/oled_daemon.service ]; then \
-		$(INSTALL) -D -m 0644 $(@D)/oled/oled_daemon.service \
-			$(TARGET_DIR)/usr/lib/systemd/system/oled_daemon.service; \
 	fi
 	if [ -f $(@D)/oled/piclockLogo.bin ]; then \
 		$(INSTALL) -D -m 0644 $(@D)/oled/piclockLogo.bin \
@@ -73,8 +65,6 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 		$(TARGET_DIR)/opt/clock8002/bootsplash.png
 	$(INSTALL) -D -m 0755 $(@D)/splash/bootsplash.sh \
 		$(TARGET_DIR)/opt/clock8002/bootsplash.sh
-	$(INSTALL) -D -m 0644 $(@D)/splash/bootsplash-fbv.service \
-		$(TARGET_DIR)/usr/lib/systemd/system/bootsplash.service
 endef
 
 $(eval $(generic-package))

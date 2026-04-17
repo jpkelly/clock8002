@@ -1,4 +1,0 @@
-# Disable USB autosuspend for VIA Labs hub and C-Media CM108 audio device
-# Prevents VL805 xHCI from losing contact with CM108 during idle periods
-SUBSYSTEM=="usb", ATTR{idVendor}=="2109", ATTR{idProduct}=="3431", ATTR{power/control}="on"
-SUBSYSTEM=="usb", ATTR{idVendor}=="0d8c", ATTR{idProduct}=="0014", ATTR{power/control}="on"

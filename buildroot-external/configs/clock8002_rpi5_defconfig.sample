@@ -1,5 +1,6 @@
 # clock8002 Buildroot defconfig (prototype)
 # Tested against: Buildroot 2025.02
+# Kernel matched to 3rd party reference unit (590178d5, built Jan 14 2026)
 # Base: raspberrypi5_defconfig
 #
 # Usage:
@@ -19,7 +20,7 @@ BR2_TOOLCHAIN_BUILDROOT_CXX=y
 # Raspberry Pi 5 board support
 BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_TARBALL=y
-BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION="$(call github,raspberrypi,linux,359f37f0faefb712add32a39f98751aea67d5c1f)/linux-359f37f0faefb712add32a39f98751aea67d5c1f.tar.gz"
+BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION="$(call github,raspberrypi,linux,590178d58b730e981099fdcb405053a000e79820)/linux-590178d58b730e981099fdcb405053a000e79820.tar.gz"
 BR2_LINUX_KERNEL_DEFCONFIG="bcm2712"
 BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_CLOCK8002_PATH)/board/clock8002-rpi5/linux.config"
 BR2_LINUX_KERNEL_NEEDS_HOST_OPENSSL=y
@@ -40,8 +41,7 @@ BR2_PACKAGE_HOST_MTOOLS=y
 BR2_PACKAGE_HOST_KMOD_XZ=y
 
 # Init
-BR2_INIT_SYSTEMD=y
-BR2_PACKAGE_SYSTEMD_LOGIND=y
+BR2_INIT_BUSYBOX=y
 
 # Basic system
 BR2_SYSTEM_DHCP=""

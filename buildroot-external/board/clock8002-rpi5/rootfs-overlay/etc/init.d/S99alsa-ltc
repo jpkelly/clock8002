@@ -1,0 +1,22 @@
+#!/bin/sh
+
+case "$1" in
+	start)
+		echo "Starting alsa-ltc watchdog"
+		/root/alsa-ltc_pokemon.sh start &
+		;;
+	stop)
+		echo "Stopping alsa-ltc watchdog"
+		kill $(cat /var/run/alsa-ltc.pid 2>/dev/null) 2>/dev/null || true
+		;;
+	restart|reload)
+		"$0" stop
+		"$0" start
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac
+
+exit 0
