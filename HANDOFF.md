@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-16
+Last updated: 2026-04-17
 
 ## Current State
 
@@ -8,34 +8,38 @@ Last updated: 2026-04-16
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `feature/sdl3-migration`** — HEAD `9612152`
+- **Active branch: `feature/sdl3-migration`** — HEAD **`e247328`**
 - Buildroot SD card image on Mac Desktop:
   - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
-  - **SDL3 dev (2GB, piclockBR 10.0.0.128)**: last flashed `581e689`, binary updated to `c35f2ad` then `14586d8` in-place
+  - **SDL3 dev (2GB, piclockBR 10.0.0.128)**: awaiting new image from BusyBox init rebuild
 - **1GB Pi 5** (piclockBR.local): running Buildroot image `ce6526b`. Healthy — 0 xHCI errors.
-- **2GB Pi 5 (piclockBR, 10.0.0.128)**: SDL3 dev unit. sdl3-clock `c35f2ad` running. Rebuild in progress on cm5 (4K kernel change, commit `14586d8`).
+- **2GB Pi 5 (piclockBR, 10.0.0.128)**: SDL3 dev unit. Awaiting reflash with BusyBox init image.
 - **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry. EEPROM downgraded to 2025-05-08. Soak in progress (started ~09:10 2026-04-14). Monitor running.
 - **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.1 default. Stable. EEPROM 2025-05-08.
-- **3rd party Buildroot unit (10.0.0.131)**: upstream clock-8001 SDL2 binary + old alsa-ltc. 4K kernel (`6.12.41-v8`, Jan 14 2026). LTC working. Used as reference for USB audio A/B comparison.
+- **3rd party Buildroot unit (10.0.0.131)**: upstream clock-8001 SDL2 binary + old alsa-ltc. 4K kernel (`6.12.41-v8`, Jan 14 2026, commit `590178d5`). BusyBox inittab. LTC working, zero retire_capture_urb errors. Reference system.
 - `buildroot-prototype` branch: fully merged into master
+- **Full clean Buildroot rebuild in progress on cm5** — screen session `brbuild`, log at `/tmp/br-build.log`
 
 ## SDL3 Migration Status (branch: feature/sdl3-migration)
 
-### Current state (2026-04-16)
-- **sdl3-clock** running cleanly on piclockBR (10.0.0.128), commit `c35f2ad`
-- Display confirmed working: text face, 3 clocks visible
-- **Rebuild in progress on cm5**: commit `ab5139d` — kernel 4K page size (corrected symbols) + remove alsa-ltc ExecStopPost
-  - First attempt `14586d8` used wrong Kconfig symbols (`ARM64_PAGE_SIZE_4K`) — kernel rebuilt but stayed 16K
-  - Fixed `ab5139d`: correct symbols `ARM64_4K_PAGES=y` / `# CONFIG_ARM64_16K_PAGES is not set`
-  - Used `linux-dirclean` to force full kernel rebuild
-- After rebuild: flash new image, test `arecord` first, then alsa-ltc + LTC signal
+### Current state (2026-04-17)
+- **Commit `e247328`**: Switch Buildroot from systemd → BusyBox init; pin kernel to 3rd party commit `590178d5`
+- **Full clean rebuild running on cm5** in screen `brbuild` — log at `/tmp/br-build.log`
+- After build completes: transfer image → `piclockBR-e247328-sdcard.img`, flash to 2GB unit, verify LTC
 
-### Root cause hypothesis: USB audio broken on 16K page kernel
-- `arecord` itself fails with `usb_set_interface failed (-110)` on our `6.12.47-v8-16k` kernel
-- 3rd party system with `6.12.41-v8` (4K pages) works — confirmed by A/B card swap
-- **Confidence: ~65%** — two variables differ (page size AND kernel version `6.12.41` vs `6.12.47`)
-- If USB audio still fails after 4K rebuild → kernel version regression, need to pin to older commit
-- If USB audio works → page size confirmed as root cause
+### USB audio root cause — BusyBox init / pokemon watchdog approach
+- **3rd party unit** (10.0.0.131): kernel `6.12.41-v8` commit `590178d5`, BusyBox inittab — **zero retire_capture_urb errors**
+- **Our prior approach**: systemd ExecStartPre with `rmmod`+`modprobe snd_usb_audio` on every alsa-ltc restart — triggers RP1 xHCI endpoint lock → EIO reads → `usb_set_interface -110`
+- **New approach** (commit `e247328`): load `snd_usb_audio` once at boot via S11modules, then restart only the userspace `alsa-ltc` process (pokemon watchdog) — never cycles the driver
+- **Page size**: Both our old build and 3rd party are 4K pages. `-16k` in kernel CONFIG_LOCALVERSION is misleading — not the issue. DO NOT revisit this.
+
+### Changes in `e247328`
+- `defconfig.sample`: kernel commit `359f37f0` → `590178d58b730e981099fdcb405053a000e79820`, `BR2_INIT_SYSTEMD` → `BR2_INIT_BUSYBOX`
+- `clock8002.mk`: removed all systemd service file installs
+- New rootfs overlay `etc/init.d/`: S11modules, S03copy_alsa-ltc_files, S03copy_clock_files, S99alsa-ltc, S99clock
+- New rootfs overlay `root/`: alsa-ltc_pokemon.sh, alsa-ltc_cmd.sh, clock_pokemon.sh, clock_cmd.sh
+- `post-build.sh`: fully rewritten — removed all systemd-specific logic
+- Deleted orphaned: `etc/systemd/system/piclock-network.service`, `usr/lib/systemd/system/alsa-ltc.service`, `etc/udev/rules.d/99-usb-audio-power.rules`
 
 ### What was ported to sdl3-clock (vs sdl-clock master)
 - `AppVersion` field + config stamping (data.go, config.ini.go, main.go)
