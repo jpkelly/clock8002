@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-14
+Last updated: 2026-04-16
 
 ## Current State
 
@@ -8,12 +8,52 @@ Last updated: 2026-04-14
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
+- **Active branch: `feature/sdl3-migration`** — HEAD `4ee4879`
 - Buildroot SD card image on Mac Desktop:
   - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
+  - **SDL3 dev (2GB, piclockBR 10.0.0.128)**: last flashed `581e689`, binary updated to `c35f2ad` then `14586d8` in-place
 - **1GB Pi 5** (piclockBR.local): running Buildroot image `ce6526b`. Healthy — 0 xHCI errors.
+- **2GB Pi 5 (piclockBR, 10.0.0.128)**: SDL3 dev unit. sdl3-clock `c35f2ad` running. Rebuild in progress on cm5 (4K kernel change, commit `14586d8`).
 - **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry. EEPROM downgraded to 2025-05-08. Soak in progress (started ~09:10 2026-04-14). Monitor running.
 - **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.1 default. Stable. EEPROM 2025-05-08.
+- **3rd party Buildroot unit (10.0.0.131)**: upstream clock-8001 SDL2 binary + old alsa-ltc. 4K kernel (`6.12.41-v8`, Jan 14 2026). LTC working. Used as reference for USB audio A/B comparison.
 - `buildroot-prototype` branch: fully merged into master
+
+## SDL3 Migration Status (branch: feature/sdl3-migration)
+
+### Current state (2026-04-16)
+- **sdl3-clock** running cleanly on piclockBR (10.0.0.128), commit `c35f2ad`
+- Display confirmed working: text face, 3 clocks visible
+- **Rebuild in progress on cm5**: commit `14586d8` — kernel 16K→4K pages + remove alsa-ltc ExecStopPost
+- After rebuild: flash new image, test display + LTC
+
+### Root cause found: USB audio broken on 16K page kernel
+- `arecord` itself fails with `usb_set_interface failed (-110)` on our `6.12.47-v8-16k` kernel
+- 3rd party system with `6.12.41-v8` (4K pages) works fine — confirmed by A/B card swap
+- Fix: override `bcm2712_defconfig` 16K default to 4K in `linux.config`
+
+### What was ported to sdl3-clock (vs sdl-clock master)
+- `AppVersion` field + config stamping (data.go, config.ini.go, main.go)
+- `CueSecondDisplay` field (was on master, never ported)
+- `clock.ini.default`: removed hardcoded `app-version`, changed `Face=quad` → `Face=text`
+
+### Still pending
+- Quad face port (5 files: data.go, main.go, text.go, sdl.go, config.html.go)
+- LTC working end-to-end (blocked on kernel rebuild)
+- Re-enable alsa-ltc.service after confirming 4K kernel fixes USB audio
+
+### Branch rule
+- `v4/` Trixie files are off-limits for Buildroot-only fixes on this branch
+- Buildroot-specific changes go in `buildroot-external/` only
+
+### Key credentials / commands
+- piclockBR SSH: `sshpass -p 'clockworkadmin' ssh -o StrictHostKeyChecking=no root@10.0.0.128`
+- 3rd party unit: `sshpass -p 'clockworkadmin' ssh -o StrictHostKeyChecking=no root@10.0.0.131`
+- Monitor build: `ssh pi@cm5.local 'tail -f /tmp/br-build.log'`
+- Binary deploy (no reflash): `scp pi@cm5.local:~/buildroot/output/target/opt/clock8002/sdl3-clock root@10.0.0.128:/opt/clock8002/sdl3-clock`
+- Image transfer after build: `scp pi@cm5.local:~/buildroot/output/images/sdcard.img ~/Desktop/piclockBR-14586d8-sdcard.img`
+
+---
 
 ### Active Investigation: VL805 xHCI crash on piclockTG (2026-04-14)
 
