@@ -8,7 +8,7 @@ Last updated: 2026-04-16
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `feature/sdl3-migration`** — HEAD `ab5139d`
+- **Active branch: `feature/sdl3-migration`** — HEAD `9612152`
 - Buildroot SD card image on Mac Desktop:
   - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
   - **SDL3 dev (2GB, piclockBR 10.0.0.128)**: last flashed `581e689`, binary updated to `c35f2ad` then `14586d8` in-place
