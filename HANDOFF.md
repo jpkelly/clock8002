@@ -8,7 +8,7 @@ Last updated: 2026-04-16
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `feature/sdl3-migration`** — HEAD `4ee4879`
+- **Active branch: `feature/sdl3-migration`** — HEAD `ab5139d`
 - Buildroot SD card image on Mac Desktop:
   - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
   - **SDL3 dev (2GB, piclockBR 10.0.0.128)**: last flashed `581e689`, binary updated to `c35f2ad` then `14586d8` in-place
@@ -24,13 +24,18 @@ Last updated: 2026-04-16
 ### Current state (2026-04-16)
 - **sdl3-clock** running cleanly on piclockBR (10.0.0.128), commit `c35f2ad`
 - Display confirmed working: text face, 3 clocks visible
-- **Rebuild in progress on cm5**: commit `14586d8` — kernel 16K→4K pages + remove alsa-ltc ExecStopPost
-- After rebuild: flash new image, test display + LTC
+- **Rebuild in progress on cm5**: commit `ab5139d` — kernel 4K page size (corrected symbols) + remove alsa-ltc ExecStopPost
+  - First attempt `14586d8` used wrong Kconfig symbols (`ARM64_PAGE_SIZE_4K`) — kernel rebuilt but stayed 16K
+  - Fixed `ab5139d`: correct symbols `ARM64_4K_PAGES=y` / `# CONFIG_ARM64_16K_PAGES is not set`
+  - Used `linux-dirclean` to force full kernel rebuild
+- After rebuild: flash new image, test `arecord` first, then alsa-ltc + LTC signal
 
-### Root cause found: USB audio broken on 16K page kernel
+### Root cause hypothesis: USB audio broken on 16K page kernel
 - `arecord` itself fails with `usb_set_interface failed (-110)` on our `6.12.47-v8-16k` kernel
-- 3rd party system with `6.12.41-v8` (4K pages) works fine — confirmed by A/B card swap
-- Fix: override `bcm2712_defconfig` 16K default to 4K in `linux.config`
+- 3rd party system with `6.12.41-v8` (4K pages) works — confirmed by A/B card swap
+- **Confidence: ~65%** — two variables differ (page size AND kernel version `6.12.41` vs `6.12.47`)
+- If USB audio still fails after 4K rebuild → kernel version regression, need to pin to older commit
+- If USB audio works → page size confirmed as root cause
 
 ### What was ported to sdl3-clock (vs sdl-clock master)
 - `AppVersion` field + config stamping (data.go, config.ini.go, main.go)
