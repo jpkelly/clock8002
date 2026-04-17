@@ -573,6 +573,11 @@ cleanup:
     }
     if (capture) {
         snd_pcm_drop(capture);
+        /* Give the CM108 500ms to notice streaming has stopped before the
+         * kernel calls usb_set_interface(0).  Without this, RP1 xHCI can
+         * time out (-110) on the Set Interface control transfer, triggering
+         * a USB cascade that takes the device off the bus. */
+        usleep(500000);
         snd_pcm_close(capture);
         fprintf(stdout, "audio interface closed\n");
     }

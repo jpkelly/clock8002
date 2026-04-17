@@ -7,7 +7,7 @@ StartLimitIntervalSec=60
 [Service]
 Type=simple
 User=root
-ExecStartPre=/bin/sh -c 'until grep -q Device /proc/asound/cards; do sleep 1; done; sleep 2'
+ExecStartPre=/bin/sh -c 'modprobe snd_usb_audio 2>/dev/null; until grep -q Device /proc/asound/cards; do sleep 1; done; sleep 5'
 ExecStart=/opt/clock8002/alsa-ltc - 255.255.255.255 1245
 Restart=on-failure
 RestartSec=5
