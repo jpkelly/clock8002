@@ -39,13 +39,26 @@ Last updated: 2026-04-16
 
 ### What was ported to sdl3-clock (vs sdl-clock master)
 - `AppVersion` field + config stamping (data.go, config.ini.go, main.go)
-- `CueSecondDisplay` field (was on master, never ported)
+- `CueSecondDisplay` option skeleton (option exists, no DRM implementation)
 - `clock.ini.default`: removed hardcoded `app-version`, changed `Face=quad` → `Face=text`
 
+### Features NOT yet ported to sdl3-clock
+| # | Feature | sdl-clock files |
+|---|---------|-----------------|
+| 1 | **Quad face** — 4-source text clock | `text.go`, `data.go`, `http.go`, `config.html.go` |
+| 2 | **Dual face** — 2-source text clock | `text.go`, `data.go`, `http.go`, `config.html.go` |
+| 3 | **DRM mirror** — second HDMI via KMS/DRM dumb buffer | `drm_mirror_linux.go`, `drm_mirror_other.go`, `second_display_probe.go` |
+| 4 | **PerfectCue icon on HDMI-2** — cue icon mode | `drm_cue_linux.go`, `drm_cue_other.go`, `second_display_probe.go` |
+| 5 | **Configurable PerfectCue geometry** — cue-pos-x/y, cue-size | `cue.go`, `data.go` |
+| 6 | **Sync Time web API** — `/api/settime` + RTC sync | `http.go` |
+| 7 | **Cue test API** — `/api/cue` | `http.go` |
+| 8 | **Atomic config import** — temp+validate+rename | `http.go` |
+| 9 | **SDL resource leak fixes** — destroyTextClock/Audio on hot-reload | `text.go`, `audio.go`, `main.go` |
+
 ### Still pending
-- Quad face port (5 files: data.go, main.go, text.go, sdl.go, config.html.go)
-- LTC working end-to-end (blocked on kernel rebuild)
+- LTC working end-to-end (blocked on 4K kernel rebuild — in progress on cm5 at `ab5139d`)
 - Re-enable alsa-ltc.service after confirming 4K kernel fixes USB audio
+- Port features 1–9 from table above (DRM mirror/cue most complex)
 
 ### Branch rule
 - `v4/` Trixie files are off-limits for Buildroot-only fixes on this branch
@@ -56,7 +69,7 @@ Last updated: 2026-04-16
 - 3rd party unit: `sshpass -p 'clockworkadmin' ssh -o StrictHostKeyChecking=no root@10.0.0.131`
 - Monitor build: `ssh pi@cm5.local 'tail -f /tmp/br-build.log'`
 - Binary deploy (no reflash): `scp pi@cm5.local:~/buildroot/output/target/opt/clock8002/sdl3-clock root@10.0.0.128:/opt/clock8002/sdl3-clock`
-- Image transfer after build: `scp pi@cm5.local:~/buildroot/output/images/sdcard.img ~/Desktop/piclockBR-14586d8-sdcard.img`
+- Image transfer after build: `scp pi@cm5.local:~/buildroot/output/images/sdcard.img ~/Desktop/piclockBR-ab5139d-sdcard.img`
 
 ---
 
