@@ -304,6 +304,16 @@ Config files live on the boot partition under `/boot/piclock/`:
 
 At boot, `S03copy_clock_files` copies `/boot/piclock/authorized_keys` to `/root/.ssh/authorized_keys` (mode 600) if it exists. To enable passwordless SSH, place your public key(s) in that file on the FAT boot partition before first boot — no SD card re-flash required.
 
+### SSH key provisioning — dev vs production
+
+| Build type | How to build | SSH access |
+|---|---|---|
+| **Production** | `make` (no `BR2_PICLOCKKEY`) | Password only (`clockworkadmin`) — no key baked in |
+| **Dev** | `BR2_PICLOCKKEY='ssh-ed25519 ...' make` | Key baked into image at build time |
+| **Field provisioning** | Either build type | Drop `authorized_keys` on `/boot/piclock/` — applied at every boot |
+
+Production images ship with **no embedded SSH key**. Field SSH key provisioning via `/boot/piclock/authorized_keys` works on both build types without reflashing.
+
 ## Known Issues / Open Work
 
 | Issue | Description |
