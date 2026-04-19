@@ -113,7 +113,7 @@ def flush_logo_buffer(buf):
             px = i * 8 + (7 - bit)
             if px < OLED_WD * OLED_HT:
                 logo_pixels[px] = 255 if (byte >> bit) & 1 else 0
-    image = Image.frombytes("L", (OLED_WD, OLED_HT), bytes(logo_pixels))
+    image = Image.frombytes("L", (OLED_WD, OLED_HT), bytes(logo_pixels)).convert("1")
     draw = ImageDraw.Draw(image)
     version_text = get_build_version()
     if version_text:
