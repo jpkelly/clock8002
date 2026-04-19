@@ -23,7 +23,7 @@ netmask=24
 hostname=piClock
 
 [wifi]
-ap_enabled=false
+ap_enabled=true
 ap_ssid=piClock-ap
 ap_password=clockwork
 ap_channel=6

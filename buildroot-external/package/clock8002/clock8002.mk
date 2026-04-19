@@ -9,6 +9,12 @@ CLOCK8002_LICENSE = GPL-3.0
 CLOCK8002_LICENSE_FILES = LICENSE
 CLOCK8002_DEPENDENCIES = host-go sdl3 sdl3-ttf sdl3-image libltc
 
+ifeq ($(BR2_PACKAGE_CLOCK8002_GERRY),y)
+CLOCK8002_CONFIG_SUFFIX = gerry
+else
+CLOCK8002_CONFIG_SUFFIX = default
+endif
+
 CLOCK8002_GIT_DIR = $(realpath $(CLOCK8002_SITE)/..)
 CLOCK8002_GIT_TAG = $(shell cd $(CLOCK8002_GIT_DIR) && git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0.1")
 CLOCK8002_GIT_COMMIT = $(shell cd $(CLOCK8002_GIT_DIR) && git rev-list -1 HEAD 2>/dev/null || echo "unknown")
@@ -42,17 +48,10 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 	$(INSTALL) -d $(TARGET_DIR)/opt/clock8002
 	$(INSTALL) -m 0755 $(@D)/sdl3-clock $(TARGET_DIR)/opt/clock8002/sdl3-clock
 	$(INSTALL) -m 0755 $(@D)/alsa-ltc $(TARGET_DIR)/opt/clock8002/alsa-ltc
-ifeq ($(BR2_PACKAGE_CLOCK8002_GERRY),y)
-	$(INSTALL) -D -m 0644 $(@D)/clock.ini.gerry \
+	$(INSTALL) -D -m 0644 $(@D)/clock.ini.$(CLOCK8002_CONFIG_SUFFIX) \
 		$(TARGET_DIR)/boot/piclock/clock.ini
-	$(INSTALL) -D -m 0644 $(@D)/network.ini.gerry \
+	$(INSTALL) -D -m 0644 $(@D)/network.ini.$(CLOCK8002_CONFIG_SUFFIX) \
 		$(TARGET_DIR)/boot/piclock/network.ini
-else
-	$(INSTALL) -D -m 0644 $(@D)/clock.ini.default \
-		$(TARGET_DIR)/boot/piclock/clock.ini
-	$(INSTALL) -D -m 0644 $(@D)/network.ini.default \
-		$(TARGET_DIR)/boot/piclock/network.ini
-endif
 	cp -a $(@D)/fonts $(TARGET_DIR)/opt/clock8002/
 	cp -a $(@D)/voices $(TARGET_DIR)/opt/clock8002/
 	$(INSTALL) -m 0644 $(@D)/ttf_fonts/*.ttf $(TARGET_DIR)/opt/clock8002/
