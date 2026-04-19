@@ -142,14 +142,59 @@ GOOS=linux GOARCH=arm64 go build ./cmd/sdl3-clock
 
 **State after Phase 3:** Branch HEAD `df7a7fb` on `feature/sdl3-migration`. cm5 `~/buildroot/configs/clock8002_rpi5_defconfig` updated directly with SDL3 entries. **Build confirmed running on cm5 as of 2026-04-14. Next: wait for build to complete → flash piclockBR → Phase 4 hardware validation.**
 
-### ⬜ Phase 4 — Hardware validation on piclockBR  ← **NEXT**
-Key items to verify:
-- Clock renders on HDMI via KMSDRM (no GLES2 patches needed — SDL3 handles natively)
-- USB audio / alsa-ltc working (C code unchanged)
-- OLED daemon working
-- Web config UI accessible
-- LTC timecode display working
-- PerfectCue, Mitti, Millumin integrations working
+### 🔄 Phase 4 — Hardware validation on piclockBR  ← **IN PROGRESS**
+
+#### Phase 4a — SDL3 validation results
+
+| Item | Status | Notes |
+|---|---|---|
+| Clock renders on HDMI via KMSDRM | ✅ | No GLES2 patches needed — SDL3 handles natively |
+| Web config UI accessible | ✅ | |
+| OLED daemon working | ❌ | Blocked — see Phase 4b |
+| LTC timecode display working | ❌ | Blocked — see Phase 4b |
+| USB audio / alsa-ltc | ❌ | Blocked — see Phase 4b |
+| WiFi AP visible | ❌ | Blocked — see Phase 4b |
+| PerfectCue, Mitti, Millumin integrations | ⬜ | Not yet reached |
+
+#### Phase 4b — Pivot: BusyBox init / 3rd-party system emulation
+
+**Root cause of alsa-ltc instability (systemd image):**
+systemd restarted alsa-ltc on failure, which exec'd `rmmod snd_usb_audio` + `modprobe snd_usb_audio` on every restart. Cycling the USB audio driver on a running RP1 xHCI bus causes an endpoint lock → EIO reads → `usb_set_interface -110` → alsa-ltc crash loop. The more it crashed, the more the driver was cycled, making recovery impossible without a full power cycle.
+
+**Discovery:**
+The 3rd-party reference unit (`10.0.0.131`) runs the same hardware with zero USB errors. Key differences:
+- **BusyBox init** (no systemd) — `snd_usb_audio` loaded once at boot, never cycled
+- **Pokemon watchdog** — restarts only the userspace `alsa-ltc` process on failure; driver is untouched
+- **Kernel commit `590178d5`** (6.12.41-v8) — matches our kernel pin
+
+**Decision:** Emulate the 3rd-party system's init model exactly. Switch from `BR2_INIT_SYSTEMD` to `BR2_INIT_BUSYBOX`, replace systemd service files with BusyBox `init.d` scripts, use the same pokemon watchdog pattern.
+
+**Commits in this pivot (2026-04-18):**
+
+| Commit | Description |
+|---|---|
+| `e247328` | buildroot: switch to BusyBox init; pin kernel to `590178d5` |
+| `ba0ddb9` | buildroot: add alsa-ltc_cmd.sh / alsa-ltc_pokemon.sh to overlay |
+| `a1bab2f` | buildroot: add eudev (hotplug support under BusyBox init) |
+| `5475aa3` | buildroot: add gerry variant (BR2_PACKAGE_CLOCK8002_GERRY) |
+| `96f45ac` | buildroot: fix ifeq-in-recipe bug; enable WiFi AP in gerry network.ini |
+| `8bc6c5e` | buildroot: add S98oled BusyBox init script for oled_daemon |
+| `8ad295e` | buildroot: install authorized_keys from /boot/piclock/ at boot |
+| `af98d5e` | buildroot: fix oled_daemon binary path (sdl3-clock); add i2c-dev to /etc/modules |
+| `2b81719` | buildroot: add CONFIG_I2C_DEV=m to kernel; NM wait-loop in S45piclock-network |
+
+**Current state (2026-04-18):**
+- Kernel rebuild running on cm5 (screen `brbuild5`, log `/tmp/br-build.log`) to include `CONFIG_I2C_DEV=m`
+- Last image on Desktop before rebuild: `piclockBR-af98d5e-sdcard.img`
+- After build: transfer → `piclockBR-2b81719-sdcard.img`, flash, verify OLED + WiFi AP
+
+**Remaining Phase 4 items after rebuild:**
+- Flash `2b81719` image → confirm OLED (`/dev/i2c-*` now present via kernel module)
+- Confirm WiFi AP visible (NM wait-loop fix in `S45piclock-network`)
+- Confirm alsa-ltc LTC decode end-to-end
+- Confirm web config UI, PerfectCue, Mitti, Millumin
+
+**Note on Phase 5:** BusyBox init is better suited to a read-only rootfs than systemd was. The pokemon watchdog scripts write only to `/var/run` and `/var/log` (both tmpfs). The pivot to BusyBox init is a net positive for Phase 5.
 
 ### ⬜ Phase 5 — Read-only rootfs (appliance hardening)
 - `BR2_TARGET_ROOTFS_SQUASHFS=y`
