@@ -13,7 +13,7 @@ from PIL import ImageDraw, ImageFont, Image
 INI_PATH = os.path.expanduser('~/.config/clock-8001/clock.ini')
 OLED_INI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oled.ini')
 LOGO_PATH = os.path.expanduser('~/piclockLogo.bin')
-SDL_CLOCK_PATH = '/opt/clock8002/sdl-clock'
+SDL_CLOCK_PATH = '/opt/clock8002/sdl3-clock'
 LOGO_SECONDS = 8
 
 # OLED hardware defaults
@@ -130,7 +130,7 @@ def get_build_version():
             [
                 'sh',
                 '-c',
-                "strings /opt/clock8002/sdl-clock | grep -m1 -oE 'clock\\.gitTag=v[0-9]+\\.[0-9]+\\.[0-9]+'",
+                "strings /opt/clock8002/sdl3-clock | grep -m1 -oE 'clock\.gitTag=v[0-9]+\.[0-9]+\.[0-9]+'"
             ],
             stderr=subprocess.STDOUT,
             timeout=1.0,

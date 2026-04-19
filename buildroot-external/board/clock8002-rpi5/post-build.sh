@@ -11,6 +11,7 @@ for script in \
         S03copy_alsa-ltc_files \
         S03copy_clock_files \
         S11modules \
+        S45piclock-network \
         S98oled \
         S99alsa-ltc \
         S99clock; do
