@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-17
+Last updated: 2026-04-18
 
 ## Current State
 
@@ -8,24 +8,33 @@ Last updated: 2026-04-17
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `feature/sdl3-migration`** — HEAD **`e247328`**
-- Buildroot SD card image on Mac Desktop:
-  - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
+- **Active branch: `feature/sdl3-migration`** — HEAD **`2b81719`**
+- Buildroot SD card image on Mac Desktop: `piclockBR-af98d5e-sdcard.img` (pre-kernel-rebuild; superseded by brbuild5 in progress)
+- Kernel rebuild in progress on cm5 (screen: `brbuild5`, log: `/tmp/br-build.log`) — adds `CONFIG_I2C_DEV=m` and NM wait-loop for WiFi AP
+- **3rd party reference unit (10.0.0.131)**: `root` / `clockworkadmin`. BusyBox init, kernel `590178d5` (6.12.41-v8), `alsa-ltc plughw:2,0 255.255.255.255 1245` — running healthy, 0 USB errors. `/usr/bin/usb-audio-monitor.sh` is our diagnostic addition, not their original code.  - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
   - **SDL3 dev (2GB, piclockBR 10.0.0.128)**: awaiting new image from BusyBox init rebuild
 - **1GB Pi 5** (piclockBR.local): running Buildroot image `ce6526b`. Healthy — 0 xHCI errors.
 - **2GB Pi 5 (piclockBR, 10.0.0.128)**: SDL3 dev unit. Awaiting reflash with BusyBox init image.
 - **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry. EEPROM downgraded to 2025-05-08. Soak in progress (started ~09:10 2026-04-14). Monitor running.
 - **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.1 default. Stable. EEPROM 2025-05-08.
-- **3rd party Buildroot unit (10.0.0.131)**: upstream clock-8001 SDL2 binary + old alsa-ltc. 4K kernel (`6.12.41-v8`, Jan 14 2026, commit `590178d5`). BusyBox inittab. LTC working, zero retire_capture_urb errors. Reference system.
+- **3rd party reference unit (10.0.0.131)**: upstream clock-8001 SDL2 binary + alsa-ltc. 4K kernel (`6.12.41-v8`, commit `590178d5`). BusyBox inittab. LTC working, 0 USB errors. `root` / `clockworkadmin`.
 - `buildroot-prototype` branch: fully merged into master
-- **Full clean Buildroot rebuild in progress on cm5** — screen session `brbuild`, log at `/tmp/br-build.log`
+- **Kernel rebuild in progress on cm5** — screen session `brbuild5`, log at `/tmp/br-build.log`
 
 ## SDL3 Migration Status (branch: feature/sdl3-migration)
 
-### Current state (2026-04-17)
-- **Commit `e247328`**: Switch Buildroot from systemd → BusyBox init; pin kernel to 3rd party commit `590178d5`
-- **Full clean rebuild running on cm5** in screen `brbuild` — log at `/tmp/br-build.log`
-- After build completes: transfer image → `piclockBR-e247328-sdcard.img`, flash to 2GB unit, verify LTC
+### Current state (2026-04-18)
+- Branch HEAD: **`2b81719`** — adds `CONFIG_I2C_DEV=m` (OLED fix) and NM wait-loop (WiFi AP fix)
+- **Kernel rebuild running on cm5** in screen `brbuild5` — log at `/tmp/br-build.log`
+- Previous image on Desktop: `piclockBR-af98d5e-sdcard.img` (pre-kernel-rebuild, missing i2c-dev)
+- After build completes: transfer image → `piclockBR-2b81719-sdcard.img`, flash, verify OLED + WiFi AP
+
+### Recent commits (session 2026-04-18)
+- `96f45ac`: fix ifeq-in-recipe; enable WiFi AP in gerry network.ini
+- `8bc6c5e`: add S98oled BusyBox init script for oled_daemon
+- `8ad295e`: install authorized_keys from /boot/piclock/ at boot
+- `af98d5e`: fix OLED (i2c-dev module, sdl3-clock path) and WiFi AP (S45piclock-network)
+- `2b81719`: add CONFIG_I2C_DEV=m; wait for NM before configuring network
 
 ### USB audio root cause — BusyBox init / pokemon watchdog approach
 - **3rd party unit** (10.0.0.131): kernel `6.12.41-v8` commit `590178d5`, BusyBox inittab — **zero retire_capture_urb errors**
