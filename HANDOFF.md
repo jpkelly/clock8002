@@ -67,6 +67,10 @@ Last updated: 2026-04-18
 | 7 | **Cue test API** — `/api/cue` | `http.go` |
 | 8 | **Atomic config import** — temp+validate+rename | `http.go` |
 | 9 | **SDL resource leak fixes** — destroyTextClock/Audio on hot-reload | `text.go`, `audio.go`, `main.go` |
+| 10 | **Row 4 color/alpha** — configurable color + alpha for text clock row 4 | `data.go`, `http.go`, `config.html.go` |
+| 11 | **Network-aware info overlay** — shows eth0/wlan0 IPs and WiFi AP SSID on 'I' overlay | `clock/engine.go` |
+| 12 | **Config version display** — "Loaded config version" in web UI + `/export` download link | `http.go`, `config.html.go` |
+| 13 | **Symlink-safe config path** — `resolvedConfigPath()` resolves symlinks before import/save | `http.go` |
 
 ### Still pending
 - LTC working end-to-end (blocked on 4K kernel rebuild — in progress on cm5 at `ab5139d`)
