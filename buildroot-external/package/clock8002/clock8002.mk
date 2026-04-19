@@ -42,10 +42,17 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 	$(INSTALL) -d $(TARGET_DIR)/opt/clock8002
 	$(INSTALL) -m 0755 $(@D)/sdl3-clock $(TARGET_DIR)/opt/clock8002/sdl3-clock
 	$(INSTALL) -m 0755 $(@D)/alsa-ltc $(TARGET_DIR)/opt/clock8002/alsa-ltc
+ifeq ($(BR2_PACKAGE_CLOCK8002_GERRY),y)
+	$(INSTALL) -D -m 0644 $(@D)/clock.ini.gerry \
+		$(TARGET_DIR)/boot/piclock/clock.ini
+	$(INSTALL) -D -m 0644 $(@D)/network.ini.gerry \
+		$(TARGET_DIR)/boot/piclock/network.ini
+else
 	$(INSTALL) -D -m 0644 $(@D)/clock.ini.default \
 		$(TARGET_DIR)/boot/piclock/clock.ini
 	$(INSTALL) -D -m 0644 $(@D)/network.ini.default \
 		$(TARGET_DIR)/boot/piclock/network.ini
+endif
 	cp -a $(@D)/fonts $(TARGET_DIR)/opt/clock8002/
 	cp -a $(@D)/voices $(TARGET_DIR)/opt/clock8002/
 	$(INSTALL) -m 0644 $(@D)/ttf_fonts/*.ttf $(TARGET_DIR)/opt/clock8002/

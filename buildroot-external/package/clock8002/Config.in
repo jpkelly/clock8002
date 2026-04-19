@@ -16,4 +16,12 @@ config BR2_PACKAGE_CLOCK8002_SOURCE_DIR
 	help
 	  Local source tree path used by the package (site method local).
 
+config BR2_PACKAGE_CLOCK8002_GERRY
+	bool "Use gerry variant (clock.ini.gerry / network.ini.gerry)"
+	default n
+	help
+	  Install clock.ini.gerry and network.ini.gerry instead of the
+	  default variants. Enables the Gerry-specific clock face and
+	  static network configuration.
+
 endif
