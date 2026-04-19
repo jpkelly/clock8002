@@ -19,13 +19,14 @@ NET_MODE=$(parse_ini "$NETWORK_INI" network mode)
 NET_HOSTNAME=$(parse_ini "$NETWORK_INI" host hostname)
 
 # Apply NTP setting
+# Note: timedatectl is a systemd tool; guard for BusyBox init images.
 NTP_ENABLED=$(parse_ini "$NETWORK_INI" network ntp)
 if [ "$NTP_ENABLED" = "false" ]; then
     echo "Disabling NTP..."
-    timedatectl set-ntp false
+    command -v timedatectl >/dev/null 2>&1 && timedatectl set-ntp false || true
 elif [ "$NTP_ENABLED" = "true" ]; then
     echo "Enabling NTP..."
-    timedatectl set-ntp true
+    command -v timedatectl >/dev/null 2>&1 && timedatectl set-ntp true || true
 fi
 
 # Find the wired Ethernet connection (Pi 5 Trixie: end0 or eth0)
@@ -128,7 +129,8 @@ if [ -n "$NET_HOSTNAME" ]; then
     CURRENT_HOSTNAME=$(hostname)
     if [ "$CURRENT_HOSTNAME" != "$NET_HOSTNAME" ]; then
         echo "Setting hostname to ${NET_HOSTNAME}..."
-        hostnamectl set-hostname "$NET_HOSTNAME"
+        hostname "$NET_HOSTNAME"
+        echo "$NET_HOSTNAME" > /etc/hostname
         sed -i "s/127\.0\.1\.1.*/127.0.1.1\t${NET_HOSTNAME}/" /etc/hosts
         grep -q "127.0.1.1" /etc/hosts || echo -e "127.0.1.1\t${NET_HOSTNAME}" >> /etc/hosts
         systemctl restart avahi-daemon 2>/dev/null || true

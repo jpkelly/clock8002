@@ -5,6 +5,7 @@ start() {
 	echo "Starting sdl-clock watchdog"
 	export SDL_VIDEODRIVER=kmsdrm
 	export XDG_RUNTIME_DIR=/run/user/0
+	mkdir -p /run/user/0
 
 	cd /opt/clock8002
 	while true; do

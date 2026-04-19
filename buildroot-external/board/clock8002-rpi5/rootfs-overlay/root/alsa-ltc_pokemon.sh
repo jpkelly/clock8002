@@ -14,6 +14,14 @@ start() {
 		i=$((i + 1))
 	done
 
+	# Detect USB audio card number dynamically (avoids hardcoded plughw:N,0)
+	ALSA_CARD=$(grep -E "^ *[0-9]" /proc/asound/cards 2>/dev/null \
+		| grep -E "USB.Audio|USB Audio" \
+		| awk '{print $1}' | head -1)
+	[ -z "$ALSA_CARD" ] && ALSA_CARD=2
+	export ALSA_CARD
+	echo "Using USB audio card: $ALSA_CARD"
+
 	cd /opt/clock8002
 	while true; do
 		/root/alsa-ltc_cmd.sh
