@@ -71,11 +71,12 @@ Last updated: 2026-04-18
 | 11 | **Network-aware info overlay** — shows eth0/wlan0 IPs and WiFi AP SSID on 'I' overlay | `clock/engine.go` |
 | 12 | **Config version display** — "Loaded config version" in web UI + `/export` download link | `http.go`, `config.html.go` |
 | 13 | **Symlink-safe config path** — `resolvedConfigPath()` resolves symlinks before import/save | `http.go` |
+| 14 | **Web UI teal theme** — color scheme changed from pink/magenta to teal (`#006D88`); tab, heading, and form colors updated | `config.html.go` |
 
 ### Still pending
 - LTC working end-to-end (blocked on 4K kernel rebuild — in progress on cm5 at `ab5139d`)
 - Re-enable alsa-ltc.service after confirming 4K kernel fixes USB audio
-- Port features 1–9 from table above (DRM mirror/cue most complex)
+- Port features 1–14 from table above (DRM mirror/cue most complex)
 
 ### Branch rule
 - `v4/` Trixie files are off-limits for Buildroot-only fixes on this branch
