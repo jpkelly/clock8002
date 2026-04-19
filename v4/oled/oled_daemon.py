@@ -103,17 +103,21 @@ def flush_logo_buffer(buf):
             yidx = yidx + 1
             ymask = ymask << 1
         srcidx = srcidx + OLED_WD
-    # Expand packed-bit tmplist to explicit greyscale bytes (0 or 255) so that
-    # Image.frombytes produces a correct result across all Pillow versions.
-    # Image.frombytes("1", ...) interprets packed bits differently in Pillow 10+
-    # and can produce an all-black image on some luma.oled/Pillow combinations.
-    logo_pixels = bytearray(OLED_WD * OLED_HT)
-    for i, byte in enumerate(tmplist):
-        for bit in range(8):
-            px = i * 8 + (7 - bit)
-            if px < OLED_WD * OLED_HT:
-                logo_pixels[px] = 255 if (byte >> bit) & 1 else 0
-    image = Image.frombytes("L", (OLED_WD, OLED_HT), bytes(logo_pixels)).convert("1")
+    # Write logo pixels directly into a fresh mode-1 image. This avoids
+    # Image.frombytes("1",...) whose packed-bit interpretation varies across
+    # Pillow versions, and avoids frombytes("L",...).convert("1") which can
+    # produce an all-black image on some Pillow 11 / luma.oled 3.15 builds.
+    image = Image.new("1", (OLED_WD, OLED_HT))
+    pix = image.load()
+    bytes_per_row = OLED_WD // 8
+    for byte_idx, byte in enumerate(tmplist):
+        if byte == 0:
+            continue
+        row = byte_idx // bytes_per_row
+        col_base = (byte_idx % bytes_per_row) * 8
+        for b in range(8):
+            if byte & (0x80 >> b):
+                pix[col_base + b, row] = 1
     draw = ImageDraw.Draw(image)
     version_text = get_build_version()
     if version_text:
