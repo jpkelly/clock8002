@@ -298,8 +298,11 @@ Config files live on the boot partition under `/boot/piclock/`:
 | `/boot/piclock/clock.ini` | Main clock config |
 | `/boot/piclock/network.ini` | Network / Wi-Fi config |
 | `/boot/piclock/oled.ini` | OLED hardware config — enable/disable, I2C port, I2C address, rotation |
+| `/boot/piclock/authorized_keys` | SSH public keys for passwordless root login (optional) |
 
 `/opt/clock8002/clock.ini` and `/opt/clock8002/oled/oled.ini` are symlinks into `/boot/piclock/`, so edits survive service restarts.
+
+At boot, `S03copy_clock_files` copies `/boot/piclock/authorized_keys` to `/root/.ssh/authorized_keys` (mode 600) if it exists. To enable passwordless SSH, place your public key(s) in that file on the FAT boot partition before first boot — no SD card re-flash required.
 
 ## Known Issues / Open Work
 
