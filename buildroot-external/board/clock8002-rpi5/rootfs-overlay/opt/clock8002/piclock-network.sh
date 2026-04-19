@@ -87,6 +87,27 @@ fi
 fi # end wired config block
 
 # --- Wi-Fi Access Point ---
+
+# Wait for wlan0 to appear (brcmfmac loads via eudev uevent after boot)
+i=0
+while [ "$i" -lt 30 ]; do
+    ip link show wlan0 >/dev/null 2>&1 && break
+    i=$((i + 1))
+    sleep 1
+done
+if ip link show wlan0 >/dev/null 2>&1; then
+    echo "wlan0 ready after ${i}s"
+else
+    echo "Warning: wlan0 not found after 30s — AP may not start"
+fi
+
+# Set regulatory domain so AP mode is permitted.
+AP_COUNTRY=$(parse_ini "$NETWORK_INI" wifi ap_country)
+[ -z "$AP_COUNTRY" ] && AP_COUNTRY="US"
+echo "Setting WiFi regulatory domain: ${AP_COUNTRY}"
+iw reg set "$AP_COUNTRY"
+sleep 1
+
 AP_ENABLED=$(parse_ini "$NETWORK_INI" wifi ap_enabled)
 AP_CON="piclock-ap"
 
