@@ -51,9 +51,10 @@ while [ "$i" -lt 30 ]; do
 done
 
 if [ -z "$NM_CON" ]; then
-    echo "No wired NetworkManager connection found after 30s."
-    exit 0
+    echo "No wired NetworkManager connection found after 30s — skipping wired config."
 fi
+
+if [ -n "$NM_CON" ]; then
 echo "Using wired connection: $NM_CON"
 
 if [ "$NET_MODE" = "static" ]; then
@@ -82,6 +83,8 @@ elif [ "$NET_MODE" = "dhcp" ]; then
         echo "Network mode: DHCP (already set)."
     fi
 fi
+
+fi # end wired config block
 
 # --- Wi-Fi Access Point ---
 AP_ENABLED=$(parse_ini "$NETWORK_INI" wifi ap_enabled)
