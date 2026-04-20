@@ -144,7 +144,7 @@ def get_build_version():
             [
                 'sh',
                 '-c',
-                "strings /opt/clock8002/sdl3-clock | grep -m1 -oE 'clock\.gitTag=v[0-9]+\.[0-9]+\.[0-9]+'"
+                r"strings /opt/clock8002/sdl3-clock | grep -m1 -oE 'clock\.gitTag=v[0-9]+\.[0-9]+\.[0-9]+'"
             ],
             stderr=subprocess.STDOUT,
             timeout=1.0,

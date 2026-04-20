@@ -131,7 +131,14 @@ if [ "$AP_ENABLED" = "true" ]; then
             wifi-sec.key-mgmt wpa-psk \
             wifi-sec.psk "$AP_PASSWORD"
     fi
-    nmcli --wait 10 con up "$AP_CON" || echo "Warning: AP activation timed out (will autoconnect later)"
+    _ap_retries=0
+    while [ "$_ap_retries" -lt 3 ]; do
+        nmcli --wait 15 con up "$AP_CON" && break
+        _ap_retries=$((_ap_retries + 1))
+        echo "AP activation attempt ${_ap_retries} failed, retrying in 5s..."
+        sleep 5
+    done
+    [ "$_ap_retries" -ge 3 ] && echo "Warning: AP activation failed after 3 attempts (will autoconnect later)"
 elif [ "$AP_ENABLED" = "false" ]; then
     if nmcli con show "$AP_CON" >/dev/null 2>&1; then
         echo "Disabling Wi-Fi AP..."
