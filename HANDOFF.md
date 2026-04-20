@@ -10,10 +10,11 @@ Last updated: 2026-04-20
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
 - **Active branch: `feature/sdl3-migration`** — HEAD **`5609f6d`**
 - Buildroot SD card image on Mac Desktop: `piclockBR-af98d5e-sdcard.img` (pre-kernel-rebuild)
-- **piclockBR test unit** (piclock.local / 192.168.8.245): running Buildroot with live-deployed fixes from `5609f6d`
+- **piclockBR test unit** (piclock.local / 192.168.8.245): running Buildroot with live-deployed fixes from `720d883`
   - OLED logo + stats: **working at boot**
   - sdl3-clock HDMI: **working at boot**
   - WiFi AP (piClock-ap): **working**
+  - Power button shutdown: **working at boot**
   - alsa-ltc: running
   - Build host: pi@cm5.local (10.0.0.101)
 - **3rd party reference unit (10.0.0.131)**: `root` / `clockworkadmin`. BusyBox init, kernel `590178d5` (6.12.41-v8), `alsa-ltc plughw:2,0 255.255.255.255 1245` — running healthy, 0 USB errors. `/usr/bin/usb-audio-monitor.sh` is our diagnostic addition, not their original code.  - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
@@ -29,11 +30,16 @@ Last updated: 2026-04-20
 ## SDL3 Migration Status (branch: feature/sdl3-migration)
 
 ### Current state (2026-04-20)
-- Branch HEAD: **`5609f6d`** — all boot issues fixed: logo, clock, WiFi AP
-- **Test unit** (192.168.8.245): live-deployed, both OLED logo and HDMI clock confirmed working from cold boot
+- Branch HEAD: **`720d883`** — all boot issues fixed: logo, clock, WiFi AP, power button
+- **Test unit** (192.168.8.245): live-deployed, all features confirmed working from cold boot
 - Pending: rebuild Buildroot image to bake all fixes into sdcard.img
 
-### Recent commits (session 2026-04-19/20 — Buildroot boot fixes)
+### Recent commits (session 2026-04-20 — power button + boot fixes)
+- `06d3715`: buildroot: add power button shutdown handler for BusyBox init
+- `ab7e80e`: power-button: use nohup to detach handler from init session
+- `720d883`: power-button: wait for /dev/input/event0 before reading events
+
+### Prior commits (session 2026-04-19/20 — Buildroot boot fixes)
 - `934e43a`: oled: fix SyntaxWarning on regex string literal
 - `c05d2c7`: oled: fix INI_PATH to find clock.ini on Buildroot
 - `ba63500`: oled: blank display on SIGTERM/SIGINT for clean shutdown
@@ -41,14 +47,22 @@ Last updated: 2026-04-20
 - `a9feaf7`: buildroot: add fbcon=map:10 to cmdline to prevent fbcon holding DRM master
 - `5609f6d`: fix boot: use absolute paths for logo, export HOME=/root in watchdog
 
-### Boot issues diagnosed and fixed (2026-04-19/20)
+### BusyBox init boot-timing pattern (unified root cause)
+All boot failures on BusyBox init share the same root cause: **rcS runs S## scripts
+before devices, environment, or services are ready**. Unlike systemd (device units,
+After= dependencies), BusyBox rcS is a sequential loop with no dependency tracking.
+
 | Issue | Root Cause | Fix |
 |-------|-----------|-----|
-| OLED logo black at boot | `HOME` unset → `~/piclockLogo.bin` resolved to `/piclockLogo.bin` | Use `/root/piclockLogo.bin` absolute path with fallback |
-| sdl3-clock crash-loop at boot | `HOME` unset → Go/SDL3 can't find fonts; fbcon held DRM master | `export HOME=/root` + `fbcon=map:10` in cmdline.txt |
-| OLED blank user/pass/port | `INI_PATH` hardcoded to Trixie path | Added `/boot/piclock/clock.ini` as Buildroot fallback |
+| OLED logo black at boot | `HOME` unset → `~/piclockLogo.bin` → `/piclockLogo.bin` | Absolute path `/root/piclockLogo.bin` with fallback |
+| sdl3-clock crash-loop at boot | `HOME` unset → fonts not found; fbcon held DRM master | `export HOME=/root` + `fbcon=map:10` + device wait |
+| Power button not working at boot | `/dev/input/event0` not yet created by eudev | Wait loop (up to 30s) for device node |
+| OLED blank user/pass/port | `INI_PATH` hardcoded to Trixie path | Added `/boot/piclock/clock.ini` Buildroot fallback |
 | WiFi AP not broadcasting | `piclock-network.sh` ran before wlan0 ready | 3-retry loop with 5s delay |
 | SyntaxWarning in oled_daemon | Unescaped `\.` in non-raw string | Changed to `r"..."` |
+
+**Fix pattern**: Always poll/wait for the required resource (device node, env var,
+network interface) before using it. Never assume it exists at S## script time.
 
 ### Prior commits (session 2026-04-18)
 - `96f45ac`: fix ifeq-in-recipe; enable WiFi AP in gerry network.ini
