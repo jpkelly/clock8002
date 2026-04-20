@@ -18,8 +18,8 @@ start() {
 
 	cd /opt/clock8002
 	while true; do
-		/root/clock_cmd.sh
-		echo "sdl-clock exited, restarting in 2s..."
+		/root/clock_cmd.sh >> /tmp/clock.log 2>&1
+		echo "$(date): sdl-clock exited ($?), restarting in 2s..." >> /tmp/clock.log
 		sleep 2
 	done
 }

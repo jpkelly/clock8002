@@ -44,6 +44,16 @@ if not OLED_ENABLED:
 serial = i2c(port=OLED_I2C_PORT, address=OLED_I2C_ADDRESS)
 device = ssd1306(serial, rotate=OLED_ROTATION)
 
+import signal as _signal
+def _blank_and_exit(signum=None, frame=None):
+    try:
+        device.display(Image.new("1", device.size))
+    except Exception:
+        pass
+    sys.exit(0)
+_signal.signal(_signal.SIGTERM, _blank_and_exit)
+_signal.signal(_signal.SIGINT, _blank_and_exit)
+
 _FONT_CANDIDATES = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # Debian/Trixie
     "/opt/clock8002/DejaVuSans.ttf",                     # Buildroot (bundled)
