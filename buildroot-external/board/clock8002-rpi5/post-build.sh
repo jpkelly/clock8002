@@ -8,6 +8,7 @@ echo 'piclockBR' > "${TARGET_DIR}/etc/hostname"
 
 # Make init.d scripts executable.
 for script in \
+        S01power-button \
         S03copy_alsa-ltc_files \
         S03copy_clock_files \
         S11modules \
@@ -26,7 +27,8 @@ for script in \
         alsa-ltc_pokemon.sh \
         alsa-ltc_cmd.sh \
         clock_pokemon.sh \
-        clock_cmd.sh; do
+        clock_cmd.sh \
+        power-button.sh; do
         F="${TARGET_DIR}/root/${script}"
         if [ -f "${F}" ]; then
                 chmod +x "${F}"

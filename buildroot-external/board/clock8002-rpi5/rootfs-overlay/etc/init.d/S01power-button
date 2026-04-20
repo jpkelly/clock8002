@@ -1,0 +1,22 @@
+#!/bin/sh
+
+case "$1" in
+	start)
+		echo "Starting power-button handler"
+		/root/power-button.sh &
+		;;
+	stop)
+		echo "Stopping power-button handler"
+		kill $(ps aux | grep '[p]ower-button.sh' | awk '{print $1}') 2>/dev/null || true
+		;;
+	restart|reload)
+		"$0" stop
+		"$0" start
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac
+
+exit 0
