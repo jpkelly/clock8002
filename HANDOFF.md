@@ -8,13 +8,14 @@ Last updated: 2026-04-20
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `feature/sdl3-migration`** — HEAD **`855151c`**
-- Buildroot SD card image on Mac Desktop: **`piclockBR-855151c-sdcard.img`** — all boot fixes + power button baked in
-- **piclockBR test unit** (piclockBR.local / DHCP): freshly flashed `855151c` image
+- **Active branch: `feature/sdl3-migration`** — HEAD **`c1fc28a`**
+- Buildroot SD card image on Mac Desktop: **`piclockBR-c1fc28a-sdcard.img`** (built, not yet flashed — pending network.sh commit bake-in)
+- **piclockBR test unit** (piclockBR.local / 192.168.8.246): running `855151c` image + live-patched fixes
   - OLED logo + stats: **working at boot**
   - sdl3-clock HDMI: **working at boot**
-  - WiFi AP (piClock-ap): **working**
-  - Power button shutdown: **working at boot**
+  - WiFi AP (piclockBR-ap): **working**
+  - Power button shutdown: **working at boot** (stable `/dev/input/by-path/` symlink)
+  - Network config from `network.ini`: **working** (static IP, hostname, AP — all verified after reboot)
   - alsa-ltc: running
   - Build host: pi@cm5.local (10.0.0.101)
 - **3rd party reference unit (10.0.0.131)**: `root` / `clockworkadmin`. BusyBox init, kernel `590178d5` (6.12.41-v8), `alsa-ltc plughw:2,0 255.255.255.255 1245` — running healthy, 0 USB errors. `/usr/bin/usb-audio-monitor.sh` is our diagnostic addition, not their original code.  - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
@@ -30,14 +31,17 @@ Last updated: 2026-04-20
 ## SDL3 Migration Status (branch: feature/sdl3-migration)
 
 ### Current state (2026-04-20)
-- Branch HEAD: **`720d883`** — all boot issues fixed: logo, clock, WiFi AP, power button
-- **Test unit** (192.168.8.245): live-deployed, all features confirmed working from cold boot
-- Pending: rebuild Buildroot image to bake all fixes into sdcard.img
+- Branch HEAD: **`c1fc28a`** — all boot issues fixed: logo, clock, WiFi AP, power button, network config
+- **Test unit** (192.168.8.246): live-deployed, all features confirmed working from cold boot
+- `piclockBR-c1fc28a-sdcard.img` built on cm5, transferred to Mac Desktop
 
-### Recent commits (session 2026-04-20 — power button + boot fixes)
+### Recent commits (session 2026-04-20 — power button + network + BusyBox compat)
 - `06d3715`: buildroot: add power button shutdown handler for BusyBox init
 - `ab7e80e`: power-button: use nohup to detach handler from init session
 - `720d883`: power-button: wait for /dev/input/event0 before reading events
+- `855151c`: HANDOFF: add power button, document BusyBox boot-timing pattern
+- `c1fc28a`: power-button: use stable by-path symlink instead of hardcoded event0
+- **pending**: piclock-network.sh: BusyBox compatibility (#!/bin/sh, timedatectl/hostnamectl/systemctl fallbacks)
 
 ### Prior commits (session 2026-04-19/20 — Buildroot boot fixes)
 - `934e43a`: oled: fix SyntaxWarning on regex string literal

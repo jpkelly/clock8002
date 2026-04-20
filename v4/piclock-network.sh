@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 # Apply network settings from the boot partition network.ini
-# Runs at boot via piclock-network.service
+# Runs at boot via piclock-network.service (Trixie) or S45piclock-network (Buildroot)
 #
 # Pi OS Bookworm/Trixie: /boot/firmware is the FAT32 boot partition.
 # Buildroot: /boot is the FAT32 boot partition (mounted from mmcblk0p1).
@@ -28,10 +28,14 @@ NET_HOSTNAME=$(parse_ini "$NETWORK_INI" host hostname)
 NTP_ENABLED=$(parse_ini "$NETWORK_INI" network ntp)
 if [ "$NTP_ENABLED" = "false" ]; then
     echo "Disabling NTP..."
-    timedatectl set-ntp false
+    if command -v timedatectl >/dev/null 2>&1; then
+        timedatectl set-ntp false
+    fi
 elif [ "$NTP_ENABLED" = "true" ]; then
     echo "Enabling NTP..."
-    timedatectl set-ntp true
+    if command -v timedatectl >/dev/null 2>&1; then
+        timedatectl set-ntp true
+    fi
 fi
 
 # Find the wired Ethernet connection.
@@ -153,11 +157,19 @@ if [ -n "$NET_HOSTNAME" ]; then
     CURRENT_HOSTNAME=$(hostname)
     if [ "$CURRENT_HOSTNAME" != "$NET_HOSTNAME" ]; then
         echo "Setting hostname to ${NET_HOSTNAME}..."
-        hostnamectl set-hostname "$NET_HOSTNAME"
+        if command -v hostnamectl >/dev/null 2>&1; then
+            hostnamectl set-hostname "$NET_HOSTNAME"
+        else
+            hostname "$NET_HOSTNAME"
+        fi
         # Update /etc/hosts so sudo and other tools can resolve the hostname
         sed -i "s/127\.0\.1\.1.*/127.0.1.1\t${NET_HOSTNAME}/" /etc/hosts
-        grep -q "127.0.1.1" /etc/hosts || echo -e "127.0.1.1\t${NET_HOSTNAME}" >> /etc/hosts
+        grep -q "127.0.1.1" /etc/hosts || printf "127.0.1.1\t%s\n" "$NET_HOSTNAME" >> /etc/hosts
         # Restart mDNS so the new hostname is advertised on the network
-        systemctl restart avahi-daemon 2>/dev/null || true
+        if command -v systemctl >/dev/null 2>&1; then
+            systemctl restart avahi-daemon 2>/dev/null || true
+        elif [ -x /etc/init.d/S50avahi-daemon ]; then
+            /etc/init.d/S50avahi-daemon restart 2>/dev/null || true
+        fi
     fi
 fi
