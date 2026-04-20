@@ -11,8 +11,14 @@
 
 DEV="/dev/input/event0"
 
+# Wait for input device to appear (eudev may not have created it yet).
+n=0
+while [ ! -c "$DEV" ] && [ "$n" -lt 30 ]; do
+    sleep 1
+    n=$((n + 1))
+done
 if [ ! -c "$DEV" ]; then
-    echo "power-button: $DEV not found" >&2
+    echo "power-button: $DEV not found after 30s" >&2
     exit 1
 fi
 
