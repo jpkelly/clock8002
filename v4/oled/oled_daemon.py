@@ -89,13 +89,39 @@ def load_logo_buffer(path):
     return buf
 
 def flush_logo_buffer(buf):
-    # piclockLogo.bin is a packed 1-bit row-major bitmap (standard PIL '1' format):
-    # 128x64 pixels, 16 bytes per row, MSB = leftmost pixel.
-    # Write directly to a mode-1 image without any page-format transform.
+    tmplist = [0] * OLED_BUFFERIZE
+    srcidx = 0
+    while srcidx < OLED_BUFFERIZE:
+        outyoffset = 0
+        yidx = 0
+        ymask = 1
+        while yidx < 8:
+            outoffsetidx = 0
+            outbyte = 0
+            xmask = 0x80
+            xidx = 0
+            xoffset = 0
+            while xoffset < OLED_WD:
+                if buf[srcidx + xoffset] & ymask:
+                    outbyte = outbyte | xmask
+                xmask = xmask >> 1
+                xidx = xidx + 1
+                if xidx >= 8:
+                    tmplist[srcidx + outoffsetidx + outyoffset] = outbyte
+                    xmask = 0x80
+                    xidx = 0
+                    outbyte = 0
+                    outoffsetidx = outoffsetidx + 1
+                xoffset = xoffset + 1
+            outyoffset = outyoffset + (OLED_WD >> 3)
+            yidx = yidx + 1
+            ymask = ymask << 1
+        srcidx = srcidx + OLED_WD
+    # Write logo pixels directly into a fresh mode-1 image.
     image = Image.new("1", (OLED_WD, OLED_HT))
     pix = image.load()
     bytes_per_row = OLED_WD // 8
-    for byte_idx, byte in enumerate(buf):
+    for byte_idx, byte in enumerate(tmplist):
         if byte == 0:
             continue
         row = byte_idx // bytes_per_row
