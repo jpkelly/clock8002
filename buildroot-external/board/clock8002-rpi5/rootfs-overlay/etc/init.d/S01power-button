@@ -3,7 +3,7 @@
 case "$1" in
 	start)
 		echo "Starting power-button handler"
-		/root/power-button.sh &
+		nohup /root/power-button.sh </dev/null >/dev/null 2>&1 &
 		;;
 	stop)
 		echo "Stopping power-button handler"
