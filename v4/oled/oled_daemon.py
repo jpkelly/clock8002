@@ -16,7 +16,11 @@ _INI_CANDIDATES = [
 ]
 INI_PATH = next((p for p in _INI_CANDIDATES if os.path.exists(p)), _INI_CANDIDATES[0])
 OLED_INI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oled.ini')
-LOGO_PATH = os.path.expanduser('~/piclockLogo.bin')
+_LOGO_CANDIDATES = [
+    '/root/piclockLogo.bin',                              # Buildroot
+    os.path.expanduser('~/piclockLogo.bin'),               # Trixie / dev
+]
+LOGO_PATH = next((p for p in _LOGO_CANDIDATES if os.path.exists(p)), _LOGO_CANDIDATES[0])
 SDL_CLOCK_PATH = '/opt/clock8002/sdl3-clock'
 LOGO_SECONDS = 8
 

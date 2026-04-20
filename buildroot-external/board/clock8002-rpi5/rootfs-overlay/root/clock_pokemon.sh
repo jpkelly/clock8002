@@ -3,6 +3,7 @@
 
 start() {
 	echo "Starting sdl-clock watchdog"
+	export HOME=/root
 	export SDL_VIDEODRIVER=kmsdrm
 	export XDG_RUNTIME_DIR=/run/user/0
 	mkdir -p /run/user/0
