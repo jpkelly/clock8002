@@ -16,6 +16,11 @@ start() {
 	done
 	echo "DRM device ready after ${_drm_retries}s"
 
+	# Release fbcon's hold on the DRM device so sdl3-clock can acquire master.
+	# fbcon binds to vtcon1 at boot via vc4drmfb; without this sdl3-clock
+	# cannot get DRM master and exits immediately with code 1.
+	echo 0 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
+
 	cd /opt/clock8002
 	while true; do
 		/root/clock_cmd.sh >> /tmp/clock.log 2>&1
