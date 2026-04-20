@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-18
+Last updated: 2026-04-20
 
 ## Current State
 
@@ -8,9 +8,14 @@ Last updated: 2026-04-18
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `feature/sdl3-migration`** — HEAD **`2b81719`**
-- Buildroot SD card image on Mac Desktop: `piclockBR-af98d5e-sdcard.img` (pre-kernel-rebuild; superseded by brbuild5 in progress)
-- Kernel rebuild in progress on cm5 (screen: `brbuild5`, log: `/tmp/br-build.log`) — adds `CONFIG_I2C_DEV=m` and NM wait-loop for WiFi AP
+- **Active branch: `feature/sdl3-migration`** — HEAD **`5609f6d`**
+- Buildroot SD card image on Mac Desktop: `piclockBR-af98d5e-sdcard.img` (pre-kernel-rebuild)
+- **piclockBR test unit** (piclock.local / 192.168.8.245): running Buildroot with live-deployed fixes from `5609f6d`
+  - OLED logo + stats: **working at boot**
+  - sdl3-clock HDMI: **working at boot**
+  - WiFi AP (piClock-ap): **working**
+  - alsa-ltc: running
+  - Build host: pi@cm5.local (10.0.0.101)
 - **3rd party reference unit (10.0.0.131)**: `root` / `clockworkadmin`. BusyBox init, kernel `590178d5` (6.12.41-v8), `alsa-ltc plughw:2,0 255.255.255.255 1245` — running healthy, 0 USB errors. `/usr/bin/usb-audio-monitor.sh` is our diagnostic addition, not their original code.  - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
   - **SDL3 dev (2GB, piclockBR 10.0.0.128)**: awaiting new image from BusyBox init rebuild
 - **1GB Pi 5** (piclockBR.local): running Buildroot image `ce6526b`. Healthy — 0 xHCI errors.
@@ -23,13 +28,29 @@ Last updated: 2026-04-18
 
 ## SDL3 Migration Status (branch: feature/sdl3-migration)
 
-### Current state (2026-04-18)
-- Branch HEAD: **`2b81719`** — adds `CONFIG_I2C_DEV=m` (OLED fix) and NM wait-loop (WiFi AP fix)
-- **Kernel rebuild running on cm5** in screen `brbuild5` — log at `/tmp/br-build.log`
-- Previous image on Desktop: `piclockBR-af98d5e-sdcard.img` (pre-kernel-rebuild, missing i2c-dev)
-- After build completes: transfer image → `piclockBR-2b81719-sdcard.img`, flash, verify OLED + WiFi AP
+### Current state (2026-04-20)
+- Branch HEAD: **`5609f6d`** — all boot issues fixed: logo, clock, WiFi AP
+- **Test unit** (192.168.8.245): live-deployed, both OLED logo and HDMI clock confirmed working from cold boot
+- Pending: rebuild Buildroot image to bake all fixes into sdcard.img
 
-### Recent commits (session 2026-04-18)
+### Recent commits (session 2026-04-19/20 — Buildroot boot fixes)
+- `934e43a`: oled: fix SyntaxWarning on regex string literal
+- `c05d2c7`: oled: fix INI_PATH to find clock.ini on Buildroot
+- `ba63500`: oled: blank display on SIGTERM/SIGINT for clean shutdown
+- `ff229c0`: clock_pokemon: unbind fbcon before launching sdl3-clock
+- `a9feaf7`: buildroot: add fbcon=map:10 to cmdline to prevent fbcon holding DRM master
+- `5609f6d`: fix boot: use absolute paths for logo, export HOME=/root in watchdog
+
+### Boot issues diagnosed and fixed (2026-04-19/20)
+| Issue | Root Cause | Fix |
+|-------|-----------|-----|
+| OLED logo black at boot | `HOME` unset → `~/piclockLogo.bin` resolved to `/piclockLogo.bin` | Use `/root/piclockLogo.bin` absolute path with fallback |
+| sdl3-clock crash-loop at boot | `HOME` unset → Go/SDL3 can't find fonts; fbcon held DRM master | `export HOME=/root` + `fbcon=map:10` in cmdline.txt |
+| OLED blank user/pass/port | `INI_PATH` hardcoded to Trixie path | Added `/boot/piclock/clock.ini` as Buildroot fallback |
+| WiFi AP not broadcasting | `piclock-network.sh` ran before wlan0 ready | 3-retry loop with 5s delay |
+| SyntaxWarning in oled_daemon | Unescaped `\.` in non-raw string | Changed to `r"..."` |
+
+### Prior commits (session 2026-04-18)
 - `96f45ac`: fix ifeq-in-recipe; enable WiFi AP in gerry network.ini
 - `8bc6c5e`: add S98oled BusyBox init script for oled_daemon
 - `8ad295e`: install authorized_keys from /boot/piclock/ at boot
