@@ -8,9 +8,9 @@ Last updated: 2026-04-20
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `feature/sdl3-migration`** — HEAD **`5609f6d`**
-- Buildroot SD card image on Mac Desktop: `piclockBR-af98d5e-sdcard.img` (pre-kernel-rebuild)
-- **piclockBR test unit** (piclock.local / 192.168.8.245): running Buildroot with live-deployed fixes from `720d883`
+- **Active branch: `feature/sdl3-migration`** — HEAD **`855151c`**
+- Buildroot SD card image on Mac Desktop: **`piclockBR-855151c-sdcard.img`** — all boot fixes + power button baked in
+- **piclockBR test unit** (piclockBR.local / DHCP): freshly flashed `855151c` image
   - OLED logo + stats: **working at boot**
   - sdl3-clock HDMI: **working at boot**
   - WiFi AP (piClock-ap): **working**
