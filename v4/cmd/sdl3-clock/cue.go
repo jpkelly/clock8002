@@ -87,7 +87,6 @@ func updateCue(state *clock.State) {
 
 func drawCue() {
 	if options.CueFullScreen {
-
 		rect := sdl.FRect{
 			W: 1920 - 20,
 			H: 1080 - 20,
@@ -96,13 +95,24 @@ func drawCue() {
 		}
 		copyIntoRect(cueTexture, rect)
 	} else {
+		size := float32(options.CueSize)
+		if size < 1 {
+			size = 150
+		}
+		posX := float32(options.CuePosX)
+		posY := float32(options.CuePosY)
+		if posX < 0 {
+			posX = 0
+		}
+		if posY < 0 {
+			posY = 0
+		}
 		rect := sdl.FRect{
-			H: 150,
-			W: 150,
-			X: 5,
-			Y: 1080 - 155,
+			H: size,
+			W: size,
+			X: posX,
+			Y: posY,
 		}
 		copyIntoRect(cueTexture, rect)
 	}
-
 }

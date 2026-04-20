@@ -56,7 +56,7 @@ var outputModules []outputModule = make([]outputModule, 0)
 type clockOptions struct {
 	Config          func(s string) error `short:"C" long:"config" description:"read config from a file"`
 	AppVersion      string               `long:"app-version" description:"App version that wrote this config"`
-	Face            string               `long:"face" description:"Select the clock face to use" default:"round" choice:"round" choice:"dual-round" choice:"small" choice:"text" choice:"single" choice:"max" choice:"countdown" choice:"144" choice:"192" choice:"288x144"`
+	Face            string               `long:"face" description:"Select the clock face to use" default:"round" choice:"round" choice:"dual-round" choice:"small" choice:"text" choice:"text2" choice:"text4" choice:"single" choice:"max" choice:"countdown" choice:"144" choice:"192" choice:"288x144"`
 	Debug           bool                 `long:"debug" description:"Enable debug output"`
 	HTTPPort        string               `long:"http-port" description:"Port to listen on for the http configuration interface" default:":8080"`
 	DisableHTTP     bool                 `long:"disable-http" description:"Disable the web configuration interface"`
@@ -88,6 +88,8 @@ type clockOptions struct {
 	Row2Alpha      uint8  `long:"row2-alpha" description:"Alpha channel for text clock row 2" default:"255"`
 	Row3Color      string `long:"row3-color" description:"Color for text clock row 3" default:"#FF8000"`
 	Row3Alpha      uint8  `long:"row3-alpha" description:"Alpha channel for text clock row 3" default:"255"`
+	Row4Color      string `long:"row4-color" description:"Color for text clock row 4" default:"#FF8000"`
+	Row4Alpha      uint8  `long:"row4-alpha" description:"Alpha channel for text clock row 4" default:"255"`
 	LabelColor     string `long:"label-color" description:"Color for text clock labels" default:"#FF8000"`
 	LabelAlpha     uint8  `long:"label-alpha" description:"Alpha channel for label text color" default:"255"`
 	TimerBG        string `long:"timer-bg-color" description:"Color for optional timer background box" default:"#202020"`
@@ -115,6 +117,13 @@ type clockOptions struct {
 
 	CueFullScreen    bool `long:"cue-fullscreen" description:"Show cue changes as full screen icons"`
 	CueSecondDisplay bool `long:"cue-second-display" description:"Enable second HDMI output for PerfectCue display"`
+	CuePosX          int  `long:"cue-pos-x" description:"Perfect Cue overlay X position in pixels" default:"5"`
+	CuePosY          int  `long:"cue-pos-y" description:"Perfect Cue overlay Y position in pixels" default:"925"`
+	CueSize          int  `long:"cue-size" description:"Perfect Cue overlay square size in pixels" default:"150"`
+
+	// Legacy options retained for backward compatibility with older config files.
+	CueWidth  int `long:"cue-width" description:"Perfect Cue overlay width in pixels" default:"150"`
+	CueHeight int `long:"cue-height" description:"Perfect Cue overlay height in pixels" default:"150"`
 
 	DynamicBG bool `long:"dynamic-bg"`
 
@@ -134,8 +143,9 @@ type clockOptions struct {
 	vertical   bool
 	Errors     htmlTemplate.HTML // For passing errors to the html template
 	Fonts      []string          // For passing list of font files to html template
-	Serials    []string
-	Timezones  []string
+	Serials             []string
+	Timezones           []string
+	LoadedConfigVersion string
 }
 
 type gpioOptions struct {

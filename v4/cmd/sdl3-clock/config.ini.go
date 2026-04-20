@@ -7,7 +7,7 @@ const configTemplate = `# Example configuration file for clock-8001
 # App version that wrote this config file
 app-version={{.AppVersion}}
 
-# Clock face to use. (countdown, round, dual-round, text, single or small)
+# Clock face to use. (countdown, round, dual-round, text, text2, text4, single or small)
 Face={{.Face}}
 
 # Username and password for the web configuration interface
@@ -364,6 +364,10 @@ cue-enabled={{.EngineOptions.CueEnabled}}
 cue-serial={{.EngineOptions.CueSerial}}
 cue-duration={{.EngineOptions.CueDuration}}
 cue-fullscreen={{.CueFullScreen}}
+cue-second-display={{.CueSecondDisplay}}
+cue-pos-x={{.CuePosX}}
+cue-pos-y={{.CuePosY}}
+cue-size={{.CueSize}}
 
 # Hyperdeck
 hyperdeck-enabled={{.EngineOptions.HyperdeckEnabled}}

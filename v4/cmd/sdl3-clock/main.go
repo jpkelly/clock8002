@@ -113,7 +113,7 @@ func main() {
 	engine, err := clock.MakeEngine(options.EngineOptions)
 	check(err)
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 4; i++ {
 		engine.SetSourceColors(i, toRGBA(colors.row[i]), toRGBA(colors.rowBG[i]))
 	}
 	engine.SetTitleColors(toRGBA(colors.label), toRGBA(colors.labelBG))
@@ -168,7 +168,7 @@ func main() {
 			// Create main clock engine
 			engine, err = clock.MakeEngine(options.EngineOptions)
 			check(err)
-			for i := 0; i < 3; i++ {
+			for i := 0; i < 4; i++ {
 				engine.SetSourceColors(i, toRGBA(colors.row[i]), toRGBA(colors.rowBG[i]))
 			}
 			engine.SetTitleColors(toRGBA(colors.label), toRGBA(colors.labelBG))
@@ -389,13 +389,15 @@ func parseOptions() {
 }
 
 func computeDerivedOptions() {
+	binaryAppVersion := clock.AppVersionForConfig()
 	loadedVersion := options.AppVersion
+	options.LoadedConfigVersion = loadedVersion
 	if loadedVersion == "" {
 		log.Printf("Info: clock.ini has no app-version; will update file after migration")
-	} else if loadedVersion != clock.Version {
-		log.Printf("Info: clock.ini app-version %q differs from binary version %q; will update file", loadedVersion, clock.Version)
+	} else if loadedVersion != binaryAppVersion {
+		log.Printf("Info: clock.ini app-version %q differs from binary version %q; will update file", loadedVersion, binaryAppVersion)
 	}
-	options.AppVersion = clock.Version
+	options.AppVersion = binaryAppVersion
 
 	switch options.Face {
 	case "max":
@@ -412,6 +414,10 @@ func computeDerivedOptions() {
 	case "192":
 		options.small = true
 	case "text":
+		options.textClock = true
+	case "text2":
+		options.textClock = true
+	case "text4":
 		options.textClock = true
 	case "single":
 		options.textClock = true
@@ -458,8 +464,8 @@ func computeDerivedOptions() {
 
 	// If the config file is out of date, rewrite it so it gains any new
 	// keys and the correct app-version stamp.
-	if loadedVersion != clock.Version && options.configFile != "" && options.Face != "" {
-		log.Printf("Info: rewriting %s to update app-version to %s", options.configFile, clock.Version)
+	if loadedVersion != binaryAppVersion && options.configFile != "" && options.Face != "" {
+		log.Printf("Info: rewriting %s to update app-version to %s", options.configFile, binaryAppVersion)
 		options.writeConfig(options.configFile)
 	}
 }

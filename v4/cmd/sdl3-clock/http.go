@@ -3,12 +3,12 @@ package main
 import (
 	// "fmt"
 	"crypto/subtle"
+	"errors"
 	"fmt"
-	"gitlab.com/clock-8001/clock-8001/v4/clock"
-	"gitlab.com/clock-8001/clock-8001/v4/util"
 	htmlTemplate "html/template"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -17,8 +17,13 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
+
+	oscClient "gitlab.com/Depili/go-osc/osc"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
+	"gitlab.com/clock-8001/clock-8001/v4/util"
 )
 
 func runHTTP() {
@@ -35,6 +40,8 @@ func runHTTP() {
 		http.ServeFile(res, req, options.configFile)
 	})
 	http.HandleFunc("/import", basicAuth(importHandler))
+	http.HandleFunc("/api/cue", basicAuth(cueTestHandler))
+	http.HandleFunc("/api/settime", basicAuth(setTimeHandler))
 
 	log.Printf("HTTP config: listening on %v", options.HTTPPort)
 	log.Fatal(http.ListenAndServe(options.HTTPPort, nil))
@@ -213,7 +220,28 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.HideHours = r.FormValue("hide-hours") != ""
 	newOptions.IconsDisable = r.FormValue("disable-icons") != ""
 	newOptions.CueFullScreen = r.FormValue("cue-fullscreen") != ""
+	newOptions.CueSecondDisplay = r.FormValue("cue-second-display") != ""
 	newOptions.DynamicBG = r.FormValue("DynamicBG") != ""
+
+	newOptions.CuePosX, err = strconv.Atoi(r.FormValue("cue-pos-x"))
+	errors += util.ValidateNumber(err, "Perfect Cue X position")
+	if err == nil && newOptions.CuePosX < 1 {
+		errors += "<li>Perfect Cue X position must be at least 1</li>"
+	}
+
+	newOptions.CuePosY, err = strconv.Atoi(r.FormValue("cue-pos-y"))
+	errors += util.ValidateNumber(err, "Perfect Cue Y position")
+	if err == nil && newOptions.CuePosY < 1 {
+		errors += "<li>Perfect Cue Y position must be at least 1</li>"
+	}
+
+	newOptions.CueSize, err = strconv.Atoi(r.FormValue("cue-size"))
+	errors += util.ValidateNumber(err, "PerfectCue overlay size")
+	if err == nil && newOptions.CueSize < 1 {
+		errors += "<li>PerfectCue overlay size must be at least 1 pixel</li>"
+	}
+	newOptions.CueWidth = newOptions.CueSize
+	newOptions.CueHeight = newOptions.CueSize
 	newOptions.VFD = r.FormValue("VFD") != ""
 
 	// Strings, will not be validated
@@ -232,7 +260,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Clock face type
 	newOptions.Face = r.FormValue("Face")
-	if f := newOptions.Face; (f != "countdown") && (f != "round") && (f != "dual-round") && (f != "text") && (f != "max") && (f != "small") && (f != "single") && (f != "144") && (f != "192") && (f != "288x144") {
+	if f := newOptions.Face; (f != "countdown") && (f != "round") && (f != "dual-round") && (f != "text") && (f != "text2") && (f != "text4") && (f != "max") && (f != "small") && (f != "single") && (f != "144") && (f != "192") && (f != "288x144") {
 		errors += fmt.Sprintf("<li>Clock face selection is invalid (%s)</li>", newOptions.Face)
 	}
 
@@ -272,6 +300,10 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	errors += util.ValidateNumber(err, "Row3 alpha")
 	newOptions.Row3Alpha = uint8(alpha)
 
+	alpha, err = strconv.Atoi(r.FormValue("row4-alpha"))
+	errors += util.ValidateNumber(err, "Row4 alpha")
+	newOptions.Row4Alpha = uint8(alpha)
+
 	alpha, err = strconv.Atoi(r.FormValue("label-alpha"))
 	errors += util.ValidateNumber(err, "Label alpha")
 	newOptions.LabelAlpha = uint8(alpha)
@@ -303,6 +335,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	errors += util.ValidateColor(newOptions.Row2Color, "Text clock row 2 color")
 	newOptions.Row3Color = r.FormValue("Row3Color")
 	errors += util.ValidateColor(newOptions.Row3Color, "Text clock row 3 color")
+	newOptions.Row4Color = r.FormValue("Row4Color")
+	errors += util.ValidateColor(newOptions.Row4Color, "Text clock row 4 color")
 
 	newOptions.LabelColor = r.FormValue("LabelColor")
 	errors += util.ValidateColor(newOptions.LabelColor, "Text clock label color")
@@ -386,6 +420,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		log.Printf("Writing new config ini file")
+		newOptions.AppVersion = clock.AppVersionForConfig()
 		newOptions.writeConfig(options.configFile)
 
 		// TODO render success page
@@ -457,6 +492,179 @@ func (options *clockOptions) writeConfig(path string) {
 	}
 	f.Sync()
 	f.Close()
+}
+
+func localOSCClient() (*oscClient.Client, error) {
+	if options.EngineOptions == nil {
+		return nil, errors.New("engine options not initialized")
+	}
+	if options.EngineOptions.DisableOSC {
+		return nil, errors.New("osc control is disabled")
+	}
+
+	listenAddr := strings.TrimSpace(options.EngineOptions.ListenAddr)
+	if listenAddr == "" {
+		return nil, errors.New("osc listen address is empty")
+	}
+
+	portStr := ""
+	if strings.HasPrefix(listenAddr, ":") {
+		portStr = strings.TrimPrefix(listenAddr, ":")
+	} else {
+		_, p, err := net.SplitHostPort(listenAddr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid osc listen address %q: %w", listenAddr, err)
+		}
+		portStr = p
+	}
+
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid osc port %q: %w", portStr, err)
+	}
+
+	return oscClient.NewClient("127.0.0.1", port), nil
+}
+
+func cueTestHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	action := r.FormValue("action")
+	if action == "" {
+		http.Error(w, "Missing action parameter", http.StatusBadRequest)
+		return
+	}
+
+	client, err := localOSCClient()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var msg *oscClient.Message
+	switch action {
+	case "right":
+		msg = oscClient.NewMessage("/clock/cue/right")
+		msg.Append("")
+	case "left":
+		msg = oscClient.NewMessage("/clock/cue/left")
+		msg.Append("")
+	case "blank_on":
+		msg = oscClient.NewMessage("/clock/cue/blank")
+		msg.Append("")
+		msg.Append(true)
+	case "blank_off":
+		msg = oscClient.NewMessage("/clock/cue/blank")
+		msg.Append("")
+		msg.Append(false)
+	default:
+		http.Error(w, "Invalid action parameter", http.StatusBadRequest)
+		return
+	}
+
+	if err := client.Send(msg); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to send cue OSC message: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("ok"))
+}
+
+func findCommandPath(name string, fallbacks []string) string {
+	if path, err := exec.LookPath(name); err == nil {
+		return path
+	}
+	for _, candidate := range fallbacks {
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate
+		}
+	}
+	return ""
+}
+
+func syncHardwareClock() error {
+	hwclockPath := findCommandPath("hwclock", []string{"/usr/sbin/hwclock", "/sbin/hwclock", "/usr/bin/hwclock", "/bin/hwclock"})
+	if hwclockPath == "" {
+		return fmt.Errorf("hwclock command not found")
+	}
+
+	args := []string{"-w", "-u"}
+	hwCmd := exec.Command(hwclockPath, args...)
+	if err := hwCmd.Run(); err == nil {
+		return nil
+	} else {
+		sudoPath := findCommandPath("sudo", []string{"/usr/bin/sudo", "/bin/sudo"})
+		if sudoPath == "" {
+			return fmt.Errorf("direct hwclock failed and sudo command not found: %w", err)
+		}
+		fullArgs := append([]string{"-n", hwclockPath}, args...)
+		sudoCmd := exec.Command(sudoPath, fullArgs...)
+		if sudoErr := sudoCmd.Run(); sudoErr != nil {
+			return fmt.Errorf("direct hwclock failed: %w; sudo hwclock failed: %v", err, sudoErr)
+		}
+		log.Printf("Web UI settime: RTC updated via sudo hwclock fallback")
+		return nil
+	}
+}
+
+func setTimeHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	timeStr := r.FormValue("time")
+	if timeStr == "" {
+		http.Error(w, "Missing time parameter", http.StatusBadRequest)
+		return
+	}
+
+	_, lookErr := exec.LookPath("date")
+	if lookErr != nil {
+		http.Error(w, "date command not found", http.StatusInternalServerError)
+		return
+	}
+
+	// Parse ISO 8601 format (RFC3339Nano) to support sub-second precision.
+	// Accepts: 2026-03-20T17:04:50.123Z (from toISOString) or 2026-03-20T10:04:50 (legacy).
+	var parsedTime time.Time
+	if t, parseErr := time.Parse(time.RFC3339Nano, timeStr); parseErr == nil {
+		parsedTime = t
+	} else {
+		match, _ := regexp.MatchString(`^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d:[0-5]\d$`, timeStr)
+		if !match {
+			http.Error(w, "Invalid time format", http.StatusBadRequest)
+			return
+		}
+		legacyTime, legacyErr := time.ParseInLocation("2006-01-02T15:04:05", timeStr, time.Local)
+		if legacyErr != nil {
+			http.Error(w, "Invalid time format", http.StatusBadRequest)
+			return
+		}
+		parsedTime = legacyTime
+	}
+
+	// Use short flags compatible with both GNU coreutils and BusyBox.
+	dateString := parsedTime.UTC().Format("2006-01-02 15:04:05")
+	log.Printf("Web UI settime: setting system date to %s (raw input: %s)", parsedTime.Format(time.RFC3339Nano), timeStr)
+	cmd := exec.Command("date", "-u", "-s", dateString) // #nosec strict validation above
+	if err := cmd.Run(); err != nil {
+		log.Printf("Failed to set system time: %v", err)
+		http.Error(w, "Failed to set time", http.StatusInternalServerError)
+		return
+	}
+
+	// Best-effort RTC sync so time survives reboot even when NTP is disabled.
+	if err := syncHardwareClock(); err != nil {
+		log.Printf("Warning: failed to update hardware clock: %v", err)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 func basicAuth(handler http.HandlerFunc) http.HandlerFunc {

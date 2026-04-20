@@ -7,8 +7,9 @@ Last updated: 2026-04-20
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
+- Latest Buildroot tag: **v1.3.2** — `buildroot` branch
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `feature/sdl3-migration`** — HEAD **`c1fc28a`**
+- **Active branch: `buildroot`** (renamed from `feature/sdl3-migration`)
 - Buildroot SD card image on Mac Desktop: **`piclockBR-c1fc28a-sdcard.img`** (built, not yet flashed — pending network.sh commit bake-in)
 - **piclockBR test unit** (piclockBR.local / 192.168.8.246): running `855151c` image + live-patched fixes
   - OLED logo + stats: **working at boot**
@@ -28,10 +29,12 @@ Last updated: 2026-04-20
 - `buildroot-prototype` branch: fully merged into master
 - **Kernel rebuild in progress on cm5** — screen session `brbuild5`, log at `/tmp/br-build.log`
 
-## SDL3 Migration Status (branch: feature/sdl3-migration)
+## SDL3 Migration Status (branch: buildroot)
 
 ### Current state (2026-04-20)
-- Branch HEAD: **`c1fc28a`** — all boot issues fixed: logo, clock, WiFi AP, power button, network config
+- Branch renamed `feature/sdl3-migration` → `buildroot`; tagged **v1.3.2**
+- Branch HEAD: **`c1fc28a`** (pre-tag) → tagged commit includes sdl3-clock feature parity work
+- All boot issues fixed: logo, clock, WiFi AP, power button, network config
 - **Test unit** (192.168.8.246): live-deployed, all features confirmed working from cold boot
 - `piclockBR-c1fc28a-sdcard.img` built on cm5, transferred to Mac Desktop
 
@@ -41,7 +44,7 @@ Last updated: 2026-04-20
 - `720d883`: power-button: wait for /dev/input/event0 before reading events
 - `855151c`: HANDOFF: add power button, document BusyBox boot-timing pattern
 - `c1fc28a`: power-button: use stable by-path symlink instead of hardcoded event0
-- **pending**: piclock-network.sh: BusyBox compatibility (#!/bin/sh, timedatectl/hostnamectl/systemctl fallbacks)
+- `d62f6dd`: piclock-network: BusyBox compatibility for Buildroot
 
 ### Prior commits (session 2026-04-19/20 — Buildroot boot fixes)
 - `934e43a`: oled: fix SyntaxWarning on regex string literal

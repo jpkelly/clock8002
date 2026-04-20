@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/Zyko0/go-sdl3/sdl"
-	"github.com/Zyko0/go-sdl3/ttf"
-	"gitlab.com/clock-8001/clock-8001/v4/clock"
-	"gitlab.com/clock-8001/clock-8001/v4/debug"
 	"image/color"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/Zyko0/go-sdl3/sdl"
+	"github.com/Zyko0/go-sdl3/ttf"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
+	"gitlab.com/clock-8001/clock-8001/v4/debug"
 )
 
 type outputLine struct {
@@ -31,7 +32,7 @@ var textClock struct {
 	numberFont  *ttf.Font
 	labelFont   *ttf.Font
 	iconFont    *ttf.Font
-	r           [3]outputLine
+	r           [4]outputLine
 	glyphRegexp *regexp.Regexp
 	tally       string
 	tallyTex    *sdl.Texture
@@ -64,6 +65,10 @@ func initTextClock() {
 
 	if options.singleLine {
 		numAudioSources = 1
+	} else if options.Face == "text2" {
+		numAudioSources = 2
+	} else if options.Face == "text4" {
+		numAudioSources = 4
 	} else {
 		numAudioSources = 3
 	}
@@ -82,7 +87,7 @@ func openFont(file string, size int) *ttf.Font {
 func drawTextClock(state *clock.State) {
 	colors.labelBG = toSDLColor(state.TitleBGColor)
 
-	for i := range textClock.r {
+	for i := 0; i < numAudioSources; i++ {
 		clk := state.Clocks[i]
 		colors.rowBG[i] = toSDLColor(clk.BGColor)
 
@@ -125,6 +130,10 @@ func drawTextClock(state *clock.State) {
 		drawMaxClock(state)
 	} else if options.singleLine && !state.Clocks[0].Hidden {
 		drawSingleLineClock(state)
+	} else if options.Face == "text2" {
+		draw2TextClocks(state)
+	} else if options.Face == "text4" {
+		draw4TextClocks(state)
 	} else if !options.singleLine {
 		draw3TextClocks(state)
 	}
@@ -193,7 +202,7 @@ func drawSingleLineClock(state *clock.State) {
 func draw3TextClocks(state *clock.State) {
 	var x, y float32
 
-	for i := range textClock.r {
+	for i := 0; i < 3; i++ {
 		if state.Clocks[i].Hidden {
 			// Row is hidden
 			continue
@@ -238,6 +247,84 @@ func draw3TextClocks(state *clock.State) {
 	}
 }
 
+func draw2TextClocks(state *clock.State) {
+	var x, y float32
+
+	for i := 0; i < 2; i++ {
+		if state.Clocks[i].Hidden {
+			continue
+		}
+		y = float32(25 + (530 * i))
+		x = 530
+		numberBox := sdl.FRect{X: x, Y: y, W: 1380, H: 440}
+		textR := sdl.FRect{X: x + 300, Y: y, W: 1380 - 300, H: 440}
+		if options.IconsDisable {
+			textR = numberBox
+		}
+		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 440}
+		x = 10
+		labelR := sdl.FRect{X: x, Y: y, W: 500, H: 150}
+		signalR := sdl.FRect{X: iconR.X - 175, Y: y + 170, W: 150, H: 150}
+		if options.DrawBoxes {
+			rectColor(&numberBox, colors.rowBG[i])
+			rectColor(&labelR, colors.labelBG)
+		}
+
+		copyIntoRect(textClock.r[i].signalTex, signalR)
+		copyIntoRect(textClock.r[i].labelTex, labelR)
+
+		if state.Clocks[i].Mode != clock.LTC {
+			copyIntoRect(textClock.r[i].textTex, textR)
+			if textClock.r[i].iconTex != nil {
+				copyIntoRect(textClock.r[i].iconTex, iconR)
+			}
+		} else {
+			numberBox.Y = numberBox.Y + 10
+			numberBox.W = numberBox.W - 20
+			copyIntoRect(textClock.r[i].textTex, numberBox)
+		}
+	}
+}
+
+func draw4TextClocks(state *clock.State) {
+	var x, y float32
+
+	for i := 0; i < 4; i++ {
+		if state.Clocks[i].Hidden {
+			continue
+		}
+		y = float32(10 + (265 * i))
+		x = 530
+		numberBox := sdl.FRect{X: x, Y: y, W: 1380, H: 240}
+		textR := sdl.FRect{X: x + 300, Y: y, W: 1380 - 300, H: 240}
+		if options.IconsDisable {
+			textR = numberBox
+		}
+		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 240}
+		x = 10
+		labelR := sdl.FRect{X: x, Y: y, W: 500, H: 80}
+		signalR := sdl.FRect{X: iconR.X - 175, Y: y + 95, W: 120, H: 120}
+		if options.DrawBoxes {
+			rectColor(&numberBox, colors.rowBG[i])
+			rectColor(&labelR, colors.labelBG)
+		}
+
+		copyIntoRect(textClock.r[i].signalTex, signalR)
+		copyIntoRect(textClock.r[i].labelTex, labelR)
+
+		if state.Clocks[i].Mode != clock.LTC {
+			copyIntoRect(textClock.r[i].textTex, textR)
+			if textClock.r[i].iconTex != nil {
+				copyIntoRect(textClock.r[i].iconTex, iconR)
+			}
+		} else {
+			numberBox.Y = numberBox.Y + 10
+			numberBox.W = numberBox.W - 20
+			copyIntoRect(textClock.r[i].textTex, numberBox)
+		}
+	}
+}
+
 func copyIntoRect(t *sdl.Texture, r sdl.FRect) {
 	if t == nil {
 		return
@@ -248,6 +335,9 @@ func copyIntoRect(t *sdl.Texture, r sdl.FRect) {
 		return
 	}
 	dest := centerRect(w, h, r)
+	if dest.W <= 0 || dest.H <= 0 {
+		return
+	}
 	renderer.RenderTexture(t, nil, &dest)
 }
 
@@ -460,7 +550,11 @@ func drawTally(state *clock.State) {
 		}
 
 		tallyRect := sdl.FRect{X: 10, Y: 25 + (365 * 2), W: 1920 - 20, H: 300}
-		if options.singleLine {
+		if options.Face == "text2" {
+			tallyRect = sdl.FRect{X: 10, Y: 25 + (530 * 1), W: 1920 - 20, H: 440}
+		} else if options.Face == "text4" {
+			tallyRect = sdl.FRect{X: 10, Y: 10 + (265 * 3), W: 1920 - 20, H: 240}
+		} else if options.singleLine {
 			tallyRect.X = 25
 			tallyRect.W = 1920 - 50
 		}
@@ -471,6 +565,12 @@ func drawTally(state *clock.State) {
 }
 
 func centerRect(w, h float32, r sdl.FRect) sdl.FRect {
+	if r.W <= 0 || r.H <= 0 || w <= 0 || h <= 0 {
+		return sdl.FRect{}
+	}
+	if r.W <= 0 || r.H <= 0 || w <= 0 || h <= 0 {
+		return sdl.FRect{}
+	}
 	dest := sdl.FRect{}
 	rSource := float64(w) / float64(h)
 	rDest := float64(r.W) / float64(r.H)

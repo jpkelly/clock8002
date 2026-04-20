@@ -28,13 +28,20 @@ const configHTML = `
 
         <fieldset>
           <legend>Config Import / Export</legend>
-          <p><a href="/export">Download current configuration.</a></p>
+          <p><a href="/export">Download current configuration.</a> Loaded config version: {{if .LoadedConfigVersion}}{{.LoadedConfigVersion}}{{else}}missing{{end}}</p>
           <label for="import"><span>Import configurations file</span>
             <input type="file" id="import" name="import" />
           </label>
           <input type="submit" value="upload" />
         </fieldset>
       </form>
+
+      <fieldset>
+        <legend>Sync Time</legend>
+        <p>Set the piClock time from this computer's clock.</p>
+        <input type="button" value="Sync Time Now" onclick="syncTime()" />
+        <span id="sync-status"></span>
+      </fieldset>
 
       <form action="/save" method="post">
         <div class="tabs">
@@ -50,6 +57,8 @@ const configHTML = `
                     <option value="round" {{if eq .Face "round"}} selected {{end}}>Single round clock</option>
                     <option value="dual-round" {{if eq .Face "dual-round"}} selected {{end}}>Dual round clocks</option>
                     <option value="text" {{if eq .Face "text"}} selected {{end}}>Text clock with 3 timers</option>
+                    <option value="text4" {{if eq .Face "text4"}} selected {{end}}>Text clock with 4 timers</option>
+                    <option value="text2" {{if eq .Face "text2"}} selected {{end}}>Text clock with 2 timers</option>
                     <option value="single" {{if eq .Face "single"}} selected {{end}}>Text clock with 1 timer</option>
                     <option value="max" {{if eq .Face "max"}} selected {{end}}>Text clock with maximal size. Recommend disabling hours. Doesn't include icons or signal colors.</option>
                     <option value="192" {{if eq .Face "192"}} selected {{end}}>Small 192x192px round clock</option>
@@ -517,7 +526,23 @@ const configHTML = `
 
                 {{text "cue-serial" "Serial port for communication with the Perfect Cue" .EngineOptions.CueSerial}}
                 {{number "cue-duration" "Time to show the cue marks on screen, in seconds" .EngineOptions.CueDuration}}
-                {{checkbox "cue-fullscreen" "Show the cue information as full screen icons" .CueFullScreen}}
+                {{checkbox "cue-second-display" "Enable second HDMI output for full-screen cue only display (off mirrors clock display)" .CueSecondDisplay}}
+                {{checkbox "cue-fullscreen" "Show the cue information as full screen icons (overlay on clock)" .CueFullScreen}}
+                <h4>Use the following when &lsquo;show cue information as full screen icons&rsquo; is off.</h4>
+                <label for="cue-pos-x"><span>Cue overlay X position in pixels</span><input type="number" id="cue-pos-x" name="cue-pos-x" value="{{.CuePosX}}" min="1" /></label>
+                <label for="cue-pos-y"><span>Cue overlay Y position in pixels</span><input type="number" id="cue-pos-y" name="cue-pos-y" value="{{.CuePosY}}" min="1" /></label>
+                <label for="cue-size"><span>Cue overlay square size in pixels</span><input type="number" id="cue-size" name="cue-size" value="{{.CueSize}}" min="1" /></label>
+
+                <p>Use these buttons to test cue overlay rendering without PerfectCue hardware.</p>
+                <div>
+                    <input type="button" value="Forward" onclick="sendCueTest('right', 'Forward')" style="width:200px;" />
+                    <input type="button" value="Reverse" onclick="sendCueTest('left', 'Reverse')" style="width:200px;" />
+                </div>
+                <div>
+                    <input type="button" value="Blank" onclick="sendCueTest('blank_on', 'Blank')" style="width:200px;" />
+                    <input type="button" value="Clear" onclick="sendCueTest('blank_off', 'Clear')" style="width:200px;" />
+                </div>
+                <span id="cue-test-status"></span>
               </fieldset>
 
               <fieldset>
@@ -567,6 +592,9 @@ const configHTML = `
 
                   {{color "Row3Color" "Color for timer row 3." .Row3Color}}
                   {{uint8 "row3-alpha" "Alpha for timer row 3." .Row3Alpha}}
+
+                  {{color "Row4Color" "Color for timer row 4." .Row4Color}}
+                  {{uint8 "row4-alpha" "Alpha for timer row 4." .Row4Alpha}}
 
                   {{color "LabelColor" "Color for timer titles." .LabelColor}}
                   {{uint8 "label-alpha" "Alpha for timer titles." .LabelAlpha}}
@@ -674,11 +702,11 @@ const configHTML = `
       </form>
     </div>
 
-    {{$color := "#8E1047"}}
-    {{$oldColor := "F072A9"}}
-    {{$background := "#FFF4F4"}}
-    {{$tabInactive := "#EB3383"}}
-    {{$tabActive := "#E3166F"}}
+    {{$color := "#00445A"}}
+    {{$oldColor := "006D88"}}
+    {{$background := "#EEF7FA"}}
+    {{$tabInactive := "#006D88"}}
+    {{$tabActive := "#005470"}}
     {{$tabText := "white"}}
 
     <style type="text/css">
@@ -747,22 +775,22 @@ const configHTML = `
       -webkit-border-radius: 10px;
       -moz-border-radius: 10px;
       margin: 0px 0px 10px 0px;
-      border: 1px solid #FFD2D2;
+      border: 1px solid #B2D8E3;
       padding: 20px;
-      background: #FFF4F4;
-      box-shadow: inset 0px 0px 15px #FFE5E5;
-      -moz-box-shadow: inset 0px 0px 15px #FFE5E5;
-      -webkit-box-shadow: inset 0px 0px 15px #FFE5E5;
+      background: #EEF7FA;
+      box-shadow: inset 0px 0px 15px #D5EDF4;
+      -moz-box-shadow: inset 0px 0px 15px #D5EDF4;
+      -webkit-box-shadow: inset 0px 0px 15px #D5EDF4;
     }
     .config-form fieldset legend {
       color: {{$color}};
-      border-top: 1px solid #FFD2D2;
-      border-left: 1px solid #FFD2D2;
-      border-right: 1px solid #FFD2D2;
+      border-top: 1px solid #B2D8E3;
+      border-left: 1px solid #B2D8E3;
+      border-right: 1px solid #B2D8E3;
       border-radius: 5px 5px 0px 0px;
       -webkit-border-radius: 5px 5px 0px 0px;
       -moz-border-radius: 5px 5px 0px 0px;
-      background: #FFF4F4;
+      background: #EEF7FA;
       padding: 0px 8px 3px 8px;
       box-shadow: -0px -1px 2px #F1F1F1;
       -moz-box-shadow:-0px -1px 2px #F1F1F1;
@@ -783,14 +811,14 @@ const configHTML = `
       border-radius: 3px;
       -webkit-border-radius: 3px;
       -moz-border-radius: 3px;
-      border: 1px solid #FFC2DC;
+      border: 1px solid #80C4D4;
       outline: none;
       color: {{$color}};
       padding: 5px 8px 5px 8px;
-      box-shadow: inset 1px 1px 4px #FFD5E7;
-      -moz-box-shadow: inset 1px 1px 4px #FFD5E7;
-      -webkit-box-shadow: inset 1px 1px 4px #FFD5E7;
-      background: #FFEFF6;
+      box-shadow: inset 1px 1px 4px #C0E4EE;
+      -moz-box-shadow: inset 1px 1px 4px #C0E4EE;
+      -webkit-box-shadow: inset 1px 1px 4px #C0E4EE;
+      background: #F0FAFD;
       width:50%;
     }
     .config-form  input[type=checkbox]{
@@ -799,12 +827,12 @@ const configHTML = `
     .config-form  input[type=submit],
     .config-form  input[type=button]{
       background: {{$tabInactive}};
-      border: 1px solid #C94A81;
+      border: 1px solid #004F66;
       padding: 5px 15px 5px 15px;
       color: {{$tabText}};
-      box-shadow: inset -1px -1px 3px #FF62A7;
-      -moz-box-shadow: inset -1px -1px 3px #FF62A7;
-      -webkit-box-shadow: inset -1px -1px 3px #FF62A7;
+      box-shadow: inset -1px -1px 3px #0088AA;
+      -moz-box-shadow: inset -1px -1px 3px #0088AA;
+      -webkit-box-shadow: inset -1px -1px 3px #0088AA;
       border-radius: 3px;
       border-radius: 3px;
       -webkit-border-radius: 3px;
@@ -878,7 +906,7 @@ const configHTML = `
     .tab-content {
       max-height: 0;
       padding: 0 1em;
-      color: #F072A9;
+      color: {{$color}};
       background: white;
       transition: all 0.35s;
     }
@@ -887,11 +915,11 @@ const configHTML = `
       justify-content: flex-end;
       padding: 1em;
       font-size: 0.75em;
-      background: #F072A9;
+      background: {{$tabInactive}};
       cursor: pointer;
     }
     .tab-close:hover {
-      background: #eb448d;
+      background: {{$tabActive}};
     }
 
     input:checked + .tab-label {
@@ -905,6 +933,52 @@ const configHTML = `
       padding: 1em;
     }
     </style>
+  <script>
+    function syncTime() {
+      var btn = document.querySelector('[value="Sync Time Now"]');
+      var status = document.getElementById('sync-status');
+      btn.disabled = true;
+      status.textContent = 'Syncing...';
+      var now = new Date();
+      var ts = now.toISOString();
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/settime');
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          status.textContent = 'Time set to ' + ts.replace('T', ' ');
+        } else {
+          status.textContent = 'Error: ' + xhr.responseText;
+        }
+        btn.disabled = false;
+      };
+      xhr.onerror = function() {
+        status.textContent = 'Network error';
+        btn.disabled = false;
+      };
+      xhr.send('time=' + encodeURIComponent(ts));
+    }
+    function sendCueTest(action, label) {
+      var status = document.getElementById('cue-test-status');
+      status.textContent = 'Sending cue test: ' + label + '...';
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+            status.textContent = 'Cue test sent: ' + label;
+          } else {
+            status.textContent = 'Cue test failed: ' + xhr.responseText;
+          }
+        }
+      };
+      xhr.onerror = function() {
+        status.textContent = 'Cue test failed: network error';
+      };
+      xhr.open('POST', '/api/cue');
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.send('action=' + encodeURIComponent(action));
+    }
+  </script>
   </body>
 </html>
 `
