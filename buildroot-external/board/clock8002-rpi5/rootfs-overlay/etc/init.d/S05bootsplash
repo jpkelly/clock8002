@@ -1,0 +1,27 @@
+#!/bin/sh
+PIDFILE=/var/run/bootsplash.pid
+
+case "$1" in
+	start)
+		if [ -f /opt/clock8002/bootsplash.png ] && [ -x /opt/clock8002/bootsplash.sh ]; then
+			echo "Starting boot splash"
+			/opt/clock8002/bootsplash.sh &
+			echo $! > "$PIDFILE"
+		fi
+		;;
+	stop)
+		echo "Stopping boot splash"
+		if [ -f "$PIDFILE" ]; then
+			kill "$(cat $PIDFILE)" 2>/dev/null || true
+			rm -f "$PIDFILE"
+		fi
+		kill $(pidof fbv) 2>/dev/null || true
+		;;
+	restart|reload)
+		"$0" stop; "$0" start
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"; exit 1
+		;;
+esac
+exit 0

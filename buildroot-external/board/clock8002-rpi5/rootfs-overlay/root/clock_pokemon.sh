@@ -17,6 +17,9 @@ start() {
 	done
 	echo "DRM device ready after ${_drm_retries}s"
 
+	# Kill bootsplash (fbv) so it releases the framebuffer before we take DRM master.
+	kill $(pidof fbv) 2>/dev/null || true
+
 	# Release fbcon's hold on the DRM device so sdl3-clock can acquire master.
 	# fbcon binds to vtcon1 at boot via vc4drmfb; without this sdl3-clock
 	# cannot get DRM master and exits immediately with code 1.

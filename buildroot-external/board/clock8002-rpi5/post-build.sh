@@ -11,6 +11,7 @@ for script in \
         S01power-button \
         S03copy_alsa-ltc_files \
         S03copy_clock_files \
+        S05bootsplash \
         S11modules \
         S45piclock-network \
         S98oled \
