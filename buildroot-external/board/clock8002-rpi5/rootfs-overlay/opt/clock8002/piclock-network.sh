@@ -29,67 +29,8 @@ elif [ "$NTP_ENABLED" = "true" ]; then
     command -v timedatectl >/dev/null 2>&1 && timedatectl set-ntp true || true
 fi
 
-# Find the wired Ethernet connection (Pi 5 Trixie: end0 or eth0)
-find_wired_con() {
-    for iface in end0 eth0 enp0s31f6; do
-        local con
-        con=$(nmcli -t -f NAME,DEVICE con show | grep ":${iface}$" | head -1 | cut -d: -f1)
-        if [ -n "$con" ]; then
-            echo "$con"
-            return 0
-        fi
-    done
-    return 1
-}
-
-NM_CON=""
-i=0
-while [ "$i" -lt 30 ]; do
-    NM_CON=$(find_wired_con) && break
-    i=$((i + 1))
-    sleep 1
-done
-
-if [ -z "$NM_CON" ]; then
-    echo "No wired NetworkManager connection found after 30s — skipping wired config."
-fi
-
-if [ -n "$NM_CON" ]; then
-echo "Using wired connection: $NM_CON"
-
-if [ "$NET_MODE" = "static" ]; then
-    NET_ADDR=$(parse_ini "$NETWORK_INI" network address)
-    NET_MASK=$(parse_ini "$NETWORK_INI" network netmask)
-    NET_GW=$(parse_ini "$NETWORK_INI" network gateway)
-    NET_DNS=$(parse_ini "$NETWORK_INI" network dns)
-
-    if [ -n "$NET_ADDR" ] && [ -n "$NET_MASK" ]; then
-        echo "Applying static IP: ${NET_ADDR}/${NET_MASK}..."
-        nmcli con mod "$NM_CON" ipv4.method manual \
-            ipv4.addresses "${NET_ADDR}/${NET_MASK}"
-        [ -n "$NET_GW" ] && nmcli con mod "$NM_CON" ipv4.gateway "$NET_GW" || nmcli con mod "$NM_CON" ipv4.gateway ""
-        [ -n "$NET_DNS" ] && nmcli con mod "$NM_CON" ipv4.dns "$NET_DNS" || nmcli con mod "$NM_CON" ipv4.dns ""
-        # Bring the connection down first so any in-progress DHCP activation
-        # is cancelled before re-activating with the new static config.
-        nmcli con down "$NM_CON" 2>/dev/null || true
-        nmcli --wait 10 con up "$NM_CON"
-    else
-        echo "Warning: static mode set but address/netmask missing."
-    fi
-elif [ "$NET_MODE" = "dhcp" ]; then
-    CURRENT_METHOD=$(nmcli -g ipv4.method con show "$NM_CON")
-    if [ "$CURRENT_METHOD" != "auto" ]; then
-        echo "Switching to DHCP..."
-        nmcli con mod "$NM_CON" ipv4.method auto ipv4.addresses "" ipv4.gateway "" ipv4.dns ""
-        nmcli --wait 10 con up "$NM_CON"
-    else
-        echo "Network mode: DHCP (already set)."
-    fi
-fi
-
-fi # end wired config block
-
 # --- Wi-Fi Access Point ---
+# Note: wired IP config is handled pre-NM by S43piclock-network-prep.
 
 # Wait for wlan0 to appear (brcmfmac loads via eudev uevent after boot)
 i=0

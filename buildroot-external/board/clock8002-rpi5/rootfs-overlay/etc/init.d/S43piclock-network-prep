@@ -1,0 +1,91 @@
+#!/bin/sh
+# Write NetworkManager wired connection config from network.ini BEFORE NM starts.
+# This avoids the first-boot DHCP race: NM reads our nmconnection file at launch
+# and activates the correct IP method immediately without ever trying DHCP.
+#
+# Runs at S43 — after S03 mounts /boot, before S45NetworkManager.
+
+NETWORK_INI="/boot/piclock/network.ini"
+NM_CON_DIR="/etc/NetworkManager/system-connections"
+NM_CON_FILE="${NM_CON_DIR}/piclock-wired.nmconnection"
+
+# Fixed UUID for the piclock wired connection (stable across reflashes)
+WIRED_UUID="a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
+parse_ini() {
+	local file="$1" section="$2" key="$3"
+	awk -F= -v section="$section" -v key="$key" '
+		/^\[/ { current = substr($0, 2, index($0, "]") - 2) }
+		current == section && $1 == key { print $2; exit }
+	' "$file"
+}
+
+case "$1" in
+	start)
+		if [ ! -f "$NETWORK_INI" ]; then
+			exit 0
+		fi
+
+		NET_MODE=$(parse_ini "$NETWORK_INI" network mode)
+		mkdir -p "$NM_CON_DIR"
+
+		if [ "$NET_MODE" = "static" ]; then
+			NET_ADDR=$(parse_ini "$NETWORK_INI" network address)
+			NET_MASK=$(parse_ini "$NETWORK_INI" network netmask)
+			NET_GW=$(parse_ini "$NETWORK_INI" network gateway)
+			NET_DNS=$(parse_ini "$NETWORK_INI" network dns)
+
+			if [ -z "$NET_ADDR" ] || [ -z "$NET_MASK" ]; then
+				echo "piclock-network-prep: static mode but address/netmask missing, skipping"
+				exit 0
+			fi
+
+			echo "piclock-network-prep: writing static ${NET_ADDR}/${NET_MASK}"
+
+			if [ -n "$NET_GW" ]; then
+				ADDR_LINE="address1=${NET_ADDR}/${NET_MASK},${NET_GW}"
+			else
+				ADDR_LINE="address1=${NET_ADDR}/${NET_MASK}"
+			fi
+
+			{
+				echo "[connection]"
+				echo "id=piclock-wired"
+				echo "uuid=${WIRED_UUID}"
+				echo "type=ethernet"
+				echo "interface-name=eth0"
+				echo "autoconnect=true"
+				echo ""
+				echo "[ethernet]"
+				echo ""
+				echo "[ipv4]"
+				echo "method=manual"
+				echo "${ADDR_LINE}"
+				[ -n "$NET_DNS" ] && echo "dns=${NET_DNS};"
+				echo ""
+				echo "[ipv6]"
+				echo "addr-gen-mode=default"
+				echo "method=auto"
+				echo ""
+				echo "[proxy]"
+			} > "$NM_CON_FILE"
+			chmod 600 "$NM_CON_FILE"
+
+		elif [ "$NET_MODE" = "dhcp" ]; then
+			# Remove any previous static config so NM creates a default DHCP connection
+			if [ -f "$NM_CON_FILE" ]; then
+				echo "piclock-network-prep: removing static config, using DHCP"
+				rm -f "$NM_CON_FILE"
+			fi
+		fi
+		;;
+	stop|restart|reload)
+		true
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac
+
+exit 0
