@@ -71,16 +71,28 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	fi
 
 	# Prepare piclock config files (injected via mtools after genimage).
+	# Select default vs gerry variant based on BR2_PACKAGE_CLOCK8002_GERRY.
 	mkdir -p "${BINARIES_DIR}/piclock"
 	CLOCK8002_SRC="${BUILD_DIR}/clock8002-prototype"
+	CLOCK8002_SUFFIX="default"
+	if [ -n "${BR2_CONFIG:-}" ] && [ -f "${BR2_CONFIG}" ] && \
+		grep -q '^BR2_PACKAGE_CLOCK8002_GERRY=y' "${BR2_CONFIG}"; then
+		CLOCK8002_SUFFIX="gerry"
+	fi
 	for pair in \
-		"${BOARD_DIR}/network.ini:network.ini" \
-		"${CLOCK8002_SRC}/clock.ini.default:clock.ini" \
+		"${CLOCK8002_SRC}/network.ini.${CLOCK8002_SUFFIX}:network.ini" \
+		"${CLOCK8002_SRC}/clock.ini.${CLOCK8002_SUFFIX}:clock.ini" \
 		"${CLOCK8002_SRC}/oled/oled.ini:oled.ini"; do
 		SRC="${pair%%:*}"
 		DST="${pair##*:}"
 		[ -f "${SRC}" ] && cp -f "${SRC}" "${BINARIES_DIR}/piclock/${DST}"
 	done
+	# Fix path comment in network.ini (v4 source references Trixie's
+	# /boot/firmware/piclock/; on Buildroot the FAT partition mounts at /boot).
+	if [ -f "${BINARIES_DIR}/piclock/network.ini" ]; then
+		sed -i 's|/boot/firmware/piclock/|/boot/piclock/|g' \
+			"${BINARIES_DIR}/piclock/network.ini"
+	fi
 
 	sed "s|#BOOT_FILES#|${FILES}|" "${BOARD_DIR}/genimage.cfg.in" > "${GENIMAGE_CFG}"
 fi
