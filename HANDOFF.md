@@ -7,27 +7,23 @@ Last updated: 2026-04-20
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
-- Latest Buildroot tag: **v1.3.2** — `buildroot` branch
+- Latest Buildroot tag: **v1.3.2** — `buildroot` branch, commit `7dcaa69`
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
 - **Active branch: `buildroot`** (renamed from `feature/sdl3-migration`)
-- Buildroot SD card image on Mac Desktop: **`piclockBR-c1fc28a-sdcard.img`** (built, not yet flashed — pending network.sh commit bake-in)
-- **piclockBR test unit** (piclockBR.local / 192.168.8.246): running `855151c` image + live-patched fixes
+- Buildroot SD card image on Mac Desktop: **`piclockBR-c1fc28a-sdcard.img`** (flashed and running on test unit at 192.168.8.246)
+- **piclockBR test unit** (192.168.8.246): running `c1fc28a` image (v1.3.2), all features confirmed working
   - OLED logo + stats: **working at boot**
   - sdl3-clock HDMI: **working at boot**
   - WiFi AP (piclockBR-ap): **working**
   - Power button shutdown: **working at boot** (stable `/dev/input/by-path/` symlink)
   - Network config from `network.ini`: **working** (static IP, hostname, AP — all verified after reboot)
-  - alsa-ltc: running
+  - alsa-ltc: **stable** — 0 USB errors, 0 restarts (PID stable 15+ min), LTC decoding to display confirmed
+  - `authorized_keys` from `/boot/piclock/authorized_keys`: **tested and working** — key-based SSH confirmed
   - Build host: pi@cm5.local (10.0.0.101)
-- **3rd party reference unit (10.0.0.131)**: `root` / `clockworkadmin`. BusyBox init, kernel `590178d5` (6.12.41-v8), `alsa-ltc plughw:2,0 255.255.255.255 1245` — running healthy, 0 USB errors. `/usr/bin/usb-audio-monitor.sh` is our diagnostic addition, not their original code.  - **Production (1GB board)**: `piclockBR-ce6526b-sdcard.img` — deployed on 1GB piclockBR unit, stable
-  - **SDL3 dev (2GB, piclockBR 10.0.0.128)**: awaiting new image from BusyBox init rebuild
-- **1GB Pi 5** (piclockBR.local): running Buildroot image `ce6526b`. Healthy — 0 xHCI errors.
-- **2GB Pi 5 (piclockBR, 10.0.0.128)**: SDL3 dev unit. Awaiting reflash with BusyBox init image.
-- **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry. EEPROM downgraded to 2025-05-08. Soak in progress (started ~09:10 2026-04-14). Monitor running.
+- **3rd party reference unit (192.168.8.246 / 10.0.0.131)**: `root` / `clockworkadmin`. BusyBox init. alsa-ltc fixed (was using `-` for device, now uses `plughw:${ALSA_CARD:-2},0`). LTC rolling on display. 0 USB errors.
+- **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry. EEPROM downgraded to 2025-05-08. Monitor running.
 - **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.1 default. Stable. EEPROM 2025-05-08.
-- **3rd party reference unit (10.0.0.131)**: upstream clock-8001 SDL2 binary + alsa-ltc. 4K kernel (`6.12.41-v8`, commit `590178d5`). BusyBox inittab. LTC working, 0 USB errors. `root` / `clockworkadmin`.
 - `buildroot-prototype` branch: fully merged into master
-- **Kernel rebuild in progress on cm5** — screen session `brbuild5`, log at `/tmp/br-build.log`
 
 ## SDL3 Migration Status (branch: buildroot)
 
@@ -115,9 +111,22 @@ network interface) before using it. Never assume it exists at S## script time.
 | 13 | **Symlink-safe config path** — `resolvedConfigPath()` resolves symlinks before import/save | `http.go` |
 | 14 | **Web UI teal theme** — color scheme changed from pink/magenta to teal (`#006D88`); tab, heading, and form colors updated | `config.html.go` |
 
+### Session 2026-04-20 — alsa-ltc stability + authorized_keys test
+
+**alsa-ltc stability confirmed** (both our Buildroot unit and 3rd party):
+- Root cause of prior crash loops: `alsa-ltc_cmd.sh` used `-` (auto-detect) which fails to open CM108 on BusyBox kernels, causing a continuous crash/restart loop that floods VL805 with `usb_set_interface -110` errors
+- Our fix (already in image via pokemon watchdog): `ALSA_CARD` detected dynamically from `/proc/asound/cards` → used as `plughw:${ALSA_CARD:-2},0`
+- Applied same fix to 3rd party unit (`/root/alsa-ltc_cmd.sh` + `/boot/piclock/authorized_keys` installed)
+- Result on both units: 0 USB errors, stable PID over 15+ min, LTC decoding confirmed on display
+
+**authorized_keys feature tested**:
+- `S03copy_clock_files` already implements: copies `/boot/piclock/authorized_keys` → `/root/.ssh/authorized_keys` (700/600 perms) at every boot
+- Tested live: wrote key to `/boot/piclock/authorized_keys`, manually triggered copy, passwordless SSH confirmed working
+- FAT boot partition makes this accessible from any OS without ext4 support
+
 ### Still pending
-- LTC working end-to-end (blocked on 4K kernel rebuild — in progress on cm5 at `ab5139d`)
-- Re-enable alsa-ltc.service after confirming 4K kernel fixes USB audio
+- Remaining sdl3-clock feature gap items (see table above — items 1–14)
+- No blocking issues on the Buildroot platform
 - Port features 1–14 from table above (DRM mirror/cue most complex)
 
 ### Branch rule
