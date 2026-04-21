@@ -255,11 +255,12 @@ func setupScaling() {
 			// No logical size, we might have different aspect ratio
 			return
 		} else if !options.vertical {
-			err := renderer.SetLogicalPresentation(1920, 1080, sdl.LOGICAL_PRESENTATION_LETTERBOX)
+			// 1829x1029 = 1920x1080 / 1.05 — logical canvas 5% smaller so SDL upscales content 5% bigger
+			err := renderer.SetLogicalPresentation(1829, 1029, sdl.LOGICAL_PRESENTATION_LETTERBOX)
 			check(err)
 		} else {
 			// rotated display
-			err := renderer.SetLogicalPresentation(1080, 1920, sdl.LOGICAL_PRESENTATION_LETTERBOX)
+			err := renderer.SetLogicalPresentation(1029, 1829, sdl.LOGICAL_PRESENTATION_LETTERBOX)
 			check(err)
 		}
 	} else if !options.NoARCorrection {
