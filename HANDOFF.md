@@ -10,7 +10,7 @@ Last updated: 2026-04-20
 - Latest Buildroot tag: **v1.3.2** — `buildroot` branch, commit `7dcaa69`
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
 - **Active branch: `buildroot`** (renamed from `feature/sdl3-migration`)
-- Buildroot SD card image on Mac Desktop: **`piclockBR-5239c38-sdcard.img`** (release build, no SSH key)
+- Buildroot SD card image on Mac Desktop: **`piclockBR-b93633c-sdcard.img`** (release build, no SSH key)
 - **piclockBR test unit** (192.168.8.246): running `c1fc28a` image (v1.3.2), all features confirmed working
   - OLED logo + stats: **working at boot**
   - sdl3-clock HDMI: **working at boot**
@@ -19,6 +19,7 @@ Last updated: 2026-04-20
   - Network config from `network.ini`: **working** (static IP, hostname, AP — all verified after reboot)
   - alsa-ltc: **stable** — 0 USB errors, 0 restarts (PID stable 15+ min), LTC decoding to display confirmed
   - `authorized_keys` from `/boot/piclock/authorized_keys`: **tested and working** — key-based SSH confirmed
+  - Static IP from `network.ini`: **working on first boot** — `S43piclock-network-prep` writes NM connection file before NM starts, no DHCP race
   - Build host: pi@cm5.local (10.0.0.101)
 - **3rd party reference unit (192.168.8.246 / 10.0.0.131)**: `root` / `clockworkadmin`. BusyBox init. alsa-ltc fixed (was using `-` for device, now uses `plughw:${ALSA_CARD:-2},0`). LTC rolling on display. 0 USB errors.
 - **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry. EEPROM downgraded to 2025-05-08. Monitor running.
