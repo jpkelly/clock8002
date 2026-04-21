@@ -255,7 +255,7 @@ func setupScaling() {
 			// No logical size, we might have different aspect ratio
 			return
 		} else if !options.vertical {
-			lw, lh := 1920, 1080
+			var lw, lh int32 = 1920, 1080
 			if options.Face == "text4" {
 				// 5% scale-up for text4: shrink logical canvas so SDL upscales content
 				lw, lh = 1829, 1029
@@ -264,7 +264,7 @@ func setupScaling() {
 			check(err)
 		} else {
 			// rotated display
-			lw, lh := 1080, 1920
+			var lw, lh int32 = 1080, 1920
 			if options.Face == "text4" {
 				lw, lh = 1029, 1829
 			}
