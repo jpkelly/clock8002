@@ -293,7 +293,7 @@ func draw4TextClocks(state *clock.State) {
 		if state.Clocks[i].Hidden {
 			continue
 		}
-		y = float32(280 * i)
+		y = float32(285 * i)
 		x = 530
 		numberBox := sdl.FRect{X: x, Y: y, W: 1380, H: 255}
 		textR := sdl.FRect{X: x + 300, Y: y, W: 1380 - 300, H: 255}
