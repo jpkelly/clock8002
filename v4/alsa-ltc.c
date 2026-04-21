@@ -442,6 +442,7 @@ int main(int argc, char *argv[]) {
     unsigned long heartbeat_frames = 0;
     unsigned long heartbeat_ltc_frames = 0;
     short peak_level = 0;
+    short gap_peak = 0;  /* peak level since last decoded LTC frame */
     struct timespec last_ltc_ts = {0, 0};
     int ltc_active = 0;  /* set after first decode */
 
@@ -478,12 +479,11 @@ int main(int argc, char *argv[]) {
         consecutive_errors = 0;
         heartbeat_frames += frames;
 
-        /* Track peak audio level for verbose heartbeat */
-        if (verbose) {
-            for (snd_pcm_sframes_t i = 0; i < frames; i++) {
-                short s = audiobuf[i] < 0 ? -audiobuf[i] : audiobuf[i];
-                if (s > peak_level) peak_level = s;
-            }
+        /* Track peak audio level — always for gap reporting, verbose adds heartbeat */
+        for (snd_pcm_sframes_t i = 0; i < frames; i++) {
+            short s = audiobuf[i] < 0 ? -audiobuf[i] : audiobuf[i];
+            if (s > gap_peak) gap_peak = s;
+            if (verbose && s > peak_level) peak_level = s;
         }
 
         /* Periodic heartbeat (always on; verbose adds signal level) */
@@ -517,10 +517,12 @@ int main(int argc, char *argv[]) {
                 long gap_ms = (now_ts.tv_sec - last_ltc_ts.tv_sec) * 1000
                             + (now_ts.tv_nsec - last_ltc_ts.tv_nsec) / 1000000;
                 if (gap_ms > LTC_GAP_THRESHOLD_MS) {
-                    fprintf(stdout, "\n[gap] no LTC decoded for %ldms\n", gap_ms);
+                    fprintf(stdout, "\n[gap] no LTC decoded for %ldms, peak_during_gap=%d\n",
+                            gap_ms, gap_peak);
                     fflush(stdout);
                 }
             }
+            gap_peak = 0;  /* reset on each decoded frame */
             last_ltc_ts = now_ts;
             ltc_active = 1;
 
