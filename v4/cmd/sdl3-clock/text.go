@@ -291,7 +291,7 @@ func draw4TextClocks(state *clock.State) {
 	fw, fh := float32(wi), float32(hi)
 
 	// All proportions derived from 1920x1080 reference, scaled up 10%.
-	const scaleFactor = float32(1.1)
+	const scaleFactor = float32(1.01)
 	rowH := fh * 240.0 / 1080.0 * scaleFactor
 	stride := fh * 265.0 / 1080.0 * scaleFactor
 	labelH := rowH * 80.0 / 240.0
