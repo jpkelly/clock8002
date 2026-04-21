@@ -287,35 +287,37 @@ func draw2TextClocks(state *clock.State) {
 }
 
 func draw4TextClocks(state *clock.State) {
-	w, h, _ := renderer.CurrentOutputSize()
+	wi, hi, _ := renderer.CurrentOutputSize()
+	fw, fh := float32(wi), float32(hi)
 
 	// All proportions derived from 1920x1080 reference, scaled up 10%.
 	const scaleFactor = float32(1.1)
-	rowH := h * 240 / 1080 * scaleFactor
-	stride := h * 265 / 1080 * scaleFactor
-	labelH := rowH * 80 / 240
-	numberX := w * 530 / 1920
-	iconW := w * 300 / 1920
-	labelW := w * 500 / 1920
+	rowH := fh * 240.0 / 1080.0 * scaleFactor
+	stride := fh * 265.0 / 1080.0 * scaleFactor
+	labelH := rowH * 80.0 / 240.0
+	numberX := fw * 530.0 / 1920.0
+	iconW := fw * 300.0 / 1920.0
+	labelW := fw * 500.0 / 1920.0
+	signalOffX := fw * 175.0 / 1920.0
 	signalSize := float32(120)
 
 	// Centre the 4-row group vertically so overflow is equal top and bottom.
 	totalH := stride*3 + rowH
-	topY := (h - totalH) / 2
+	topY := (fh - totalH) / 2
 
 	for i := 0; i < 4; i++ {
 		if state.Clocks[i].Hidden {
 			continue
 		}
 		y := topY + stride*float32(i)
-		numberBox := sdl.FRect{X: numberX, Y: y, W: w - numberX - 10, H: rowH}
-		textR := sdl.FRect{X: numberX + iconW, Y: y, W: w - numberX - iconW - 10, H: rowH}
+		numberBox := sdl.FRect{X: numberX, Y: y, W: fw - numberX - 10, H: rowH}
+		textR := sdl.FRect{X: numberX + iconW, Y: y, W: fw - numberX - iconW - 10, H: rowH}
 		if options.IconsDisable {
 			textR = numberBox
 		}
 		iconR := sdl.FRect{X: numberX, Y: y, W: iconW, H: rowH}
 		labelR := sdl.FRect{X: 10, Y: y, W: labelW, H: labelH}
-		signalR := sdl.FRect{X: numberX - w*175/1920, Y: y + rowH*95/240, W: signalSize, H: signalSize}
+		signalR := sdl.FRect{X: numberX - signalOffX, Y: y + rowH*95.0/240.0, W: signalSize, H: signalSize}
 		if options.DrawBoxes {
 			rectColor(&numberBox, colors.rowBG[i])
 			rectColor(&labelR, colors.labelBG)
