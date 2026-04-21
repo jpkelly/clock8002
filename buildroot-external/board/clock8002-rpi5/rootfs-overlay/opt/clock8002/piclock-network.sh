@@ -69,6 +69,9 @@ if [ "$NET_MODE" = "static" ]; then
             ipv4.addresses "${NET_ADDR}/${NET_MASK}"
         [ -n "$NET_GW" ] && nmcli con mod "$NM_CON" ipv4.gateway "$NET_GW" || nmcli con mod "$NM_CON" ipv4.gateway ""
         [ -n "$NET_DNS" ] && nmcli con mod "$NM_CON" ipv4.dns "$NET_DNS" || nmcli con mod "$NM_CON" ipv4.dns ""
+        # Bring the connection down first so any in-progress DHCP activation
+        # is cancelled before re-activating with the new static config.
+        nmcli con down "$NM_CON" 2>/dev/null || true
         nmcli --wait 10 con up "$NM_CON"
     else
         echo "Warning: static mode set but address/netmask missing."
