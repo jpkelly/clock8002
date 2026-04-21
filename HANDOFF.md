@@ -10,7 +10,7 @@ Last updated: 2026-04-20
 - Latest Buildroot tag: **v1.3.2** — `buildroot` branch, commit `7dcaa69`
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
 - **Active branch: `buildroot`** (renamed from `feature/sdl3-migration`)
-- Buildroot SD card image on Mac Desktop: **`piclockBR-c1fc28a-sdcard.img`** (flashed and running on test unit at 192.168.8.246)
+- Buildroot SD card image on Mac Desktop: **`piclockBR-5239c38-sdcard.img`** (release build, no SSH key)
 - **piclockBR test unit** (192.168.8.246): running `c1fc28a` image (v1.3.2), all features confirmed working
   - OLED logo + stats: **working at boot**
   - sdl3-clock HDMI: **working at boot**
