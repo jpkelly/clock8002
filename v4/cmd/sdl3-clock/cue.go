@@ -87,12 +87,21 @@ func updateCue(state *clock.State) {
 
 func drawCue() {
 	if options.CueFullScreen {
-		w, h, _ := renderer.CurrentOutputSize()
+		// Match the logical canvas size set in setupScaling(); text4
+		// shrinks the logical size 5% to upscale content, and the full-
+		// screen cue rect must track it or it clips at the edges.
+		var lw, lh float32 = 1920, 1080
+		if options.Face == "text4" {
+			lw, lh = 1829, 1029
+		}
+		if options.vertical {
+			lw, lh = lh, lw
+		}
 		rect := sdl.FRect{
 			X: 10,
 			Y: 10,
-			W: float32(w) - 20,
-			H: float32(h) - 20,
+			W: lw - 20,
+			H: lh - 20,
 		}
 		copyIntoRect(cueTexture, rect)
 	} else {
