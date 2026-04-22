@@ -1,6 +1,114 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-20
+Last updated: 2026-04-22
+
+## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
+
+**Symptom:** alsa-ltc logs `[gap] no LTC decoded for Nms, peak_during_gap=P` events
+on piclockBR (192.168.8.246, Buildroot image c4847b2). All observed gaps show
+`peak≈32750-32767` (full-scale) and duration 2-5s — classified INVALID_LTC (audio
+present but biphase unreadable). Source is TouchDesigner → USB-C analog →
+C-Media CM108 USB audio (`plughw:0,0`).
+
+**Pi-side evidence (kernel dmesg, when in degraded state):**
+```
+usb 1-1.1: 2:1: cannot set freq 44100 to ep 0x82
+usb 1-1.1: 2:0: usb_set_interface failed (-110)
+```
+Errors arrive on a fixed **17.92s cadence** — kernel periodically retries sample
+rate renegotiation with the CM108 and times out.
+
+**Key test result:** Stopping alsa-ltc for 60s → 0 new errors. Restarting
+alsa-ltc → 0 new errors for 60s after. The 18s cadence only runs once the card
+is in a degraded state; a clean `alsa-ltc` restart resets the endpoint and
+clears it. Once in the bad state, each failed renegotiation can stall audio
+capture 1-5s → INVALID_LTC gap.
+
+**Escalation event (21:20 UTC):** On the pre-enhanced run, alsa-ltc hit 10 EIO
+errors and exited. Watchdog restart attempts failed with `cannot set parameters
+(Connection timed out)`. USB stack fully wedged: `can't set config #1, error
+-110`; unbind/rebind of `1-1.1` and parent hub `1-1` failed; `lsusb` hung.
+Required warm reboot to recover (matches the documented "ribbon cable" failure
+mode in `/memories/repo/clock8002-stability-tests.md`).
+
+**Reboot recovery (21:53 UTC):** Card re-enumerated cleanly as card 0, alsa-ltc
+started by S99 init. Monitor re-armed.
+
+**2026-04-22 reflash — new SD card with image `piclockBR-8234252-gerry-sdcard.img`:**
+- Fresh card booted; hostname bug diagnosed (`/opt/clock8002/piclock-network.sh`
+  missing exec bit in overlay → `Permission denied` at boot → network.ini
+  silently skipped). Fix committed as **`58c6d17`** (`git update-index --chmod=+x`)
+  and pushed. Hot-patched live unit first; Buildroot image rebuilt for 58c6d17.
+- On **cold boot** of 8234252: USB xHCI HC died at 147s (hard failure) on that
+  run. Subsequent cold boot is clean; unit stable at 192.168.8.246 as
+  `piClockBR` (user renamed hostname in network.ini to avoid mDNS collision
+  with another `piclock.local` on LAN).
+- USB audio now on **card 1** (HDMI takes card 0/2 on this image); `1-1.1`
+  still. alsa-ltc PCM RUNNING, hw_ptr advancing, no errors.
+
+**Monitoring in place (ltcmon v3, 2026-04-22 ~15:59 UTC on new image):**
+- Script: `/root/ltcmon.sh` on piclockBR (repo copy: `tools/ltcmon.sh`). Rebuilt
+  from the session-memory spec — original file did not survive the new SD card.
+- Log: `/tmp/ltcmon.log`. Auto-detects USB audio card + usbdev path, so it
+  works regardless of card index.
+- Watches:
+  - `tail -F /tmp/alsa-ltc.log` (foreground) — classifies `[gap]` events
+    (SILENCE / INVALID_LTC / PARTIAL), `[APP_ERR]`. **NOTE:** on this image the
+    S99 init does not redirect alsa-ltc stdout, so `/tmp/alsa-ltc.log` is empty
+    until alsa-ltc is restarted under a redirect. Gap classification dormant
+    until then; all other signals still captured.
+  - `dmesg` cursor-based poll @5s — KERN/FREQ_FAIL, IFACE_FAIL, XRUN,
+    DISCONNECT, RESET, HC_DIED, DMA_PAUSE
+  - `/proc/asound/card<N>/pcm0c/sub0/status` @1s — PCM state transitions
+    (PCM/STATE), hw_ptr stall detection (PCM/STALL)
+  - `/sys/bus/usb/devices/1-1.1/urbnum` @1s — URB stall detection (URB/STALL)
+    when alsa-ltc is running
+  - `/sys/bus/usb/devices/1-1.1/power/runtime_status` @1s —
+    USB/SUSPEND / USB/RESUME transitions (definitive autosuspend fingerprint)
+  - 10s HEALTH snapshot: pid, state, pcm, hw_ptr, urbn, rs, susp_dms (ms
+    suspended this interval), xhci_d (xHCI interrupt delta), load, temp,
+    cumulative freq/iface error counts
+
+**Baseline (healthy):** hw_ptr +442K/10s, urbn +10K/10s, xhci_d ≈10022,
+rs=active, susp_dms=0, no errors.
+
+**Autosuspend status:** `autosuspend=2s` is configured on the CM108 endpoint,
+but `runtime_suspended_time=0` since boot — device has never suspended while
+alsa-ltc is actively reading. Autosuspend could only fire during an
+error-recovery window when alsa-ltc momentarily pauses URB submission. The
+new USB/SUSPEND tag will definitively show whether autosuspend is the
+trigger when the bug next occurs.
+
+**Commands:**
+```bash
+# Skip heartbeats, see events
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa root@192.168.8.246 \
+  'grep -v heartbeat /tmp/ltcmon.log | tail -40'
+
+# Restart monitor (hard-kills strays, clears log)
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa root@192.168.8.246 '
+for p in $(ps | grep ltcmon | grep -v grep | awk "{print \$1}"); do kill -9 $p; done
+rm -f /tmp/ltcmon.log
+nohup /root/ltcmon.sh > /tmp/ltcmon.log 2>&1 &'
+```
+
+**Open questions / next steps:**
+- Does autosuspend trigger the degraded state? (Monitor v3 will answer: if
+  `[USB/SUSPEND]` precedes `[KERN/FREQ_FAIL]` cluster → confirmed; if
+  `rs=active` throughout → ruled out)
+- Is PCM stall or URB stall the first symptom? (differentiates ALSA buffer
+  starve vs. USB URB submission freeze)
+- Candidate mitigations (NOT yet attempted — change-control gate):
+  - Disable USB autosuspend on the CM108 at runtime:
+    `echo -1 > /sys/bus/usb/devices/1-1.1/power/autosuspend` +
+    `echo on > /sys/bus/usb/devices/1-1.1/power/control`
+  - Watchdog-level PCM reopen on repeated gap events
+  - Different USB port / different audio adapter
+- Repo rule: no code changes until user explicitly approves.
+
+**Session note saved:** `/memories/session/ltc-dropout-investigation.md`
+
+---
 
 ## Current State
 
