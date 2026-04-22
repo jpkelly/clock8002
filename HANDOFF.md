@@ -126,13 +126,16 @@ destination to `192.168.8.246:1245`.
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - Latest Buildroot tag: **v1.3.2** — `buildroot` branch, commit `7dcaa69`
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `buildroot`** — current HEAD `70d0695`
-- Buildroot SD card image on Mac Desktop: **`piclockBR-58c6d17-gerry-sdcard.img`**
-- **piclockBR test unit** (192.168.8.246): flashed `58c6d17`, hot-swapped sdl3-clock to `70d0695` (2026-04-22). All features confirmed working
+- **Active branch: `buildroot`** — current HEAD `5a18694`
+- Buildroot SD card image on Mac Desktop: **`piclockBR-58c6d17-gerry-sdcard.img`** (pre-font-dropdown; rebuild pending)
+- **piclockBR test unit** (192.168.8.246): flashed `58c6d17`, hot-swapped sdl3-clock to `5a18694` (2026-04-22). All features confirmed working
 - Recent UI fixes on buildroot branch (2026-04-22), deployed to piclockBR:
   - `013be8d`: cue fullscreen clipping fix (text4 uses per-face logical size, vertical swap)
   - `e585ba0`: web-config save page refresh delay 1s → 3s (fix stale view race)
   - `70d0695`: 3-line text clock wider row gaps (stride 365→380, heights reverted to 300/100) — supersedes `06cc775` which grew row heights
+  - `8001c05`: font fields in web config become `<select>` dropdowns; pass `--font-path=/opt/clock8002` in service/install.sh/clock_cmd.sh overlay
+  - `5a18694`: preserve FontPath across config save; extract font walk into `collectFonts()` helper (fixes dropdown going empty after first save)
+- **Scope:** SDL3 + font dropdown fixes are `buildroot` branch only. Trixie variants (master) still on SDL2 `sdl-clock`; will inherit these on next buildroot → master merge + v1.x release.
 - Reboot + sdl3-clock deploy lesson captured in memory (`/memories/repo/clock8002-sdl3-clock-deploy-rules.md`): `S99clock stop` doesn't kill the pokemon watchdog; multiple deploy cycles stack watchdogs that race for port :80; sdl3-clock can hang in D-state (unkillable) — reboot first.
   - OLED logo + stats: **working at boot**
   - sdl3-clock HDMI: **working at boot**
