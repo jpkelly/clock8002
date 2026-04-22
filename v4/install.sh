@@ -213,7 +213,7 @@ if [ -f "${CONFIG_FILE}" ]; then
 fi
 
 sed "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" "${SERVICE_FILE}" | \
-    sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl3-clock --fullscreen|" | \
+    sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl3-clock --fullscreen --font-path=${INSTALL_DIR}|" | \
     sed "s|User=.*|User=$INSTALL_USER|" | \
     sudo tee /etc/systemd/system/clock8002.service > /dev/null
 

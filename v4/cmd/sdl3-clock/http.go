@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -117,14 +118,20 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	options.Fonts = make([]string, 0, 200)
+	seenFont := make(map[string]bool)
 	err = filepath.Walk(options.FontPath, func(path string, info os.FileInfo, err error) error {
 		if matched, err := filepath.Match("*.ttf", filepath.Base(path)); err != nil {
 			return err
 		} else if matched {
-			options.Fonts = append(options.Fonts, path)
+			name := filepath.Base(path)
+			if !seenFont[name] {
+				seenFont[name] = true
+				options.Fonts = append(options.Fonts, name)
+			}
 		}
 		return nil
 	})
+	sort.Strings(options.Fonts)
 	if err != nil {
 		log.Fatalf("Error walking fontpath: %v", err)
 	}

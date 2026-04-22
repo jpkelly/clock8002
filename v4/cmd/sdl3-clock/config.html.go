@@ -88,17 +88,41 @@ const configHTML = `
 
                 <label for="NumberFont">
                   <span>Font filename for text clock numbers</span>
-                  <input list="FontList" type="text" id="NumberFont" name="NumberFont" value="{{.NumberFont}}" />
+                  <select id="NumberFont" name="NumberFont">
+                    {{$cur := .NumberFont}}
+                    {{$found := false}}
+                    {{range $f := .Fonts}}{{if eq $f $cur}}{{$found = true}}{{end}}{{end}}
+                    {{if not $found}}<option value="{{$cur}}" selected>{{$cur}} (custom)</option>{{end}}
+                    {{range $f := .Fonts}}
+                      <option value="{{$f}}" {{if eq $f $cur}}selected{{end}}>{{$f}}</option>
+                    {{end}}
+                  </select>
                 </label>
 
                 <label for="LabelFont">
                   <span>Font filename for text clock labels</span>
-                  <input list="FontList" type="text" id="LabelFont" name="LabelFont" value="{{.LabelFont}}" />
+                  <select id="LabelFont" name="LabelFont">
+                    {{$cur := .LabelFont}}
+                    {{$found := false}}
+                    {{range $f := .Fonts}}{{if eq $f $cur}}{{$found = true}}{{end}}{{end}}
+                    {{if not $found}}<option value="{{$cur}}" selected>{{$cur}} (custom)</option>{{end}}
+                    {{range $f := .Fonts}}
+                      <option value="{{$f}}" {{if eq $f $cur}}selected{{end}}>{{$f}}</option>
+                    {{end}}
+                  </select>
                 </label>
 
                 <label for="IconFont">
                   <span>Font filename for text clock icons</span>
-                  <input list="FontList" type="text" id="IconFont" name="IconFont" value="{{.IconFont}}" />
+                  <select id="IconFont" name="IconFont">
+                    {{$cur := .IconFont}}
+                    {{$found := false}}
+                    {{range $f := .Fonts}}{{if eq $f $cur}}{{$found = true}}{{end}}{{end}}
+                    {{if not $found}}<option value="{{$cur}}" selected>{{$cur}} (custom)</option>{{end}}
+                    {{range $f := .Fonts}}
+                      <option value="{{$f}}" {{if eq $f $cur}}selected{{end}}>{{$f}}</option>
+                    {{end}}
+                  </select>
                 </label>
 
                 {{number "Flash" "Flashing interval in milliseconds for ellapsed countdowns." .EngineOptions.Flash}}
