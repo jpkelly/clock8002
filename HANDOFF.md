@@ -126,9 +126,14 @@ destination to `192.168.8.246:1245`.
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - Latest Buildroot tag: **v1.3.2** — `buildroot` branch, commit `7dcaa69`
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `buildroot`** (renamed from `feature/sdl3-migration`)
-- Buildroot SD card image on Mac Desktop: **`piclockBR-b93633c-sdcard.img`** (release build, no SSH key)
-- **piclockBR test unit** (192.168.8.246): running `c1fc28a` image (v1.3.2), all features confirmed working
+- **Active branch: `buildroot`** — current HEAD `70d0695`
+- Buildroot SD card image on Mac Desktop: **`piclockBR-58c6d17-gerry-sdcard.img`**
+- **piclockBR test unit** (192.168.8.246): flashed `58c6d17`, hot-swapped sdl3-clock to `70d0695` (2026-04-22). All features confirmed working
+- Recent UI fixes on buildroot branch (2026-04-22), deployed to piclockBR:
+  - `013be8d`: cue fullscreen clipping fix (text4 uses per-face logical size, vertical swap)
+  - `e585ba0`: web-config save page refresh delay 1s → 3s (fix stale view race)
+  - `70d0695`: 3-line text clock wider row gaps (stride 365→380, heights reverted to 300/100) — supersedes `06cc775` which grew row heights
+- Reboot + sdl3-clock deploy lesson captured in memory (`/memories/repo/clock8002-sdl3-clock-deploy-rules.md`): `S99clock stop` doesn't kill the pokemon watchdog; multiple deploy cycles stack watchdogs that race for port :80; sdl3-clock can hang in D-state (unkillable) — reboot first.
   - OLED logo + stats: **working at boot**
   - sdl3-clock HDMI: **working at boot**
   - WiFi AP (piclockBR-ap): **working**
