@@ -87,11 +87,12 @@ func updateCue(state *clock.State) {
 
 func drawCue() {
 	if options.CueFullScreen {
+		w, h, _ := renderer.CurrentOutputSize()
 		rect := sdl.FRect{
-			W: 1920 - 20,
-			H: 1080 - 20,
 			X: 10,
 			Y: 10,
+			W: float32(w) - 20,
+			H: float32(h) - 20,
 		}
 		copyIntoRect(cueTexture, rect)
 	} else {
