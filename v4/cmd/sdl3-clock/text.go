@@ -207,17 +207,17 @@ func draw3TextClocks(state *clock.State) {
 			// Row is hidden
 			continue
 		}
-		y = float32(15 + (350 * i))
+		y = float32(10 + (380 * i))
 		x = 530
-		numberBox := sdl.FRect{X: x, Y: y, W: 1380, H: 340}
-		textR := sdl.FRect{X: x + 300, Y: y, W: 1380 - 300, H: 340}
+		numberBox := sdl.FRect{X: x, Y: y, W: 1380, H: 300}
+		textR := sdl.FRect{X: x + 300, Y: y, W: 1380 - 300, H: 300}
 		if options.IconsDisable {
 			textR = numberBox
 		}
-		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 340}
+		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 300}
 		x = 10
-		labelR := sdl.FRect{X: x, Y: y, W: 500, H: 115}
-		signalR := sdl.FRect{X: iconR.X - 175, Y: y + 145, W: 150, H: 150}
+		labelR := sdl.FRect{X: x, Y: y, W: 500, H: 100}
+		signalR := sdl.FRect{X: iconR.X - 175, Y: y + 125, W: 150, H: 150}
 		if options.DrawBoxes {
 			// Draw the placeholder boxes for timers and labels
 			rectColor(&numberBox, colors.rowBG[i])
@@ -549,7 +549,7 @@ func drawTally(state *clock.State) {
 			textClock.tallyTex.SetAlphaMod(colors.tally.A)
 		}
 
-		tallyRect := sdl.FRect{X: 10, Y: 15 + (350 * 2), W: 1920 - 20, H: 340}
+		tallyRect := sdl.FRect{X: 10, Y: 10 + (380 * 2), W: 1920 - 20, H: 300}
 		if options.Face == "text2" {
 			tallyRect = sdl.FRect{X: 10, Y: 25 + (530 * 1), W: 1920 - 20, H: 440}
 		} else if options.Face == "text4" {
