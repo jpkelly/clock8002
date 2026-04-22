@@ -1,7 +1,9 @@
 #!/bin/sh
-# ltcmon v3 — enhanced alsa-ltc/USB/ALSA monitor (reconstructed)
+# ltcmon v4 — enhanced alsa-ltc/USB/ALSA/PCIe monitor
+# v4 adds: PCIe AER counters, LnkSta, throttle, post-mortem dump on HC_DIED
 # Tags: GAP/*, KERN/*, PCM/STATE|STALL, URB/STALL, USB/SUSPEND|RESUME,
-#       STATE, RESTART, APP_ERR, HEALTH, heartbeat
+#       PCIE/AER, PCIE/LNKSTA, THROTTLE, STATE, RESTART, APP_ERR, HEALTH,
+#       heartbeat, POSTMORTEM
 # Logs to stdout; wrap with nohup ... > /tmp/ltcmon.log 2>&1 &
 
 ts() { date +%H:%M:%S; }
@@ -31,8 +33,39 @@ SUSPTIME="$USBPATH/power/runtime_suspended_time"
 CURSOR=/tmp/ltcmon.dmesg.cursor
 ALSA_LOG=/tmp/alsa-ltc.log
 
-log "[MON/START] ltcmon v3 card=$CARD usbdev=$USBDEV pcm=$PCMSTAT"
+# --- PCIe autodetect (VL805 xHCI + parent bridge) ---
+# Find the xHCI PCI device whose child is our USB bus
+detect_pcie() {
+  # Prefer the PCI device that hosts the USB audio device
+  if [ -L "$USBPATH" ]; then
+    real=$(readlink -f "$USBPATH" 2>/dev/null)
+    # e.g. /sys/devices/platform/axi/1000110000.pcie/pci0001:00/0001:00:00.0/0001:01:00.0/usb1/1-1/1-1.1
+    xhci=$(echo "$real" | sed -n 's#\(.*/[0-9a-f]\{4\}:[0-9a-f]\{2\}:[0-9a-f]\{2\}\.[0-9a-f]\)/usb[0-9].*#\1#p')
+    bridge=$(dirname "$xhci" 2>/dev/null)
+    [ -d "$xhci" ] && [ -d "$bridge" ] && {
+      echo "$xhci $bridge"
+      return
+    }
+  fi
+  # Fallback: scan for VL805 (VIA 1106:3483)
+  for pci in /sys/bus/pci/devices/*; do
+    v=$(cat "$pci/vendor" 2>/dev/null); d=$(cat "$pci/device" 2>/dev/null)
+    if [ "$v" = "0x1106" ] && [ "$d" = "0x3483" ]; then
+      br=$(dirname "$(readlink -f "$pci")")
+      echo "$pci $br"
+      return
+    fi
+  done
+}
+set -- $(detect_pcie)
+XHCI_PCI=$1
+PCIE_BRIDGE=$2
+THROTTLED_PATH=$(ls /sys/devices/platform/soc/*firmware*/get_throttled 2>/dev/null | head -1)
+
+log "[MON/START] ltcmon v4 card=$CARD usbdev=$USBDEV pcm=$PCMSTAT"
 log "[MON/START] pid=$$ alsa_log=$ALSA_LOG"
+log "[MON/START] xhci_pci=${XHCI_PCI:-none} bridge=${PCIE_BRIDGE:-none}"
+log "[MON/START] throttled=${THROTTLED_PATH:-none}"
 
 DMESG_PREV=$(dmesg 2>/dev/null | wc -l)
 echo "$DMESG_PREV" > "$CURSOR"
@@ -105,16 +138,67 @@ P_URB=$!
     if [ "$cur" -gt "$prev" ]; then
       delta=$((cur - prev))
       dmesg 2>/dev/null | tail -n "$delta" | while IFS= read -r line; do
+        hc_died=0
         case "$line" in
           *"cannot set freq"*)                 log "[KERN/FREQ_FAIL] $line" ;;
           *"usb_set_interface failed"*)        log "[KERN/IFACE_FAIL] $line" ;;
           *"underrun"*|*"xrun"*|*"XRUN"*)      log "[KERN/XRUN] $line" ;;
-          *"HC died"*)                         log "[KERN/HC_DIED] $line" ;;
-          *"xhci"*"dead"*)                     log "[KERN/HC_DIED] $line" ;;
+          *"HC died"*)                         log "[KERN/HC_DIED] $line"; hc_died=1 ;;
+          *"xhci"*"dead"*)                     log "[KERN/HC_DIED] $line"; hc_died=1 ;;
+          *"not responding, assume dead"*)     log "[KERN/HC_DIED] $line"; hc_died=1 ;;
           *"USB disconnect"*)                  log "[KERN/DISCONNECT] $line" ;;
           *"reset high-speed"*|*"reset full-speed"*|*"reset low-speed"*) log "[KERN/RESET] $line" ;;
           *"failed to complete pause on dma"*) log "[KERN/DMA_PAUSE] $line" ;;
+          *"AER:"*|*"PCIe Bus Error"*)         log "[KERN/PCIE_AER] $line" ;;
+          *"link up"*|*"link down"*|*"Link Down"*|*"LnkCtl"*) log "[KERN/PCIE_LINK] $line" ;;
+          *"Under-voltage"*|*"under-voltage"*|*"throttle"*|*"Throttle"*) log "[KERN/THROTTLE] $line" ;;
         esac
+        if [ "$hc_died" = "1" ]; then
+          # Post-mortem dump (once per event cluster)
+          PM="/var/log/ltcmon-death-$(date +%s).log"
+          [ -d /var/log ] || PM="/root/ltcmon-death-$(date +%s).log"
+          {
+            echo "=== ltcmon POSTMORTEM $(date -Iseconds 2>/dev/null || date) ==="
+            echo "=== trigger line ==="
+            echo "$line"
+            echo
+            echo "=== uptime / loadavg ==="
+            uptime; cat /proc/loadavg
+            echo
+            echo "=== last 300 dmesg ==="
+            dmesg | tail -300
+            echo
+            echo "=== /proc/interrupts ==="
+            cat /proc/interrupts
+            echo
+            echo "=== lsusb ==="
+            lsusb 2>&1
+            echo
+            echo "=== asound/cards ==="
+            cat /proc/asound/cards 2>&1
+            echo
+            if [ -n "$XHCI_PCI" ] && [ -r "$XHCI_PCI/config" ]; then
+              echo "=== VL805 xHCI config space head ==="
+              dd if="$XHCI_PCI/config" bs=1 count=64 2>/dev/null | od -An -tx1 | head -4
+            fi
+            if [ -n "$PCIE_BRIDGE" ]; then
+              echo
+              echo "=== PCIe bridge AER counters ==="
+              for f in aer_dev_correctable aer_dev_fatal aer_dev_nonfatal; do
+                [ -r "$PCIE_BRIDGE/$f" ] && { echo "$f:"; cat "$PCIE_BRIDGE/$f"; }
+              done
+            fi
+            if [ -n "$THROTTLED_PATH" ]; then
+              echo
+              echo "=== throttled ==="
+              cat "$THROTTLED_PATH"
+            fi
+            echo
+            echo "=== last 200 ltcmon.log lines ==="
+            tail -200 /tmp/ltcmon.log 2>/dev/null
+          } > "$PM" 2>&1
+          log "[POSTMORTEM] wrote $PM"
+        fi
       done
       echo "$cur" > "$CURSOR"
     fi
@@ -122,6 +206,53 @@ P_URB=$!
   done
 ) &
 P_DMESG=$!
+
+# 3b) PCIe AER + LnkSta poller (10s)
+(
+  prev_cor=""; prev_fat=""; prev_non=""; prev_lnk=""
+  # Offset of PCIe Link Status register varies; look up Link Capabilities/Status via sysfs if possible.
+  # Kernel exposes 'current_link_speed' and 'current_link_width' on the bridge.
+  while :; do
+    if [ -n "$PCIE_BRIDGE" ]; then
+      for f in aer_dev_correctable aer_dev_fatal aer_dev_nonfatal; do
+        case "$f" in
+          aer_dev_correctable)
+            cur=$(awk 'NF==2 && $2 ~ /^[0-9]+$/ {s+=$2} END{print s+0}' "$PCIE_BRIDGE/$f" 2>/dev/null)
+            if [ -n "$prev_cor" ] && [ "$cur" != "$prev_cor" ]; then
+              log "[PCIE/AER] correctable $prev_cor -> $cur"
+            fi
+            prev_cor=$cur
+            ;;
+          aer_dev_fatal)
+            cur=$(awk 'NF==2 && $2 ~ /^[0-9]+$/ {s+=$2} END{print s+0}' "$PCIE_BRIDGE/$f" 2>/dev/null)
+            if [ -n "$prev_fat" ] && [ "$cur" != "$prev_fat" ]; then
+              log "[PCIE/AER] fatal $prev_fat -> $cur"
+            fi
+            prev_fat=$cur
+            ;;
+          aer_dev_nonfatal)
+            cur=$(awk 'NF==2 && $2 ~ /^[0-9]+$/ {s+=$2} END{print s+0}' "$PCIE_BRIDGE/$f" 2>/dev/null)
+            if [ -n "$prev_non" ] && [ "$cur" != "$prev_non" ]; then
+              log "[PCIE/AER] nonfatal $prev_non -> $cur"
+            fi
+            prev_non=$cur
+            ;;
+        esac
+      done
+      # Link speed/width via sysfs
+      spd=""; wid=""
+      [ -r "$PCIE_BRIDGE/current_link_speed" ] && spd=$(cat "$PCIE_BRIDGE/current_link_speed" 2>/dev/null)
+      [ -r "$PCIE_BRIDGE/current_link_width" ] && wid=$(cat "$PCIE_BRIDGE/current_link_width" 2>/dev/null)
+      lnk="${spd}/${wid}"
+      if [ -n "$prev_lnk" ] && [ "$lnk" != "$prev_lnk" ]; then
+        log "[PCIE/LNKSTA] $prev_lnk -> $lnk"
+      fi
+      prev_lnk=$lnk
+    fi
+    sleep 10
+  done
+) &
+P_PCIE=$!
 
 # 4) process state + restart (10s)
 (
@@ -168,11 +299,13 @@ P_STATE=$!
     load=$(awk '{print $1}' /proc/loadavg)
     temp=0
     [ -r /sys/class/thermal/thermal_zone0/temp ] && temp=$(( $(cat /sys/class/thermal/thermal_zone0/temp) / 1000 ))
+    thr="?"
+    [ -n "$THROTTLED_PATH" ] && [ -r "$THROTTLED_PATH" ] && thr=$(cat "$THROTTLED_PATH" 2>/dev/null)
     freq_errs=$(grep -c '\[KERN/FREQ_FAIL\]' /tmp/ltcmon.log 2>/dev/null)
     iface_errs=$(grep -c '\[KERN/IFACE_FAIL\]' /tmp/ltcmon.log 2>/dev/null)
     [ -z "$freq_errs" ] && freq_errs=0
     [ -z "$iface_errs" ] && iface_errs=0
-    log "[HEALTH] pid=${pid:-none} state=$st pcm=$pcm hw_ptr=$hw urbn=$urb rs=$rs susp_dms=$susp_dms xhci_d=$xhci_d load=$load temp=${temp}C freq_errs=$freq_errs iface_errs=$iface_errs"
+    log "[HEALTH] pid=${pid:-none} state=$st pcm=$pcm hw_ptr=$hw urbn=$urb rs=$rs susp_dms=$susp_dms xhci_d=$xhci_d load=$load temp=${temp}C thr=$thr freq_errs=$freq_errs iface_errs=$iface_errs"
     tick=$((tick+1))
     [ $((tick % 6)) -eq 0 ] && log "[heartbeat] up"
   done
@@ -181,7 +314,7 @@ P_HEALTH=$!
 
 cleanup() {
   log "[MON/STOP] shutting down"
-  kill $P_PCM $P_URB $P_DMESG $P_STATE $P_HEALTH 2>/dev/null
+  kill $P_PCM $P_URB $P_DMESG $P_PCIE $P_STATE $P_HEALTH 2>/dev/null
   exit 0
 }
 trap cleanup INT TERM
