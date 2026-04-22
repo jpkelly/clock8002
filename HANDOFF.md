@@ -135,6 +135,7 @@ destination to `192.168.8.246:1245`.
   - `70d0695`: 3-line text clock wider row gaps (stride 365→380, heights reverted to 300/100) — supersedes `06cc775` which grew row heights
   - `8001c05`: font fields in web config become `<select>` dropdowns; pass `--font-path=/opt/clock8002` in service/install.sh/clock_cmd.sh overlay
   - `5a18694`: preserve FontPath across config save; extract font walk into `collectFonts()` helper (fixes dropdown going empty after first save)
+  - All five UI fixes above **visually verified on piclockBR display 2026-04-22**: dropdown populates and repopulates after save; saved NumberFont renders on text faces; 3-line spacing correct; save redirect timing correct; cue fullscreen no longer clipped.
 - **Scope:** SDL3 + font dropdown fixes are `buildroot` branch only. Trixie variants (master) still on SDL2 `sdl-clock`; will inherit these on next buildroot → master merge + v1.x release.
 - Reboot + sdl3-clock deploy lesson captured in memory (`/memories/repo/clock8002-sdl3-clock-deploy-rules.md`): `S99clock stop` doesn't kill the pokemon watchdog; multiple deploy cycles stack watchdogs that race for port :80; sdl3-clock can hang in D-state (unkillable) — reboot first.
   - OLED logo + stats: **working at boot**
