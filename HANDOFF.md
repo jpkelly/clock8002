@@ -108,6 +108,15 @@ nohup /root/ltcmon.sh > /tmp/ltcmon.log 2>&1 &'
 
 **Session note saved:** `/memories/session/ltc-dropout-investigation.md`
 
+**Production image policy (2026-04-22):** Diagnostics (ltcmon, verbose
+logging) stay OUT of production images — deploy on demand from `tools/`.
+See `/memories/repo/clock8002-production-image-policy.md`.
+
+**Source3 "Playback" not displaying (2026-04-22) — resolved:** Mitti was
+still configured to send OSC to the previous unit's IP. IP changed with the
+new SD card. Not a code/config bug on the clock side. Fix: update Mitti OSC
+destination to `192.168.8.246:1245`.
+
 ---
 
 ## Current State
