@@ -1,3 +1,13 @@
+## Unreleased (buildroot branch)
+* Web config
+  * NumberFont / LabelFont / IconFont fields are now `<select>` dropdowns, auto-populated from `.ttf` files in `--font-path`. If the currently saved font isn't on disk, it is preserved as a `(custom)` option so nothing is silently dropped. (`8001c05`)
+  * Font list no longer empties after the first save — CLI-only `FontPath` is now preserved across the config reload that happens on save. The font walk is factored into a `collectFonts()` helper, used by both the index handler and the validation-error re-render path. (`5a18694`)
+  * Save-confirmation page refresh delay increased 1s → 3s so the server has time to reload and return fresh values instead of a stale view. (`e585ba0`)
+* sdl3-clock
+  * `--font-path=/opt/clock8002` now passed in `clock8002.service`, `install.sh`, and the Buildroot `clock_cmd.sh` overlay so the web-config font dropdown is populated on both Trixie and Buildroot installs. (`8001c05`)
+  * Cue fullscreen (text4): use per-face logical size with vertical swap so the PerfectCue arrow is no longer clipped at the bottom. (`013be8d`)
+  * 3-line text clock: increase row-to-row stride (365 → 380) while keeping row heights at 300/100 — gives more breathing room between rows without growing glyphs. (`70d0695`, supersedes `06cc775`)
+
 ## Version 1.3.1
 * Install
   * Fix `~/.config/clock-8001/` directory created as root when running `sudo bash install.sh` — sdl-clock would fail immediately with "permission denied" on the log file
