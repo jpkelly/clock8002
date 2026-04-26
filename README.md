@@ -18,9 +18,6 @@ An HDMI clock display for Raspberry Pi 5, running as a minimal appliance on a cu
 - [Service Operations](#service-operations)
 - [GPIO/UART Serial Connections](#gpiouart-serial-connections)
 - [OSC Control](#osc-control)
-- [Building from Source](#building-from-source)
-- [Legacy Trixie/SDL2 Path](#legacy-trixiesdl2-path)
-- [Troubleshooting](#troubleshooting)
 - [License](#license)
 
 ## Acknowledgements
@@ -235,42 +232,6 @@ UART overlays are pre-configured in the Buildroot image `config.txt`. No manual 
 ## OSC Control
 
 See the [original clock-8001 OSC documentation](https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md) for the full list of OSC commands.
-
-## Building from Source
-
-The Buildroot image is built on a dedicated build host (Pi CM5). See [buildroot-external/README.buildroot.md](buildroot-external/README.buildroot.md) for full build, deploy, and release procedures.
-
-For a quick binary cross-compile (code changes only, no full image rebuild):
-
-```bash
-GOOS=linux GOARCH=arm64 CGO_ENABLED=0 GOFLAGS=-mod=vendor go build -o /tmp/sdl3-clock-linux-arm64 ./cmd/sdl3-clock
-```
-
-Deploy directly to a running unit:
-
-```sh
-/etc/init.d/S99clock stop
-scp /tmp/sdl3-clock-linux-arm64 root@piClock.local:/opt/clock8002/sdl3-clock
-ssh root@piClock.local '/etc/init.d/S99clock start'
-```
-
-> No `install.sh` exists on Buildroot — deploy binaries directly.
-
-## Legacy Trixie/SDL2 Path
-
-The original SDL2/Debian Trixie deployment path (using `install.sh` on Raspberry Pi OS) is preserved on the [`trixie` branch](../../tree/trixie). It is no longer actively developed but remains available for reference.
-
-## Troubleshooting
-
-| Problem | Solution |
-|---------|----------|
-| Black screen / no output | Check `ps | grep sdl3-clock` — ensure DRM/KMS is not held by another process |
-| Text invisible on display | Verify Mesa 25.0.7 patches were applied to the Buildroot build host (see [issue #29](https://github.com/jpkelly/clock8002/issues/29)) |
-| Clock exits silently | Check `/root/.config/clock-8001/clock.log` |
-| Web UI not accessible | Verify `ps | grep sdl3-clock` shows the process running and check network connectivity |
-| Config changes not applied | Restart the service: `/etc/init.d/S99clock restart` |
-| SSH: too many auth failures | Use `-o IdentitiesOnly=yes -i ~/.ssh/id_ed25519` to specify the key |
-| alsa-ltc not decoding LTC | Check `systemctl status alsa-ltc`; verify USB audio device is connected |
 
 ## License
 

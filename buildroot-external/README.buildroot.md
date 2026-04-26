@@ -262,9 +262,9 @@ To test a single binary change on the running unit without rebuilding the full i
 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 GOFLAGS=-mod=vendor go build -o /tmp/sdl3-clock-linux-arm64 ./cmd/sdl3-clock
 
 # Copy to unit and restart
-systemctl stop clock8002
-scp /tmp/sdl3-clock-linux-arm64 root@piClock.local:/opt/clock8002/sdl-clock
-ssh root@piClock.local 'systemctl start clock8002'
+/etc/init.d/S99clock stop
+scp /tmp/sdl3-clock-linux-arm64 root@piClock.local:/opt/clock8002/sdl3-clock
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@piClock.local '/etc/init.d/S99clock start'
 ```
 
 No `install.sh` exists on Buildroot — deploy binaries directly.
@@ -283,11 +283,23 @@ The Buildroot target uses BusyBox — not GNU coreutils. Key differences:
 
 ## Service Management
 
-```bash
-systemctl start|stop|restart|status clock8002
-systemctl start|stop|restart|status alsa-ltc
-systemctl start|stop|restart|status oled_daemon
-journalctl -u clock8002 -f
+```sh
+# Clock
+/etc/init.d/S99clock start
+/etc/init.d/S99clock stop
+/etc/init.d/S99clock restart
+ps | grep sdl3-clock        # status
+
+# LTC decoder
+/etc/init.d/S99alsa-ltc start
+/etc/init.d/S99alsa-ltc stop
+/etc/init.d/S99alsa-ltc restart
+ps | grep alsa-ltc          # status
+
+# OLED daemon
+/etc/init.d/S98oled start
+/etc/init.d/S98oled stop
+ps | grep oled_daemon       # status
 ```
 
 Log file location (root user): `/root/.config/clock-8001/clock.log`
