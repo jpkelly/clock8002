@@ -123,14 +123,11 @@ destination to `192.168.8.246:1245`.
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
-- Latest Buildroot tag: **v1.3.2** — `buildroot` branch, commit `7dcaa69`
-- master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `buildroot`** — current HEAD **`af37c54`**
-- Buildroot SD card image on Mac Desktop: **`piclockBR-af37c54-sdcard.img`** (soak test in progress)
-- **piclockBR test unit** (192.168.8.245): flashed `af37c54` (2026-04-25). Running soak test.
-- Soak monitor running on device: `/tmp/soak.sh` → `/tmp/soak.log`, 60s interval, commit `af37c54`
-- Full release Buildroot build running on cm5 in screen session `br-release` → `/tmp/br-release.log`
+- **Latest release: v1.3.3** (RC, 2026-04-26) — `master` branch (Buildroot/SDL3). Key commit: `af37c54` (second-display freeze fix)
+- Latest Trixie release: **v1.3.1** — archived on `trixie` branch
+- **Active branch: `master`** (Buildroot) — branch rename complete 2026-04-26
+- Buildroot SD card image on Mac Desktop: **`piclockBR-af37c54-sdcard.img`** (production build, no SSH key)
+- **piclockBR test unit** (192.168.8.245): flashed `af37c54` (2026-04-25). Soak test passed ~12h checkpoint (all green — VmRSS stable, VmSwap=0).
 - Recent UI fixes on buildroot branch (2026-04-22), deployed to piclockBR:
   - `013be8d`: cue fullscreen clipping fix (text4 uses per-face logical size, vertical swap)
   - `e585ba0`: web-config save page refresh delay 1s → 3s (fix stale view race)
@@ -625,12 +622,12 @@ Committed changes in `v4/alsa-ltc.c`, `v4/alsa-ltc.service`, and Buildroot overl
 - SDL3 port complete and soak-tested; SDL2 path has no ongoing development
 - Code divergence (118 vs 420 commits from common ancestor) makes cross-branch merging impractical
 
-**Branch operations required (manual — GitHub Settings):**
-1. Change default branch from `master` to `buildroot`
-2. Rename `master` → `trixie`
-3. Rename `buildroot` → `master`
-4. Update local: `git branch -m buildroot master && git fetch origin && git branch -u origin/master master`
-5. Update `.github/copilot-instructions.md` — remove `buildroot` branch references
+**Branch operations completed (2026-04-26):**
+1. ✅ Changed default branch to `master` (was `buildroot`)
+2. ✅ Renamed `master` → `trixie`
+3. ✅ Renamed `buildroot` → `master`
+4. ✅ Local tracking updated
+5. ✅ `.github/copilot-instructions.md` — branch references verified correct
 
 **Tracking issue:** [#40](https://github.com/jpkelly/clock8002/issues/40)
 
@@ -641,6 +638,5 @@ Committed changes in `v4/alsa-ltc.c`, `v4/alsa-ltc.service`, and Buildroot overl
 
 ## Next Suggested Release
 
-- No immediate release pending.
-- Prerequisites before next release: resolve #28 (Trixie regression test + broadcast.go fix), #29 (build host patches), #30 (SSH/password).
-- alsa-ltc enhancements above should be included in next release after build/test validation.
+- **v1.3.3** cut 2026-04-26 as release candidate — Buildroot (SDL3) primary image. Includes second-display freeze fix (`af37c54`) and branch rename to `master`.
+- Next planned release: **v1.4.0** — official Buildroot release.

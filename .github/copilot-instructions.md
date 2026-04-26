@@ -35,7 +35,7 @@ Stability decision gate note:
 - Approve code change only if leak behavior is reproduced on that unit (e.g., materially rising `VmSwap` for `sdl-clock` or sustained RSS growth over time). If metrics are flat by 24h, hold changes and treat prior 1GB findings as non-generalized.
 
 Release management note:
-- For each new release, be sure to include both a default and a Gerry version.
+- For each new release, build both network variants: `NETWORK_CONFIG=default` and `NETWORK_CONFIG=gerry`. The `gerry` variant is the primary release.
 - Versioning must follow this repository's own tag line (`v1.x` and onward); ignore inherited upstream `v4.x` tags from the fork source.
 - When cutting a new release, update README quick-install download/extract commands to the new release URL/version.
 - When tagging a release, always update HANDOFF.md to reflect the new latest tag, commit hash, and any relevant status changes before or as part of the release commit.
