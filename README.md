@@ -64,9 +64,21 @@ Mount the SD card's FAT32 boot partition (appears as `piClock` on Mac/PC) and ed
 
 ### 3. Flash to SD card
 
-Use **[Raspberry Pi Imager](https://www.raspberrypi.com/software/)** — choose "Use custom image" and select the `.img` file. This works on macOS, Windows, and Linux.
+**Option A — Raspberry Pi Imager (recommended):** Use **[Raspberry Pi Imager](https://www.raspberrypi.com/software/)** — choose "Use custom image" and select the `.img` file. This works on macOS, Windows, and Linux.
 
-Alternatively, use any other SD card flashing tool (e.g. balenaEtcher).
+**Option B — `dd` (macOS/Linux):**
+
+```bash
+# Identify your SD card disk number (look for the correct size)
+diskutil list external physical
+
+# Flash (replace diskN with your disk number)
+diskutil unmountDisk /dev/diskN
+sudo dd if=/Users/jp/Desktop/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
+diskutil eject /dev/diskN
+```
+
+On Linux, replace `/dev/rdiskN` with `/dev/sdX` or `/dev/mmcblkX` as appropriate.
 
 > **Warning:** Flashing overwrites all data on the SD card. Verify you have selected the correct device before proceeding.
 
