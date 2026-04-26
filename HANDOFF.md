@@ -123,7 +123,7 @@ destination to `192.168.8.246:1245`.
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- **Latest release: v1.3.3** (RC, 2026-04-26) — `master` branch (Buildroot/SDL3). Key commit: `af37c54` (second-display freeze fix)
+- **Latest release: v1.3.4** (2026-04-26) — `master` branch (Buildroot/SDL3). Commit: `14cb2d1`
 - Latest Trixie release: **v1.3.1** — archived on `trixie` branch
 - **Active branch: `master`** (Buildroot) — branch rename complete 2026-04-26
 - Buildroot SD card image on Mac Desktop: **`piclockBR-af37c54-sdcard.img`** (production build, no SSH key)
@@ -638,5 +638,4 @@ Committed changes in `v4/alsa-ltc.c`, `v4/alsa-ltc.service`, and Buildroot overl
 
 ## Next Suggested Release
 
-- **v1.3.3** cut 2026-04-26 as release candidate — Buildroot (SDL3) primary image. Includes second-display freeze fix (`af37c54`) and branch rename to `master`.
-- Next planned release: **v1.4.0** — official Buildroot release.
+- Next planned release: **v1.4.0** — next Buildroot release cycle.
