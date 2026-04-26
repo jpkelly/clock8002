@@ -66,7 +66,7 @@ Mount the SD card's FAT32 boot partition (appears as `piClock` on Mac/PC) and ed
 
 **Option A — Raspberry Pi Imager (recommended):** Use **[Raspberry Pi Imager](https://www.raspberrypi.com/software/)** — choose "Use custom image" and select the `.img` file. This works on macOS, Windows, and Linux.
 
-**Option B — `dd` (macOS/Linux):**
+**Option B — `dd` (macOS):**
 
 ```bash
 # Identify your SD card disk number (look for the correct size)
@@ -78,7 +78,17 @@ sudo dd if=/path/to/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=prog
 diskutil eject /dev/diskN
 ```
 
-On Linux, replace `/dev/rdiskN` with `/dev/sdX` or `/dev/mmcblkX` as appropriate.
+**Option C — `dd` (Linux):**
+
+```bash
+# Identify your SD card device (look for the correct size)
+lsblk
+
+# Flash (replace sdX or mmcblkX with your device)
+sudo umount /dev/sdX*
+sudo dd if=/path/to/piClock-<COMMIT>-sdcard.img of=/dev/sdX bs=4M status=progress
+sync
+```
 
 > **Warning:** Flashing overwrites all data on the SD card. Verify you have selected the correct device before proceeding.
 
