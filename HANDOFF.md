@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-22
+Last updated: 2026-04-25
 
 ## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
 
@@ -126,9 +126,11 @@ destination to `192.168.8.246:1245`.
 - Latest tagged release: **v1.3.1** — Trixie tarballs on GitHub (default + gerry)
 - Latest Buildroot tag: **v1.3.2** — `buildroot` branch, commit `7dcaa69`
 - master HEAD: **`3ed5c9d`** (RELEASING: add fresh-install smoke test step)
-- **Active branch: `buildroot`** — current HEAD `5a18694`
-- Buildroot SD card image on Mac Desktop: **`piclockBR-58c6d17-gerry-sdcard.img`** (pre-font-dropdown; rebuild pending)
-- **piclockBR test unit** (192.168.8.246): flashed `58c6d17`, hot-swapped sdl3-clock to `5a18694` (2026-04-22). All features confirmed working
+- **Active branch: `buildroot`** — current HEAD **`af37c54`**
+- Buildroot SD card image on Mac Desktop: **`piclockBR-af37c54-sdcard.img`** (soak test in progress)
+- **piclockBR test unit** (192.168.8.245): flashed `af37c54` (2026-04-25). Running soak test.
+- Soak monitor running on device: `/tmp/soak.sh` → `/tmp/soak.log`, 60s interval, commit `af37c54`
+- Full release Buildroot build running on cm5 in screen session `br-release` → `/tmp/br-release.log`
 - Recent UI fixes on buildroot branch (2026-04-22), deployed to piclockBR:
   - `013be8d`: cue fullscreen clipping fix (text4 uses per-face logical size, vertical swap)
   - `e585ba0`: web-config save page refresh delay 1s → 3s (fix stale view race)
@@ -151,6 +153,48 @@ destination to `192.168.8.246:1245`.
 - **2GB Pi 5 board #1** (piclockTG.local): fresh Trixie 6.12.47, v1.3.1 gerry. EEPROM downgraded to 2025-05-08. Monitor running.
 - **2GB Pi 5 board #2** (piclockTD.local): fresh Trixie 6.12.47, v1.3.1 default. Stable. EEPROM 2025-05-08.
 - `buildroot-prototype` branch: fully merged into master
+
+## Second Display Work (2026-04-25, buildroot branch)
+
+### Commits
+- `fc4c6eb`: second-display: mirror mode + PerfectCue icon mode for Buildroot
+- `af37c54`: second-display: fix freeze on config save with second display active
+
+### What was implemented
+- **Mirror mode** (`CueSecondDisplay=false`, default): real-time DRM dumb buffer copy of SDL3 renderer output to spare HDMI connector. ABGR8888→XRGB8888 byte-swap for correct colours. Letterbox/pillarbox scaling for mismatched resolutions.
+- **Cue icon mode** (`CueSecondDisplay=true`): fullscreen PerfectCue icons (right/left/blank) on second HDMI, toggled via web config. Black between cues.
+- New files: `drm_mirror_linux.go`, `drm_mirror_other.go`, `drm_cue_linux.go`, `drm_cue_other.go`, `second_display_probe.go`
+
+### Key bugs found and fixed
+1. **sysfs false-positive HDMI detection**: `/sys/class/drm/card1-HDMI-A-2/status` always returns `connected` on Pi 5. Old code called `DROP_MASTER` on SDL's DRM fd → SDL lost display → hung system (bricked unit 3 times). Fix: use DRM ioctl (`findSpareHDMIConnector`) which only returns a connector if physically connected.
+2. **Unsafe pointer arithmetic**: `surface + 5*8` assumed SDL3 Surface struct layout. Fix: use `surface.Pixels()`.
+3. **R/B colour swap**: SDL3 `ReadPixels` returns ABGR8888 (R,G,B,A in memory) but DRM XRGB8888 expects B,G,R,X. Fix: detect format and swap bytes 0 and 2.
+4. **S99clock stop() was a no-op**: `clock_pokemon.sh stop()` contained only `true`. Fix: kill by PID file + process name. `S99clock start` now saves PID.
+5. **DRM freeze on config save**: `probeSecondDisplayOutput()` called `initDRMMirror()` on every config reload (not just first-time init). Second call did DROP_MASTER/SET_MASTER again → frozen display. Fix: guard with `isDRMMirrorActive()` — in-place mode switch, no DRM teardown.
+
+### Soak test status (2026-04-25 ~19:35 PDT / 2026-04-26 02:35 UTC)
+- Unit: 192.168.8.245, commit `af37c54`, ~5 min uptime at start
+- 0h baseline: RSS=109,560 kB, VmSwap=0, RAMfree=~688 MB, swap=0
+- 36 samples to date: RSS flat (normal jitter ±400 kB), both processes alive, no swap
+- Monitor: on-device `/tmp/soak.sh` (nohup), logging to `/tmp/soak.log`
+- **Decision gate**: hold release tag until 24h checkpoint shows flat RSS/swap
+
+### Release build status
+- Full `make clean && make` running on cm5 in screen session `br-release`
+- Log: `/tmp/br-release.log` on cm5
+- Check: `ssh pi@cm5.local 'grep BR_EXIT /tmp/br-release.log'` (empty until done)
+- Monitor: `ssh pi@cm5.local 'tail -5 /tmp/br-release.log'`
+- This will be the release image (no SSH key baked in)
+
+### After soak test passes
+1. Check soak log: `ssh root@192.168.8.245 'tail -20 /tmp/soak.log'`
+2. Update HANDOFF.md with final soak metrics
+3. Cut new version tag (v1.x — check last tag with `git tag | sort -V | tail -5`)
+4. Both default and Gerry release tarballs required (per release policy)
+5. Update README quick-install commands to new version
+6. Transfer release image to desktop and provide flash command
+
+---
 
 ## SDL3 Migration Status (branch: buildroot)
 
@@ -221,22 +265,22 @@ network interface) before using it. Never assume it exists at S## script time.
 - `clock.ini.default`: removed hardcoded `app-version`, changed `Face=quad` → `Face=text`
 
 ### Features NOT yet ported to sdl3-clock
-| # | Feature | sdl-clock files |
-|---|---------|-----------------|
-| 1 | **Quad face** — 4-source text clock | `text.go`, `data.go`, `http.go`, `config.html.go` |
-| 2 | **Dual face** — 2-source text clock | `text.go`, `data.go`, `http.go`, `config.html.go` |
-| 3 | **DRM mirror** — second HDMI via KMS/DRM dumb buffer | `drm_mirror_linux.go`, `drm_mirror_other.go`, `second_display_probe.go` |
-| 4 | **PerfectCue icon on HDMI-2** — cue icon mode | `drm_cue_linux.go`, `drm_cue_other.go`, `second_display_probe.go` |
-| 5 | **Configurable PerfectCue geometry** — cue-pos-x/y, cue-size | `cue.go`, `data.go` |
-| 6 | **Sync Time web API** — `/api/settime` + RTC sync | `http.go` |
-| 7 | **Cue test API** — `/api/cue` | `http.go` |
-| 8 | **Atomic config import** — temp+validate+rename | `http.go` |
-| 9 | **SDL resource leak fixes** — destroyTextClock/Audio on hot-reload | `text.go`, `audio.go`, `main.go` |
-| 10 | **Row 4 color/alpha** — configurable color + alpha for text clock row 4 | `data.go`, `http.go`, `config.html.go` |
-| 11 | **Network-aware info overlay** — shows eth0/wlan0 IPs and WiFi AP SSID on 'I' overlay | `clock/engine.go` |
-| 12 | **Config version display** — "Loaded config version" in web UI + `/export` download link | `http.go`, `config.html.go` |
-| 13 | **Symlink-safe config path** — `resolvedConfigPath()` resolves symlinks before import/save | `http.go` |
-| 14 | **Web UI teal theme** — color scheme changed from pink/magenta to teal (`#006D88`); tab, heading, and form colors updated | `config.html.go` |
+| # | Feature | Status |
+|---|---------|--------|
+| 1 | **Quad face** — 4-source text clock | Not ported |
+| 2 | **Dual face** — 2-source text clock | Not ported |
+| 3 | **DRM mirror** — second HDMI via KMS/DRM dumb buffer | ✅ Done (`fc4c6eb`) |
+| 4 | **PerfectCue icon on HDMI-2** — cue icon mode | ✅ Done (`fc4c6eb`) |
+| 5 | **Configurable PerfectCue geometry** — cue-pos-x/y, cue-size | Not ported |
+| 6 | **Sync Time web API** — `/api/settime` + RTC sync | Not ported |
+| 7 | **Cue test API** — `/api/cue` | Not ported |
+| 8 | **Atomic config import** — temp+validate+rename | Not ported |
+| 9 | **SDL resource leak fixes** — destroyTextClock/Audio on hot-reload | Not ported |
+| 10 | **Row 4 color/alpha** — configurable color + alpha for text clock row 4 | Not ported |
+| 11 | **Network-aware info overlay** — shows eth0/wlan0 IPs and WiFi AP SSID on 'I' overlay | Not ported |
+| 12 | **Config version display** — "Loaded config version" in web UI + `/export` download link | Not ported |
+| 13 | **Symlink-safe config path** — `resolvedConfigPath()` resolves symlinks before import/save | Not ported |
+| 14 | **Web UI teal theme** — color scheme changed from pink/magenta to teal (`#006D88`); tab, heading, and form colors updated | Not ported |
 
 ### Session 2026-04-20 — alsa-ltc stability + authorized_keys test
 
