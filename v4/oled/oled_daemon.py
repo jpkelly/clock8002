@@ -70,6 +70,16 @@ try:
 except Exception:
     logo_font = ImageFont.load_default()
 
+_MATERIAL_FONT_CANDIDATES = [
+    "/opt/clock8002/MaterialIcons-Regular.ttf",  # Buildroot
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../ttf_fonts/MaterialIcons-Regular.ttf"),  # dev
+]
+_MATERIAL_FONT_PATH = next((p for p in _MATERIAL_FONT_CANDIDATES if os.path.exists(p)), None)
+try:
+    wifi_icon_font = ImageFont.truetype(_MATERIAL_FONT_PATH, 16) if _MATERIAL_FONT_PATH else None
+except Exception:
+    wifi_icon_font = None
+
 # Direct port of Argon logo display logic
 OLED_WD = device.bounding_box[2] + 1
 OLED_HT = device.bounding_box[3] + 1
@@ -251,7 +261,13 @@ while True:
     draw.text((0, 32), f"User: {http_user}", font=font, fill=255)
     draw.text((0, 48), f"Pass: {http_pass}", font=font, fill=255)
     if is_ap_active():
-        draw.ellipse((OLED_WD - 5, 2, OLED_WD - 2, 5), fill=255)
+        _WIFI_CHAR = "\ue63e"
+        if wifi_icon_font:
+            _bbox = draw.textbbox((0, 0), _WIFI_CHAR, font=wifi_icon_font)
+            _iw = _bbox[2] - _bbox[0]
+            draw.text((OLED_WD - _iw - 1, 0), _WIFI_CHAR, font=wifi_icon_font, fill=255)
+        else:
+            draw.ellipse((OLED_WD - 5, 2, OLED_WD - 2, 5), fill=255)
     device.display(image)
     time.sleep(2)
 

@@ -56,6 +56,6 @@ Buildroot image workflow note:
 - Flash command format (user runs manually — never run dd from agent): `diskutil unmountDisk /dev/diskN && sudo dd if=/Users/jp/Desktop/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress && diskutil eject /dev/diskN`
 - Always verify disk number with `diskutil list external physical` before giving flash commands.
 - BusyBox on target: no bash (use `sh`), no `tar -z` (use `gzip -d -c | tar x`), no `--ignore-missing` on sha256sum.
-- SSH to Buildroot target: `root@piClock.local` with `-o IdentitiesOnly=yes -i ~/.ssh/id_ed25519`.
+- SSH to Buildroot target: `root@piClock.local` with `-o IdentitiesOnly=yes -i ~/.ssh/id_rsa`.
 - Deploy binary directly (no install.sh on BR): `/etc/init.d/S99clock stop && cp <binary> /opt/clock8002/sdl3-clock && /etc/init.d/S99clock start`.
 - After a fresh Buildroot checkout, always run `buildroot-external/scripts/apply-build-host-patches.sh ~/buildroot` before building — this applies the Mesa 25.0.7 upgrade and host-xz libtool workaround (see issue #29).
