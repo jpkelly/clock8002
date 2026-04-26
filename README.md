@@ -1,6 +1,6 @@
 # Clock 8002
 
-An HDMI clock display for Raspberry Pi 5, running as a minimal appliance on a custom **Buildroot** image. No desktop environment required. Controllable via OSC and a built-in web UI.
+An HDMI clock display for Raspberry Pi 5, running as a minimal appliance on a custom **Buildroot** image. Controllable via OSC and a built-in web UI.
 
 > **Legacy Trixie/SDL2 path:** The Debian Trixie (Raspberry Pi OS) deployment path is preserved on the [`trixie` branch](../../tree/trixie). New deployments should use this branch.
 
