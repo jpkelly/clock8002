@@ -147,6 +147,16 @@ ap-passphrase=clockwork1
 ap-channel=6
 ```
 
+#### Wi-Fi Access Point
+
+piClock can run a Wi-Fi AP alongside its wired or wireless client connection. When active, it creates a hotspot you can join directly from a laptop or phone to reach the web UI — useful on sets where there is no existing Wi-Fi network.
+
+Set `ap-ssid` and `ap-passphrase` in `network.ini` to enable it. Leave `ap-ssid` blank (or remove the line) to disable the AP entirely.
+
+Once connected to the AP, open `http://piClock.local:8080` (or the unit's AP-side IP) in a browser.
+
+> **OLED indicator:** The small dot in the top-right corner of the OLED display is lit when the Wi-Fi AP is active, and dark when it is off.
+
 ### authorized_keys
 
 Place SSH public key(s) in `/boot/piclock/authorized_keys` for passwordless root login. Applied at every boot — no reflash required.
