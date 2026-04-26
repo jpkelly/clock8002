@@ -122,10 +122,10 @@ Controls hostname, DHCP/static IP, NTP, and Wi-Fi AP mode. Changes take effect o
 [network]
 mode=dhcp                          # dhcp or static
 ntp=false                          # disable if using OSC settime
-# address=10.0.0.100               # static IP only
+# address=192.168.8.245             # static IP only
 # netmask=24
-# gateway=10.0.0.1
-# dns=8.8.8.8
+# gateway=192.168.8.1
+# dns=1.1.1.1
 
 [host]
 hostname=piClock
