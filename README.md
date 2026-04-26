@@ -141,17 +141,22 @@ ntp=false                          # disable if using OSC settime
 # netmask=24
 # gateway=10.0.0.1
 # dns=8.8.8.8
+
+[host]
 hostname=piClock
-ap-ssid=piClock-ap
-ap-passphrase=clockwork1
-ap-channel=6
+
+[wifi]
+ap_enabled=false
+ap_ssid=piClock-ap
+ap_password=clockwork
+ap_channel=6
 ```
 
 #### Wi-Fi Access Point
 
 piClock can run a Wi-Fi AP alongside its wired or wireless client connection. When active, it creates a hotspot you can join directly from a laptop or phone to reach the web UI — useful on sets where there is no existing Wi-Fi network.
 
-Set `ap-ssid` and `ap-passphrase` in `network.ini` to enable it. Leave `ap-ssid` blank (or remove the line) to disable the AP entirely.
+Set `ap_enabled=true` in `network.ini` to enable it. Set to `false` (the default) to disable.
 
 Once connected to the AP, open `http://piClock.local:8080` (or the unit's AP-side IP) in a browser.
 
