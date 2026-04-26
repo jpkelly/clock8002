@@ -142,7 +142,7 @@ ap_channel=6
 
 #### Wi-Fi Access Point
 
-piClock can run a Wi-Fi AP alongside its wired or wireless client connection. When active, it creates a hotspot you can join directly from a laptop or phone to reach the web UI — useful on sets where there is no existing Wi-Fi network.
+piClock can run a Wi-Fi AP alongside its wired or wireless client connection. When active, it creates a hotspot you can join directly from a laptop or phone — useful to wirelessly access the piClock without relying on an existing network.
 
 Set `ap_enabled=true` in `network.ini` to enable it. Set to `false` (the default) to disable.
 
