@@ -231,14 +231,16 @@ def get_stats():
 logo_buf = load_logo_buffer(LOGO_PATH)
 flush_logo_buffer(logo_buf)
 
-def is_buildroot():
+def is_ap_active():
     try:
-        with open('/etc/os-release') as f:
-            return any(line.strip() in ('NAME=Buildroot', 'NAME="Buildroot"') for line in f)
+        out = subprocess.check_output(
+            ['nmcli', '-t', '-f', 'STATE', 'con', 'show', 'piclock-ap'],
+            stderr=subprocess.DEVNULL,
+            timeout=1.0,
+        ).decode(errors='ignore')
+        return 'activated' in out
     except Exception:
         return False
-
-BUILDROOT = is_buildroot()
 
 while True:
     image = Image.new("1", device.size)
@@ -248,7 +250,7 @@ while True:
     draw.text((0, 16), hostname, font=font, fill=255)
     draw.text((0, 32), f"User: {http_user}", font=font, fill=255)
     draw.text((0, 48), f"Pass: {http_pass}", font=font, fill=255)
-    if BUILDROOT:
+    if is_ap_active():
         draw.ellipse((OLED_WD - 5, 2, OLED_WD - 2, 5), fill=255)
     device.display(image)
     time.sleep(2)
