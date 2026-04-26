@@ -9,11 +9,7 @@ CLOCK8002_LICENSE = GPL-3.0
 CLOCK8002_LICENSE_FILES = LICENSE
 CLOCK8002_DEPENDENCIES = host-go sdl3 sdl3-ttf sdl3-image libltc
 
-ifeq ($(BR2_PACKAGE_CLOCK8002_GERRY),y)
-CLOCK8002_CONFIG_SUFFIX = gerry
-else
 CLOCK8002_CONFIG_SUFFIX = default
-endif
 
 CLOCK8002_GIT_DIR = $(realpath $(CLOCK8002_SITE)/..)
 CLOCK8002_GIT_TAG = $(shell cd $(CLOCK8002_GIT_DIR) && git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0.1")

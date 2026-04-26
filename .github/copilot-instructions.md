@@ -36,7 +36,7 @@ Stability decision gate note:
 
 Release management note:
 - The primary release artifact is the **Buildroot SD card image** (`piClock-<commit>-sdcard.img`), built via the Buildroot system on cm5 (`~/buildroot`). This is what gets attached to GitHub releases.
-- The `make release` tarballs (`NETWORK_CONFIG=default/gerry`) are a legacy Trixie mechanism; do not build or attach them for Buildroot releases.
+- The `make release` tarballs are a legacy Trixie mechanism; do not build or attach them for Buildroot releases.
 - Versioning must follow this repository's own tag line (`v1.x` and onward); ignore inherited upstream `v4.x` tags from the fork source.
 - When cutting a new release, update README quick-install download/extract commands to the new release URL/version.
 - When tagging a release, always update HANDOFF.md to reflect the new latest tag, commit hash, and any relevant status changes before or as part of the release commit.

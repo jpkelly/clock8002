@@ -38,35 +38,35 @@ Countup=false
 
 # Time sources
 
-source1.text=SFO
+source1.text=Limitimer
 source1.ltc=false
 source1.ltc-channel=0
-source1.timer=false
+source1.timer=true
 source1.timer-target=false
-source1.counter=0
-source1.tod=true
+source1.counter=5
+source1.tod=false
 source1.timezone=America/Los_Angeles
 source1.hidden=false
 source1.overtime-color=#ff0000
 
-source2.text=TYO
-source2.ltc=false
+source2.text=TOD/LTC
+source2.ltc=true
 source2.ltc-channel=0
 source2.timer=false
 source2.timer-target=false
 source2.counter=0
 source2.tod=true
-source2.timezone=Asia/Tokyo
+source2.timezone=America/Los_Angeles
 source2.hidden=false
 source2.overtime-color=#ff0000
 
-source3.text=JFK
+source3.text=Playback
 source3.ltc=false
 source3.ltc-channel=0
-source3.timer=false
+source3.timer=true
 source3.timer-target=false
-source3.counter=0
-source3.tod=true
+source3.counter=8
+source3.tod=false
 source3.timezone=America/New_York
 source3.hidden=false
 source3.overtime-color=#ff0000
@@ -506,13 +506,13 @@ tricaster-interval=100
 tricaster-timeout=1000
 
 # Limitimer
-limitimer-mode=off
+limitimer-mode=receive
 limitimer-serial=/dev/ttyAMA3
-limitimer-receive-timer1=false
-limitimer-receive-timer2=false
-limitimer-receive-timer3=false
-limitimer-receive-timer4=false
-limitimer-receive-timer5=false
+limitimer-receive-timer1=true
+limitimer-receive-timer2=true
+limitimer-receive-timer3=true
+limitimer-receive-timer4=true
+limitimer-receive-timer5=true
 limitimer-broadcast-timer1=false
 limitimer-broadcast-timer2=false
 limitimer-broadcast-timer3=false
@@ -520,10 +520,10 @@ limitimer-broadcast-timer4=false
 limitimer-broadcast-timer5=false
 
 # Perfect Cue
-cue-enabled=false
+cue-enabled=true
 cue-serial=/dev/ttyAMA1
 cue-duration=2
-cue-fullscreen=false
+cue-fullscreen=true
 cue-second-display=false
 
 # Hyperdeck
@@ -551,11 +551,11 @@ countdown-color=#ff0000
 # Text clock
 label-color=#ff8000
 label-alpha=255
-row1-color=#ff8000
+row1-color=#ffffff
 row1-alpha=255
 row2-color=#ff8000
 row2-alpha=255
-row3-color=#ff8000
+row3-color=#94e3fe
 row3-alpha=255
 draw-boxes=false
 timer-bg-color=#202020
@@ -573,7 +573,7 @@ Timeout=1000
 DisableFeedback=false
 Connect=255.255.255.255:1245
 DisableHTTP=false
-HTTPPort=:8080
+HTTPPort=:80
 DisableLTC=false
 LTCSeconds=false
 LTCFollow=false
