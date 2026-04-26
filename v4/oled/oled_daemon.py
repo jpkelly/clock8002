@@ -234,11 +234,11 @@ flush_logo_buffer(logo_buf)
 def is_ap_active():
     try:
         out = subprocess.check_output(
-            ['nmcli', '-t', '-f', 'STATE', 'con', 'show', 'piclock-ap'],
+            ['iw', 'dev', 'wlan0', 'info'],
             stderr=subprocess.DEVNULL,
             timeout=1.0,
         ).decode(errors='ignore')
-        return 'activated' in out
+        return 'type AP' in out
     except Exception:
         return False
 
