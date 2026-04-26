@@ -1,5 +1,5 @@
 # Clock-8002 default configuration
-# Copy to ~/.config/clock-8001/clock.ini
+# Place at /boot/piclock/clock.ini (editable on the FAT boot partition or via SSH)
 
 Face=text
 

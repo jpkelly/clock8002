@@ -77,7 +77,7 @@ Flash (replace `diskN` with your actual disk number):
 
 ```bash
 diskutil unmountDisk /dev/diskN
-sudo dd if=/Users/yourname/Desktop/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
+sudo dd if=/Users/<your-username>/Desktop/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
 diskutil eject /dev/diskN
 ```
 
@@ -190,25 +190,23 @@ All clock settings — face type, colors, sources, timers, OSC, GPIO — can be 
 
 ## Service Operations
 
-```bash
+```sh
 # Clock
-systemctl start clock8002
-systemctl stop clock8002
-systemctl restart clock8002
-systemctl status clock8002
-journalctl -u clock8002 -f
+/etc/init.d/S99clock start
+/etc/init.d/S99clock stop
+/etc/init.d/S99clock restart
+ps | grep sdl3-clock        # status
 
 # LTC decoder
-systemctl start alsa-ltc
-systemctl stop alsa-ltc
-systemctl restart alsa-ltc
-systemctl status alsa-ltc
-journalctl -u alsa-ltc -f
+/etc/init.d/S99alsa-ltc start
+/etc/init.d/S99alsa-ltc stop
+/etc/init.d/S99alsa-ltc restart
+ps | grep alsa-ltc          # status
 
 # OLED daemon
-systemctl start oled_daemon
-systemctl stop oled_daemon
-systemctl status oled_daemon
+/etc/init.d/S98oled start
+/etc/init.d/S98oled stop
+ps | grep oled_daemon       # status
 ```
 
 Log file: `/root/.config/clock-8001/clock.log`
@@ -265,10 +263,10 @@ GOOS=linux GOARCH=arm64 CGO_ENABLED=0 GOFLAGS=-mod=vendor go build -o /tmp/sdl3-
 
 Deploy directly to a running unit:
 
-```bash
-systemctl stop clock8002
-scp /tmp/sdl3-clock-linux-arm64 root@piClock.local:/opt/clock8002/sdl-clock
-ssh root@piClock.local 'systemctl start clock8002'
+```sh
+/etc/init.d/S99clock stop
+scp /tmp/sdl3-clock-linux-arm64 root@piClock.local:/opt/clock8002/sdl3-clock
+ssh root@piClock.local '/etc/init.d/S99clock start'
 ```
 
 > No `install.sh` exists on Buildroot — deploy binaries directly.
@@ -281,11 +279,11 @@ The original SDL2/Debian Trixie deployment path (using `install.sh` on Raspberry
 
 | Problem | Solution |
 |---------|----------|
-| Black screen / no output | Check `systemctl status clock8002` — ensure DRM/KMS is not held by another process |
+| Black screen / no output | Check `ps | grep sdl3-clock` — ensure DRM/KMS is not held by another process |
 | Text invisible on display | Verify Mesa 25.0.7 patches were applied to the Buildroot build host (see [issue #29](https://github.com/jpkelly/clock8002/issues/29)) |
-| Clock exits silently | Check `/root/.config/clock-8001/clock.log` and `journalctl -u clock8002` |
-| Web UI not accessible | Verify `systemctl status clock8002` is active and check network connectivity |
-| Config changes not applied | Restart the service: `systemctl restart clock8002` |
+| Clock exits silently | Check `/root/.config/clock-8001/clock.log` |
+| Web UI not accessible | Verify `ps | grep sdl3-clock` shows the process running and check network connectivity |
+| Config changes not applied | Restart the service: `/etc/init.d/S99clock restart` |
 | SSH: too many auth failures | Use `-o IdentitiesOnly=yes -i ~/.ssh/id_ed25519` to specify the key |
 | alsa-ltc not decoding LTC | Check `systemctl status alsa-ltc`; verify USB audio device is connected |
 

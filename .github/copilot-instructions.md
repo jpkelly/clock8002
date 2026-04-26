@@ -8,7 +8,7 @@ Dev-deploy workflow note (feature branch testing, NOT a release):
 - `install.sh` must be run on the TARGET machine (piclock) from a flat release directory — never from the source tree.
 - The Makefile `release` target flattens all assets (including ttf_fonts/*.ttf) into a release dir and tarballs it.
 - Reliability rules for remote deploy sessions:
-  - Do not use `pkill -f /opt/clock8002/sdl-clock` or `pkill -f /opt/clock8002/alsa-ltc` in one-shot SSH deploy commands; pattern matches can terminate the remote session and cause SSH exit 255.
+  - Do not use `pkill -f /opt/clock8002/sdl3-clock` or `pkill -f /opt/clock8002/alsa-ltc` in one-shot SSH deploy commands; pattern matches can terminate the remote session and cause SSH exit 255.
   - Prefer `sudo systemctl stop ...` and `sudo systemctl kill ...` for process teardown.
   - Run installer as `sudo bash install.sh > /tmp/<install-log>.log 2>&1` and check `INSTALL_EXIT` before restarting services.
   - After installer completion, explicitly start and verify `clock8002`, `alsa-ltc`, and `oled_daemon` service state.
@@ -32,7 +32,7 @@ Change control note:
 Stability decision gate note:
 - When investigating suspected memory/resource leaks, do not deploy code fixes until the current baseline run on the fully-populated 2GB piclock unit reaches at least the 24h checkpoint, unless the user explicitly overrides this gate.
 - Required decision checkpoints: 12h and 24h with the same metrics (`VmRSS`, `VmSwap`, system swap, service state, temperature/throttle).
-- Approve code change only if leak behavior is reproduced on that unit (e.g., materially rising `VmSwap` for `sdl-clock` or sustained RSS growth over time). If metrics are flat by 24h, hold changes and treat prior 1GB findings as non-generalized.
+- Approve code change only if leak behavior is reproduced on that unit (e.g., materially rising `VmSwap` for `sdl3-clock` or sustained RSS growth over time). If metrics are flat by 24h, hold changes and treat prior 1GB findings as non-generalized.
 
 Release management note:
 - The primary release artifact is the **Buildroot SD card image** (`piClock-<commit>-sdcard.img`), built via the Buildroot system on cm5 (`~/buildroot`). This is what gets attached to GitHub releases.
@@ -44,7 +44,7 @@ Release management note:
 Buildroot image workflow note:
 - Branch: `master` (NEVER use `buildroot-prototype` — it is historical only and permanently diverged).
 - Test unit: `root@piClock.local`. Build host: `pi@cm5.local` (~/buildroot).
-- Buildroot sources sdl-clock/alsa-ltc directly from `~/clock8002/v4` on cm5 — always `git pull --ff-only` in `~/clock8002` before any `make`.
+- Buildroot sources sdl3-clock/alsa-ltc directly from `~/clock8002/v4` on cm5 — always `git pull --ff-only` in `~/clock8002` before any `make`.
 - Before building, verify cm5 is on master: `ssh pi@cm5.local 'cd ~/clock8002 && git branch --show-current'`
 - Dual service file rule: service files that exist in both `v4/` (Trixie) and `buildroot-external/board/clock8002-rpi5/rootfs-overlay/` (Buildroot) must be kept in sync. When editing a service file in `v4/`, always check for a Buildroot overlay copy and update it with the same changes (adjusting for platform differences like `User=root`). The overlay overwrites the package-installed copy at image build time.
 - Dev builds (with SSH key): `ssh pi@cm5.local "cd ~/buildroot && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make clock8002-dirclean && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:\$?"`
@@ -57,5 +57,5 @@ Buildroot image workflow note:
 - Always verify disk number with `diskutil list external physical` before giving flash commands.
 - BusyBox on target: no bash (use `sh`), no `tar -z` (use `gzip -d -c | tar x`), no `--ignore-missing` on sha256sum.
 - SSH to Buildroot target: `root@piClock.local` with `-o IdentitiesOnly=yes -i ~/.ssh/id_ed25519`.
-- Deploy binary directly (no install.sh on BR): `systemctl stop clock8002 && cp <binary> /opt/clock8002/sdl-clock && systemctl start clock8002`.
+- Deploy binary directly (no install.sh on BR): `/etc/init.d/S99clock stop && cp <binary> /opt/clock8002/sdl3-clock && /etc/init.d/S99clock start`.
 - After a fresh Buildroot checkout, always run `buildroot-external/scripts/apply-build-host-patches.sh ~/buildroot` before building — this applies the Mesa 25.0.7 upgrade and host-xz libtool workaround (see issue #29).

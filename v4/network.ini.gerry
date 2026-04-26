@@ -1,6 +1,6 @@
 # Clock-8002 Network Configuration
 #
-# Place this file at /boot/firmware/piclock/network.ini
+# Place this file at /boot/piclock/network.ini
 # Settings are applied automatically on every boot.
 # Edit, save, and reboot for changes to take effect.
 
