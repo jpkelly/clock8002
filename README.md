@@ -56,7 +56,7 @@ Built for the **piClock platform** on Raspberry Pi 5, arm64.
 
 ### 1. Download the latest release image
 
-Get the pre-built SD card image from the [Releases](https://github.com/jpkelly/clock8002/releases) page. The image is named `piclockBR-<commit>-sdcard.img`.
+Get the pre-built SD card image from the [Releases](https://github.com/jpkelly/clock8002/releases) page. The image is named `piClock-<commit>-sdcard.img`.
 
 ### 2. (Optional) Pre-configure before first boot
 
@@ -77,7 +77,7 @@ Flash (replace `diskN` with your actual disk number):
 
 ```bash
 diskutil unmountDisk /dev/diskN
-sudo dd if=/Users/yourname/Desktop/piclockBR-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
+sudo dd if=/Users/yourname/Desktop/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
 diskutil eject /dev/diskN
 ```
 
@@ -90,7 +90,7 @@ Alternatively, use **Raspberry Pi Imager** → "Use custom image" to flash the `
 Insert the SD card and power on. After ~20 seconds, open a browser to:
 
 ```
-http://piclockBR.local:8080
+http://piClock.local:8080
 ```
 
 Default credentials: **admin** / **clockwork**
@@ -98,7 +98,7 @@ Default credentials: **admin** / **clockwork**
 Default SSH access:
 
 ```bash
-ssh root@piclockBR.local   # password: clockworkadmin
+ssh root@piClock.local   # password: clockworkadmin
 ```
 
 ---
@@ -141,7 +141,7 @@ ntp=false                          # disable if using OSC settime
 # netmask=24
 # gateway=10.0.0.1
 # dns=8.8.8.8
-hostname=piclockBR
+hostname=piClock
 ap-ssid=piClock-ap
 ap-passphrase=clockwork1
 ap-channel=6
@@ -252,8 +252,8 @@ Deploy directly to a running unit:
 
 ```bash
 systemctl stop clock8002
-scp /tmp/sdl3-clock-linux-arm64 root@piclockBR.local:/opt/clock8002/sdl-clock
-ssh root@piclockBR.local 'systemctl start clock8002'
+scp /tmp/sdl3-clock-linux-arm64 root@piClock.local:/opt/clock8002/sdl-clock
+ssh root@piClock.local 'systemctl start clock8002'
 ```
 
 > No `install.sh` exists on Buildroot — deploy binaries directly.

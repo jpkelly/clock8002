@@ -132,7 +132,7 @@ See [buildroot-external/README.buildroot.md](buildroot-external/README.buildroot
 
 Key points:
 - Build host: `pi@cm5.local` — apply manual patches (Mesa 25.0.7, host-xz) before building (issue #29)
-- Image naming: `piclockBR-<version>-sdcard.img` (e.g. `piclockBR-v1.2.4-sdcard.img`)
+- Image naming: `piClock-<version>-sdcard.img` (e.g. `piClock-v1.2.4-sdcard.img`)
 - Both images (default and Gerry) are Trixie tarballs only — the Buildroot image is config-neutral (config lives on the boot partition)
 - **Release images must never include an SSH key** — always build without `BR2_PICLOCKKEY` set. Password-only access (`clockworkadmin`) is the only auth method on release images. The `BR2_PICLOCKKEY` mechanism is for dev builds only and must never be used when cutting a release.
 - **Release builds must use `make clean`**, not `clock8002-dirclean`. `output/target/` is not wiped by partial cleans — stale files from prior dev builds (including SSH keys) persist. `make clean` ensures a provably clean rootfs. Build command: `cd ~/clock8002 && git checkout vX.X.X && cd ~/buildroot && make clean && make`

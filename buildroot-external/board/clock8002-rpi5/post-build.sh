@@ -4,7 +4,7 @@ set -eu
 TARGET_DIR="$1"
 
 # Set hostname.
-echo 'piclockBR' > "${TARGET_DIR}/etc/hostname"
+echo 'piClock' > "${TARGET_DIR}/etc/hostname"
 
 # Make init.d scripts executable.
 for script in \

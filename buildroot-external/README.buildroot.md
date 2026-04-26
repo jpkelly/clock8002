@@ -180,10 +180,10 @@ Always verify: `grep BR2_PACKAGE_<name> ~/buildroot/.config`
 
 ```bash
 scp pi@cm5.local:~/buildroot/output/images/sdcard.img \
-    /Users/yourname/Desktop/piclockBR-<7-char-commit>-sdcard.img
+    /Users/yourname/Desktop/piClock-<7-char-commit>-sdcard.img
 ```
 
-Image naming convention: `piclockBR-<7-char-commit-hash>-sdcard.img`
+Image naming convention: `piClock-<7-char-commit-hash>-sdcard.img`
 
 ### Flash to SD card (run manually — never automated)
 
@@ -197,7 +197,7 @@ Then flash (replace `diskN` with the actual disk number):
 
 ```bash
 diskutil unmountDisk /dev/diskN
-sudo dd if=/Users/jp/Desktop/piclockBR-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
+sudo dd if=/Users/jp/Desktop/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
 diskutil eject /dev/diskN
 ```
 
@@ -209,7 +209,7 @@ The boot-partition `pieeprom.upd`/`recovery.bin` approach was removed in `65af13
 
 ```bash
 # SSH into the running unit
-ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@piclockBR.local
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@piClock.local
 
 # Write config, build patched firmware blob, apply
 printf '[all]\nBOOT_UART=1\nBOOT_ORDER=0xf1\n' > /tmp/eeprom.cfg
@@ -242,13 +242,13 @@ Default credentials on all images:
 SSH with key (dev builds with `BR2_PICLOCKKEY` set):
 
 ```bash
-ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@piclockBR.local
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@piClock.local
 ```
 
 SSH with password (release images):
 
 ```bash
-ssh root@piclockBR.local
+ssh root@piClock.local
 ```
 
 SCP note: use `-o IdentitiesOnly=yes -i ~/.ssh/id_ed25519` to avoid "too many authentication failures" if SSH agent has multiple keys loaded.
@@ -263,8 +263,8 @@ GOOS=linux GOARCH=arm64 CGO_ENABLED=0 GOFLAGS=-mod=vendor go build -o /tmp/sdl3-
 
 # Copy to unit and restart
 systemctl stop clock8002
-scp /tmp/sdl3-clock-linux-arm64 root@piclockBR.local:/opt/clock8002/sdl-clock
-ssh root@piclockBR.local 'systemctl start clock8002'
+scp /tmp/sdl3-clock-linux-arm64 root@piClock.local:/opt/clock8002/sdl-clock
+ssh root@piClock.local 'systemctl start clock8002'
 ```
 
 No `install.sh` exists on Buildroot — deploy binaries directly.
@@ -329,5 +329,5 @@ Production images ship with **no embedded SSH key**. Field SSH key provisioning 
 
 | Hostname | IP | RAM | Notes |
 |---|---|---|---|
-| `piclockBR.local` | 10.0.0.184 | 2GB (actually 8GB — Rev 1.1 D0) | Primary dev/test unit |
+| `piClock.local` | 10.0.0.184 | 2GB (actually 8GB — Rev 1.1 D0) | Primary dev/test unit |
 | `piclockT.local` | 10.0.0.162 | 1GB | Stability test unit |

@@ -127,7 +127,7 @@ destination to `192.168.8.246:1245`.
 - Latest Trixie release: **v1.3.1** — archived on `trixie` branch
 - **Active branch: `master`** (Buildroot) — branch rename complete 2026-04-26
 - Buildroot SD card image on Mac Desktop: **`piclockBR-af37c54-sdcard.img`** (production build, no SSH key)
-- **piclockBR test unit** (192.168.8.245): flashed `af37c54` (2026-04-25). Soak test passed ~12h checkpoint (all green — VmRSS stable, VmSwap=0).
+- **piClock test unit** (192.168.8.245): flashed `af37c54` (2026-04-25). Soak test passed ~12h checkpoint (all green — VmRSS stable, VmSwap=0).
 - Recent UI fixes on buildroot branch (2026-04-22), deployed to piclockBR:
   - `013be8d`: cue fullscreen clipping fix (text4 uses per-face logical size, vertical swap)
   - `e585ba0`: web-config save page refresh delay 1s → 3s (fix stale view race)
@@ -139,7 +139,7 @@ destination to `192.168.8.246:1245`.
 - Reboot + sdl3-clock deploy lesson captured in memory (`/memories/repo/clock8002-sdl3-clock-deploy-rules.md`): `S99clock stop` doesn't kill the pokemon watchdog; multiple deploy cycles stack watchdogs that race for port :80; sdl3-clock can hang in D-state (unkillable) — reboot first.
   - OLED logo + stats: **working at boot**
   - sdl3-clock HDMI: **working at boot**
-  - WiFi AP (piclockBR-ap): **working**
+  - WiFi AP (piClock-ap): **working**
   - Power button shutdown: **working at boot** (stable `/dev/input/by-path/` symlink)
   - Network config from `network.ini`: **working** (static IP, hostname, AP — all verified after reboot)
   - alsa-ltc: **stable** — 0 USB errors, 0 restarts (PID stable 15+ min), LTC decoding to display confirmed
