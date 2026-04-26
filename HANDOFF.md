@@ -123,11 +123,11 @@ destination to `192.168.8.246:1245`.
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- **Latest release: v1.3.4** (2026-04-26) — `master` branch (Buildroot/SDL3). Commit: `14cb2d1`
+- **Latest release: v1.3.5** (2026-04-26) — `master` branch (Buildroot/SDL3). Commit: `09daab9`
 - Latest Trixie release: **v1.3.1** — archived on `trixie` branch
 - **Active branch: `master`** (Buildroot) — branch rename complete 2026-04-26
 - Buildroot SD card image on Mac Desktop: **`piclockBR-af37c54-sdcard.img`** (production build, no SSH key)
-- **piClock test unit** (192.168.8.245): flashed `af37c54` (2026-04-25). Soak test passed ~12h checkpoint (all green — VmRSS stable, VmSwap=0).
+- **piClock test unit** (192.168.8.245): flashed `af37c54` (2026-04-25). Soak test passed ~12h checkpoint (all green — VmRSS stable, VmSwap=0). Soak monitor not running (unit rebooted); v1.3.5 is docs/config only — no new code.
 - Recent UI fixes on buildroot branch (2026-04-22), deployed to piclockBR:
   - `013be8d`: cue fullscreen clipping fix (text4 uses per-face logical size, vertical swap)
   - `e585ba0`: web-config save page refresh delay 1s → 3s (fix stale view race)
