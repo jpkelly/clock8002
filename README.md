@@ -67,30 +67,18 @@ Mount the SD card's FAT32 boot partition (appears as `piClock` on Mac/PC) and ed
 
 ### 3. Flash to SD card
 
-Identify the SD card device:
+Use **[Raspberry Pi Imager](https://www.raspberrypi.com/software/)** — choose "Use custom image" and select the `.img` file. This works on macOS, Windows, and Linux.
 
-```bash
-diskutil list external physical
-```
+Alternatively, use any other SD card flashing tool (e.g. balenaEtcher).
 
-Flash (replace `diskN` with your actual disk number):
-
-```bash
-diskutil unmountDisk /dev/diskN
-sudo dd if=/Users/<your-username>/Desktop/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
-diskutil eject /dev/diskN
-```
-
-> **Warning:** `dd` overwrites without prompting. Verify the disk number carefully before running.
-
-Alternatively, use **Raspberry Pi Imager** → "Use custom image" to flash the `.img` file.
+> **Warning:** Flashing overwrites all data on the SD card. Verify you have selected the correct device before proceeding.
 
 ### 4. Boot and access the web UI
 
 Insert the SD card and power on. After ~20 seconds, open a browser to:
 
 ```
-http://piClock.local:8080
+http://piClock.local
 ```
 
 Default credentials: **admin** / **clockwork**
@@ -158,7 +146,7 @@ piClock can run a Wi-Fi AP alongside its wired or wireless client connection. Wh
 
 Set `ap_enabled=true` in `network.ini` to enable it. Set to `false` (the default) to disable.
 
-Once connected to the AP, open `http://piClock.local:8080` (or the unit's AP-side IP) in a browser.
+Once connected to the AP, open `http://piClock.local` (or the unit's AP-side IP) in a browser.
 
 > **OLED indicator:** The small dot in the top-right corner of the OLED display is lit when the Wi-Fi AP is active, and dark when it is off.
 
@@ -166,10 +154,7 @@ Once connected to the AP, open `http://piClock.local:8080` (or the unit's AP-sid
 
 Place SSH public key(s) in `/boot/piclock/authorized_keys` for passwordless root login. Applied at every boot — no reflash required.
 
-```bash
-# From Mac, with SD card mounted as piClock:
-echo "$(cat ~/.ssh/id_ed25519.pub)" >> /Volumes/piClock/piclock/authorized_keys
-```
+When the SD card is mounted on your computer, the FAT boot partition will appear as a drive named `piClock`. Add your public key(s) to the file `piclock/authorized_keys` on that partition (create the file if it does not exist).
 
 ## Config Files Overview
 
@@ -184,7 +169,7 @@ echo "$(cat ~/.ssh/id_ed25519.pub)" >> /Volumes/piClock/piclock/authorized_keys
 
 ## Web UI
 
-Access the configuration interface at `http://<pi-ip>:8080`. Default credentials: **admin** / **clockwork**.
+Access the configuration interface at `http://piClock.local` (or by IP). Default credentials: **admin** / **clockwork**.
 
 All clock settings — face type, colors, sources, timers, OSC, GPIO — can be changed from the web UI without editing files. Settings are saved to `clock.ini` on the boot partition.
 
