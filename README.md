@@ -1,125 +1,279 @@
-# OSC controlled simple clock
-* Clock binary builds: [![pipeline status](https://gitlab.com/clock-8001/clock-8001/badges/master/pipeline.svg)](https://gitlab.com/clock-8001/clock-8001/commits/master)
-* The installation files for windows and linux are available on https://kissa.depili.fi/clock-8001/releases/
-* The raspberry pi images are available at: https://kissa.depili.fi/clock-8001/images/
+# Clock 8002
 
-Support clock-8001 development by paypal: [![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=XUMXUL5RX5MWJ&currency_code=EUR)
+An HDMI clock display for Raspberry Pi 5, running as a minimal appliance on a custom **Buildroot** image. No desktop environment required. Controllable via OSC and a built-in web UI.
 
+> **Legacy Trixie/SDL2 path:** The Debian Trixie (Raspberry Pi OS) deployment path is preserved on the [`trixie` branch](../../tree/trixie). New deployments should use this branch.
 
-## Repository name change 2022-06-02
+## Table of Contents
 
-Due to changes to gitlab OSS licensing the project had to be moved to a new location inside a gitlab clock-8001 organization. So this is the new home for the project, https://gitlab.com/clock-8001/clock-8001/ Unfortunately this also means that go projects importing the clock packages need to be updated to reflect on the new module location and name. Sorry about that, but it had to be done.
+- [Acknowledgements](#acknowledgements)
+- [What changed from clock-8001](#what-changed-from-clock-8001)
+- [Requirements](#requirements)
+- [Quick Start — Flash the Image](#quick-start--flash-the-image)
+- [First Boot](#first-boot)
+- [EEPROM Provisioning (Pi 5)](#eeprom-provisioning-pi-5)
+- [Pre-boot Configuration](#pre-boot-configuration)
+- [Config Files Overview](#config-files-overview)
+- [Web UI](#web-ui)
+- [Service Operations](#service-operations)
+- [GPIO/UART Serial Connections](#gpiouart-serial-connections)
+- [OSC Control](#osc-control)
+- [Building from Source](#building-from-source)
+- [Legacy Trixie/SDL2 Path](#legacy-trixiesdl2-path)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
-## About
+## Acknowledgements
 
-This is a simplistic clock written in go that can be used either as a video out with SDL or as a dedicated clock buidt with a 32x32 pixel hub75 led matrix and a ring of 60 addressable leds.
+This project is a fork of **clock-8001** by Depili, developed in co-operation with Daniel Richert and with grants from FUUG — Finnish Unix User Group. The original project is available at https://gitlab.com/clock-8001/clock-8001 and is licensed under the GNU General Public License v2.
 
-The README has been written for the version 4.x.x clocks, ie. the gitlab.com/clock-8001/clock-8001/v4 go module.
+Please consider supporting the original clock-8001 development: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=XUMXUL5RX5MWJ&currency_code=EUR
 
-The clock can be controlled with the depili-clock-8001 companion module: https://github.com/bitfocus/companion-module-depili-clock-8001 Module version 5.0.0 is the first to implement V4 clock API.
+## What changed from clock-8001
 
-Features and configuration in greated detail can be found in the [getting started guide in wiki](https://gitlab.com/clock-8001/clock-8001/-/wikis/Getting-started-on-clock-8001-version-4).
+- Runtime: SDL3, runs headless via KMSDRM (no X11/Wayland)
+- Deployment: minimal Buildroot appliance image — flash to SD card, boot, done
+- Features: added `text4`, `text2`, and 3-line text clock faces
+- Features: added configurable PerfectCue overlay placement/size in the web UI
+- Features: added 2nd HDMI output support — PerfectCue full-screen icons or main clock mirror
+- Features: font selection via dropdown in web UI
+- Features: OLED display daemon (SSD1306 I2C) with version overlay
+- Features: refactored `alsa-ltc` binary for 64-bit arm64
+- Features: retained GPIO pulse output support (`periph.io`)
+- Platform: targets Raspberry Pi 5 with custom Buildroot image (musl libc, BusyBox init, SDL3)
+- Removed hardware: HUB75 LED matrix, Arduino LED ring, Pimoroni Unicorn HD, Futaba VFD
 
-Developed in co-operation with Daniel Richert and with grants from FUUG - Finnish Unix User Group.
+## Requirements
 
-## Platforms supported
+Built for the **piClock platform** on Raspberry Pi 5, arm64.
 
-The main target is a custom hardened linux image for raspberry pi 2 & 3 single board computers. It has been made to be as fault tolerant as possible.
+- **Hardware**: Raspberry Pi 5 (1GB or 2GB)
+- **Display**: HDMI via SDL3 KMSDRM (headless, no desktop required)
+- **OS**: Custom Buildroot image — pre-built images on the [Releases](https://github.com/jpkelly/clock8002/releases) page
+- **Network**: Required for OSC control and web configuration
 
-Currently the clock is also available on macos Vetura, linux and windows as precompiled installation packages. Compiling from the source should be possible on many other variants.
+## Quick Start — Flash the Image
 
-The installation files are available on https://kissa.depili.fi/clock-8001/releases/
+### 1. Download the latest release image
 
-* .msi files are Microsoft installer files for Windows, tested on windows 10 64bit
-* .deb files are debian / ubuntu linux packages, currently x86 64bit (amd64) and armhf (raspberry pi os 32bit) packages are being generated. Packages have been tested on raspberry pi os bullseye on rpi 3b+ and rpi4 and on ubuntu 22.4 jammy 64bit.
-  * Best way to install the package is to use 'sudo apt install ./clock-8001_1.2.3_arch.deb' command, as it will automatically pull all the dependencies.
-* .zip files contain Macos .app files. The earlier unsigned intel releases should work on big sur onwards on x86 macs, the later signed universal releases are for ventura.
+Get the pre-built SD card image from the [Releases](https://github.com/jpkelly/clock8002/releases) page. The image is named `piclockBR-<commit>-sdcard.img`.
 
-## Web configuration interface
+### 2. (Optional) Pre-configure before first boot
 
-The new unified images have a web configuration interface for the clock settings. You can access this interface by pointing your browser to the address of the clock. The default username is `admin` and the default password is `clockwork`. You should change them from the interface or the clock.ini file.
+Mount the SD card's FAT32 boot partition (appears as `piClock` on Mac/PC) and edit:
 
-On the raspberry pi images the config interface runs on port 80, on the installable versions on macos, linux and windows the default port is 8080.
+- `piclock/network.ini` — set hostname, static IP, Wi-Fi AP settings (applied on first boot)
+- `piclock/authorized_keys` — add SSH public key(s) for passwordless root login
 
-You can open a browser pointing to the configuration interface by pressing 'c' key while the clock is running.
+### 3. Flash to SD card
 
-## Ready made raspberry pi images
+Identify the SD card device:
 
-SD-card images for raspberry pi can be found at https://kissa.depili.fi/clock-8001/images
-
-Clock-8001 no longer has multiple different images, they have all been consolidated to one unified image which uses `enable_` files to activate various parts of the clock system as desired. The new images are named as `clock-800-unified-<version>.img`
-
-The images support raspberry pi 2B / 3B / 3B+ boards. They need at least 64Mb SD-cards. Write them to the card like any other raspberry pi sd-card image.
-
-The image tries to get a dhcp address on wired ethernet and also brings up a virtual interface eth0:1 with static ip (default 192.168.10.245 with 255.255.255.0 netmask).
-
-### Customizing the images
-
-You can place the following files on the sd-card FAT partition to customize the installation:
-* `clock.ini` main clock configuration file that is used by the default `clock_cmd.sh`
-* `hostname` to change the hostname used by the clock, it is available with "hostname.local" for bonjour / mDNS requests
-* `interfaces` a replacement for /etc/network/interfaces for custom network configuration
-* `ntp.conf` for custom ntp server configuration
-* `config.sys` the normal raspberry pi boot configuration for changing video modes etc.
-* `sdl-clock` to update the clock binary with this file
-* `clock_cmd.sh` is the command line for the clock, it should start with `/root/sdl-clock ` and be followed by any command line parameters you wish to use for the clock.
-* `clock_bridge` to update the clock bridge binary file
-* `clock_bridge_cmd.sh` to update the clock bridge command line. It should start with `/root/clock-bridge` and be followed by any command line paramaters for the bridge.
-* `enable_clock` delete this file and the main clock will not be active
-* `enable_bridge` delete this file and the mitti / millumin osc bridge will not be active
-* `enable_ssh` delete this file and remote ssh logins to the raspberry pi will not be allowed
-* `enable_ltc` delete this file and the LTC audio -> OSC functionality will not be active
-
-### Hyperpixel4 displays
-
-The image supports both the retangular and square hyperpixel4 displays from Pimoroni. To use them you need to rename either `config.txt.hp4_square` or `config.txt.hp4_rect` to `config.txt`
-
-For the rectangular display you need to also modify `clock_cmd.sh` to contain:
+```bash
+diskutil list external physical
 ```
-/hyperpixel4_rect/hyperpixel4-init
-/root/sdl-clock -C /boot/clock.ini
+
+Flash (replace `diskN` with your actual disk number):
+
+```bash
+diskutil unmountDisk /dev/diskN
+sudo dd if=/Users/yourname/Desktop/piclockBR-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
+diskutil eject /dev/diskN
 ```
-So that the display is initialized on boot.
 
-## sdl-clock - Output the clock to hdmi on the raspberry pi
+> **Warning:** `dd` overwrites without prompting. Verify the disk number carefully before running.
 
-You can build the clock binary with `go get gitlab.com/clock-8001/clock-8001/v4/cmd/sdl_clock`. Compiling requires SDL 2 and SDL_GFX 2 libraries. On the raspberry pi the default libraries shipped with rasbian will only output data to X11 window, so for full screen dedicated clock you need to compile the SDL libraries from source. For compiling use `./configure --host=armv7l-raspberry-linux-gnueabihf --disable-pulseaudio --disable-esd --disable-video-mir --disable-video-wayland --disable-video-x11 --disable-video-opengl` for config flags.
+Alternatively, use **Raspberry Pi Imager** → "Use custom image" to flash the `.img` file.
 
-### Precompiled binaries
+### 4. Boot and access the web UI
 
-* Latest from git master: [sdl-clock](https://gitlab.com/clock-8001/clock-8001/-/jobs/artifacts/master/raw/sdl-clock?job=build)
-* Testing builds: https://kissa.depili.fi/clock-8001/testing/
-* Tagged releases: https://kissa.depili.fi/clock-8001/releases/
+Insert the SD card and power on. After ~20 seconds, open a browser to:
 
-### LTC timecode support
+```
+http://piclockBR.local:8080
+```
 
-The clock can be used to display a SMPTE LTC time. This requires a Hifiberry ADC+ DAC Pro hat: https://www.hifiberry.com/shop/boards/hifiberry-dac-adc-pro/ or Interpace Industries USB AiO interface. Currently only these two options for audio input are supported.
+Default credentials: **admin** / **clockwork**
 
-For Hifiberry it is recommended to use the pin headers for balanced audio input and to wire the incoming mono LTC signal to both left and right channels.
+Default SSH access:
 
-Other usb audio interfaces might work, but they are completely untested and no support is offered for them.
+```bash
+ssh root@piclockBR.local   # password: clockworkadmin
+```
 
-## matrix-clock - Dedicated led matrix clock
+---
 
-**The matrix clock v4 isn't currently available. You can still use the version 3.**
+## First Boot
 
-Bill of materials:
-* Raspberry pi
-* 32x32 pixel 4mm pixel pitch led matrix
-* Led ring with 60 ws2812b leds
-* Arduino (nano recommend)
-* Adapter hat for the raspberry pi to connect to the led matrix
-* 5V 3A power supply
-* 12 leds of your choice for the static "hour" markers and current limiting resistors
+On first boot the clock starts automatically. A startup overlay displays the version and IP address for ~30 seconds.
 
-You need to compile https://gitlab.com/Depili/rpi-matrix for a small program that will listen on udp socket for the led matrix data and handle driving the led matrix.
+If you pre-configured `network.ini` before flashing, network settings are applied on first boot. To change settings after booting, edit `/boot/piclock/network.ini` via SSH and reboot.
 
-Compile the led matrix clock binary with `go get gitlab.com/clock-8001/clock-8001/v3/cmd/matrix-clock`
+## EEPROM Provisioning (Pi 5)
 
-### Precompiled binaries
+Factory Pi 5 units ship with `BOOT_ORDER=0xf461` (SD → USB → network → restart loop). For piClock, change this to `BOOT_ORDER=0xf1` (SD-only). This is a one-time operation per unit.
 
-* Latest from git master: [matrix-clock](https://gitlab.com/clock-8001/clock-8001/-/jobs/artifacts/master/raw/matrix-clock?job=build)
+SSH into the running unit and run:
 
-## OSC commands understood by the clock
+```bash
+printf '[all]\nBOOT_UART=1\nBOOT_ORDER=0xf1\n' > /tmp/eeprom.cfg
+BLOB=$(ls /usr/lib/firmware/raspberrypi/bootloader-2712/default/pieeprom-*.bin | sort | tail -1)
+rpi-eeprom-config --config /tmp/eeprom.cfg --out /tmp/custom.bin "$BLOB"
+rpi-eeprom-update -d -f /tmp/custom.bin
+reboot
+```
 
-See https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md
+After reboot, verify with `rpi-eeprom-config` — expect `BOOT_ORDER=0xf1`.
+
+## Pre-boot Configuration
+
+Config files live on the FAT32 boot partition at `/boot/piclock/` (visible as `piClock` when the SD card is mounted on Mac/PC). Edit them before first boot, or via SSH at the same path after booting.
+
+### network.ini
+
+Controls hostname, DHCP/static IP, NTP, and Wi-Fi AP mode. Changes take effect on reboot.
+
+```ini
+[network]
+mode=dhcp                          # dhcp or static
+ntp=false                          # disable if using OSC settime
+# address=10.0.0.100               # static IP only
+# netmask=24
+# gateway=10.0.0.1
+# dns=8.8.8.8
+hostname=piclockBR
+ap-ssid=piClock-ap
+ap-passphrase=clockwork1
+ap-channel=6
+```
+
+### authorized_keys
+
+Place SSH public key(s) in `/boot/piclock/authorized_keys` for passwordless root login. Applied at every boot — no reflash required.
+
+```bash
+# From Mac, with SD card mounted as piClock:
+echo "$(cat ~/.ssh/id_ed25519.pub)" >> /Volumes/piClock/piclock/authorized_keys
+```
+
+## Config Files Overview
+
+| File | Location | Purpose |
+|---|---|---|
+| `clock.ini` | `/boot/piclock/clock.ini` | Main clock config — face, colors, sources, timers, OSC, GPIO, web UI port |
+| `network.ini` | `/boot/piclock/network.ini` | Network config — DHCP/static IP, hostname, Wi-Fi AP mode |
+| `oled.ini` | `/boot/piclock/oled.ini` | OLED hardware config — enable/disable, I2C port, I2C address, rotation |
+| `authorized_keys` | `/boot/piclock/authorized_keys` | SSH public keys for passwordless root login |
+
+`/opt/clock8002/clock.ini` and `/opt/clock8002/oled/oled.ini` are symlinks into `/boot/piclock/`. Changes to `clock.ini` take effect on service restart or via the web UI. Changes to `network.ini` and `oled.ini` take effect on reboot.
+
+## Web UI
+
+Access the configuration interface at `http://<pi-ip>:8080`. Default credentials: **admin** / **clockwork**.
+
+All clock settings — face type, colors, sources, timers, OSC, GPIO — can be changed from the web UI without editing files. Settings are saved to `clock.ini` on the boot partition.
+
+## Service Operations
+
+```bash
+# Clock
+systemctl start clock8002
+systemctl stop clock8002
+systemctl restart clock8002
+systemctl status clock8002
+journalctl -u clock8002 -f
+
+# LTC decoder
+systemctl start alsa-ltc
+systemctl stop alsa-ltc
+systemctl restart alsa-ltc
+systemctl status alsa-ltc
+journalctl -u alsa-ltc -f
+
+# OLED daemon
+systemctl start oled_daemon
+systemctl stop oled_daemon
+systemctl status oled_daemon
+```
+
+Log file: `/root/.config/clock-8001/clock.log`
+
+### LTC (alsa-ltc)
+
+The LTC decoder auto-detects USB audio capture devices and sends decoded timecode via OSC to the clock. Enable LTC on a source in the web UI or config file (`source1.ltc=true`).
+
+```
+alsa-ltc [-v] <alsa-device> <OSC-destination-ip> <OSC-port> [sample-rate] [fps]
+```
+
+| Argument | Description |
+|---|---|
+| `-v` | Verbose — prints `.` per decoded frame, ALSA params, signal level |
+| `<alsa-device>` | ALSA capture device, or `-` for auto-detect |
+| `<OSC-destination-ip>` | IP to send OSC timecode to (`255.255.255.255` for subnet broadcast) |
+| `<OSC-port>` | UDP port (default: 1245) |
+| `[sample-rate]` | Audio sample rate in Hz (default: 44100) |
+| `[fps]` | LTC frame rate: 24, 25, or 30 (default: 25) |
+
+## GPIO/UART Serial Connections
+
+See the [piClock wiring diagram (PDF)](docs/piClockWiring.pdf) for a visual overview of UART, RS-485, LTC, and HDMI connections.
+
+UART overlays are pre-configured in the Buildroot image `config.txt`. No manual overlay installation required.
+
+#### UART Pin Mapping (Pi 5, 3.3V logic, current piclock wiring)
+
+| Device | Function | GPIO | Pin | Notes |
+|--------|----------|------|-----|-------|
+| `/dev/ttyAMA0` | UART0 TX | GPIO 14 | Pin 8 | Primary UART |
+| `/dev/ttyAMA0` | UART0 RX | GPIO 15 | Pin 10 | Primary UART |
+| `/dev/ttyAMA1` | UART1 TX | GPIO 0 | Pin 27 | PerfectCue TX (TTL to RS485 converter) |
+| `/dev/ttyAMA1` | UART1 RX | GPIO 1 | Pin 28 | PerfectCue RX (TTL to RS485 converter) |
+| `/dev/ttyAMA2` | UART2 TX | GPIO 4 | Pin 7 | |
+| `/dev/ttyAMA2` | UART2 RX | GPIO 5 | Pin 29 | |
+| `/dev/ttyAMA3` | UART3 TX | GPIO 8 | Pin 24 | Limitimer TX (TTL to RS485 converter) |
+| `/dev/ttyAMA3` | UART3 RX | GPIO 9 | Pin 21 | Limitimer RX (TTL to RS485 converter) |
+
+## OSC Control
+
+See the [original clock-8001 OSC documentation](https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md) for the full list of OSC commands.
+
+## Building from Source
+
+The Buildroot image is built on a dedicated build host (Pi CM5). See [buildroot-external/README.buildroot.md](buildroot-external/README.buildroot.md) for full build, deploy, and release procedures.
+
+For a quick binary cross-compile (code changes only, no full image rebuild):
+
+```bash
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 GOFLAGS=-mod=vendor go build -o /tmp/sdl3-clock-linux-arm64 ./cmd/sdl3-clock
+```
+
+Deploy directly to a running unit:
+
+```bash
+systemctl stop clock8002
+scp /tmp/sdl3-clock-linux-arm64 root@piclockBR.local:/opt/clock8002/sdl-clock
+ssh root@piclockBR.local 'systemctl start clock8002'
+```
+
+> No `install.sh` exists on Buildroot — deploy binaries directly.
+
+## Legacy Trixie/SDL2 Path
+
+The original SDL2/Debian Trixie deployment path (using `install.sh` on Raspberry Pi OS) is preserved on the [`trixie` branch](../../tree/trixie). It is no longer actively developed but remains available for reference.
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Black screen / no output | Check `systemctl status clock8002` — ensure DRM/KMS is not held by another process |
+| Text invisible on display | Verify Mesa 25.0.7 patches were applied to the Buildroot build host (see [issue #29](https://github.com/jpkelly/clock8002/issues/29)) |
+| Clock exits silently | Check `/root/.config/clock-8001/clock.log` and `journalctl -u clock8002` |
+| Web UI not accessible | Verify `systemctl status clock8002` is active and check network connectivity |
+| Config changes not applied | Restart the service: `systemctl restart clock8002` |
+| SSH: too many auth failures | Use `-o IdentitiesOnly=yes -i ~/.ssh/id_ed25519` to specify the key |
+| alsa-ltc not decoding LTC | Check `systemctl status alsa-ltc`; verify USB audio device is connected |
+
+## License
+
+This project is licensed under the GNU General Public License v2, the same license as the original clock-8001.

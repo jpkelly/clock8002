@@ -1,6 +1,6 @@
-# clock8002 Buildroot Image
+# clock8002 Buildroot Image — Developer Reference
 
-This document covers building, flashing, and maintaining the Buildroot-based SD card image for clock8002 on Raspberry Pi 5. This is separate from the Debian/Trixie install.sh deployment path described in the main README.
+This document covers building, flashing, and maintaining the Buildroot-based SD card image for clock8002 on Raspberry Pi 5. For user-facing setup and configuration, see the [main README](../README.md).
 
 ## Table of Contents
 
@@ -63,7 +63,7 @@ buildroot-external/
 
 ## Build Host Setup
 
-**Build host:** `pi@pi5start.local`  
+**Build host:** `pi@cm5.local` (CM5, 8GB RAM, NVMe)  
 **Buildroot version:** 2025.02  
 **Buildroot path:** `~/buildroot`  
 **External tree:** `~/clock8002/buildroot-external` (via `BR2_EXTERNAL`)
@@ -109,19 +109,19 @@ CXX="$(HOSTCXX_NOCCACHE)" acl_cv_wl="-Wl,"
 Before any build, always sync the clock8002 source on the build host:
 
 ```bash
-ssh pi@pi5start.local 'cd ~/clock8002 && git pull --ff-only'
+ssh pi@cm5.local 'cd ~/clock8002 && git pull --ff-only'
 ```
 
 ### Full image build
 
 ```bash
-ssh pi@pi5start.local 'cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
+ssh pi@cm5.local 'cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
 ```
 
 Monitor progress:
 
 ```bash
-ssh pi@pi5start.local 'tail -f /tmp/br-build.log'
+ssh pi@cm5.local 'tail -f /tmp/br-build.log'
 ```
 
 ### Partial rebuilds (when to use each)
@@ -139,7 +139,7 @@ ssh pi@pi5start.local 'tail -f /tmp/br-build.log'
 Release builds must use `make clean` — not `clock8002-dirclean` — to wipe `output/target/` completely. `clock8002-dirclean` only cleans the package build dir; stale files (including SSH keys from prior dev builds) persist in `output/target/` across partial rebuilds. `post-build.sh` also actively purges any stale key, but `make clean` ensures a provably clean rootfs.
 
 ```bash
-ssh pi@pi5start.local 'cd ~/clock8002 && git fetch --tags origin && git checkout vX.X.X && cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
+ssh pi@cm5.local 'cd ~/clock8002 && git fetch --tags origin && git checkout vX.X.X && cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
 ```
 
 > Replace `vX.X.X` with the release tag. `make clean` is slower (full rebuild of all packages) but required for release integrity.
@@ -148,23 +148,23 @@ ssh pi@pi5start.local 'cd ~/clock8002 && git fetch --tags origin && git checkout
 
 Bakes your personal SSH public key into the image for passwordless login. `BR2_PICLOCKKEY` must be set at build time.
 
-**One-time setup on pi5start** — store your key in a local untracked file:
+**One-time setup on cm5** — store your key in a local untracked file:
 
 ```bash
-ssh pi@pi5start.local 'echo "export BR2_PICLOCKKEY=\"ssh-ed25519 AAAA... you@host\"" > ~/buildroot-keys.env && chmod 600 ~/buildroot-keys.env'
+ssh pi@cm5.local 'echo "export BR2_PICLOCKKEY=\"ssh-ed25519 AAAA... you@host\"" > ~/buildroot-keys.env && chmod 600 ~/buildroot-keys.env'
 ```
 
 **Dev build command:**
 
 ```bash
-ssh pi@pi5start.local 'source ~/buildroot-keys.env && cd ~/clock8002 && git pull --ff-only && cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
+ssh pi@cm5.local 'source ~/buildroot-keys.env && cd ~/clock8002 && git pull --ff-only && cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
 ```
 
 > Dev builds can use `clock8002-dirclean` for speed. The SSH key is re-injected on every build by `post-build.sh` when `BR2_PICLOCKKEY` is set.
 
 ### Defconfig notes
 
-The committed file `configs/clock8002_rpi5_defconfig.sample` is **not** the live `.config` on pi5start. After adding packages to the sample you must also patch the live `.config`:
+The committed file `configs/clock8002_rpi5_defconfig.sample` is **not** the live `.config` on cm5. After adding packages to the sample you must also patch the live `.config`:
 
 ```bash
 # Example: adding a package
@@ -179,8 +179,8 @@ Always verify: `grep BR2_PACKAGE_<name> ~/buildroot/.config`
 ### Copy image to Mac
 
 ```bash
-scp pi@pi5start.local:~/buildroot/output/images/sdcard.img \
-    ~/Desktop/piclockBR-<7-char-commit>-sdcard.img
+scp pi@cm5.local:~/buildroot/output/images/sdcard.img \
+    /Users/yourname/Desktop/piclockBR-<7-char-commit>-sdcard.img
 ```
 
 Image naming convention: `piclockBR-<7-char-commit-hash>-sdcard.img`
@@ -258,9 +258,12 @@ SCP note: use `-o IdentitiesOnly=yes -i ~/.ssh/id_ed25519` to avoid "too many au
 To test a single binary change on the running unit without rebuilding the full image:
 
 ```bash
-# Build on pi5start, copy binary to unit, restart service
+# Cross-compile on Mac (from v4/)
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 GOFLAGS=-mod=vendor go build -o /tmp/sdl3-clock-linux-arm64 ./cmd/sdl3-clock
+
+# Copy to unit and restart
 systemctl stop clock8002
-scp <binary> root@piclockBR.local:/opt/clock8002/sdl-clock
+scp /tmp/sdl3-clock-linux-arm64 root@piclockBR.local:/opt/clock8002/sdl-clock
 ssh root@piclockBR.local 'systemctl start clock8002'
 ```
 

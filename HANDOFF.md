@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-25
+Last updated: 2026-04-26
 
 ## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
 
@@ -614,6 +614,30 @@ Committed changes in `v4/alsa-ltc.c`, `v4/alsa-ltc.service`, and Buildroot overl
 ### Stability test (Apr 11, ~6h)
 - piclockBR: clean — 0 USB errors
 - piclockTG (Trixie): CM108 lockup at ~6h (`usb_set_interface -110`), rebooted to recover
+
+## Branch Promotion Decision (2026-04-26)
+
+**Decision:** Promote `buildroot` → `master`. SDL3/Buildroot is the primary deployment path going forward. SDL2/Trixie is archived as `trixie`.
+
+**Rationale:**
+- Zero external users (0 stars, 0 forks, all issues/PRs from owner only)
+- Buildroot image is the active production path; no new units are deployed on Trixie
+- SDL3 port complete and soak-tested; SDL2 path has no ongoing development
+- Code divergence (118 vs 420 commits from common ancestor) makes cross-branch merging impractical
+
+**Branch operations required (manual — GitHub Settings):**
+1. Change default branch from `master` to `buildroot`
+2. Rename `master` → `trixie`
+3. Rename `buildroot` → `master`
+4. Update local: `git branch -m buildroot master && git fetch origin && git branch -u origin/master master`
+5. Update `.github/copilot-instructions.md` — remove `buildroot` branch references
+
+**Tracking issue:** [#40](https://github.com/jpkelly/clock8002/issues/40)
+
+**Docs already committed (this session):**
+- `README.md` on `buildroot` — rewritten as primary user-facing doc (flash → configure)
+- `buildroot-external/README.buildroot.md` — stale `pi5start.local` → `cm5.local`; reframed as developer/builder reference
+- `README.md` on `master` (commit `a991419`) — legacy notice added pointing to new primary branch
 
 ## Next Suggested Release
 
