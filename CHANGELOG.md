@@ -1,4 +1,12 @@
 ## Unreleased (buildroot branch)
+* Second display (Buildroot)
+  * Add mirror mode — second HDMI output mirrors the clock display in real time using a DRM dumb buffer; enabled by default when a second display is connected
+  * Add PerfectCue fullscreen icon mode (`cue-second-display`) — second HDMI shows full-screen green/red/yellow PerfectCue icons instead of mirroring; toggled via web config
+  * Fix HDMI detection: replaced sysfs `/sys/class/drm/.../status` checks (always reports `connected` on Pi 5) with DRM ioctl-based detection — prevents `DROP_MASTER` from being called when no second display is physically connected
+  * Fix R/B channel swap in mirror mode: SDL3 `ReadPixels` returns ABGR8888; swap bytes 0 and 2 before writing to the XRGB8888 DRM framebuffer
+  * Fix `setFramebufferConsoleBound(false)` called unconditionally on startup — now only called after DRM confirms a spare connector is available, preventing SDL3 from losing its display on single-screen setups
+  * `S99clock`: save watchdog PID on start; stop now kills by PID and by process name to handle the boot-time instance that pre-dates the PID file
+  * `clock_pokemon.sh`: `stop()` was a no-op (`true`) — now kills watchdog loop, `clock_cmd.sh`, and `sdl3-clock` processes
 * Web config
   * NumberFont / LabelFont / IconFont fields are now `<select>` dropdowns, auto-populated from `.ttf` files in `--font-path`. If the currently saved font isn't on disk, it is preserved as a `(custom)` option so nothing is silently dropped. (`8001c05`)
   * Font list no longer empties after the first save — CLI-only `FontPath` is now preserved across the config reload that happens on save. The font walk is factored into a `collectFonts()` helper, used by both the index handler and the validation-error re-render path. (`5a18694`)

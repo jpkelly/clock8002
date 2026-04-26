@@ -34,7 +34,13 @@ start() {
 }
 
 stop() {
-	true
+	echo "Stopping sdl-clock watchdog"
+	kill $(cat /var/run/clock.pid 2>/dev/null) 2>/dev/null || true
+	for pid in $(ps aux | grep clock_pokemon | grep -v grep | awk '{print $1}'); do
+		[ "$pid" != "$$" ] && kill "$pid" 2>/dev/null || true
+	done
+	kill $(ps aux | grep clock_cmd | grep -v grep | awk '{print $1}') 2>/dev/null || true
+	kill $(ps aux | grep sdl3-clock | grep -v grep | awk '{print $1}') 2>/dev/null || true
 }
 
 case "$1" in

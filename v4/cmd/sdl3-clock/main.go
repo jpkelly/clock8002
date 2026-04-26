@@ -120,6 +120,8 @@ func main() {
 
 	loadBackground(options.Background)
 
+	probeSecondDisplayOutput()
+
 	log.Printf("Entering main loop")
 
 	configStarted := false
@@ -174,6 +176,7 @@ func main() {
 			engine.SetTitleColors(toRGBA(colors.label), toRGBA(colors.labelBG))
 
 			loadBackground(options.Background)
+			probeSecondDisplayOutput()
 			log.Printf("Config reloaded!")
 		case <-eventTicker.C:
 			// SDL event polling
@@ -269,6 +272,13 @@ func main() {
 			updateCue(state)
 			if state.CueShow {
 				drawCue()
+			}
+
+			// Second display sync
+			if options.CueSecondDisplay {
+				syncSecondDisplayCueDisplay(state)
+			} else {
+				syncSecondDisplayMirrorDisplay()
 			}
 
 			// Update the canvas
