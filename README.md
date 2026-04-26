@@ -1,5 +1,11 @@
 # Clock 8002
 
+> **⚠ This branch (`trixie`) is the legacy SDL2/Debian Trixie deployment path.**
+> The primary branch is now [`master`](../../tree/master) (SDL3/Buildroot image).
+> New deployments and active development are on `master`. This branch is preserved for reference.
+
+---
+
 An HDMI clock display for Raspberry Pi 5, based on the [clock-8001](https://gitlab.com/clock-8001/clock-8001) project. Outputs a full-screen clock to HDMI via SDL2 with KMSDRM (no desktop environment required). Controllable via OSC and a built-in web UI.
 
 This build is intended to be used with the piClock platform.
