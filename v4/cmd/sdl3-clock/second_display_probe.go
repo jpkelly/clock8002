@@ -38,42 +38,44 @@ func probeSecondDisplayOutput() {
 		return
 	}
 
-	if options.CueSecondDisplay {
-		destroySecondDisplayMirror()
-	} else {
-		// Mirror mode: stop any running fbi, reset cue state, start DRM mirror.
-		// initDRMMirror uses DRM ioctls to detect a spare connector — more reliable
-		// than the sysfs status file which can report "connected" even with nothing plugged in.
-		stopSecondDisplayImageProcesses()
+	// If DRM is already active, handle the mode switch in-place — do NOT tear down
+	// and rebuild. Both mirror and cue mode write to the same dumb framebuffer; calling
+	// destroyDRMMirror() leaves the CRTC scanning a freed buffer, freezing the display.
+	if isDRMMirrorActive() {
 		lastSecondDisplayCueVisual = secondDisplayCueUnset
-		if err := initDRMMirror(); err != nil {
-			log.Printf("Info: DRM mirror init failed (no spare HDMI or not supported): %v", err)
-			return
-		}
-		// Only unbind fbcon after DRM mirror is confirmed active.
-		if err := setFramebufferConsoleBound(false); err != nil {
-			log.Printf("Warning: could not disable framebuffer console binding for mirror mode: %v", err)
+		if options.CueSecondDisplay {
+			updateCueDRMBuffer(secondDisplayCueOff)
+			log.Printf("Info: second display switched to cue icon mode (DRM already active)")
 		} else {
-			log.Printf("Info: framebuffer console unbound for second display mirror mode")
+			log.Printf("Info: second display switched to mirror mode (DRM already active)")
 		}
 		return
 	}
 
-	// Cue icon mode: use DRM ioctl to confirm a spare connector exists before
-	// touching fbcon — same approach as mirror mode (sysfs status is unreliable).
-	log.Printf("Info: HDMI-A-2 cue display: initialising DRM")
+	// First-time init: DRM not yet active. Detect spare connector and set up.
+	stopSecondDisplayImageProcesses()
+	lastSecondDisplayCueVisual = secondDisplayCueUnset
+
+	// initDRMMirror uses DRM ioctls to detect a spare connector — more reliable
+	// than the sysfs status file which can report "connected" with nothing plugged in.
 	if err := initDRMMirror(); err != nil {
-		log.Printf("Info: DRM cue display init failed (no spare HDMI or not supported): %v", err)
+		log.Printf("Info: DRM second display init failed (no spare HDMI or not supported): %v", err)
 		return
 	}
+
 	// Only unbind fbcon after DRM confirms a spare display is available.
 	if err := setFramebufferConsoleBound(false); err != nil {
 		log.Printf("Warning: could not disable framebuffer console binding: %v", err)
 	} else {
-		log.Printf("Info: framebuffer console unbound for second display icon mode")
+		log.Printf("Info: framebuffer console unbound for second display")
 	}
-	updateCueDRMBuffer(secondDisplayCueOff)
-	log.Printf("Info: DRM cue display ready on HDMI-A-2")
+
+	if options.CueSecondDisplay {
+		updateCueDRMBuffer(secondDisplayCueOff)
+		log.Printf("Info: DRM cue display ready on HDMI-A-2")
+	} else {
+		log.Printf("Info: DRM mirror ready on spare HDMI")
+	}
 }
 
 func fbconBound() bool {
