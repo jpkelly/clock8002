@@ -74,7 +74,7 @@ diskutil list external physical
 
 # Flash (replace diskN with your disk number)
 diskutil unmountDisk /dev/diskN
-sudo dd if=/Users/jp/Desktop/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
+sudo dd if=/path/to/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
 diskutil eject /dev/diskN
 ```
 
