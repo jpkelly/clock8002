@@ -1,4 +1,4 @@
-## Unreleased (buildroot branch)
+## Version 1.3.3 (2026-04-26) — Buildroot RC
 * Second display (Buildroot)
   * Add mirror mode — second HDMI output mirrors the clock display in real time using a DRM dumb buffer; enabled by default when a second display is connected
   * Add PerfectCue fullscreen icon mode (`cue-second-display`) — second HDMI shows full-screen green/red/yellow PerfectCue icons instead of mirroring; toggled via web config
