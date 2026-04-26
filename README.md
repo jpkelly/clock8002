@@ -170,6 +170,8 @@ Access the configuration interface at `http://piClock.local` (or by IP). Default
 
 All clock settings — face type, colors, sources, timers, OSC, GPIO — can be changed from the web UI without editing files. Settings are saved to `clock.ini` on the boot partition.
 
+> **Note:** On a new install, the first configuration save will reboot the clock.
+
 ## Service Operations
 
 ```sh
