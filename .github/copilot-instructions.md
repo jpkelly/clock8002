@@ -40,3 +40,42 @@ Codebase orientation:
 - Active code: v4/ only (v3/ is historical)
 - Go module: gitlab.com/clock-8001/clock-8001/v4
 - Target config path: /boot/piclock/clock.ini (never rely on baked symlink target)
+
+Stability decision gate note:
+- When investigating suspected memory/resource leaks, do not deploy code fixes until the current baseline run on the fully-populated 2GB piclock unit reaches at least the 24h checkpoint, unless the user explicitly overrides this gate.
+- Required decision checkpoints: 12h and 24h with the same metrics (`VmRSS`, `VmSwap`, system swap, service state, temperature/throttle).
+- Approve code change only if leak behavior is reproduced on that unit (e.g., materially rising `VmSwap` for `sdl3-clock` or sustained RSS growth over time). If metrics are flat by 24h, hold changes and treat prior 1GB findings as non-generalized.
+
+Branch safety note:
+- Before editing any repository file, always verify the local branch: `git branch --show-current`. Confirm it matches the intended branch before proceeding.
+- Before any `git commit`, verify the branch again. Never commit to `master` when changes belong on a feature branch, or vice versa.
+- `master` = production-ready Buildroot image code only. All experimental/in-progress work lives on a feature branch.
+- Active feature branch: `feature/squashfs-readonly` — owns: rootfs-overlay fstab, S02setup-root, launcher script relocation, /root tmpfs changes. Do NOT merge to master until clean-boot image test passes.
+- For a feature-branch build on cm5: (1) switch cm5 to the feature branch, (2) build, (3) switch cm5 back to master immediately after. Always restore cm5 to master — leaving it on a feature branch will corrupt the next master build.
+- `buildroot-prototype` branch: historical only — never check it out, never build from it, never commit to it.
+
+Release management note:
+- The primary release artifact is the **Buildroot SD card image** (`piClock-<commit>-sdcard.img`), built via the Buildroot system on cm5 (`~/buildroot`). This is what gets attached to GitHub releases.
+- The `make release` tarballs are a legacy Trixie mechanism; do not build or attach them for Buildroot releases.
+- Versioning must follow this repository's own tag line (`v1.x` and onward); ignore inherited upstream `v4.x` tags from the fork source.
+- When cutting a new release, update README quick-install download/extract commands to the new release URL/version.
+- When tagging a release, always update HANDOFF.md to reflect the new latest tag, commit hash, and any relevant status changes before or as part of the release commit.
+
+Buildroot image workflow note:
+- Branch: `master` (NEVER use `buildroot-prototype` — it is historical only and permanently diverged).
+- Test unit: `root@piClock.local`. Build host: `pi@cm5.local` (~/buildroot).
+- Buildroot sources sdl3-clock/alsa-ltc directly from `~/clock8002/v4` on cm5 — always `git pull --ff-only` in `~/clock8002` before any `make`.
+- Before building, verify cm5 is on the **intended branch**: `ssh pi@cm5.local 'cd ~/clock8002 && git branch --show-current'` — expected output is `master` for release/production builds, or the feature branch name for feature-branch builds. Fail if the output does not match.
+- Dual service file rule: service files that exist in both `v4/` (Trixie) and `buildroot-external/board/clock8002-rpi5/rootfs-overlay/` (Buildroot) must be kept in sync. When editing a service file in `v4/`, always check for a Buildroot overlay copy and update it with the same changes (adjusting for platform differences like `User=root`). The overlay overwrites the package-installed copy at image build time.
+- Dev builds (with SSH key): `ssh pi@cm5.local "cd ~/buildroot && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make clock8002-dirclean && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:\$?"`
+- Release builds (no SSH key): `ssh pi@cm5.local 'cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
+- Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-build.log'`
+- Always provide the monitor command after starting a build.
+- Image transfer: `scp pi@cm5.local:~/buildroot/output/images/sdcard.img ~/Desktop/piClock-<COMMIT>-sdcard.img`
+- Image naming convention: `piClock-<7-char-commit-hash>-sdcard.img`
+- Flash command format (user runs manually — never run dd from agent): `diskutil unmountDisk /dev/diskN && sudo dd if=/Users/jp/Desktop/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress && diskutil eject /dev/diskN`
+- Always verify disk number with `diskutil list external physical` before giving flash commands.
+- BusyBox on target: no bash (use `sh`), no `tar -z` (use `gzip -d -c | tar x`), no `--ignore-missing` on sha256sum.
+- SSH to Buildroot target: `root@piClock.local` with `-o IdentitiesOnly=yes -i ~/.ssh/id_rsa`.
+- Deploy binary directly (no install.sh on BR): `/etc/init.d/S99clock stop && cp <binary> /opt/clock8002/sdl3-clock && /etc/init.d/S99clock start`.
+- After a fresh Buildroot checkout, always run `buildroot-external/scripts/apply-build-host-patches.sh ~/buildroot` before building — this applies the Mesa 25.0.7 upgrade and host-xz libtool workaround (see issue #29).
