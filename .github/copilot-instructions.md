@@ -34,6 +34,14 @@ Stability decision gate note:
 - Required decision checkpoints: 12h and 24h with the same metrics (`VmRSS`, `VmSwap`, system swap, service state, temperature/throttle).
 - Approve code change only if leak behavior is reproduced on that unit (e.g., materially rising `VmSwap` for `sdl3-clock` or sustained RSS growth over time). If metrics are flat by 24h, hold changes and treat prior 1GB findings as non-generalized.
 
+Branch safety note:
+- Before editing any repository file, always verify the local branch: `git branch --show-current`. Confirm it matches the intended branch before proceeding.
+- Before any `git commit`, verify the branch again. Never commit to `master` when changes belong on a feature branch, or vice versa.
+- `master` = production-ready Buildroot image code only. All experimental/in-progress work lives on a feature branch.
+- Active feature branch: `feature/squashfs-readonly` — owns: rootfs-overlay fstab, S02setup-root, launcher script relocation, /root tmpfs changes. Do NOT merge to master until clean-boot image test passes.
+- For a feature-branch build on cm5: (1) switch cm5 to the feature branch, (2) build, (3) switch cm5 back to master immediately after. Always restore cm5 to master — leaving it on a feature branch will corrupt the next master build.
+- `buildroot-prototype` branch: historical only — never check it out, never build from it, never commit to it.
+
 Release management note:
 - The primary release artifact is the **Buildroot SD card image** (`piClock-<commit>-sdcard.img`), built via the Buildroot system on cm5 (`~/buildroot`). This is what gets attached to GitHub releases.
 - The `make release` tarballs are a legacy Trixie mechanism; do not build or attach them for Buildroot releases.
@@ -45,7 +53,7 @@ Buildroot image workflow note:
 - Branch: `master` (NEVER use `buildroot-prototype` — it is historical only and permanently diverged).
 - Test unit: `root@piClock.local`. Build host: `pi@cm5.local` (~/buildroot).
 - Buildroot sources sdl3-clock/alsa-ltc directly from `~/clock8002/v4` on cm5 — always `git pull --ff-only` in `~/clock8002` before any `make`.
-- Before building, verify cm5 is on master: `ssh pi@cm5.local 'cd ~/clock8002 && git branch --show-current'`
+- Before building, verify cm5 is on the **intended branch**: `ssh pi@cm5.local 'cd ~/clock8002 && git branch --show-current'` — expected output is `master` for release/production builds, or the feature branch name for feature-branch builds. Fail if the output does not match.
 - Dual service file rule: service files that exist in both `v4/` (Trixie) and `buildroot-external/board/clock8002-rpi5/rootfs-overlay/` (Buildroot) must be kept in sync. When editing a service file in `v4/`, always check for a Buildroot overlay copy and update it with the same changes (adjusting for platform differences like `User=root`). The overlay overwrites the package-installed copy at image build time.
 - Dev builds (with SSH key): `ssh pi@cm5.local "cd ~/buildroot && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make clock8002-dirclean && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:\$?"`
 - Release builds (no SSH key): `ssh pi@cm5.local 'cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
