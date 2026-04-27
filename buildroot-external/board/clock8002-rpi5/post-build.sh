@@ -43,6 +43,13 @@ if ! grep -q '/boot' "${TARGET_DIR}/etc/fstab" 2>/dev/null; then
         echo '/dev/mmcblk0p1    /boot   vfat    defaults,nofail 0       0' >> "${TARGET_DIR}/etc/fstab"
 fi
 
+# Mount /root as tmpfs to protect the SD card from write wear.
+# Appended here (not via overlay fstab) so the Buildroot-generated fstab
+# entries for /proc, /sys, /run, /tmp etc. are preserved intact.
+if ! grep -q 'tmpfs.*\s/root\s' "${TARGET_DIR}/etc/fstab" 2>/dev/null; then
+        echo 'tmpfs           /root           tmpfs   mode=0700,noatime       0       0' >> "${TARGET_DIR}/etc/fstab"
+fi
+
 # Pre-create /boot/piclock directory (will be on the mounted FAT partition).
 mkdir -p "${TARGET_DIR}/boot/piclock"
 
