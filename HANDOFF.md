@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-26
+Last updated: 2026-04-26 (feature/squashfs-readonly live-tested)
 
 ## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
 
@@ -116,6 +116,54 @@ See `/memories/repo/clock8002-production-image-policy.md`.
 still configured to send OSC to the previous unit's IP. IP changed with the
 new SD card. Not a code/config bug on the clock side. Fix: update Mitti OSC
 destination to `192.168.8.246:1245`.
+
+---
+
+## feature/squashfs-readonly Branch (2026-04-26)
+
+### Goal
+Protect the SD card from write wear by mounting `/root` as tmpfs.
+`/root` is the only path that needs protection — `/var` was intentionally
+**not** touched (sshd requires `/var/empty`).
+
+### Commits on this branch (from master `13094a1`)
+- `be4198e`: buildroot: /root tmpfs — move launcher scripts to /opt, add S02setup-root
+
+### What changed
+- `rootfs-overlay/etc/fstab` — new file: `tmpfs /root tmpfs defaults,noatime 0 0`
+  (post-build.sh appends the `/boot` FAT entry as before)
+- `S02setup-root` — new init script (runs before S03/S04): copies all 5 launcher
+  scripts from `/opt/clock8002/` to `/root/` and recreates the
+  `/root/.config/clock-8001/clock.ini → /boot/piclock/clock.ini` symlink
+- `S01power-button` → `S04power-button` — renamed so it runs after S02 populates `/root/`
+- All 5 launcher scripts moved from `rootfs-overlay/root/` to `rootfs-overlay/opt/clock8002/`
+  so they are accessible from `/opt` (not hidden by the tmpfs mount)
+- `post-build.sh` — chmod lists updated to match new names/paths
+
+### Boot sequence
+```
+mount -a (fstab)  → /root is empty tmpfs
+S02setup-root     → copies scripts + creates clock.ini symlink
+S03copy_*         → /boot overrides if present
+S04power-button   → /root/power-button.sh now exists, launches cleanly
+```
+
+### Live test result (2026-04-26)
+- Deployed to piClock (192.168.8.245, v1.3.5 image + manual fstab tmpfs)
+- Rebooted — S02setup-root populated /root correctly on clean boot
+- All services confirmed running: sdl3-clock, alsa-ltc, oled_daemon, power-button
+- clock.ini symlink recreated correctly at `/root/.config/clock-8001/clock.ini`
+
+### Status
+- ✅ Code committed and pushed to `feature/squashfs-readonly`
+- ✅ Live-tested on reboot — all services up
+- ⏳ Buildroot image not yet built from this branch
+
+### Next steps
+1. Build on cm5: `ssh pi@cm5.local 'cd ~/clock8002 && git checkout feature/squashfs-readonly && git pull --ff-only && cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
+2. Transfer: `scp pi@cm5.local:~/buildroot/output/images/sdcard.img ~/Desktop/piClock-<COMMIT>-squashfs-sdcard.img`
+3. Flash and do a completely clean-boot test (no manual patches)
+4. If clean-boot passes: merge to master and cut v1.4.0
 
 ---
 
