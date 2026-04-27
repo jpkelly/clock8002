@@ -1,0 +1,37 @@
+#!/bin/sh
+# Set up /root at boot time.
+# /root is a tmpfs mount (see /etc/fstab), so files baked into the rootfs
+# at /root/ are hidden at runtime.  This script copies launcher scripts
+# from /opt/clock8002/ to /root/ and recreates the clock.ini config symlink.
+
+case "$1" in
+	start)
+		echo "Setting up /root"
+		mkdir -p /root
+
+		# Copy launcher scripts from /opt/clock8002/ to /root/
+		for script in clock_pokemon.sh clock_cmd.sh \
+		              alsa-ltc_pokemon.sh alsa-ltc_cmd.sh \
+		              power-button.sh; do
+			if [ -f "/opt/clock8002/${script}" ]; then
+				cp "/opt/clock8002/${script}" "/root/${script}"
+				chmod +x "/root/${script}"
+			fi
+		done
+
+		# Recreate clock.ini symlink for sdl3-clock XDG config path.
+		# /boot must be mounted before this runs (handled by S03copy_clock_files),
+		# but the symlink itself can point to a not-yet-mounted path safely.
+		mkdir -p /root/.config/clock-8001
+		ln -sf /boot/piclock/clock.ini /root/.config/clock-8001/clock.ini
+		;;
+	stop|restart|reload)
+		true
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac
+
+exit 0

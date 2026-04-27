@@ -8,9 +8,10 @@ echo 'piClock' > "${TARGET_DIR}/etc/hostname"
 
 # Make init.d scripts executable.
 for script in \
-        S01power-button \
+        S02setup-root \
         S03copy_alsa-ltc_files \
         S03copy_clock_files \
+        S04power-button \
         S05bootsplash \
         S11modules \
         S45piclock-network \
@@ -23,14 +24,14 @@ for script in \
         fi
 done
 
-# Make pokemon/cmd scripts executable.
+# Make pokemon/cmd scripts executable (now in /opt/clock8002/, copied to /root/ at boot).
 for script in \
         alsa-ltc_pokemon.sh \
         alsa-ltc_cmd.sh \
         clock_pokemon.sh \
         clock_cmd.sh \
         power-button.sh; do
-        F="${TARGET_DIR}/root/${script}"
+        F="${TARGET_DIR}/opt/clock8002/${script}"
         if [ -f "${F}" ]; then
                 chmod +x "${F}"
         fi
