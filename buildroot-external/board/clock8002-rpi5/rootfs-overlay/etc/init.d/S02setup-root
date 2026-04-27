@@ -7,7 +7,8 @@
 case "$1" in
 	start)
 		echo "Setting up /root"
-		mkdir -p /root		chmod 700 /root
+		mkdir -p /root
+		chmod 700 /root
 		# Copy launcher scripts from /opt/clock8002/ to /root/
 		for script in clock_pokemon.sh clock_cmd.sh \
 		              alsa-ltc_pokemon.sh alsa-ltc_cmd.sh \
