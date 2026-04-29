@@ -1,0 +1,54 @@
+#!/bin/sh
+# Persist SSH host keys across reflashes.
+# Keys are stored on the FAT /boot partition (/boot/piclock/ssh/).
+# On each boot they are copied to /root/ssh (tmpfs).
+# On first boot (or when FAT keys are missing) they are generated and saved.
+#
+# sshd_config (modified by post-build.sh) points HostKey directives to
+# /root/ssh/ so that sshd reads keys from the tmpfs copy.
+#
+# Runs at S49 — after S03 mounts /boot, before S50sshd.
+
+KEY_STORE="/boot/piclock/ssh"
+KEY_DIR="/root/ssh"
+
+start() {
+	mkdir -p "$KEY_DIR"
+	chmod 700 "$KEY_DIR"
+
+	if [ -f "$KEY_STORE/ssh_host_ed25519_key" ]; then
+		# Keys already persisted on FAT — restore for this boot.
+		cp "$KEY_STORE"/ssh_host_*_key     "$KEY_DIR/"
+		cp "$KEY_STORE"/ssh_host_*_key.pub "$KEY_DIR/"
+		chmod 600 "$KEY_DIR"/ssh_host_*_key
+		chmod 644 "$KEY_DIR"/ssh_host_*_key.pub
+		echo "sshd-keys: host keys restored from $KEY_STORE"
+	else
+		# First boot or FAT keys missing — generate and save.
+		echo "sshd-keys: generating SSH host keys (first boot)"
+		ssh-keygen -q -t rsa     -N '' -f "$KEY_DIR/ssh_host_rsa_key"
+		ssh-keygen -q -t ecdsa   -N '' -f "$KEY_DIR/ssh_host_ecdsa_key"
+		ssh-keygen -q -t ed25519 -N '' -f "$KEY_DIR/ssh_host_ed25519_key"
+		mkdir -p "$KEY_STORE"
+		cp "$KEY_DIR"/ssh_host_*_key     "$KEY_STORE/"
+		cp "$KEY_DIR"/ssh_host_*_key.pub "$KEY_STORE/"
+		chmod 600 "$KEY_STORE"/ssh_host_*_key
+		chmod 644 "$KEY_STORE"/ssh_host_*_key.pub
+		echo "sshd-keys: host keys saved to $KEY_STORE"
+	fi
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop|restart|reload)
+		true
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac
+
+exit 0

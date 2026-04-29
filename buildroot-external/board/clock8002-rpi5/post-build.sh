@@ -15,6 +15,7 @@ for script in \
         S05bootsplash \
         S11modules \
         S45piclock-network \
+        S49sshd-keys \
         S98oled \
         S99alsa-ltc \
         S99clock; do
@@ -50,6 +51,18 @@ if ! grep -q 'tmpfs.*\s/root\s' "${TARGET_DIR}/etc/fstab" 2>/dev/null; then
         echo 'tmpfs           /root           tmpfs   mode=0700,noatime       0       0' >> "${TARGET_DIR}/etc/fstab"
 fi
 
+# Mount tmpfs over /var/lib so NM and seedrng can write runtime data.
+# squashfs rootfs is read-only; these dirs are regenerated each boot.
+if ! grep -q 'tmpfs.*\s/var/lib\s' "${TARGET_DIR}/etc/fstab" 2>/dev/null; then
+        echo 'tmpfs           /var/lib        tmpfs   mode=0755,noatime       0       0' >> "${TARGET_DIR}/etc/fstab"
+fi
+
+# Mount tmpfs over NM system-connections dir so S43piclock-network-prep can
+# write the wired connection file before NetworkManager starts.
+if ! grep -q '/etc/NetworkManager/system-connections' "${TARGET_DIR}/etc/fstab" 2>/dev/null; then
+        echo 'tmpfs           /etc/NetworkManager/system-connections tmpfs mode=0700,noatime 0 0' >> "${TARGET_DIR}/etc/fstab"
+fi
+
 # Pre-create /boot/piclock directory (will be on the mounted FAT partition).
 mkdir -p "${TARGET_DIR}/boot/piclock"
 
@@ -65,6 +78,13 @@ ln -sf /boot/piclock/oled.ini "${TARGET_DIR}/opt/clock8002/oled/oled.ini"
 # Allow root SSH login with password (appliance build).
 if [ -f "${TARGET_DIR}/etc/ssh/sshd_config" ]; then
         sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' "${TARGET_DIR}/etc/ssh/sshd_config"
+fi
+
+# Redirect SSH host keys to /root/ssh (tmpfs, persisted to FAT by S49sshd-keys).
+# /root is tmpfs so keys survive runtime but are not baked into squashfs.
+if [ -f "${TARGET_DIR}/etc/ssh/sshd_config" ]; then
+        sed -i '/^[[:space:]]*HostKey[[:space:]]/d' "${TARGET_DIR}/etc/ssh/sshd_config"
+        printf '\n# Host keys live in /root/ssh (tmpfs). S49sshd-keys populates from /boot/piclock/ssh/.\nHostKey /root/ssh/ssh_host_rsa_key\nHostKey /root/ssh/ssh_host_ecdsa_key\nHostKey /root/ssh/ssh_host_ed25519_key\n' >> "${TARGET_DIR}/etc/ssh/sshd_config"
 fi
 
 # SSH authorized key (dev builds only).

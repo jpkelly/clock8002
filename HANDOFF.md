@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-26 (feature/squashfs-readonly live-tested)
+Last updated: 2026-04-29 (squashfs Phase 2 config changes committed)
 
 ## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
 
@@ -119,51 +119,165 @@ destination to `192.168.8.246:1245`.
 
 ---
 
-## feature/squashfs-readonly Branch (2026-04-26)
-
+## feature/squashfs-readonly Branch (2026-04-29)
 ### Goal
-Protect the SD card from write wear by mounting `/root` as tmpfs.
-`/root` is the only path that needs protection — `/var` was intentionally
-**not** touched (sshd requires `/var/empty`).
+Convert the Buildroot rootfs from ext4 (read-write) to SquashFS (read-only) with
+tmpfs covering all runtime write paths. All writes go to RAM; SD card rootfs
+partition is never written after first flash.
 
-### Commits on this branch (from master `13094a1`)
+**Current status (2026-04-29): Phase 2 config changes committed. First squashfs
+build pending on cm5. See Issue #41 for full 10-phase plan.**
+
+### Commits on this branch (HEAD: pending squashfs commit)
 - `be4198e`: buildroot: /root tmpfs — move launcher scripts to /opt, add S02setup-root
+- `58e9b0a`: squashfs-readonly: fix /root tmpfs permissions for sshd StrictModes
+- `f351372`: buildroot: fix S02setup-root mkdir/chmod on same line
+- `45d637f`: buildroot: fix network boot — move /root tmpfs from overlay fstab to post-build.sh
+- `16a99a7`: buildroot: fix piclockLogo.bin not found on OLED splash (root tmpfs)
+- `f4679e0`: clock8002.mk: remove install to $(TARGET_DIR)/root (build host path issue)
+- (pending): squashfs Phase 2 — defconfig, kernel, genimage, cmdline, SSH key script, fstab
 
-### What changed
-- `rootfs-overlay/etc/fstab` — new file: `tmpfs /root tmpfs defaults,noatime 0 0`
-  (post-build.sh appends the `/boot` FAT entry as before)
-- `S02setup-root` — new init script (runs before S03/S04): copies all 5 launcher
-  scripts from `/opt/clock8002/` to `/root/` and recreates the
-  `/root/.config/clock-8001/clock.ini → /boot/piclock/clock.ini` symlink
-- `S01power-button` → `S04power-button` — renamed so it runs after S02 populates `/root/`
+### Phase 1 write-path audit (2026-04-29) — complete
+All runtime write paths classified. The only real problem was SSH host keys
+(would regenerate on every reboot with overlayfs). Fix: `S49sshd-keys` init
+script persists keys to `/boot/piclock/ssh/` on first gen, restores each boot.
+
+All other write paths (NM connections, /var/lib, /etc shadow/passwd/group,
+/var/lib/seedrng, /crond.reboot) are acceptable on overlayfs upper tmpfs.
+
+### Phase 2 config changes applied (2026-04-29)
+- `defconfig.sample`: ext2 → squashfs, no REMOUNT_RW
+- `linux.config`: +CONFIG_SQUASHFS, +CONFIG_SQUASHFS_ZSTD, +CONFIG_OVERLAY_FS
+- `genimage.cfg.in`: rootfs.ext4 → rootfs.squashfs
+- `cmdline.txt`: rootfstype=ext4 → rootfstype=squashfs
+- `post-build.sh`: +S49sshd-keys chmod, HostKey redirect, /var/lib tmpfs + NM connections tmpfs fstab entries
+- `S49sshd-keys`: new init script — generates/restores SSH host keys from FAT
+
+### Write-path tmpfs coverage (post Phase 2)
+| Path | Mechanism |
+|---|---|
+| `/root` | separate tmpfs (fstab, pre-existing) |
+| `/tmp`, `/run` | separate tmpfs (Buildroot default) |
+| `/var/lib` | new tmpfs (post-build.sh fstab) |
+| `/etc/NetworkManager/system-connections` | new tmpfs (post-build.sh fstab) |
+| `/etc/ssh/ssh_host_*` | S49sshd-keys copies to `/root/ssh/` before sshd |
+| `/etc/shadow`, `/etc/passwd`, `/etc/group`, etc. | overlayfs upper tmpfs (squashfs lower is ro) |
+| `/boot/piclock/clock.ini` | FAT (stays writable) |
+
+### Buildroot image status
+- ✅ OLED logo fix live-tested and confirmed working on `piClock-f4679e0-sdcard.img`
+- ✅ Network fixed (`45d637f`), confirmed working
+- ⏳ First squashfs build: not yet started (pending commit + cm5 build)
+
+### Status
+- ✅ Phase 1 audit complete
+- ✅ Phase 2 config changes committed
+- ⏳ Phase 2 build: trigger on cm5 after commit + push
+- ⏳ Phase 3–9: pending (see Issue #41)
+
+### Next steps
+1. Commit + push this squashfs Phase 2 change on `feature/squashfs-readonly`
+2. Build on cm5: `ssh pi@cm5.local 'cd ~/clock8002 && git checkout feature/squashfs-readonly && git pull --ff-only && cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
+3. Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-build.log'`
+4. Transfer image and flash to piClock
+5. Run Phase 9 test checklist (see Issue #41)
+
+### What changed vs master
+- `rootfs-overlay/etc/fstab` — deleted entirely. `post-build.sh` appends
+  `tmpfs /root tmpfs mode=0700,noatime 0 0` to preserve Buildroot-generated fstab.
+- `S02setup-root` — new init script (runs at S02, before S03/S04): copies 5 launcher
+  scripts from `/opt/clock8002/` to `/root/` AND copies `piclockLogo.bin` from
+  `/opt/clock8002/` to `/root/` (so oled_daemon.py can find it). Recreates
+  `/root/.config/clock-8001/clock.ini → /boot/piclock/clock.ini` symlink.
 - All 5 launcher scripts moved from `rootfs-overlay/root/` to `rootfs-overlay/opt/clock8002/`
   so they are accessible from `/opt` (not hidden by the tmpfs mount)
-- `post-build.sh` — chmod lists updated to match new names/paths
+- `S01power-button` → `S04power-button` — renamed so it runs after S02 populates `/root/`
+- `post-build.sh` — chmod lists updated to match new names/paths; appends both
+  `/boot` FAT entry and `/root` tmpfs entry to fstab
+- `clock8002.mk` — installs `piclockLogo.bin` to `/opt/clock8002/` (not `/root/`,
+  since `/root` is tmpfs at runtime). S02setup-root copies to `/root/` at boot.
+- **Nothing network-related changed** — S43, S45, NM configs, network.ini,
+  piclock-network.sh are all identical to master
 
 ### Boot sequence
 ```
-mount -a (fstab)  → /root is empty tmpfs
-S02setup-root     → copies scripts + creates clock.ini symlink
+mount -a (fstab)  → /root tmpfs mounted drwx------ (mode=0700)
+S02setup-root     → chmod 700 /root; copies scripts; creates clock.ini symlink
 S03copy_*         → /boot overrides if present
 S04power-button   → /root/power-button.sh now exists, launches cleanly
+S43piclock-network-prep → DHCP mode: removes any stale static NM config; exits
+S45piclock-network      → waits for NM; runs piclock-network.sh (WiFi AP + hostname)
 ```
 
-### Live test result (2026-04-26)
-- Deployed to piClock (192.168.8.245, v1.3.5 image + manual fstab tmpfs)
-- Rebooted — S02setup-root populated /root correctly on clean boot
-- All services confirmed running: sdl3-clock, alsa-ltc, oled_daemon, power-button
-- clock.ini symlink recreated correctly at `/root/.config/clock-8001/clock.ini`
+### Key bugs found and fixed
+1. **sshd StrictModes rejection**: default tmpfs mount mode is `drwxrwxrwt`
+   (world-writable). sshd refuses key auth when home dir is world-writable.
+   Fix: `mode=0700` in fstab. Belt-and-suspenders: `chmod 700 /root` in S02.
+2. **S02setup-root mkdir/chmod on same line**: tab-separated `mkdir -p /root`
+   and `chmod 700 /root` on one line — shell treats them as one command with
+   extra args. chmod never ran. Fixed at `f351372`.
+
+### Live test result (2026-04-26) — manual apply on v1.3.5
+- v1.3.5 reflashed to piClock (192.168.8.245)
+- Feature changes manually applied over password SSH
+- Rebooted — clean boot, key auth working, all services up:
+  `power-button`, `oled_daemon`, `alsa-ltc`, `sdl3-clock`
+- `/root` permissions: `drwx------`, tmpfs mounted `mode=700`
+- clock.ini symlink recreated at `/root/.config/clock-8001/clock.ini`
+- SSH authorized_keys in `/boot/piclock/authorized_keys`
+
+### Buildroot image status
+- Dev builds from `af37c54` and `f351372` **both failed clean-boot** — unit
+  unreachable on network. Root cause: unknown.
+- The manual-apply approach (v1.3.5 base + feature changes over SSH) works
+  correctly and has passed two clean-boot tests.
+- **piClock (192.168.8.245) is currently running v1.3.5 + manually applied
+  feature changes** (commit `f351372` equivalent). SSH key auth working.
+
+### Network failure — ROOT CAUSE FOUND AND FIXED (commit `45d637f`)
+
+**Root cause:** `rootfs-overlay/etc/fstab` was a complete file replacement.
+Buildroot overlays replace the entire target file — not append to it. The
+overlay contained only one line (`tmpfs /root tmpfs mode=0700,noatime 0 0`),
+which wiped the Buildroot-generated entries for `/proc`, `/sys`, `/run`,
+`/tmp`, `/dev/pts`, and `/dev/shm` from every baked image. NetworkManager
+requires sysfs to enumerate network interfaces — without `/sys` mounted,
+`eth0` was invisible and the unit had no IP on every clean flash.
+
+The running card was unaffected because it was built from `master` (which has
+no overlay fstab), and the `/root tmpfs` line was manually appended on top of
+the existing full fstab.
+
+**Fix (`45d637f`):**
+- Deleted `rootfs-overlay/etc/fstab` entirely
+- Updated `post-build.sh` to append `tmpfs /root mode=0700,noatime` alongside
+  the existing `/boot` append — Buildroot-generated fstab is now preserved intact
+
+### Build in progress
+- Full rebuild (`make clean` + `make`) started on cm5 at 2026-04-26 ~20:12 UTC
+- Running in `screen -S piclock-build` on cm5 — survives disconnection
+- Script: `/tmp/piclock-build.sh` on cm5
+- Log: `/tmp/br-build.log` on cm5 — tail with:
+  ```bash
+  ssh pi@cm5.local 'tail -f /tmp/br-build.log'
+  ```
+- Completion marker: `BUILD_COMPLETE` in log
+- Script auto-restores cm5 to `master` on completion
+- Build includes `BR2_PICLOCKKEY` — dev image with SSH key baked in
 
 ### Status
-- ✅ Code committed and pushed to `feature/squashfs-readonly`
-- ✅ Live-tested on reboot — all services up
-- ⏳ Buildroot image not yet built from this branch
+- ✅ Root cause identified and fixed (`45d637f`)
+- ✅ Code committed and pushed to `feature/squashfs-readonly` at `45d637f`
+- ✅ Live-tested (manual apply on v1.3.5 base) — all services up, key auth working
+- ⏳ Clean-build image in progress on cm5 (full `make clean`)
+- ❌ Clean-boot test of baked image — pending build completion
 
 ### Next steps
-1. Build on cm5: `ssh pi@cm5.local 'cd ~/clock8002 && git checkout feature/squashfs-readonly && git pull --ff-only && cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
-2. Transfer: `scp pi@cm5.local:~/buildroot/output/images/sdcard.img ~/Desktop/piClock-<COMMIT>-squashfs-sdcard.img`
-3. Flash and do a completely clean-boot test (no manual patches)
-4. If clean-boot passes: merge to master and cut v1.4.0
+1. Wait for `BUILD_COMPLETE` in `/tmp/br-build.log`
+2. Verify cm5 restored to master: `ssh pi@cm5.local 'cd ~/clock8002 && git branch --show-current'`
+3. Transfer image: `scp pi@cm5.local:~/buildroot/output/images/sdcard.img ~/Desktop/piClock-45d637f-sdcard.img`
+4. Flash and do clean-boot test — verify network, key auth, all services, `/root` tmpfs
+5. If clean-boot passes: merge to master and cut v1.4.0
 
 ---
 
@@ -171,11 +285,12 @@ S04power-button   → /root/power-button.sh now exists, launches cleanly
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- **Latest release: v1.3.5** (2026-04-26) — `master` branch (Buildroot/SDL3). Commit: `09daab9`
+- **Latest release: v1.3.5** (2026-04-26) — `master` branch (Buildroot/SDL3). Commit: `5477158`
 - Latest Trixie release: **v1.3.1** — archived on `trixie` branch
 - **Active branch: `master`** (Buildroot) — branch rename complete 2026-04-26
-- Buildroot SD card image on Mac Desktop: **`piclockBR-af37c54-sdcard.img`** (production build, no SSH key)
-- **piClock test unit** (192.168.8.245): flashed `af37c54` (2026-04-25). Soak test passed ~12h checkpoint (all green — VmRSS stable, VmSwap=0). Soak monitor not running (unit rebooted); v1.3.5 is docs/config only — no new code.
+- **feature/squashfs-readonly**: HEAD pending squashfs commit — Phase 2 config changes applied. First squashfs build not yet triggered. See section above and Issue #41.
+- **Active monitoring**: ltcmon + alsa-ltc logging live on piClock (192.168.8.245). alsa-ltc stable; watching for USB/LTC dropout recurrence.
+- **piClock test unit** (192.168.8.245): flashed `piClock-f4679e0-sdcard.img`. OLED logo confirmed working. Network (static) working. All services up.
 - Recent UI fixes on buildroot branch (2026-04-22), deployed to piclockBR:
   - `013be8d`: cue fullscreen clipping fix (text4 uses per-face logical size, vertical swap)
   - `e585ba0`: web-config save page refresh delay 1s → 3s (fix stale view race)
