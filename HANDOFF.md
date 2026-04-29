@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-29 (squashfs Phase 2 build running on cm5)
+Last updated: 2026-04-29 (squashfs Phase 2 build complete; image on Desktop; SD card ready to flash)
 
 ## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
 
@@ -126,7 +126,9 @@ tmpfs covering all runtime write paths. All writes go to RAM; SD card rootfs
 partition is never written after first flash.
 
 **Current status (2026-04-29): Phase 2 config changes committed as `f84f49e`.
-First squashfs build is running on cm5 (`screen` session `br-build`).
+Build complete (`BR_BUILD_EXIT:0`). Image `piClock-f84f49e-sdcard.img` (343 MB) on Desktop.
+SHA-256: `aa5b01b9707fbeab46bdc0a087f6cd170971681ac507491604516f8c2e80da6b`.
+cm5 restored to `master`. SD card detected at `/dev/disk6`. Ready to flash and run Phase 9 tests.
 See Issue #41 for full 10-phase plan.**
 
 ### Commits on this branch (HEAD: `f84f49e`)
@@ -168,19 +170,30 @@ All other write paths (NM connections, /var/lib, /etc shadow/passwd/group,
 ### Buildroot image status
 - ✅ OLED logo fix live-tested and confirmed working on `piClock-f4679e0-sdcard.img`
 - ✅ Network fixed (`45d637f`), confirmed working
-- ⏳ First squashfs build: in progress on cm5 (`br-build`, kernel currently compiling)
+- ✅ First squashfs build complete (`f84f49e`): `BR_BUILD_EXIT:0`, image `piClock-f84f49e-sdcard.img` on Desktop
 
 ### Status
 - ✅ Phase 1 audit complete
-- ✅ Phase 2 config changes committed
-- ⏳ Phase 2 build: in progress on cm5
-- ⏳ Phase 3–9: pending (see Issue #41)
+- ✅ Phase 2 config changes committed (`f84f49e`)
+- ✅ Phase 2 build complete — image ready
+- ⏳ Phase 9 clean-boot test — pending flash
+- ⏳ Phase 3–8/10: pending (see Issue #41)
 
 ### Next steps
-1. Wait for build completion marker in `/tmp/br-build.log` (`BR_BUILD_EXIT:0`)
-2. Confirm cm5 restored to `master` (`CM5_RESTORED_TO_MASTER` marker)
-3. Transfer image and flash to piClock
-4. Run Phase 9 test checklist (see Issue #41)
+1. Flash SD card (user runs manually):
+   ```
+   diskutil unmountDisk /dev/disk6 && sudo dd if=/Users/jp/Desktop/piClock-f84f49e-sdcard.img of=/dev/rdisk6 bs=4m status=progress && diskutil eject /dev/disk6
+   ```
+2. Insert card, cold boot piClock
+3. Run Phase 9 test checklist (see Issue #41):
+   - `mount | grep -E 'squashfs|tmpfs'` — verify rootfs is squashfs
+   - `touch /etc/test && reboot` → confirm file gone after reboot
+   - `touch /boot/piclock/test && reboot` → confirm file persists on FAT
+   - `ls -la /root/ssh/ssh_host_*` — confirm S49sshd-keys populated keys
+   - SSH from Mac — confirm no host-key-changed warning on second boot
+   - Clock UI on HDMI, OLED splash + IP display
+   - Static IP from network.ini applied
+   - `df -h` — check tmpfs sizes
 
 ### What changed vs master
 - `rootfs-overlay/etc/fstab` — deleted entirely. `post-build.sh` appends
@@ -288,7 +301,7 @@ the existing full fstab.
 - **Latest release: v1.3.5** (2026-04-26) — `master` branch (Buildroot/SDL3). Commit: `5477158`
 - Latest Trixie release: **v1.3.1** — archived on `trixie` branch
 - **Active branch: `master`** (Buildroot) — branch rename complete 2026-04-26
-- **feature/squashfs-readonly**: HEAD `f84f49e` — Phase 2 config changes committed and pushed. First squashfs build in progress on cm5.
+- **feature/squashfs-readonly**: HEAD `f84f49e` — Phase 2 config changes committed and pushed. Squashfs build complete; image `piClock-f84f49e-sdcard.img` (343 MB) on Desktop; SD card at `/dev/disk6`. Ready for Phase 9 clean-boot test.
 - **Active monitoring**: ltcmon + alsa-ltc logging live on piClock (192.168.8.245). alsa-ltc stable; watching for USB/LTC dropout recurrence.
 - **piClock test unit** (192.168.8.245): flashed `piClock-f4679e0-sdcard.img`. OLED logo confirmed working. Network (static) working. All services up.
 - Recent UI fixes on buildroot branch (2026-04-22), deployed to piclockBR:
