@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-29 (squashfs Phase 2 build complete; image on Desktop; SD card ready to flash)
+Last updated: 2026-04-29 (squashfs Phase 9 clean-boot test COMPLETE — all 14 checks passed; image piClock-1fe6357-sdcard.img live at 192.168.8.246)
 
 ## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
 
@@ -171,29 +171,46 @@ All other write paths (NM connections, /var/lib, /etc shadow/passwd/group,
 - ✅ OLED logo fix live-tested and confirmed working on `piClock-f4679e0-sdcard.img`
 - ✅ Network fixed (`45d637f`), confirmed working
 - ✅ First squashfs build complete (`f84f49e`): `BR_BUILD_EXIT:0`, image `piClock-f84f49e-sdcard.img` on Desktop
+- ✅ machine-id fix committed (`1fe6357`): S12machine-id init script generates/persists machine-id to FAT
+- ✅ machine-id build complete — image `piClock-1fe6357-sdcard.img` (343 MB) on Desktop, flashed and live
+
+### Phase 9 clean-boot test results (2026-04-29) — image `piClock-1fe6357-sdcard.img`
+Unit: `root@piClock.local` / `192.168.8.246`
+
+| Check | Result |
+|---|---|
+| rootfs is squashfs (ro) | ✅ |
+| `/etc` fully read-only (not even writable by root) | ✅ stronger than overlayfs approach |
+| tmpfs: `/tmp`, `/run`, `/root`, `/var/lib`, `/etc/NetworkManager/system-connections` | ✅ |
+| FAT persistence across reboot (`/boot/piclock/phase9-test`) | ✅ |
+| machine-id stable across reboot | ✅ `e8d290a3...` same before and after |
+| SSH host key unchanged across reboot | ✅ fingerprint `SHA256:YKeSTc5J...` |
+| sdl3-clock running after reboot | ✅ |
+| alsa-ltc running after reboot | ✅ |
+| oled_daemon running after reboot | ✅ |
+| network.ini static IP + ap_enabled | ✅ user-verified |
+| Config symlinks resolve to FAT | ✅ `clock.ini` → `/boot/piclock/clock.ini`, `oled.ini` → `/boot/piclock/oled.ini` |
+| Web UI config save to FAT | ✅ `ToDHideSeconds=false` written to `/boot/piclock/clock.ini` |
+| authorized_keys provisioning | ✅ `/boot/piclock/authorized_keys` → `/root/.ssh/authorized_keys` at boot |
+| clock log writes (`/root/.config/clock-8001/clock.log`) | ✅ 16 KB, actively written to tmpfs |
+
+**Key finding:** `/etc` is directly on squashfs — no overlayfs upper layer. This is stronger isolation than the S02overlayfs approach originally planned in Issue #41. `touch /etc/...` returns `Read-only file system` even as root.
+
+**Config symlink note:** `/opt/clock8002/clock.ini` does not exist on this image. The clock binary uses `~/.config/clock-8001/clock.ini`, which S02setup-root recreates as a symlink to `/boot/piclock/clock.ini` at every boot.
 
 ### Status
 - ✅ Phase 1 audit complete
 - ✅ Phase 2 config changes committed (`f84f49e`)
-- ✅ Phase 2 build complete — image ready
-- ⏳ Phase 9 clean-boot test — pending flash
+- ✅ Phase 2 build complete
+- ✅ machine-id fix committed and built (`1fe6357`)
+- ✅ Phase 9 clean-boot test — **ALL 14 CHECKS PASSED** (2026-04-29)
 - ⏳ Phase 3–8/10: pending (see Issue #41)
+- ⏳ Issue #41: needs update to reflect per-path tmpfs vs full overlayfs deviation
 
 ### Next steps
-1. Flash SD card (user runs manually):
-   ```
-   diskutil unmountDisk /dev/disk6 && sudo dd if=/Users/jp/Desktop/piClock-f84f49e-sdcard.img of=/dev/rdisk6 bs=4m status=progress && diskutil eject /dev/disk6
-   ```
-2. Insert card, cold boot piClock
-3. Run Phase 9 test checklist (see Issue #41):
-   - `mount | grep -E 'squashfs|tmpfs'` — verify rootfs is squashfs
-   - `touch /etc/test && reboot` → confirm file gone after reboot
-   - `touch /boot/piclock/test && reboot` → confirm file persists on FAT
-   - `ls -la /root/ssh/ssh_host_*` — confirm S49sshd-keys populated keys
-   - SSH from Mac — confirm no host-key-changed warning on second boot
-   - Clock UI on HDMI, OLED splash + IP display
-   - Static IP from network.ini applied
-   - `df -h` — check tmpfs sizes
+1. ⏳ Update Issue #41 to document per-path tmpfs approach vs S02overlayfs plan
+2. ⏳ Remaining Issue #41 phases 3–8/10
+3. ⏳ Merge `feature/squashfs-readonly` to `master` and cut next release when phases complete
 
 ### What changed vs master
 - `rootfs-overlay/etc/fstab` — deleted entirely. `post-build.sh` appends
@@ -301,7 +318,7 @@ the existing full fstab.
 - **Latest release: v1.3.5** (2026-04-26) — `master` branch (Buildroot/SDL3). Commit: `5477158`
 - Latest Trixie release: **v1.3.1** — archived on `trixie` branch
 - **Active branch: `master`** (Buildroot) — branch rename complete 2026-04-26
-- **feature/squashfs-readonly**: HEAD `f84f49e` — Phase 2 config changes committed and pushed. Squashfs build complete; image `piClock-f84f49e-sdcard.img` (343 MB) on Desktop; SD card at `/dev/disk6`. Ready for Phase 9 clean-boot test.
+- **feature/squashfs-readonly**: HEAD `1fe6357` — Phase 9 clean-boot test **COMPLETE** (all 14 checks passed, 2026-04-29). Image `piClock-1fe6357-sdcard.img` live at `192.168.8.246`. Remaining: Issue #41 phases 3–8/10.
 - **Active monitoring**: ltcmon + alsa-ltc logging live on piClock (192.168.8.245). alsa-ltc stable; watching for USB/LTC dropout recurrence.
 - **piClock test unit** (192.168.8.245): flashed `piClock-f4679e0-sdcard.img`. OLED logo confirmed working. Network (static) working. All services up.
 - Recent UI fixes on buildroot branch (2026-04-22), deployed to piclockBR:
