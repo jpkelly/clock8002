@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-29 (squashfs Phase 2 config changes committed)
+Last updated: 2026-04-29 (squashfs Phase 2 build running on cm5)
 
 ## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
 
@@ -125,17 +125,18 @@ Convert the Buildroot rootfs from ext4 (read-write) to SquashFS (read-only) with
 tmpfs covering all runtime write paths. All writes go to RAM; SD card rootfs
 partition is never written after first flash.
 
-**Current status (2026-04-29): Phase 2 config changes committed. First squashfs
-build pending on cm5. See Issue #41 for full 10-phase plan.**
+**Current status (2026-04-29): Phase 2 config changes committed as `f84f49e`.
+First squashfs build is running on cm5 (`screen` session `br-build`).
+See Issue #41 for full 10-phase plan.**
 
-### Commits on this branch (HEAD: pending squashfs commit)
+### Commits on this branch (HEAD: `f84f49e`)
 - `be4198e`: buildroot: /root tmpfs — move launcher scripts to /opt, add S02setup-root
 - `58e9b0a`: squashfs-readonly: fix /root tmpfs permissions for sshd StrictModes
 - `f351372`: buildroot: fix S02setup-root mkdir/chmod on same line
 - `45d637f`: buildroot: fix network boot — move /root tmpfs from overlay fstab to post-build.sh
 - `16a99a7`: buildroot: fix piclockLogo.bin not found on OLED splash (root tmpfs)
 - `f4679e0`: clock8002.mk: remove install to $(TARGET_DIR)/root (build host path issue)
-- (pending): squashfs Phase 2 — defconfig, kernel, genimage, cmdline, SSH key script, fstab
+- `f84f49e`: buildroot: squashfs Phase 2 — defconfig, kernel, genimage, SSH key persistence
 
 ### Phase 1 write-path audit (2026-04-29) — complete
 All runtime write paths classified. The only real problem was SSH host keys
@@ -167,20 +168,19 @@ All other write paths (NM connections, /var/lib, /etc shadow/passwd/group,
 ### Buildroot image status
 - ✅ OLED logo fix live-tested and confirmed working on `piClock-f4679e0-sdcard.img`
 - ✅ Network fixed (`45d637f`), confirmed working
-- ⏳ First squashfs build: not yet started (pending commit + cm5 build)
+- ⏳ First squashfs build: in progress on cm5 (`br-build`, kernel currently compiling)
 
 ### Status
 - ✅ Phase 1 audit complete
 - ✅ Phase 2 config changes committed
-- ⏳ Phase 2 build: trigger on cm5 after commit + push
+- ⏳ Phase 2 build: in progress on cm5
 - ⏳ Phase 3–9: pending (see Issue #41)
 
 ### Next steps
-1. Commit + push this squashfs Phase 2 change on `feature/squashfs-readonly`
-2. Build on cm5: `ssh pi@cm5.local 'cd ~/clock8002 && git checkout feature/squashfs-readonly && git pull --ff-only && cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
-3. Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-build.log'`
-4. Transfer image and flash to piClock
-5. Run Phase 9 test checklist (see Issue #41)
+1. Wait for build completion marker in `/tmp/br-build.log` (`BR_BUILD_EXIT:0`)
+2. Confirm cm5 restored to `master` (`CM5_RESTORED_TO_MASTER` marker)
+3. Transfer image and flash to piClock
+4. Run Phase 9 test checklist (see Issue #41)
 
 ### What changed vs master
 - `rootfs-overlay/etc/fstab` — deleted entirely. `post-build.sh` appends
@@ -288,7 +288,7 @@ the existing full fstab.
 - **Latest release: v1.3.5** (2026-04-26) — `master` branch (Buildroot/SDL3). Commit: `5477158`
 - Latest Trixie release: **v1.3.1** — archived on `trixie` branch
 - **Active branch: `master`** (Buildroot) — branch rename complete 2026-04-26
-- **feature/squashfs-readonly**: HEAD pending squashfs commit — Phase 2 config changes applied. First squashfs build not yet triggered. See section above and Issue #41.
+- **feature/squashfs-readonly**: HEAD `f84f49e` — Phase 2 config changes committed and pushed. First squashfs build in progress on cm5.
 - **Active monitoring**: ltcmon + alsa-ltc logging live on piClock (192.168.8.245). alsa-ltc stable; watching for USB/LTC dropout recurrence.
 - **piClock test unit** (192.168.8.245): flashed `piClock-f4679e0-sdcard.img`. OLED logo confirmed working. Network (static) working. All services up.
 - Recent UI fixes on buildroot branch (2026-04-22), deployed to piclockBR:
