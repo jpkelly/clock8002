@@ -13,3 +13,4 @@
 /v4/clock_port*.ini
 /v4/sdl3-clock*
 /v4/clock-8001*.deb
+/pi345build/
