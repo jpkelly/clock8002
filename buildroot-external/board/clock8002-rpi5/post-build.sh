@@ -14,6 +14,7 @@ for script in \
         S04power-button \
         S05bootsplash \
         S11modules \
+        S12machine-id \
         S45piclock-network \
         S49sshd-keys \
         S98oled \
