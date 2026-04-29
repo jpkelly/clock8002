@@ -57,7 +57,6 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 	fi
 	if [ -f $(@D)/oled/piclockLogo.bin ]; then \
 		$(INSTALL) -D -m 0644 $(@D)/oled/piclockLogo.bin \	$(TARGET_DIR)/opt/clock8002/piclockLogo.bin; \
-	$(INSTALL) -D -m 0644 $(@D)/oled/piclockLogo.bin \			$(TARGET_DIR)/root/piclockLogo.bin; \
 	fi
 	if [ -f $(@D)/oled/oled.ini ]; then \
 		$(INSTALL) -D -m 0644 $(@D)/oled/oled.ini \
