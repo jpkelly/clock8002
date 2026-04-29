@@ -204,13 +204,17 @@ Unit: `root@piClock.local` / `192.168.8.246`
 - ✅ Phase 2 build complete
 - ✅ machine-id fix committed and built (`1fe6357`)
 - ✅ Phase 9 clean-boot test — **ALL 14 CHECKS PASSED** (2026-04-29)
-- ⏳ Phase 3–8/10: pending (see Issue #41)
-- ⏳ Issue #41: needs update to reflect per-path tmpfs vs full overlayfs deviation
+- ⏳ Pre-merge items (see below) — none are functional blockers
+
+### Pre-merge remaining items
+1. **Confirmatory test** — save a config change via web UI, reboot, verify in-memory change is gone but FAT clock.ini still holds the last saved value. Proves tmpfs reset works as designed. Low-risk (guaranteed by architecture).
+2. **Dev-deploy behaviour note** — `/opt/clock8002` is squashfs (ro); `cp sdl3-clock /opt/...` will fail on the live unit unlike ext4. Dev deploys require reflash. Document this change in Issue #41.
+3. **Issue #41 update** — record the per-path tmpfs approach as the resolved implementation (vs `S02overlayfs` full overlayfs originally planned), and close out the checklist.
 
 ### Next steps
-1. ⏳ Update Issue #41 to document per-path tmpfs approach vs S02overlayfs plan
-2. ⏳ Remaining Issue #41 phases 3–8/10
-3. ⏳ Merge `feature/squashfs-readonly` to `master` and cut next release when phases complete
+1. ⏳ Run confirmatory tmpfs-reset test (save → reboot → verify FAT value retained, in-memory change gone)
+2. ⏳ Update Issue #41 with per-path tmpfs rationale + dev-deploy note
+3. ⏳ Merge `feature/squashfs-readonly` to `master` and cut next release
 
 ### What changed vs master
 - `rootfs-overlay/etc/fstab` — deleted entirely. `post-build.sh` appends
