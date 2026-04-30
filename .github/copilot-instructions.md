@@ -65,5 +65,12 @@ Buildroot image workflow note:
 - Always verify disk number with `diskutil list external physical` before giving flash commands.
 - BusyBox on target: no bash (use `sh`), no `tar -z` (use `gzip -d -c | tar x`), no `--ignore-missing` on sha256sum.
 - SSH to Buildroot target: `root@piClock.local` with `-o IdentitiesOnly=yes -i ~/.ssh/id_rsa`.
-- Deploy binary directly (no install.sh on BR): `/etc/init.d/S99clock stop && cp <binary> /opt/clock8002/sdl3-clock && /etc/init.d/S99clock start`.
+- VPN fallback IPs (use when .local mDNS fails): cm5=`10.0.0.101`, piClock=`192.168.8.246`. SSH to piClock over VPN: `ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa root@192.168.8.246`
+- Deploy binary directly (no install.sh on BR): `/etc/init.d/S99clock stop && cp <binary> /opt/clock8002/sdl3-clock && /etc/init.d/S99clock start`. WARNING: on squashfs images (`feature/squashfs-readonly` and `master` after merge), `/opt/clock8002` is read-only squashfs — `cp` will fail. Dev deploys require a full reflash on squashfs images.
 - After a fresh Buildroot checkout, always run `buildroot-external/scripts/apply-build-host-patches.sh ~/buildroot` before building — this applies the Mesa 25.0.7 upgrade and host-xz libtool workaround (see issue #29).
+
+Codebase orientation note:
+- Active code is in `v4/` only. `v3/` is historical — never edit it.
+- Go module: `gitlab.com/clock-8001/clock-8001/v4` (Go 1.24). Build: `cd v4 && make build`. Test: `make test` (runs `go test -short ./clock`).
+- Key source dirs: `v4/clock/` (engine, OSC dispatch, integrations), `v4/cmd/sdl3-clock/` (entry point, config loading, SDL3 render loop).
+- Config on target: `/root/.config/clock-8001/clock.ini` is a symlink → `/boot/piclock/clock.ini` (FAT). Always edit `/boot/piclock/clock.ini` — never the squashfs-baked symlink target.
