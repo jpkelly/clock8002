@@ -348,7 +348,7 @@ type Clock struct {
 	ActiveTimer int        // If a timer is active, give its number, -1 otherwise
 	SignalColor color.RGBA
 	Mute        bool
-	AMPMString  string     // "AM" or "PM" when 12h mode is active, empty otherwise
+	AMPMString  string // "AM" or "PM" when 12h mode is active, empty otherwise
 }
 
 // State is a snapshot of the clock representation on the time State() was called

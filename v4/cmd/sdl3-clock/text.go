@@ -187,6 +187,9 @@ func drawSingleLineClock(state *clock.State) {
 
 	if state.Clocks[0].Mode != clock.LTC {
 		// Clock time
+		if textClock.r[0].ampmTex != nil {
+			textR.W -= textR.H * 0.6
+		}
 		copyIntoRect(textClock.r[0].textTex, textR)
 		if textClock.r[0].iconTex != nil {
 			copyIntoRect(textClock.r[0].iconTex, iconR)
@@ -235,6 +238,9 @@ func draw3TextClocks(state *clock.State) {
 
 		if state.Clocks[i].Mode != clock.LTC {
 			// Clock time
+			if textClock.r[i].ampmTex != nil {
+				textR.W -= textR.H * 0.6
+			}
 			copyIntoRect(textClock.r[i].textTex, textR)
 			if textClock.r[i].iconTex != nil {
 				copyIntoRect(textClock.r[i].iconTex, iconR)
@@ -281,6 +287,9 @@ func draw2TextClocks(state *clock.State) {
 		copyIntoRect(textClock.r[i].labelTex, labelR)
 
 		if state.Clocks[i].Mode != clock.LTC {
+			if textClock.r[i].ampmTex != nil {
+				textR.W -= textR.H * 0.6
+			}
 			copyIntoRect(textClock.r[i].textTex, textR)
 			if textClock.r[i].iconTex != nil {
 				copyIntoRect(textClock.r[i].iconTex, iconR)
@@ -325,6 +334,9 @@ func draw4TextClocks(state *clock.State) {
 		copyIntoRect(textClock.r[i].labelTex, labelR)
 
 		if state.Clocks[i].Mode != clock.LTC {
+			if textClock.r[i].ampmTex != nil {
+				textR.W -= textR.H * 0.6
+			}
 			copyIntoRect(textClock.r[i].textTex, textR)
 			if textClock.r[i].iconTex != nil {
 				copyIntoRect(textClock.r[i].iconTex, iconR)
