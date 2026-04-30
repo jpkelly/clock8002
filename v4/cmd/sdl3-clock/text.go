@@ -314,17 +314,17 @@ func draw4TextClocks(state *clock.State) {
 		if state.Clocks[i].Hidden {
 			continue
 		}
-		y = float32(40 + (275 * i))
+		y = float32(40 + (265 * i))
 		x = 505
-		numberBox := sdl.FRect{X: x, Y: y, W: 1380, H: 210}
-		textR := sdl.FRect{X: x + 300, Y: y, W: 1380 - 300, H: 210}
+		numberBox := sdl.FRect{X: x, Y: y, W: 1380, H: 240}
+		textR := sdl.FRect{X: x + 300, Y: y, W: 1380 - 300, H: 240}
 		if options.IconsDisable {
 			textR = numberBox
 		}
-		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 210}
+		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 240}
 		x = 10
 		labelR := sdl.FRect{X: x, Y: y, W: 500, H: 80}
-		signalR := sdl.FRect{X: iconR.X - 175, Y: y + 80, W: 120, H: 120}
+		signalR := sdl.FRect{X: iconR.X - 175, Y: y + 95, W: 120, H: 120}
 		if options.DrawBoxes {
 			rectColor(&numberBox, colors.rowBG[i])
 			rectColor(&labelR, colors.labelBG)
