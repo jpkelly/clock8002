@@ -192,7 +192,8 @@ func drawSingleLineClock(state *clock.State) {
 			copyIntoRect(textClock.r[0].iconTex, iconR)
 		}
 		if textClock.r[0].ampmTex != nil {
-			ampmR := sdl.FRect{X: textR.X + textR.W - textR.H*0.6, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
+			textRight := renderedTextRight(textClock.r[0].textTex, textR)
+			ampmR := sdl.FRect{X: textRight + 8, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
 			copyIntoRect(textClock.r[0].ampmTex, ampmR)
 		}
 	} else {
@@ -239,7 +240,8 @@ func draw3TextClocks(state *clock.State) {
 				copyIntoRect(textClock.r[i].iconTex, iconR)
 			}
 			if textClock.r[i].ampmTex != nil {
-				ampmR := sdl.FRect{X: textR.X + textR.W - textR.H*0.6, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
+				textRight := renderedTextRight(textClock.r[i].textTex, textR)
+				ampmR := sdl.FRect{X: textRight + 8, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
 				copyIntoRect(textClock.r[i].ampmTex, ampmR)
 			}
 		} else {
@@ -284,7 +286,8 @@ func draw2TextClocks(state *clock.State) {
 				copyIntoRect(textClock.r[i].iconTex, iconR)
 			}
 			if textClock.r[i].ampmTex != nil {
-				ampmR := sdl.FRect{X: textR.X + textR.W - textR.H*0.6, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
+				textRight := renderedTextRight(textClock.r[i].textTex, textR)
+				ampmR := sdl.FRect{X: textRight + 8, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
 				copyIntoRect(textClock.r[i].ampmTex, ampmR)
 			}
 		} else {
@@ -327,7 +330,8 @@ func draw4TextClocks(state *clock.State) {
 				copyIntoRect(textClock.r[i].iconTex, iconR)
 			}
 			if textClock.r[i].ampmTex != nil {
-				ampmR := sdl.FRect{X: textR.X + textR.W - textR.H*0.6, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
+				textRight := renderedTextRight(textClock.r[i].textTex, textR)
+				ampmR := sdl.FRect{X: textRight + 8, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
 				copyIntoRect(textClock.r[i].ampmTex, ampmR)
 			}
 		} else {
@@ -588,6 +592,17 @@ func drawTally(state *clock.State) {
 		rectColor(&tallyRect, colors.tallyBG)
 		copyIntoRect(textClock.tallyTex, tallyRect)
 	}
+}
+
+// renderedTextRight returns the X coordinate of the right edge of tex after
+// it has been scaled/centered into r (same logic as copyIntoRect/centerRect).
+func renderedTextRight(tex *sdl.Texture, r sdl.FRect) float32 {
+	if tex == nil {
+		return r.X + r.W
+	}
+	w, h, _ := tex.Size()
+	dest := centerRect(w, h, r)
+	return dest.X + dest.W
 }
 
 func centerRect(w, h float32, r sdl.FRect) sdl.FRect {
