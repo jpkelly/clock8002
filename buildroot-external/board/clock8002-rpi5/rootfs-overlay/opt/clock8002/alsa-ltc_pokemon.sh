@@ -6,21 +6,10 @@ start() {
 	echo "Loading snd_usb_audio kernel module"
 	modprobe snd_usb_audio 2>/dev/null || true
 
-	# Wait for USB audio card to appear
-	i=0
-	while [ $i -lt 30 ]; do
-		grep -qE "USB.Audio|USB Audio" /proc/asound/cards 2>/dev/null && break
-		sleep 1
-		i=$((i + 1))
-	done
-
-	# Detect USB audio card number dynamically (avoids hardcoded plughw:N,0)
-	ALSA_CARD=$(grep -E "^ *[0-9]" /proc/asound/cards 2>/dev/null \
-		| grep -E "USB.Audio|USB Audio" \
-		| awk '{print $1}' | head -1)
-	[ -z "$ALSA_CARD" ] && ALSA_CARD=2
-	export ALSA_CARD
-	echo "Using USB audio card: $ALSA_CARD"
+	# alsa-ltc is invoked with '-' (auto-detect mode) — it handles device
+	# detection and timing internally, polling every 1s to catch the USB
+	# audio device within the Pi 5 xHCI 20s isochronous-ready window.
+	# Do NOT add a settle delay here; it causes the open to miss that window.
 
 	cd /opt/clock8002
 	while true; do
