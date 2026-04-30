@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-29 (squashfs Phase 9 clean-boot test COMPLETE — all 14 checks passed; image piClock-1fe6357-sdcard.img live at 192.168.8.246)
+Last updated: 2026-04-29 (squashfs confirmatory tmpfs-reset test PASSED — ToDHideSeconds=false persisted in FAT across reboot; branch ready to merge)
 
 ## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
 
@@ -204,15 +204,16 @@ Unit: `root@piClock.local` / `192.168.8.246`
 - ✅ Phase 2 build complete
 - ✅ machine-id fix committed and built (`1fe6357`)
 - ✅ Phase 9 clean-boot test — **ALL 14 CHECKS PASSED** (2026-04-29)
+- ✅ Confirmatory tmpfs-reset test — **PASSED** (2026-04-29): `ToDHideSeconds=false` persisted in FAT after reboot
 - ⏳ Pre-merge items (see below) — none are functional blockers
 
 ### Pre-merge remaining items
-1. **Confirmatory test** — save a config change via web UI, reboot, verify in-memory change is gone but FAT clock.ini still holds the last saved value. Proves tmpfs reset works as designed. Low-risk (guaranteed by architecture).
+1. ✅ **Confirmatory test** — `ToDHideSeconds=false` written via web UI, survived reboot in FAT clock.ini; in-memory state reset on reboot. Tmpfs reset works as designed.
 2. **Dev-deploy behaviour note** — `/opt/clock8002` is squashfs (ro); `cp sdl3-clock /opt/...` will fail on the live unit unlike ext4. Dev deploys require reflash. Document this change in Issue #41.
 3. **Issue #41 update** — record the per-path tmpfs approach as the resolved implementation (vs `S02overlayfs` full overlayfs originally planned), and close out the checklist.
 
 ### Next steps
-1. ⏳ Run confirmatory tmpfs-reset test (save → reboot → verify FAT value retained, in-memory change gone)
+1. ✅ ~~Run confirmatory tmpfs-reset test~~ — DONE
 2. ⏳ Update Issue #41 with per-path tmpfs rationale + dev-deploy note
 3. ⏳ Merge `feature/squashfs-readonly` to `master` and cut next release
 
