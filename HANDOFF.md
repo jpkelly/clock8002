@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-29 (squashfs confirmatory tmpfs-reset test PASSED — ToDHideSeconds=false persisted in FAT across reboot; branch ready to merge)
+Last updated: 2026-04-30 — 12h mode verified working; AM/PM label rendering; draw4TextClocks size tweak in progress. Branch HEAD: `f669f5b`. Image `piClock-f669f5b-sdcard.img` on Desktop.
 
 ## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
 
@@ -205,6 +205,9 @@ Unit: `root@piClock.local` / `192.168.8.246`
 - ✅ machine-id fix committed and built (`1fe6357`)
 - ✅ Phase 9 clean-boot test — **ALL 14 CHECKS PASSED** (2026-04-29)
 - ✅ Confirmatory tmpfs-reset test — **PASSED** (2026-04-29): `ToDHideSeconds=false` persisted in FAT after reboot
+- ✅ 12h mode — **VERIFIED WORKING** (2026-04-30): was broken by build race (background `make &` + immediate branch switch); fixed with synchronous build. CRITICAL rule added to copilot-instructions.md.
+- ✅ AM/PM label rendering — working with `textR.W -= textR.H * 0.6` reservation (`aa09bb8`)
+- ⏳ draw4TextClocks size tweak — H 240→210, spacing unchanged at 265 (`f669f5b`) — flashed, awaiting visual check
 - ⏳ Pre-merge items (see below) — none are functional blockers
 
 ### Pre-merge remaining items
