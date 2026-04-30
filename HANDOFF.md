@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-30 — 12h mode verified working; AM/PM label rendering; draw4TextClocks size tweak in progress. Branch HEAD: `f669f5b`. Image `piClock-f669f5b-sdcard.img` on Desktop.
+Last updated: 2026-04-30 — 12h mode verified working; AM/PM label rendering; draw4TextClocks size tweak in progress. Branch HEAD: `a7d6f50`. Image `piClock-f669f5b-sdcard.img` on Desktop. Issue #15 implementation plan posted (3 phases: TextClockScale → LabelFontSize → LabelX/Y/W/H).
 
 ## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
 
