@@ -62,6 +62,7 @@ Buildroot image workflow note:
 - Image transfer: `scp pi@cm5.local:~/buildroot/output/images/sdcard.img ~/Desktop/piClock-<COMMIT>-sdcard.img`
 - Image naming convention: `piClock-<7-char-commit-hash>-sdcard.img`
 - Flash command format (user runs manually — never run dd from agent): `diskutil unmountDisk /dev/diskN && sudo dd if=/Users/jp/Desktop/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress && diskutil eject /dev/diskN`
+- IMPORTANT: always use the absolute path `/Users/jp/Desktop/` in `dd if=` — never `~` or `$HOME`, as `sudo dd` does not expand tilde.
 - Always verify disk number with `diskutil list external physical` before giving flash commands.
 - BusyBox on target: no bash (use `sh`), no `tar -z` (use `gzip -d -c | tar x`), no `--ignore-missing` on sha256sum.
 - SSH to Buildroot target: `root@piClock.local` with `-o IdentitiesOnly=yes -i ~/.ssh/id_rsa`.
