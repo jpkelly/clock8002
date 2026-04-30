@@ -173,9 +173,6 @@ func drawSingleLineClock(state *clock.State) {
 	if options.IconsDisable {
 		textR = numberBox
 	}
-	if state.Clocks[0].AMPMString != "" {
-		textR.W -= textR.H * 0.6
-	}
 
 	signalR := sdl.FRect{X: 1920 - 170, Y: 115, H: 150, W: 150}
 
@@ -222,9 +219,6 @@ func draw3TextClocks(state *clock.State) {
 		textR := sdl.FRect{X: x + 300, Y: y, W: 1380 - 300, H: 300}
 		if options.IconsDisable {
 			textR = numberBox
-		}
-		if state.Clocks[i].AMPMString != "" {
-			textR.W -= textR.H * 0.6
 		}
 		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 300}
 		x = 10
@@ -274,9 +268,6 @@ func draw2TextClocks(state *clock.State) {
 		if options.IconsDisable {
 			textR = numberBox
 		}
-		if state.Clocks[i].AMPMString != "" {
-			textR.W -= textR.H * 0.6
-		}
 		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 440}
 		x = 10
 		labelR := sdl.FRect{X: x, Y: y, W: 500, H: 150}
@@ -320,9 +311,6 @@ func draw4TextClocks(state *clock.State) {
 		textR := sdl.FRect{X: x + 300, Y: y, W: 1380 - 300, H: 240}
 		if options.IconsDisable {
 			textR = numberBox
-		}
-		if state.Clocks[i].AMPMString != "" {
-			textR.W -= textR.H * 0.6
 		}
 		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 240}
 		x = 10
