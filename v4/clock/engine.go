@@ -441,19 +441,24 @@ func (engine *Engine) todState(c *Clock, s *source, t time.Time) {
 	// Time of day
 	c.Mode = Normal
 	if engine.format12h {
-		c.Text = t.In(s.tz).Format("03:04:05")
+		if engine.displaySeconds {
+			c.Text = t.In(s.tz).Format("3:04:05")
+		} else {
+			c.Text = t.In(s.tz).Format("3:04")
+		}
 		c.Hours = t.In(s.tz).Hour() % 12
+		c.AMPMString = t.In(s.tz).Format("PM")
 	} else {
-		c.Text = t.In(s.tz).Format("15:04:05")
+		if engine.displaySeconds {
+			c.Text = t.In(s.tz).Format("15:04:05")
+		} else {
+			c.Text = t.In(s.tz).Format("15:04")
+		}
 		c.Hours = t.In(s.tz).Hour()
+		c.AMPMString = ""
 	}
 	c.Minutes = t.In(s.tz).Minute()
 	c.Seconds = t.In(s.tz).Second()
-
-	// Hide seconds if requested
-	if !engine.displaySeconds {
-		c.Text = c.Text[0:5]
-	}
 }
 
 func (engine *Engine) ltcState(c *Clock, s *source, channel int) {

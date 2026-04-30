@@ -18,9 +18,11 @@ type outputLine struct {
 	icon          string
 	text          string
 	label         string
+	ampm          string
 	iconTex       *sdl.Texture
 	textTex       *sdl.Texture
 	labelTex      *sdl.Texture
+	ampmTex       *sdl.Texture
 	signalTex     *sdl.Texture
 	timeFragments [10]*sdl.Texture
 	fragmentRect  sdl.FRect
@@ -117,6 +119,7 @@ func drawTextClock(state *clock.State) {
 			}
 		}
 		renderLabel(i, fmt.Sprintf("%.10s", clk.Label), titleColor)
+		renderAMPM(i, clk.AMPMString, toSDLColor(clk.TextColor))
 		if !options.IconsDisable {
 			renderIcon(i, clk.Icon, colors.row[i])
 		}
@@ -184,17 +187,19 @@ func drawSingleLineClock(state *clock.State) {
 
 	if state.Clocks[0].Mode != clock.LTC {
 		// Clock time
-
 		copyIntoRect(textClock.r[0].textTex, textR)
 		if textClock.r[0].iconTex != nil {
 			copyIntoRect(textClock.r[0].iconTex, iconR)
+		}
+		if textClock.r[0].ampmTex != nil {
+			ampmR := sdl.FRect{X: textR.X + textR.W - textR.H*0.6, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
+			copyIntoRect(textClock.r[0].ampmTex, ampmR)
 		}
 	} else {
 		// LTC
 		// Maintain little spacing with the box borders
 		numberBox.Y = numberBox.Y + 10
 		numberBox.W = numberBox.W - 20
-
 		copyIntoRect(textClock.r[0].textTex, numberBox)
 	}
 }
@@ -229,19 +234,19 @@ func draw3TextClocks(state *clock.State) {
 
 		if state.Clocks[i].Mode != clock.LTC {
 			// Clock time
-
 			copyIntoRect(textClock.r[i].textTex, textR)
 			if textClock.r[i].iconTex != nil {
 				copyIntoRect(textClock.r[i].iconTex, iconR)
 			}
-
+			if textClock.r[i].ampmTex != nil {
+				ampmR := sdl.FRect{X: textR.X + textR.W - textR.H*0.6, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
+				copyIntoRect(textClock.r[i].ampmTex, ampmR)
+			}
 		} else {
 			// LTC
-
 			// Maintain little spacing with the box borders
 			numberBox.Y = numberBox.Y + 10
 			numberBox.W = numberBox.W - 20
-
 			copyIntoRect(textClock.r[i].textTex, numberBox)
 		}
 	}
@@ -277,6 +282,10 @@ func draw2TextClocks(state *clock.State) {
 			copyIntoRect(textClock.r[i].textTex, textR)
 			if textClock.r[i].iconTex != nil {
 				copyIntoRect(textClock.r[i].iconTex, iconR)
+			}
+			if textClock.r[i].ampmTex != nil {
+				ampmR := sdl.FRect{X: textR.X + textR.W - textR.H*0.6, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
+				copyIntoRect(textClock.r[i].ampmTex, ampmR)
 			}
 		} else {
 			numberBox.Y = numberBox.Y + 10
@@ -316,6 +325,10 @@ func draw4TextClocks(state *clock.State) {
 			copyIntoRect(textClock.r[i].textTex, textR)
 			if textClock.r[i].iconTex != nil {
 				copyIntoRect(textClock.r[i].iconTex, iconR)
+			}
+			if textClock.r[i].ampmTex != nil {
+				ampmR := sdl.FRect{X: textR.X + textR.W - textR.H*0.6, Y: textR.Y + textR.H*0.05, W: textR.H * 0.55, H: textR.H * 0.35}
+				copyIntoRect(textClock.r[i].ampmTex, ampmR)
 			}
 		} else {
 			numberBox.Y = numberBox.Y + 10
@@ -524,6 +537,19 @@ func renderLabel(i int, label string, textColor sdl.Color) {
 		}
 
 		textClock.r[i].labelTex = renderText(label, textClock.labelFont, colors.label)
+	}
+}
+
+func renderAMPM(i int, ampm string, textColor sdl.Color) {
+	if textClock.r[i].ampm != ampm || colors.row[i] != textColor {
+		textClock.r[i].ampm = ampm
+		if textClock.r[i].ampmTex != nil {
+			textClock.r[i].ampmTex.Destroy()
+			textClock.r[i].ampmTex = nil
+		}
+		if ampm != "" {
+			textClock.r[i].ampmTex = renderText(ampm, textClock.labelFont, textColor)
+		}
 	}
 }
 
