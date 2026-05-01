@@ -1,34 +1,40 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-01 - commit `e9d2f9c` (OLED logo packaging fix) pushed on `feature/squashfs-readonly`; fixed image built and transferred to Desktop (`piClock-e9d2f9c-sdcard.img`); incremental build work paused pending LTC issue investigation.
+Last updated: 2026-05-01 - root-ram parity pivot prepared; `feature/root-ram` created from current squashfs tip (`2e95217`) and published; pre-squashfs image build is running on cm5 in `screen` from `build/pre-squashfs` (`13094a1`).
 
-## Current Checkpoint (2026-05-01)
+## Current Checkpoint (2026-05-01, root-ram pivot + pre-squashfs rebuild)
 
-### Repository + build status
-- Branch: `feature/squashfs-readonly`
-- Pushed HEAD: `e9d2f9c`
-- Logo packaging fix commit includes `buildroot-external/package/clock8002/clock8002.mk` install-line correction for `piclockLogo.bin`.
-- Incremental Buildroot rebuild completed on cm5 with source at `/tmp/clock8002-clean-build` (HEAD `e9d2f9c`), `BR_BUILD_EXIT:0`.
-- New image artifact transferred to Desktop: `/Users/jp/Desktop/piClock-e9d2f9c-sdcard.img`.
-- Image checksum: `b5b3b2e86a71e06f55703c1acaa2438b24a1126f1c831cba014785257f7a107e`.
-- Per user request, additional incremental rebuilds are paused until LTC issue work proceeds.
+### Git references and branch topology
+- Current local branch: `feature/squashfs-readonly` at `2e95217` (clean working tree).
+- New branch for parity progression: `feature/root-ram` at `2e95217` (same tip as squashfs branch at pivot time).
+- Frozen pre-squashfs build anchor: `build/pre-squashfs` at `13094a1`.
+- Tags published:
+  - `pre-squashfs-last-good` -> `13094a1`
+  - `squashfs-pivot` -> `be4198e`
+- Historical intent/reference for squashfs transition: Issue #41 (`Buildroot: read-only rootfs (SquashFS + overlayfs tmpfs)`).
 
-### Runtime checkpoint (target)
-- During live diagnostics, repeated `sdl3-clock` exit(1) loops were traced to Limitimer serial init failing when config referenced `/dev/ttyAMA3` and that device node was absent on the running profile.
-- Temporary mitigation (`limitimer-mode=off`) restored stable clock process.
-- Per user direction, Limitimer was re-enabled for clock #1:
-  - `source1.text=Limitimer`
-  - `source1.timer=true`
-  - `source1.counter=1`
-  - `limitimer-mode=receive`
-- After restart, `sdl3-clock` remained up (stable PID check passed).
-- USB audio instability remains a separate open track (`usb_set_interface failed (-110)`, `cannot set freq 44100`).
+### Worktree layout (local + cm5)
+- Local worktrees:
+  - `/Users/jp/Documents/GitHub/clock8002` -> `feature/squashfs-readonly` (`2e95217`)
+  - `/Users/jp/Documents/GitHub/clock8002-pre-squashfs` -> `build/pre-squashfs` (`13094a1`)
+  - `/Users/jp/Documents/GitHub/clock8002-root-ram` -> `feature/root-ram` (`2e95217`)
+- cm5 worktrees:
+  - `/home/pi/clock8002` -> `feature/squashfs-readonly` (`fb6d5d4`, intentionally left as-is)
+  - `/home/pi/clock8002-pre-squashfs` -> `build/pre-squashfs` (`13094a1`)
+  - `/home/pi/clock8002-root-ram` -> `feature/root-ram` (`2e95217`)
 
-### Defaults changed in repo
-- `v4/network.ini.default` now defaults to static networking:
-  - `mode=static`
-  - `address=192.168.8.245`
-  - `netmask=24` (CIDR for `255.255.255.0`)
+### Build status (cm5)
+- Pre-squashfs rebuild is active in detached screen session: `944476.br-pre-squashfs`.
+- Build uses pre-squashfs tree explicitly:
+  - `BR2_EXTERNAL=/home/pi/clock8002-pre-squashfs/buildroot-external`
+  - `BR2_PACKAGE_CLOCK8002_SOURCE_DIR=/home/pi/clock8002-pre-squashfs/v4`
+- Exit marker not present yet (`/tmp/br-pre-squashfs.exit`), indicating build still running.
+- Latest observed stage: glibc compile in `output-pre-squashfs`.
+
+### Operational notes
+- Repo policy updated and pushed: cm5 Buildroot builds must be started in `screen` (commit `2e95217`).
+- Current squashfs branch and root-ram branch both include this policy commit.
+- Older sections below this checkpoint remain as historical trail from earlier investigation phases.
 
 ## Active Investigation: Rootfs Mode vs USB Stability (2026-04-30)
 
