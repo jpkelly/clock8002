@@ -54,11 +54,12 @@ Buildroot image workflow note:
 - Test unit: `root@piClock.local`. Build host: `pi@cm5.local` (~/buildroot).
 - Buildroot sources sdl3-clock/alsa-ltc directly from `~/clock8002/v4` on cm5 — always `git pull --ff-only` in `~/clock8002` before any `make`.
 - Before building, verify cm5 is on the **intended branch**: `ssh pi@cm5.local 'cd ~/clock8002 && git branch --show-current'` — expected output is `master` for release/production builds, or the feature branch name for feature-branch builds. Fail if the output does not match.
+- MANDATORY: always start cm5 builds inside a `screen` session. Never start a long Buildroot `make` directly in a one-shot SSH command.
 - Dual service file rule: service files that exist in both `v4/` (Trixie) and `buildroot-external/board/clock8002-rpi5/rootfs-overlay/` (Buildroot) must be kept in sync. When editing a service file in `v4/`, always check for a Buildroot overlay copy and update it with the same changes (adjusting for platform differences like `User=root`). The overlay overwrites the package-installed copy at image build time.
-- Dev builds (with SSH key): `ssh pi@cm5.local "cd ~/buildroot && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make clock8002-dirclean && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:\$?"`
-- Release builds (no SSH key): `ssh pi@cm5.local 'cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`
+- Dev builds (with SSH key): `ssh pi@cm5.local 'cd ~/buildroot && screen -S br-build -dm bash -lc "BR2_PICLOCKKEY='"'"'$(cat ~/.ssh/id_rsa.pub)'"'"' make clock8002-dirclean && BR2_PICLOCKKEY='"'"'$(cat ~/.ssh/id_rsa.pub)'"'"' make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$? > /tmp/br-build.exit"'`
+- Release builds (no SSH key): `ssh pi@cm5.local 'cd ~/buildroot && screen -S br-build -dm bash -lc "make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$? > /tmp/br-build.exit"'`
 - CRITICAL: NEVER run builds with `&` (background) and immediately switch the cm5 branch. Buildroot rsyncs source during `make` — switching to master before rsync runs causes master's source to be built instead of the feature branch. Always run builds synchronously and only `git checkout master` AFTER the build command returns.
-- Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-build.log'`
+- Monitor: `ssh pi@cm5.local 'screen -ls; tail -f /tmp/br-build.log'`
 - Always provide the monitor command after starting a build.
 - Image transfer: `scp pi@cm5.local:~/buildroot/output/images/sdcard.img ~/Desktop/piClock-<COMMIT>-sdcard.img`
 - Image naming convention: `piClock-<7-char-commit-hash>-sdcard.img`
