@@ -121,7 +121,41 @@ GOHASHES
     fi
 done
 
+# ---------------------------------------------------------------------------
+# rpi-firmware upgrade to 2025-12-08 (package/rpi-firmware/)
+# Buildroot 2025.02.x ships 5476720d (2025-05-08); that RP1 firmware has a
+# bug causing xHCI controller death when USB audio isochronous streaming
+# starts (alsa-ltc).  Buildroot master already bumped to 063bcab6 (2025-12-08)
+# which matches the working reference system.
+# ---------------------------------------------------------------------------
+RPI_FW_MK="$BUILDROOT/package/rpi-firmware/rpi-firmware.mk"
+RPI_FW_HASH="$BUILDROOT/package/rpi-firmware/rpi-firmware.hash"
+
+OLD_RPI_COMMIT="5476720d52cf579dc1627715262b30ba1242525e"
+NEW_RPI_COMMIT="063bcab6c8a90efb0d19f69d88cbbc7ec79cab68"
+OLD_RPI_SHA256="00fe5487376e9d5ed14cbc72a9b7a5bd8d6900c84aee10f6d656f192a26d161c"
+NEW_RPI_SHA256="812cb64617d6ffbc76f9b8dce8237b31159a1216b31845faec1bb75b6b6b291f"
+
+if grep -q "$OLD_RPI_COMMIT" "$RPI_FW_MK"; then
+    sed -i "s/$OLD_RPI_COMMIT/$NEW_RPI_COMMIT/" "$RPI_FW_MK"
+    echo "  rpi-firmware.mk: version bumped to 063bcab6 (2025-12-08)"
+elif grep -q "$NEW_RPI_COMMIT" "$RPI_FW_MK"; then
+    echo "  rpi-firmware.mk: already at 063bcab6 (skipping)"
+else
+    echo "  rpi-firmware.mk: unexpected version — manual check required"
+fi
+
+if grep -q "$OLD_RPI_SHA256" "$RPI_FW_HASH"; then
+    sed -i "s/$OLD_RPI_SHA256  rpi-firmware-${OLD_RPI_COMMIT}\.tar\.gz/$NEW_RPI_SHA256  rpi-firmware-${NEW_RPI_COMMIT}.tar.gz/" "$RPI_FW_HASH"
+    echo "  rpi-firmware.hash: updated for 063bcab6"
+elif grep -q "$NEW_RPI_SHA256" "$RPI_FW_HASH"; then
+    echo "  rpi-firmware.hash: already updated (skipping)"
+else
+    echo "  rpi-firmware.hash: unexpected content — manual check required"
+fi
+
 echo ""
 echo "Done. All build-host patches applied."
 echo "If mesa3d was already in output/build/, run: make mesa3d-dirclean"
 echo "If go was already in output/build/, run: make host-go-dirclean"
+echo "If rpi-firmware was already in output/build/, run: make rpi-firmware-dirclean"
