@@ -14,13 +14,11 @@ ntp=false
 
 # Static IP settings (only used when mode=static)
 address=192.168.8.245
-# netmask uses CIDR prefix length: 24 == 255.255.255.0
 netmask=24
 #gateway=192.168.8.1
 #dns=1.1.1.1
 
 [host]
-# Hostname for the Pi (without .local)
 hostname=piClock
 
 [wifi]

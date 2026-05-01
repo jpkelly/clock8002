@@ -1,6 +1,34 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-30 - RAM-root investigation plan added; kernel pin corrected to b1b490bae0bb8ad62d1f028ed0dcbbe7395a964d; clean-clone Buildroot rebuild running on cm5 in detached screen. Branch HEAD: `fb6d5d4`.
+Last updated: 2026-05-01 - commit `e9d2f9c` (OLED logo packaging fix) pushed on `feature/squashfs-readonly`; fixed image built and transferred to Desktop (`piClock-e9d2f9c-sdcard.img`); incremental build work paused pending LTC issue investigation.
+
+## Current Checkpoint (2026-05-01)
+
+### Repository + build status
+- Branch: `feature/squashfs-readonly`
+- Pushed HEAD: `e9d2f9c`
+- Logo packaging fix commit includes `buildroot-external/package/clock8002/clock8002.mk` install-line correction for `piclockLogo.bin`.
+- Incremental Buildroot rebuild completed on cm5 with source at `/tmp/clock8002-clean-build` (HEAD `e9d2f9c`), `BR_BUILD_EXIT:0`.
+- New image artifact transferred to Desktop: `/Users/jp/Desktop/piClock-e9d2f9c-sdcard.img`.
+- Image checksum: `b5b3b2e86a71e06f55703c1acaa2438b24a1126f1c831cba014785257f7a107e`.
+- Per user request, additional incremental rebuilds are paused until LTC issue work proceeds.
+
+### Runtime checkpoint (target)
+- During live diagnostics, repeated `sdl3-clock` exit(1) loops were traced to Limitimer serial init failing when config referenced `/dev/ttyAMA3` and that device node was absent on the running profile.
+- Temporary mitigation (`limitimer-mode=off`) restored stable clock process.
+- Per user direction, Limitimer was re-enabled for clock #1:
+  - `source1.text=Limitimer`
+  - `source1.timer=true`
+  - `source1.counter=1`
+  - `limitimer-mode=receive`
+- After restart, `sdl3-clock` remained up (stable PID check passed).
+- USB audio instability remains a separate open track (`usb_set_interface failed (-110)`, `cannot set freq 44100`).
+
+### Defaults changed in repo
+- `v4/network.ini.default` now defaults to static networking:
+  - `mode=static`
+  - `address=192.168.8.245`
+  - `netmask=24` (CIDR for `255.255.255.0`)
 
 ## Active Investigation: Rootfs Mode vs USB Stability (2026-04-30)
 
