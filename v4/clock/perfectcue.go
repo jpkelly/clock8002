@@ -1,10 +1,11 @@
 package clock
 
 import (
-	"github.com/tarm/serial"
 	"io"
 	"log"
 	"time"
+
+	"github.com/tarm/serial"
 )
 
 const (
@@ -29,9 +30,15 @@ type cueOptions struct {
 }
 
 func (engine *Engine) initPerfectCue(options *EngineOptions) {
-	engine.cueDuration = time.Duration(options.CueDuration) * time.Second
-	engine.cueState = &cueState{}
-	engine.cueChan = make(chan *cueState)
+	if engine.cueDuration == 0 {
+		engine.cueDuration = time.Duration(options.CueDuration) * time.Second
+	}
+	if engine.cueState == nil {
+		engine.cueState = &cueState{}
+	}
+	if engine.cueChan == nil {
+		engine.cueChan = make(chan *cueState)
+	}
 
 	if !options.CueEnabled {
 		return

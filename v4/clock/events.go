@@ -2,8 +2,10 @@ package clock
 
 import (
 	"fmt"
+
 	"github.com/desertbit/timer"
 	"gitlab.com/clock-8001/clock-8001/v4/debug"
+
 	// "gitlab.com/clock-8001/clock-8001/v4/oscutil"
 	"github.com/chabad360/go-osc/osc"
 
@@ -90,6 +92,9 @@ func (engine *Engine) listen() {
 				}
 			}
 		case cs := <-engine.cueChan:
+			if cs == nil {
+				continue
+			}
 			cs.Show = true
 			engine.cueState = cs
 			if cs.Blank {
@@ -99,7 +104,9 @@ func (engine *Engine) listen() {
 			}
 			engine.sendCue(cs)
 		case <-engine.cueTimer.C:
-			engine.cueState.Show = false
+			if engine.cueState != nil {
+				engine.cueState.Show = false
+			}
 		}
 	}
 }

@@ -80,6 +80,13 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 		log.Printf("Error initializing engine clock sources: %v", err)
 		return nil, err
 	}
+
+	// Initialize cue defaults before OSC listener starts. This avoids nil
+	// dereferences in state publishing and cue timer paths during startup.
+	engine.cueDuration = time.Duration(options.CueDuration) * time.Second
+	engine.cueState = &cueState{}
+	engine.cueChan = make(chan *cueState)
+
 	engine.initOSC(options)
 
 	// Millumin ignore regexp
@@ -407,6 +414,17 @@ func (engine *Engine) State() *State {
 
 		clocks = append(clocks, &c)
 	}
+	cueRight := false
+	cueLeft := false
+	cueBlank := false
+	cueShow := false
+	if engine.cueState != nil {
+		cueRight = engine.cueState.RightArrow
+		cueLeft = engine.cueState.LeftArrow
+		cueBlank = engine.cueState.Blank
+		cueShow = engine.cueState.Show
+	}
+
 	state := State{
 		Initialized:         engine.initialized,
 		Clocks:              clocks,
@@ -417,10 +435,10 @@ func (engine *Engine) State() *State {
 		TitleBGColor:        engine.titleBGColor,
 		ScreenFlash:         engine.screenFlash,
 		HardwareSignalColor: engine.signalHardwareColor,
-		CueRight:            engine.cueState.RightArrow,
-		CueLeft:             engine.cueState.LeftArrow,
-		CueBlank:            engine.cueState.Blank,
-		CueShow:             engine.cueState.Show,
+		CueRight:            cueRight,
+		CueLeft:             cueLeft,
+		CueBlank:            cueBlank,
+		CueShow:             cueShow,
 	}
 
 	if engine.showInfo {
