@@ -6,15 +6,16 @@
 
 [network]
 # mode: dhcp or static
-mode=dhcp
+mode=static
 
 # NTP time synchronization (true or false)
 # Disable if using OSC settime to manually control the clock
 ntp=false
 
 # Static IP settings (only used when mode=static)
-#address=192.168.8.245
-#netmask=24
+address=192.168.8.245
+# netmask uses CIDR prefix length: 24 == 255.255.255.0
+netmask=24
 #gateway=192.168.8.1
 #dns=1.1.1.1
 

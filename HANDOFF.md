@@ -1,6 +1,90 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-30 — 12h mode verified working; AM/PM label rendering; draw4TextClocks size tweak in progress. Branch HEAD: `a7d6f50`. Image `piClock-f669f5b-sdcard.img` on Desktop. Issue #15 implementation plan posted (3 phases: TextClockScale → LabelFontSize → LabelX/Y/W/H).
+Last updated: 2026-04-30 - RAM-root investigation plan added; kernel pin corrected to b1b490bae0bb8ad62d1f028ed0dcbbe7395a964d; clean-clone Buildroot rebuild running on cm5 in detached screen. Branch HEAD: `fb6d5d4`.
+
+## Active Investigation: Rootfs Mode vs USB Stability (2026-04-30)
+
+### Verified facts
+- piclock (.245) uses two partitions: `/dev/mmcblk0p1` mounted at `/boot` (vfat) and `/dev/mmcblk0p2` as root (`squashfs`, read-only).
+- 3rd-party unit (.244) shows no squashfs or overlay mounts at runtime; root is mounted as `rootfs` (RAM-root style), with `/boot` on `/dev/mmcblk0p1` (vfat).
+- USB failure signature on .245 remains `usb_set_interface failed (-110)`, reproducible with manual `arecord` and manual `alsa-ltc` while watchdog is disabled.
+- Kernel page size on .245 is 4 KB at runtime even when uname suffix said `-v8-16k`.
+
+### Config updates prepared on `feature/squashfs-readonly`
+- `buildroot-external/board/clock8002-rpi5/linux.config`
+  - `CONFIG_LOCALVERSION="-v8-4k"`
+  - `CONFIG_IKCONFIG=y`
+  - `CONFIG_IKCONFIG_PROC=y`
+- `buildroot-external/configs/clock8002_rpi5_defconfig.sample`
+  - Kernel tarball pin changed to `b1b490bae0bb8ad62d1f028ed0dcbbe7395a964d` (rpi 6.12.41 line).
+- Note: an initial full-SHA typo caused 404 download failures on codeload; corrected and rebuild relaunched.
+
+### Build status (cm5)
+- Detached session: `3854895.br-kernel-rebuild`
+- Build source: clean clone at `/tmp/clock8002-clean-build` (feature/squashfs-readonly, HEAD `fb6d5d4`) to avoid the dirty `~/clock8002` tree.
+- Effective build settings logged:
+  - `BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION="$(call github,raspberrypi,linux,b1b490bae0bb8ad62d1f028ed0dcbbe7395a964d)/linux-b1b490bae0bb8ad62d1f028ed0dcbbe7395a964d.tar.gz"`
+  - `BR2_PACKAGE_CLOCK8002_SOURCE_DIR="/tmp/clock8002-clean-build/v4"`
+- Monitor commands:
+  - `ssh pi@cm5.local 'tail -f /tmp/br-kernel-rebuild-driver.log'`
+  - `ssh pi@cm5.local 'tail -f /tmp/br-build.log'`
+- Completion check:
+  - `ssh pi@cm5.local 'cat /tmp/br-build.exit'`
+
+### 3rd-party parity checklist (workboard)
+
+| Parity axis | 3rd-party baseline | Current state on .245 | Action | Status |
+|---|---|---|---|---|
+| Kernel line | rpi 6.12.41 (`b1b490ba...`) | 6.12.64 currently deployed | Rebuild with 6.12.41 pin and validate uname + behavior | In progress |
+| Page-size clarity | 4 KB runtime pages | 4 KB runtime pages, previous uname suffix was misleading | Keep 4 KB; publish `-v8-4k` localversion in next image | In progress |
+| Runtime kernel config visibility | N/A | `/proc/config.gz` unavailable on current image | Enable IKCONFIG + IKCONFIG_PROC | In progress |
+| Rootfs execution model | RAM-root style at runtime | SquashFS partition root (`/dev/mmcblk0p2`) | Run controlled A/B (squashfs vs RAM-root) | Planned |
+| Partition model | single visible FAT partition | dual partitions (FAT + squashfs root) | Change only if A/B shows material USB benefit | Gated |
+| Init/service shape | BusyBox init + watchdog scripts | BusyBox init + watchdog scripts | Keep constant during A/B | Aligned |
+| USB symptom parity | Stable under test sequence | Reproducible `usb_set_interface -110` | Isolate root-cause variable via A/B controls | Open |
+
+### Issue tracking recommendation
+- Yes: this is worth a dedicated issue because the work spans multiple images, controlled experiments, and decision gates.
+- Suggested issue title: `Parity investigation: align Buildroot image behavior with 3rd-party RAM-root reference`.
+- Tracking issue created: **#43** (`Parity investigation: align Buildroot behavior with 3rd-party RAM-root reference`).
+- Suggested acceptance criteria:
+  - A/B results recorded with identical kernel/DT/service controls.
+  - Clear decision: proceed with RAM-root migration or stop and focus kernel/USB path.
+  - Final summary includes exact image provenance and observed USB outcome for each run.
+
+### RAM-root A/B investigation plan (time-boxed)
+1. Objective
+  - Determine whether rootfs mode (squashfs partition vs RAM-root) materially changes USB LTC stability.
+2. Hypothesis
+  - Squashfs is not the primary root cause, but rootfs mode could be a secondary contributor via boot/runtime timing.
+3. Decision gate
+  - Continue RAM-root work only if A/B results show a clear and repeatable stability improvement.
+  - If no material delta, stop RAM-root effort and focus on kernel/USB stack.
+4. Controlled variables (must stay identical across A and B)
+  - Kernel commit, DTB/overlays, cmdline USB-related flags, ALSA command line, service startup order, test hardware/cabling/power.
+5. Experimental variable (only change)
+  - Root mode:
+    - A: current squashfs partition root (`/dev/mmcblk0p2`).
+    - B: RAM-root model (initramfs/rootfs in memory) with persistent config still on `/boot/piclock`.
+6. Test protocol per image
+  - Cold boot, confirm services, run baseline idle window, run manual `arecord` test, run manual `alsa-ltc -v` test, capture dmesg and counters.
+7. Metrics to record
+  - `usb_set_interface`/xHCI errors, service liveness, `VmRSS`, `VmSwap`, system swap, temperature/throttle, and whether failure reproduces.
+8. Success criteria
+  - RAM-root must reduce or eliminate reproducible USB failures under the same procedure.
+9. Run log template
+
+```
+Run ID:
+Date/Time:
+Image Provenance (commit, kernel SHA, root mode):
+Hardware/Power/Cabling:
+Commands Executed:
+Observed Errors (if any):
+Metrics Snapshot:
+Outcome (pass/fail/inconclusive):
+Next Action:
+```
 
 ## Active Investigation: LTC dropouts on piclockBR (2026-04-21 → 2026-04-22)
 
