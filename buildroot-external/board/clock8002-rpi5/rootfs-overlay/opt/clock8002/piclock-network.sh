@@ -98,9 +98,14 @@ if [ -n "$NET_HOSTNAME" ]; then
     if [ "$CURRENT_HOSTNAME" != "$NET_HOSTNAME" ]; then
         echo "Setting hostname to ${NET_HOSTNAME}..."
         hostname "$NET_HOSTNAME"
-        echo "$NET_HOSTNAME" > /etc/hostname
-        sed -i "s/127\.0\.1\.1.*/127.0.1.1\t${NET_HOSTNAME}/" /etc/hosts
-        grep -q "127.0.1.1" /etc/hosts || echo -e "127.0.1.1\t${NET_HOSTNAME}" >> /etc/hosts
+        # /etc/hostname is on squashfs (read-only) — skip write silently
+        if [ -w /etc/hostname ]; then
+            echo "$NET_HOSTNAME" > /etc/hostname
+        fi
+        if [ -w /etc/hosts ]; then
+            sed -i "s/127\.0\.1\.1.*/127.0.1.1\t${NET_HOSTNAME}/" /etc/hosts
+            grep -q "127.0.1.1" /etc/hosts || printf "127.0.1.1\t%s\n" "$NET_HOSTNAME" >> /etc/hosts
+        fi
         systemctl restart avahi-daemon 2>/dev/null || true
     fi
 fi

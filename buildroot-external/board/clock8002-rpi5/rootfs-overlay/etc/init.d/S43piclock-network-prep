@@ -26,6 +26,14 @@ case "$1" in
 			exit 0
 		fi
 
+		# Set hostname synchronously here — before S50 avahi-daemon starts.
+		# piclock-network.sh also sets it at runtime but runs in the background
+		# after NM starts, which is too late for avahi's initial announcement.
+		NET_HOSTNAME=$(parse_ini "$NETWORK_INI" host hostname)
+		if [ -n "$NET_HOSTNAME" ]; then
+			hostname "$NET_HOSTNAME"
+		fi
+
 		NET_MODE=$(parse_ini "$NETWORK_INI" network mode)
 		mkdir -p "$NM_CON_DIR"
 
