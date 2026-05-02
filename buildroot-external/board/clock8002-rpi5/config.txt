@@ -3,6 +3,10 @@
 # Buildroot kernel image
 kernel=Image
 
+# Rootfs is linked into the kernel (BR2_TARGET_ROOTFS_INITRAMFS), so keep
+# external initramfs loading disabled for parity with the .244 reference unit.
+#initramfs rootfs.cpio.gz followkernel
+
 # Run in 64-bit mode
 arm_64bit=1
 

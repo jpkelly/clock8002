@@ -18,9 +18,4 @@ image sdcard.img {
 		bootable = "true"
 		image = "boot.vfat"
 	}
-
-	partition rootfs {
-		partition-type = 0x83
-		image = "rootfs.squashfs"
-	}
 }

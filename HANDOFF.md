@@ -1,6 +1,37 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-01 - commit `e9d2f9c` (OLED logo packaging fix) pushed on `feature/squashfs-readonly`; fixed image built and transferred to Desktop (`piClock-e9d2f9c-sdcard.img`); incremental build work paused pending LTC issue investigation.
+Last updated: 2026-05-01 - root-ram parity checkpoint on `feature/root-ram`; embedded-initramfs pivot prepared, but build intentionally deferred while another cm5 build is active and swap is saturated.
+
+## Current Checkpoint (2026-05-01 - root-ram parity prep)
+
+### Local repository status
+- Branch: `feature/root-ram`
+- Working tree has uncommitted edits in six files:
+  - `buildroot-external/configs/clock8002_rpi5_defconfig.sample`
+  - `buildroot-external/board/clock8002-rpi5/config.txt`
+  - `buildroot-external/board/clock8002-rpi5/cmdline.txt`
+  - `buildroot-external/board/clock8002-rpi5/genimage.cfg.in`
+  - `buildroot-external/board/clock8002-rpi5/linux.config`
+  - `buildroot-external/board/clock8002-rpi5/post-image.sh`
+- Root mode was pivoted to match the 3rd-party `.244` behavior:
+  - `BR2_TARGET_ROOTFS_INITRAMFS=y` set in defconfig sample.
+  - `config.txt` keeps `initramfs rootfs.cpio.gz followkernel` commented (not active).
+  - `cmdline.txt` no longer forces squashfs `root=/dev/mmcblk0p2`.
+  - `genimage.cfg.in` remains FAT-only (no rootfs partition).
+  - `post-image.sh` no longer injects `rootfs.cpio*` into FAT payload.
+  - `linux.config` keeps initrd/gzip support (`CONFIG_BLK_DEV_INITRD`, `CONFIG_RD_GZIP`).
+
+### cm5 runtime/build capacity snapshot
+- Active detached build: `screen` session `br-pre-squashfs` (output path `/home/pi/buildroot/output-pre-squashfs`).
+- Under load snapshot: CPU saturated; `MemAvailable` ~5.6-5.8 GiB.
+- Swap is intentionally small and currently the limiting factor:
+  - `/etc/dphys-swapfile` has `CONF_SWAPSIZE=200`
+  - `/var/swap` is ~200 MiB and was fully used during active build.
+- User decision: hold off starting the root-ram build for now.
+
+### Next actions when resumed
+1. Start root-ram build only with fully isolated clone, output dir, screen session, and log/exit files.
+2. Consider increasing cm5 swap to 1-2 GiB before any concurrent full Buildroot builds.
 
 ## Current Checkpoint (2026-05-01)
 

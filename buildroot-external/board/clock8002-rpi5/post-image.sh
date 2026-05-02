@@ -91,8 +91,8 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	sed "s|#BOOT_FILES#|${FILES}|" "${BOARD_DIR}/genimage.cfg.in" > "${GENIMAGE_CFG}"
 fi
 
-# genimage copies rootpath to tmppath/root; pass an empty rootpath to avoid
-# redundant copy because rootfs image is already built as rootfs.ext4.
+# genimage copies rootpath to tmppath/root; pass an empty rootpath because
+# all boot payloads are already prepared in BINARIES_DIR.
 trap 'rm -rf "${ROOTPATH_TMP}"' EXIT
 ROOTPATH_TMP="$(mktemp -d)"
 
