@@ -1,0 +1,268 @@
+package main
+
+import (
+	"fmt"
+	"github.com/Zyko0/go-sdl3/sdl"
+	"gitlab.com/Depili/go-rgb-led-matrix/bdf"
+	"gitlab.com/clock-8001/clock-8001/v4/clock"
+	"log"
+	"math"
+	"strconv"
+)
+
+/*
+ * Code for the original round clock faces
+ */
+
+var font *bdf.Bdf
+
+func initRoundClock() {
+	var err error
+	// Parse font for clock text
+	font, err = bdf.Parse(options.Font)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Printf("BDF font loaded.")
+
+	createRings()
+
+	for _, t := range clockTextures {
+		t.Destroy()
+	}
+
+	clockTextures = make([]*sdl.Texture, 2)
+	for i := range clockTextures {
+		clockTextures[i], err = renderer.CreateTexture(
+			sdl.PIXELFORMAT_RGBA8888,
+			sdl.TEXTUREACCESS_TARGET, 1080, 1080)
+		check(err)
+
+		err = clockTextures[i].SetBlendMode(sdl.BLENDMODE_BLEND)
+		check(err)
+	}
+
+	if options.dualClock {
+		numAudioSources = 4
+	} else {
+		numAudioSources = 2
+	}
+
+	log.Printf("Round clock initialized")
+}
+
+func drawRoundClocks(state *clock.State) {
+	numClocks := 1
+
+	if options.dualClock {
+		numClocks = 2
+	}
+
+	for i := 0; i < numClocks; i++ {
+		mainClock := state.Clocks[(2 * i)]
+		auxClock := state.Clocks[(2*i)+1]
+		tally := ""
+		hours := ""
+		minutes := ""
+		seconds := ""
+		leds := 0
+
+		// Normalize timers over 100 hours
+		if mainClock.Hours > 99 {
+			mainClock.Hours = 99
+			mainClock.Minutes = 59
+			mainClock.Seconds = 59
+		}
+
+		if mainClock.Text != "" {
+			if mainClock.Mode == clock.LTC {
+				tally = fmt.Sprintf(" %02d", mainClock.Hours)
+				hours = fmt.Sprintf("%02d", mainClock.Minutes)
+				minutes = fmt.Sprintf("%02d", mainClock.Seconds)
+				seconds = fmt.Sprintf("%02d", mainClock.Frames)
+				if options.EngineOptions.LTCSeconds {
+					leds = mainClock.Seconds
+				} else {
+					leds = mainClock.Frames
+				}
+				colors.tally = colors.text
+
+			} else if !mainClock.Hidden {
+				// Non-LTC clocks
+				hours = fmt.Sprintf("%02d", mainClock.Hours)
+
+				minutes = fmt.Sprintf("%02d", mainClock.Minutes)
+				seconds = fmt.Sprintf("%02d", mainClock.Seconds)
+				leds = mainClock.Seconds
+
+				if mainClock.HideSeconds && mainClock.Mode == clock.Normal {
+					seconds = ""
+				}
+
+				// Shift counters with zero hours up on fields
+				if mainClock.Mode != clock.Normal &&
+					hours == "00" {
+					hours = minutes
+					minutes = seconds
+					seconds = ""
+				}
+
+				// UDPTime overtime icon
+				if mainClock.Icon == "+" {
+					tmp := []rune(hours)
+					tmp[0] = '+'
+					hours = string(tmp)
+				}
+
+				if mainClock.Mode == clock.Countdown ||
+					mainClock.Mode == clock.Media {
+					if mainClock.Expired {
+						// TODO: Multiple different options of expired timers?
+						if !state.Flash {
+							hours = ""
+							minutes = ""
+							seconds = ""
+							leds = 59
+						}
+					} else {
+						leds = int(math.Floor(mainClock.Progress * 59))
+					}
+				} else if mainClock.Mode == clock.Countup {
+					leds, _ = strconv.Atoi(minutes)
+				}
+			}
+		}
+
+		if mainClock.Mode != clock.LTC && !options.dualClock {
+			if state.Tally != "" {
+				tally = fmt.Sprintf("%-.4s", state.Tally)
+				colors.tally = sdl.Color{R: state.TallyColor.R, G: state.TallyColor.G, B: state.TallyColor.B, A: 255}
+
+			} else if auxClock.Mode != clock.Normal && !auxClock.Hidden {
+				if auxClock.Expired && auxClock.Mode == clock.Countdown {
+					if state.Flash {
+						tally = " 00"
+					}
+				} else {
+					tally = auxClock.Compact
+					colors.tally = colors.countdown
+				}
+			}
+		}
+		hourBitmap := font.TextBitmap(hours)
+		minuteBitmap := font.TextBitmap(minutes)
+		secondBitmap := font.TextBitmap(seconds)
+		tallyBitmap := font.TextBitmap(tally)
+
+		// Set renderer target to the corresponding clock texture
+		renderTarget(clockTextures[i])
+		clearCanvas()
+
+		// Dots between hours and minutes
+		haveDisplay := (hours != "") && (minutes != "")
+		if haveDisplay && (!mainClock.Paused || state.Flash) && (mainClock.Mode != clock.Off) {
+			drawDots(14, 15, colors.text)
+		}
+
+		// Draw the text
+		drawBitmask(hourBitmap, colors.text, 10, 0)
+		drawBitmask(minuteBitmap, colors.text, 10, 17)
+		drawBitmask(secondBitmap, colors.text, 21, 8)
+		drawBitmask(tallyBitmap, colors.tally, 0, 2)
+
+		drawStaticCircles()
+		drawSecondCircles(leds)
+		renderSignal(i, mainClock.SignalColor)
+		copyIntoRect(textClock.r[i].signalTex, sdl.FRect{X: 25, Y: 905, H: 150, W: 150})
+	}
+
+	composeRoundClocks(state)
+}
+
+func composeRoundClocks(state *clock.State) {
+	renderTarget(nil)
+
+	// Clear output and setup background
+	prepareCanvas()
+
+	source := sdl.FRect{X: 0, Y: 0, W: 1080, H: 1080}
+
+	// FIXME: the text positioning and size is just magic numbers
+
+	if options.dualClock {
+		// Render the dual clock displays
+		dualText := font.TextBitmap(fmt.Sprintf("%-.8s", state.Tally))
+		colors.tally = sdl.Color{R: state.TallyColor.R, G: state.TallyColor.G, B: state.TallyColor.B, A: 255}
+
+		if !options.vertical {
+			// Normal horizontal view with the clocks side by side
+			dest := sdl.FRect{X: 0, Y: 0, W: 800, H: 800}
+			err := renderer.RenderTexture(clockTextures[0], &source, &dest)
+			check(err)
+
+			dest = sdl.FRect{X: 1920 - 800, Y: 0, W: 800, H: 800}
+			err = renderer.RenderTexture(clockTextures[1], &source, &dest)
+			check(err)
+
+			for y, row := range dualText {
+				for x, b := range row {
+					if b {
+						setPixel(y, x, colors.tally, (1920-1064)/2, 800+50, 19, 16)
+					}
+				}
+			}
+		} else {
+			// Rotated view with the clocks on top of each other
+			dest := sdl.FRect{X: (1080 - 800) / 2, Y: 0, W: 800, H: 800}
+			err := renderer.RenderTexture(clockTextures[0], &source, &dest)
+			check(err)
+
+			dest = sdl.FRect{X: (1080 - 800) / 2, Y: 1920 - 800, W: 800, H: 800}
+			err = renderer.RenderTexture(clockTextures[1], &source, &dest)
+			check(err)
+
+			for y, row := range dualText {
+				for x, b := range row {
+					if b {
+						setPixel(y, x, colors.tally, (1080-1064)/2, 800+50, 19, 16)
+					}
+				}
+			}
+
+		}
+	} else {
+		// Single clock mode
+		w, h, _ := renderer.CurrentOutputSize()
+		var dest sdl.FRect
+
+		if options.small {
+			// Do not scale the small 192x192 px clock
+			rect := sdl.FRect{
+				X: 0,
+				Y: 0,
+				H: 192,
+				W: 192,
+			}
+			err := renderer.RenderTexture(clockTextures[0], &rect, &rect)
+			check(err)
+		} else if !options.vertical {
+			dest = sdl.FRect{
+				X: float32((w - h) / 2),
+				Y: 0,
+				W: float32(h),
+				H: float32(h),
+			}
+		} else {
+			// Rotated display
+			dest = sdl.FRect{
+				X: 0,
+				Y: 0,
+				W: float32(w),
+				H: float32(w),
+			}
+		}
+		err := renderer.RenderTexture(clockTextures[0], &source, &dest)
+		check(err)
+	}
+}

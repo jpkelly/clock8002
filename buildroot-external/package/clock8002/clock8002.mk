@@ -7,7 +7,7 @@ CLOCK8002_SITE = $(call qstrip,$(BR2_PACKAGE_CLOCK8002_SOURCE_DIR))
 CLOCK8002_SITE_METHOD = local
 CLOCK8002_LICENSE = GPL-3.0
 CLOCK8002_LICENSE_FILES = LICENSE
-CLOCK8002_DEPENDENCIES = host-go sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf libltc
+CLOCK8002_DEPENDENCIES = host-go libltc
 
 CLOCK8002_GIT_DIR = $(realpath $(CLOCK8002_SITE)/..)
 CLOCK8002_GIT_TAG = $(shell cd $(CLOCK8002_GIT_DIR) && git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0.1")
@@ -26,15 +26,13 @@ CLOCK8002_ALSA_LTC_CFLAGS = -O2 \
 define CLOCK8002_BUILD_CMDS
 	cd $(@D) && \
 		$(HOST_GO_TARGET_ENV) \
-		CGO_ENABLED=1 \
-		GOFLAGS=-mod=vendor \
-		PKG_CONFIG=$(HOST_DIR)/bin/pkg-config \
-		CC="$(TARGET_CC)" \
+		CGO_ENABLED=0 \
+		GOFLAGS=-mod=mod \
 		$(HOST_DIR)/bin/go build \
 			-v \
 			-ldflags "$(CLOCK8002_GO_LD_FLAGS)" \
-			-o $(@D)/sdl-clock \
-			./cmd/sdl-clock
+			-o $(@D)/sdl3-clock \
+			./cmd/sdl3-clock
 	$(TARGET_CC) $(CLOCK8002_ALSA_LTC_CFLAGS) \
 		-I$(STAGING_DIR)/usr/include \
 		-o $(@D)/alsa-ltc $(@D)/alsa-ltc.c \
@@ -43,7 +41,7 @@ endef
 
 define CLOCK8002_INSTALL_TARGET_CMDS
 	$(INSTALL) -d $(TARGET_DIR)/opt/clock8002
-	$(INSTALL) -m 0755 $(@D)/sdl-clock $(TARGET_DIR)/opt/clock8002/sdl-clock
+	$(INSTALL) -m 0755 $(@D)/sdl3-clock $(TARGET_DIR)/opt/clock8002/sdl3-clock
 	$(INSTALL) -m 0755 $(@D)/alsa-ltc $(TARGET_DIR)/opt/clock8002/alsa-ltc
 	$(INSTALL) -D -m 0644 $(@D)/clock8002.service \
 		$(TARGET_DIR)/usr/lib/systemd/system/clock8002.service

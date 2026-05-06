@@ -2,7 +2,7 @@ PROJECT_NAME := "clock-8002"
 PKG := "gitlab.com/clock-8001/clock-8001/v4"
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
-BINARIES := sdl-clock
+BINARIES := sdl3-clock
 GOLINT := "$(GOPATH)/bin/golint"
 GIT_TAG ?= $(shell git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0.1")
 GIT_COMMIT ?= $(shell git rev-list -1 HEAD)
@@ -24,23 +24,23 @@ dep: ## Get the dependencies
 	@go get -v -d ./...
 
 clean:
-	@rm -f sdl-clock alsa-ltc
+	@rm -f sdl3-clock alsa-ltc
 	@rm -fr clock8002-*-linux-arm64 clock8002-*-linux-arm64.tar.gz clock8002-*-*-linux-arm64 clock8002-*-*-linux-arm64.tar.gz
 
-build: dep sdl-clock ## Build the binary file
+build: dep sdl3-clock ## Build the binary file
 
-sdl-clock:
-	@echo Building sdl-clock tag $(GIT_TAG) commit $(GIT_COMMIT)
-	@go build -ldflags $(GO_LD_FLAGS) gitlab.com/clock-8001/clock-8001/v4/cmd/sdl-clock
+sdl3-clock:
+	@echo Building sdl3-clock tag $(GIT_TAG) commit $(GIT_COMMIT)
+	@go build -ldflags $(GO_LD_FLAGS) gitlab.com/clock-8001/clock-8001/v4/cmd/sdl3-clock
 
 alsa-ltc: alsa-ltc.c ## Build the LTC decoder
 	@echo Building alsa-ltc tag $(GIT_TAG) commit $(GIT_COMMIT) built $(BUILD_DATE)
 	gcc $(ALSA_LTC_CFLAGS) -o alsa-ltc alsa-ltc.c -lasound -lltc
 
-release: sdl-clock alsa-ltc ## Package a release tarball for NETWORK_CONFIG variant
+release: sdl3-clock alsa-ltc ## Package a release tarball for NETWORK_CONFIG variant
 	@echo Packaging release $(GIT_TAG) variant=$(NETWORK_CONFIG)
 	@mkdir -p $(RELEASE_DIR)
-	@cp sdl-clock $(RELEASE_DIR)/
+	@cp sdl3-clock $(RELEASE_DIR)/
 	@cp alsa-ltc $(RELEASE_DIR)/
 	@cp clock.ini.$(NETWORK_CONFIG) $(RELEASE_DIR)/clock.ini
 	@cp ttf_fonts/*.ttf $(RELEASE_DIR)/
@@ -60,11 +60,11 @@ release: sdl-clock alsa-ltc ## Package a release tarball for NETWORK_CONFIG vari
 	@rm -rf $(RELEASE_DIR)
 	@echo Release tarball: $(RELEASE_DIR).tar.gz
 
-release-all: sdl-clock alsa-ltc ## Package release tarballs for all variants
+release-all: sdl3-clock alsa-ltc ## Package release tarballs for all variants
 	$(MAKE) release NETWORK_CONFIG=default
 	$(MAKE) release NETWORK_CONFIG=gerry
 
-debian_amd64: clock_port8080.ini sdl-clock
+debian_amd64: clock_port8080.ini sdl3-clock
 	@export GIT_TAG=$(GIT_TAG); export NFPM_ARCH=amd64; nfpm pkg --packager deb
 
 help: ## Display this help screen

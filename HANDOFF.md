@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-04-15 (~08:00 UTC)
+Last updated: 2026-05-06 (~21:30 UTC)
 
 ## Contents
 
@@ -396,6 +396,23 @@ Committed changes in `v4/alsa-ltc.c`, `v4/alsa-ltc.service`, and Buildroot overl
 - CGO eliminated — `GOOS=linux GOARCH=arm64 go build` only
 - Binary: `sdl-clock` → `sdl3-clock`
 - SDL3 loaded via purego/dlopen at runtime (libSDL3.so v3.4.0, libSDL3_ttf.so v3.2.2, libSDL3_image.so v3.2.6)
+
+### Trixie SDL3 Backport Status (2026-05-06)
+
+- Branch: `trixie-sdl3`
+- Scope completed in working tree:
+  - Added `v4/cmd/sdl3-clock/` from `master`
+  - Switched Trixie build/install/service paths from `sdl-clock` to `sdl3-clock`
+  - Updated `v4/go.mod`, `v4/go.sum`, vendored SDL3/purego deps, and Buildroot package recipe
+- Local build verification (macOS host cross-build):
+  - `GOOS=linux GOARCH=arm64 CGO_ENABLED=0 GOFLAGS="-mod=mod" go build -o sdl3-clock ./cmd/sdl3-clock`
+  - Output binary produced: `v4/sdl3-clock` (aarch64 ELF)
+- Release packaging on local macOS is expected to fail for `alsa-ltc` (missing ALSA headers). Build/release tarball should be produced on CM5.
+- CM5 resource note:
+  - A Buildroot job was active (`br-root-ram-74439b3-k641247-usbfix2`), so Trixie SDL3 tarball build was intentionally deferred to avoid contention.
+  - Safe sequence: wait for `/tmp/br-root-ram-74439b3-k641247-usbfix2.exit` to report `BR_BUILD_EXIT:0`, then run Trixie `make release` and copy tarball to Mac Desktop.
+- Runtime dependency risk on Trixie:
+  - `sdl3-clock` requires `libSDL3.so`, `libSDL3_ttf.so`, and `libSDL3_image.so` at runtime; package availability on target image must be validated during install test.
 
 ## Next Suggested Release
 
