@@ -9,9 +9,12 @@ POKEMON_FILE="alsa-ltc_pokemon.sh"
 
 start() {
 	echo "Setting up $SERVICE configuration"
+	sleep 5
 	mkdir -p /boot
 	if [ -e /dev/mmcblk0p1 ]; then
 		mount -r /dev/mmcblk0p1 /boot 2>/dev/null || true
+	else
+		mount -r /dev/mmcblk0 /boot 2>/dev/null || true
 	fi
 	if [ -e "/boot/$BIN_FILE" ]; then
 		echo "Copying $SERVICE binary from boot"

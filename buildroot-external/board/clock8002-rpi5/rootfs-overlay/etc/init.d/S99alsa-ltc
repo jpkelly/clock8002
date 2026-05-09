@@ -1,17 +1,29 @@
 #!/bin/sh
 
+start() {
+	if [ -e "/boot/enable_ltc" ]; then
+		/root/alsa-ltc_pokemon.sh start &
+	fi
+}
+
+stop() {
+	true
+}
+
+restart() {
+	stop
+	start
+}
+
 case "$1" in
 	start)
-		echo "Starting alsa-ltc watchdog"
-		/root/alsa-ltc_pokemon.sh start &
+		start
 		;;
 	stop)
-		echo "Stopping alsa-ltc watchdog"
-		kill $(cat /var/run/alsa-ltc.pid 2>/dev/null) 2>/dev/null || true
+		stop
 		;;
 	restart|reload)
-		"$0" stop
-		"$0" start
+		restart
 		;;
 	*)
 		echo "Usage: $0 {start|stop|restart}"
@@ -19,4 +31,4 @@ case "$1" in
 		;;
 esac
 
-exit 0
+exit $?

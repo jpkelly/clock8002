@@ -8,6 +8,10 @@ config BR2_PACKAGE_CLOCK8002
 	  clock8002 appliance package placeholder.
 	  This prototype installs runtime files and service units into the image.
 
+	  The deployed sdl-clock name is kept only for compatibility with the
+	  .244-style boot/runtime scripts. The binary itself is built from
+	  cmd/sdl3-clock; SDL2 is not part of this Buildroot image path.
+
 if BR2_PACKAGE_CLOCK8002
 
 config BR2_PACKAGE_CLOCK8002_SOURCE_DIR

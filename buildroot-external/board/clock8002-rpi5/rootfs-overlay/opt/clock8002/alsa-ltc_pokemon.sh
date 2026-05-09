@@ -1,34 +1,47 @@
 #!/bin/sh
-# alsa-ltc pokemon watchdog — mirrors 3rd party alsa-ltc_pokemon.sh pattern.
-# Loads snd_usb_audio once, then restarts alsa-ltc in a tight loop on crash.
 
 start() {
-	echo "Loading snd_usb_audio kernel module"
-	modprobe snd_usb_audio 2>/dev/null || true
+	echo -"Starting audio to OSC SMTP LTC converter"
+	echo -"Loading kernel modules for hifiberry ADC+ DAC pro"
+	modprobe i2c_bcm2835
+	modprobe snd_soc_bcm2835_i2s
+	modprobe snd_soc_pcm186x_i2c
+	modprobe snd_soc_bcm2835_i2s
+	modprobe clk_hifiberry_dacpro
+	modprobe snd_soc_pcm512x_i2c
+	modprobe snd_soc_hifiberry_dacplusadcpro
+	echo -"Loading kernel modules for interspace industries usb aio"
+	modprobe snd_usb_audio
 
-	# alsa-ltc is invoked with '-' (auto-detect mode) — it handles device
-	# detection and timing internally, polling every 1s to catch the USB
-	# audio device within the Pi 5 xHCI 20s isochronous-ready window.
-	# Do NOT add a settle delay here; it causes the open to miss that window.
-
-	cd /opt/clock8002
-	while true; do
+	cd /root
+	while true
+	do
+		echo -e "\033[9;0]"
 		/root/alsa-ltc_cmd.sh
-		echo "alsa-ltc exited, restarting in 2s..."
+		echo "CRASHED!"
 		sleep 2
 	done
+
 }
 
 stop() {
 	true
 }
 
+restart() {
+	stop
+	start
+}
+
 case "$1" in
 	start)
 		start
 		;;
-	stop|restart|reload)
+	stop)
 		stop
+		;;
+	restart|reload)
+		restart
 		;;
 	*)
 		echo "Usage: $0 {start|stop|restart}"

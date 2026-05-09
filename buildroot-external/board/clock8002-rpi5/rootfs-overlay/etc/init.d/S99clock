@@ -1,26 +1,32 @@
 #!/bin/sh
 
+start() {
+	ifup eth0:1
+	if [ -e "/boot/enable_clock" ]; then
+		echo "Starting clock..."
+		sleep 1
+		/root/clock_pokemon.sh start &
+	fi
+}
+
+stop() {
+	true
+}
+
+restart() {
+	stop
+	start
+}
+
 case "$1" in
 	start)
-		echo "Starting sdl-clock watchdog"
-		/root/clock_pokemon.sh start &
-		echo $! > /var/run/clock.pid
+		start
 		;;
 	stop)
-		echo "Stopping sdl-clock watchdog"
-		# Kill by saved PID and by name to catch any orphaned instances
-		kill $(cat /var/run/clock.pid 2>/dev/null) 2>/dev/null || true
-		for pid in $(ps aux | grep clock_pokemon | grep -v grep | awk '{print $1}'); do
-			kill "$pid" 2>/dev/null || true
-		done
-		kill $(ps aux | grep clock_cmd | grep -v grep | awk '{print $1}') 2>/dev/null || true
-		kill $(ps aux | grep sdl3-clock | grep -v grep | awk '{print $1}') 2>/dev/null || true
-		rm -f /var/run/clock.pid
+		stop
 		;;
 	restart|reload)
-		"$0" stop
-		sleep 1
-		"$0" start
+		restart
 		;;
 	*)
 		echo "Usage: $0 {start|stop|restart}"
@@ -28,4 +34,4 @@ case "$1" in
 		;;
 esac
 
-exit 0
+exit $?

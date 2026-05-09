@@ -11,6 +11,9 @@ This document covers building, flashing, and maintaining the Buildroot-based SD 
     - [1. Mesa 25.0.7 upgrade](#1-mesa-2507-upgrade)
     - [2. host-xz libtool workaround](#2-host-xz-libtool-workaround)
 - [Building an Image](#building-an-image)
+  - [Build Mode Selection (A vs B)](#build-mode-selection-a-vs-b)
+    - [Mode A - Normal kernel compile (default)](#mode-a---normal-kernel-compile-default)
+    - [Mode B - Plan B prebuilt kernel fallback (failure-only)](#mode-b---plan-b-prebuilt-kernel-fallback-failure-only)
   - [Full image build](#full-image-build)
   - [Partial rebuilds](#partial-rebuilds-when-to-use-each)
   - [Release build (password only, no SSH key)](#release-build-password-only-no-ssh-key)
@@ -111,6 +114,125 @@ Before any build, always sync the clock8002 source on the build host:
 ```bash
 ssh pi@cm5.local 'cd ~/clock8002 && git pull --ff-only'
 ```
+
+### Build Mode Selection (A vs B)
+
+Use this decision gate before starting a build:
+
+| Condition | Build mode |
+|---|---|
+| Normal operation, release work, or first attempt | Mode A |
+| Kernel compile path cannot produce a working kernel | Mode B |
+
+Rules:
+
+1. Always attempt Mode A first.
+2. Mode B is fallback-only. Do not use it when Mode A is healthy.
+3. Mode B must use a matched prebuilt kernel bundle from the known-good Golden source:
+  - `Image`
+  - DTBs and overlays
+  - `/lib/modules/<kernel-release>`
+4. Mode B must be checksum/version gated (fail closed on mismatch).
+
+#### Mode A - Normal kernel compile (default)
+
+This is the standard path and remains the default for development and releases.
+
+- Buildroot compiles kernel + userspace.
+- Use the existing full/release/dev commands in this document.
+
+#### Mode B - Plan B prebuilt kernel fallback (failure-only)
+
+This path is only for cases where the kernel compile path does not produce a working kernel.
+
+- Buildroot still produces the image/userspace payload.
+- Kernel assets are sourced from a prebuilt known-good bundle instead of kernel compilation output.
+
+Current repo status:
+
+1. Policy is approved and documented in [HANDOFF.md](../HANDOFF.md).
+2. Hook points exist in:
+  - `board/clock8002-rpi5/post-build.sh`
+  - `board/clock8002-rpi5/post-image.sh`
+3. Fallback wrapper exists:
+  - `buildroot-external/scripts/build-with-kernel-fallback.sh`
+
+Mode B command (wrapper):
+
+```bash
+ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
+```
+
+Mode B command (explicit bundle override):
+
+```bash
+ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot /path/to/prebuilt-kernel-bundle'
+```
+
+Wrapper behavior:
+
+1. Runs Mode A first (`make`).
+2. If Mode A succeeds, exits normally (no fallback).
+3. If Mode A fails and failure is kernel-path related, enables Plan B and retries once with:
+   - `CLOCK8002_PREBUILT_KERNEL=1`
+   - `CLOCK8002_PREBUILT_KERNEL_BUNDLE=<bundle>`
+  - strict bundle preflight validation (layout + required assets + checksum when present)
+4. If no bundle path/env is passed, wrapper auto-uses `/srv/clock8002/prebuilt-kernel-bundles/current` when it exists.
+5. If Mode A fails for non-kernel reasons, Plan B is not used.
+
+Expected prebuilt bundle layout:
+
+```text
+<bundle>/
+  Image
+  dtbs/                    # or dtb/
+    *.dtb
+  overlays/
+    *.dtbo
+    overlay_map.dtb
+    bcm2712d0.dtbo
+  modules/                 # either modules/<release>/... or modules/lib/modules/<release>/...
+    ...
+  SHA256SUMS               # optional but recommended; verified when present
+```
+
+Canonical prebuilt bundle storage (cm5):
+
+```text
+/srv/clock8002/prebuilt-kernel-bundles/
+  bundle-<id>/
+    Image
+    dtbs/ or dtb/
+    overlays/
+    modules/
+    SHA256SUMS
+    BUNDLE.PROVENANCE
+  current -> bundle-<id>
+```
+
+Bundle management commands:
+
+```bash
+# Verify a candidate bundle before promotion.
+buildroot-external/scripts/verify-prebuilt-kernel-bundle.sh /path/to/prebuilt-kernel-bundle
+
+# Promote candidate into canonical store and repoint current.
+sudo buildroot-external/scripts/promote-prebuilt-kernel-bundle.sh \
+  /path/to/prebuilt-kernel-bundle \
+  bundle-<id> \
+  /srv/clock8002/prebuilt-kernel-bundles
+
+# Verify active bundle in canonical location.
+buildroot-external/scripts/verify-prebuilt-kernel-bundle.sh \
+  /srv/clock8002/prebuilt-kernel-bundles/current
+```
+
+Operational requirements:
+
+1. Choose Mode A by default.
+2. Use Mode B only when Mode A cannot produce a working kernel.
+3. Keep the active fallback bundle promoted under `/srv/clock8002/prebuilt-kernel-bundles/current`.
+4. Record the decision and provenance (kernel source = prebuilt fallback + bundle id) in HANDOFF before flash/test.
 
 ### Full image build
 

@@ -1,6 +1,552 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-01 - root-ram parity checkpoint on `feature/root-ram`; embedded-initramfs pivot prepared, but build intentionally deferred while another cm5 build is active and swap is saturated.
+Last updated: 2026-05-09 - 74439b3 image built, flashed, and user-verified with LTC running.
+
+## Current Checkpoint (2026-05-09 - root-ram image build + flash verification)
+
+### Build and artifact status
+- Build session `br-build-root-ram-20260509-162611` on cm5 completed successfully:
+  - `PATCH_RC:0`
+  - `DIRCLEAN_RC:0`
+  - `BR_BUILD_EXIT:0`
+- Build source identity captured in the build log:
+  - `REPO_BRANCH: feature/root-ram`
+  - `REPO_HEAD: 74439b3`
+- Generated image on cm5:
+  - `/home/pi/buildroot/output/images/sdcard.img`
+  - sha256: `be06a3026389ef2f06ed418229ff7a260620496d9611f41ff230651ea4a443eb`
+
+### Transfer and flash prep
+- Local artifact copied and named using commit convention:
+  - `/Users/jp/Desktop/piClock-74439b3-sdcard.img`
+- Hash parity confirmed between cm5 image and local Desktop copy (`SHA_MATCH:yes`).
+- Existing Desktop image with same name was preserved as backup before overwrite:
+  - `/Users/jp/Desktop/piClock-74439b3-sdcard.bak-20260509-163001.img`
+- Flash target discovery snapshot at prep time:
+  - external SD media detected as `/dev/disk6` (`piClock` FAT partition present).
+
+### Runtime outcome on target
+- User confirmed: flashed image booted and LTC is running.
+- This validates the deployed image path at commit `74439b3` as currently bootable with active LTC on test hardware.
+
+## Current Checkpoint (2026-05-09 - .246 parity reset and clean rebuild relaunch)
+
+### What we locked
+- Golden `.246` is now the authoritative runtime baseline for recovery.
+- We identified the exact app build identity running on Golden:
+  - `vcs.revision=74439b3a431824d96752eb21053f394a9a00a319`
+  - `vcs.modified=false`
+  - build tag includes `gitTag=ram-root`
+- Kernel/runtime signatures from Golden were captured for parity:
+  - `uname -r`: `6.12.41-v8`
+  - `/boot/Image` sha256: `3062308d7916349dc5737c9c02dbbffac6f23a9344fb14b6d3d442bc09c83f80`
+  - `/boot/alsa-ltc` sha256: `c78c3fc8094dd701a9f63465641525998812db9c56be68f703173178eb830417`
+  - `/boot/sdl-clock` sha256: `3e1b789c80eae6c59f249856bb23cb6239681e656be54c1b3afe32182523621d`
+  - `/boot/clock-bridge` sha256: `09c4bf22e4956a172153f636a8f311bb73c404f8aa8a67ebe89ec419eb7a75dd`
+  - `/boot/config.txt` sha256: `fef6e7e51193d05897d410f2b8bfa9186b36dd801788c7d1a6cdd494d7318664`
+  - `/boot/clock.ini` sha256: `fbd6e41e9010ee25ecd8f2ce4ba0dbfc6a06cbb83b8cc6b31320be09f852495f`
+- Golden live process state confirms LTC stack is active together (`alsa-ltc`, `clock-bridge`, `sdl-clock`).
+
+### CM5 drift found
+- `/home/pi/clock8002` was not at parity target (`feature/squashfs-readonly`, head `fb6d5d4754b1`, dirty).
+- `/home/pi/clock8002-root-ram` was on the right commit line (`feature/root-ram`, head `74439b3a4318`) but dirty.
+- Conclusion: do not trust either dirty tree for parity rebuilds.
+
+### Recovery action in progress
+- A clean source-of-truth clone was created on cm5 and pinned to the Golden app commit:
+  - clone: `/tmp/clock8002-recover-74439b3-20260509-153727`
+  - commit: `74439b3a431824d96752eb21053f394a9a00a319`
+  - status: clean (`CLONE_STATUS_COUNT:0`)
+- Build relaunched from that clean clone in `screen`:
+  - session: `br-recover-74439b3-20260509-153727`
+  - output: `/home/pi/output-root-ram-recover-20260509-153727`
+  - log: `/tmp/br-recover-74439b3-20260509-153727.log`
+  - exit marker: `/tmp/br-recover-74439b3-20260509-153727.exit`
+- Required startup monitor policy executed: 10-second post-launch watch completed with no immediate `error/fatal/failed` signatures.
+
+### Operator monitor commands
+1. Live log:
+   - `ssh pi@cm5.local 'screen -ls; tail -f /tmp/br-recover-74439b3-20260509-153727.log'`
+2. Completion:
+   - `ssh pi@cm5.local 'cat /tmp/br-recover-74439b3-20260509-153727.exit'`
+3. Error scan:
+   - `ssh pi@cm5.local 'grep -niE "error:|\*\*\* .*Error|fatal:|failed|permission denied|no space left|memory exhausted" /tmp/br-recover-74439b3-20260509-153727.log | tail -n 120 || true'`
+
+## Current Checkpoint (2026-05-09 - payload evaluation and immediate LTC pivot policy)
+
+### Decision summary
+- Evaluated Clock-8001 GitLab `images_64b` payload as a Plan B candidate.
+- Result: not directly usable under current fallback hooks because kernel modules are missing.
+- Canonical working bundle location remains:
+  - `/srv/clock8002/prebuilt-kernel-bundles/<bundle-id>/`
+  - `/srv/clock8002/prebuilt-kernel-bundles/current`
+- Operational policy confirmed: if a new build fails LTC reliability at runtime, pivot immediately to bundled kernel+modules using a forced Plan B build flow (manual override), rather than waiting for compile-failure auto-gating.
+
+### Evidence recorded
+- Raw payload verify failed: `BUNDLE_STATUS:missing_dtbs` (layout mismatch for current verifier expectations).
+- Normalized candidate (`Image` + `dtbs/` + `overlays/`) verify failed: `BUNDLE_STATUS:missing_modules`.
+- Payload image observed:
+  - SHA256: `6f1a835f7070dbb7b4e94fb2bb2f9407b53d1df018cc260fbf1123cdcfd9b846`
+  - kernel hint: `Linux 6.12.41-v8`, 4K pages
+- No `modules` tree or `.ko*` files found in payload inventory.
+
+### Scope boundary
+- Investigation into sourcing matching modules from Clock-8001 payload path is intentionally paused by user direction.
+- Keep payload as a boot-assets reference only until a complete matched kernel bundle is available.
+
+## Current Checkpoint (2026-05-09 - post-boot checklist moved to issue tracking)
+
+### Tracking
+- Created GitHub issue: `#44` "Post-boot feature checklist (track one-by-one after bootable image)".
+- Applied issue metadata:
+  - labels: `buildroot`, `enhancement`
+  - milestone: `v0.2.0-beta`
+
+### Locked decisions
+- Keep build-environment indicator in Web UI.
+- OLED build-environment indicator is dropped; OLED role remains WiFi indicator.
+- Power button support is required and must be restored in the post-boot sequence.
+- `machine-id` persistence remains in scope while `/var/lib` is tmpfs; re-evaluate if runtime storage model changes.
+
+### Intent
+- The checklist is now issue-driven and executed one feature at a time only after a reliably bootable image is available.
+- No branch closure actions were taken as part of this tracking update.
+
+## Current Checkpoint (2026-05-09 - Plan B locked as fallback-only)
+
+### Decision
+- Plan B is approved, but only as a fallback path.
+- Default path remains: compile kernel in the Buildroot environment.
+- Plan B activation condition: if we cannot compile a working kernel in the build environment, use the known-good prebuilt kernel from the Golden build instead of compiling kernel sources.
+
+### Plan B definition (exact scope)
+- Prebuilt kernel bundle must be injected as a matched set:
+  - kernel image (`Image`)
+  - device trees and overlays
+  - kernel modules
+- All three must come from the same known-good Golden kernel release.
+
+### Activation gate (must all hold)
+1. Normal kernel compile path is attempted first.
+2. Kernel compile fails or cannot produce a working kernel.
+3. Prebuilt kernel bundle checksum/version checks pass.
+4. Build provenance is explicitly marked as fallback-kernel output.
+
+### Current repo readiness (implemented)
+- Fallback hooks are now implemented in:
+  - `buildroot-external/board/clock8002-rpi5/post-build.sh`
+  - `buildroot-external/board/clock8002-rpi5/post-image.sh`
+- Fallback wrapper is now implemented in:
+  - `buildroot-external/scripts/build-with-kernel-fallback.sh`
+- Bundle management scripts are now implemented in:
+  - `buildroot-external/scripts/verify-prebuilt-kernel-bundle.sh`
+  - `buildroot-external/scripts/promote-prebuilt-kernel-bundle.sh`
+- Canonical Plan B bundle store on cm5:
+  - `/srv/clock8002/prebuilt-kernel-bundles/<bundle-id>/`
+  - `/srv/clock8002/prebuilt-kernel-bundles/current` symlink used by default wrapper invocation when no explicit bundle path is passed.
+- Current repo-staged Golden payload still includes runtime userspace assets only; a complete prebuilt kernel bundle (Image + dtbs/overlays + modules) must be supplied externally when Mode B is invoked.
+- Default behavior remains Mode A; Mode B activates only after kernel-path failure detection in the wrapper.
+- Build mode selection documentation now lives in:
+  - `buildroot-external/README.buildroot.md` -> "Build Mode Selection (A vs B)"
+
+## Current Checkpoint (2026-05-09 - corrected 4K parity gate + root-ram source rebind + new build launch)
+
+### TL;DR
+- User correction accepted: parity gate now treats 4K pages as the expected baseline (not 16K).
+- The prior no-go run was stopped:
+  - session: `/tmp/br-resume-20260509-114304` (screen session `br-resume-20260509-114304` terminated)
+- Buildroot was re-bound away from stale `/tmp/clock8002-kpin-*` sources and now points to the feature worktree:
+  - BR2 external path: `/home/pi/clock8002-root-ram/buildroot-external`
+  - app source dir: `/home/pi/clock8002-root-ram/v4`
+  - active source branch/head: `feature/root-ram` @ `74439b3`
+- Kernel naming normalization applied for clarity:
+  - `CONFIG_LOCALVERSION="-v8"` (removed `-v8-4k` suffix)
+- Corrected prebuild parity gate state on cm5 now passes (`READY:yes`):
+  - `BR2_ARM64_PAGE_SIZE_4K=y`
+  - `# BR2_ARM64_PAGE_SIZE_16K is not set`
+  - `BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION=...590178d58b730e981099fdcb405053a000e79820...`
+  - `BR2_LINUX_KERNEL_PATCH=""`
+  - `CONFIG_LOCALVERSION="-v8"`
+- New build launched from corrected inputs:
+  - session: `br-rootram-20260509-123446`
+  - log: `/tmp/br-rootram-20260509-123446.log`
+  - exit marker: `/tmp/br-rootram-20260509-123446.exit`
+  - required 10s startup monitor completed; no immediate `error:` / `fatal:` / `failed` / `memory exhausted` signatures in startup scan.
+
+### Current state
+- Build is running in `host-gcc-final` stages at last sample.
+- cm5 repository `/home/pi/clock8002` remains on `feature/squashfs-readonly` with local dirt, but the active build inputs are now explicitly sourced from `/home/pi/clock8002-root-ram`.
+
+### Operator monitor commands (single-command copy friendly)
+1. Live log:
+   - `ssh pi@cm5.local 'L=$(ls -1t /tmp/br-rootram-*.log 2>/dev/null | head -n1); tail -f "$L"'`
+2. Completion state:
+   - `ssh pi@cm5.local 'E=$(ls -1t /tmp/br-rootram-*.exit 2>/dev/null | head -n1); if [ -n "$E" ]; then cat "$E"; else echo BUILD_STATE:RUNNING; fi'`
+3. Error scan:
+   - `ssh pi@cm5.local 'L=$(ls -1t /tmp/br-rootram-*.log 2>/dev/null | head -n1); grep -niE "error:|\*\*\* .*Error|fatal:|failed|memory exhausted" "$L" | tail -n 120 || true'`
+
+## Current Checkpoint (2026-05-09 - cm5 Buildroot recovery: host-bison bypass + monitored resume)
+
+### TL;DR
+- Active Buildroot run is now in the standard cm5 tree:
+  - build root: `/home/pi/buildroot`
+  - session: `br-resume-20260509-114304`
+  - log: `/tmp/br-resume-20260509-114304.log`
+  - exit marker: `/tmp/br-resume-20260509-114304.exit`
+- Repeated `host-bison-3.8.2` build failures were encountered in sequence (`M4`, package/version defines, `wctype_t`, `strverscmp`, `dupfd`, `FLAG_LOCALIZED`).
+- Even after compile fixes, the package-built binary remained unusable (`src/bison: memory exhausted` on `--version`/`--help`), so continuing to patch that build artifact was not reliable.
+- Recovery action on cm5:
+  - installed Debian `bison` package (`/usr/bin/bison`, `/usr/bin/yacc`)
+  - copied working tools into Buildroot host bin:
+    - `/home/pi/buildroot/output/host/bin/bison`
+    - `/home/pi/buildroot/output/host/bin/yacc`
+  - marked host-bison package as completed for this working tree:
+    - `/home/pi/buildroot/output/build/host-bison-3.8.2/.stamp_built`
+    - `/home/pi/buildroot/output/build/host-bison-3.8.2/.stamp_host_installed`
+- Required startup check was executed on the relaunched run:
+  - 30s monitor of `/tmp/br-resume-20260509-114304.log`
+  - result: no immediate `error:` lines during the window
+  - build progressed through `host-gawk`, `host-mpc`, and into `host-gcc-initial`
+
+### Current state
+- `br-resume-20260509-114304` is still running.
+- Latest sampled tail contains configure/build progress only (no current fatal/error lines).
+
+### Operator monitor commands
+1. Live monitor:
+   - `ssh pi@cm5.local 'screen -ls; tail -f /tmp/br-resume-20260509-114304.log'`
+2. Completion check:
+   - `ssh pi@cm5.local 'cat /tmp/br-resume-20260509-114304.exit'`
+3. Error-only view:
+   - `ssh pi@cm5.local 'grep -niE "error:|\*\*\* .*Error|fatal:|failed" /tmp/br-resume-20260509-114304.log | tail -n 120'`
+
+### Important caveat
+- This unblocks the active cm5 working tree, but the host-bison fallback is operational debt. A clean/reproducible fix should be added to Buildroot/package patching later so a fresh tree can build without manual stamp/tool injection.
+
+## Prior Checkpoint (2026-05-09 - reflashed A/B proof + build-level kernel delta isolation)
+
+### TL;DR
+- Reflashed failing image on test unit `192.168.8.245` booted as expected with failing kernel line:
+  - `uname`: `6.12.41-v8-4k #4`
+  - `/boot/Image` sha256: `c657863dc1a45f713c1e762c2c615e98d6e90e3a276ad44e65e1f8f458e5b99e`
+- Controlled baseline manual trigger on `.245` (autostart gate temporarily disabled):
+  - command: `/root/alsa-ltc hw:CARD=Device,DEV=0 255.255.255.255 1245`
+  - result: exited early with `rc=1`
+  - kernel delta: `usb_set_interface failed (-110)` count increased by `+1`
+  - userspace symptom: `cannot set parameters (Connection timed out)`
+- Swapped only kernel image + matching modules from Golden `.246` onto `.245` and rebooted:
+  - new `/boot/Image` sha256 on `.245`: `3062308d7916349dc5737c9c02dbbffac6f23a9344fb14b6d3d442bc09c83f80`
+  - runtime kernel on `.245`: `6.12.41-v8 #3`
+- Post-swap manual trigger (same command, 30s hold):
+  - process remained running full interval (`rc=143` only because it was intentionally terminated)
+  - kernel delta: no new `usb_set_interface failed` lines (`+0`)
+  - LTC decode loop stable (continuous dot output)
+- Startup behavior restored after controlled test:
+  - `/boot/enable_ltc` re-enabled
+  - `S99alsa-ltc` manually started
+  - `alsa-ltc_pokemon.sh` + `alsa-ltc` confirmed running
+
+### Host identity guardrail (important)
+- During reboot probes, `.local` hostnames were ambiguous and resolved to Golden.
+- Use direct IPs for proof runs:
+  - test unit: `192.168.8.245`
+  - golden reference: `192.168.8.246`
+
+### Build-level delta isolation (config + patch lineage)
+- Failing 4k kernel lineage from cm5 Buildroot output (`/home/pi/output-root-ram-goldencopy-20260509-000403`):
+  - `BR2_LINUX_KERNEL_CUSTOM_TARBALL=y`
+  - `BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION="$(call github,raspberrypi,linux,b1b490bae0bb8ad62d1f028ed0dcbbe7395a964d)/linux-b1b490bae0bb8ad62d1f028ed0dcbbe7395a964d.tar.gz"`
+  - `BR2_LINUX_KERNEL_DEFCONFIG="bcm2712"`
+  - `BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_CLOCK8002_PATH)/board/clock8002-rpi5/linux.config"`
+- Kernel local patch stack for failing build appears empty:
+  - `/home/pi/output-root-ram-goldencopy-20260509-000403/build/linux-custom/.applied_patches_list` has `0` lines
+- Failing 4k compile provenance:
+  - `UTS_RELEASE: 6.12.41-v8-4k`
+  - `LINUX_COMPILE_BY/HOST: pi@cm5`
+  - compiler string includes `Buildroot 2025.11`
+- Extracted failing 4k config confirms key USB/xHCI settings:
+  - `CONFIG_ARM64_4K_PAGES=y`
+  - `CONFIG_USB_XHCI_HCD=y`
+  - `CONFIG_USB_XHCI_PCI=y`
+  - `CONFIG_USB_XHCI_PLATFORM=y`
+  - `CONFIG_SND_USB_AUDIO=m`
+  - `CONFIG_USB_DEFAULT_PERSIST=y`
+  - `CONFIG_USB_AUTOSUSPEND_DELAY=2`
+  - `CONFIG_IOMMU_DEFAULT_DMA_STRICT=y`
+- Working v8 config could not be extracted from the Golden image (`extract-ikconfig: Cannot find kernel config`), and Golden does not expose `/proc/config.gz` or equivalent installed config files.
+
+### Tight kernel error-path mapping for `-110`
+- Exact log string source for observed failure:
+  - `sound/usb/endpoint.c` in `endpoint_set_interface()` logs:
+    - `"%d:%d: usb_set_interface failed (%d)"`
+- Call path for failure at stream/interface activation:
+  - `endpoint_set_interface()` -> `usb_set_interface()` -> USB core control transfer
+- Timeout translation site:
+  - `drivers/usb/core/message.c` (`usb_start_wait_urb`):
+    - completion timeout returns `-ETIMEDOUT` (observed as `-110`)
+- Retry behavior nuance:
+  - ALSA USB endpoint path retries only `-EPROTO` (bounded retries)
+  - `-ETIMEDOUT` is not retried there, so the error becomes an immediate hard failure at hw_params/stream start.
+
+### Ranked suspect list (post-isolation)
+1. Kernel/xHCI control-transfer timeout behavior specific to the `6.12.41-v8-4k` line (highest confidence from same-unit A/B inversion).
+2. USB runtime power/LPM interaction during interface altsetting transition on the failing line.
+3. Defconfig/platform interaction (`bcm2712` + 4k lineage) affecting timing/resource behavior in the USB audio start path.
+4. Userspace retry/restart policy amplifies impact but is not the primary trigger (proven by baseline swap test).
+
+### Recommended next diagnostics (if deeper proof is needed)
+1. On a fresh failing 4k boot, capture precise pre/post trigger dmesg windows around each manual run with focused xHCI verbosity.
+2. Add dynamic debug for relevant USB core + ALSA USB endpoint paths to capture return propagation to `endpoint_set_interface()`.
+3. Keep same command/test cadence used in this proof to preserve comparability.
+
+## Previous Checkpoint (2026-05-09 - deterministic manual-trigger failure with enhanced USB/xHCI forensics)
+
+### TL;DR
+- Startup loop remains disabled by policy: `/boot/enable_ltc` is absent, `S99alsa-ltc` does not autostart LTC, and no `alsa-ltc_pokemon.sh` loop process is active.
+- Enhanced monitor is running and writing second-by-second snapshots plus per-error forensic bundles:
+  - active monitor dir: `/boot/piclock/usb-monitor/failed-usb-live-20260509-170631`
+  - recent events: `event-20260509-170809-n0005` through `event-20260509-170824-n0008`
+- Controlled trigger loop result (manual `/root/alsa-ltc plughw:CARD=Device,DEV=0 255.255.255.255 1245`, 4 consecutive runs):
+  - 4/4 runs failed with exit code 1 at ALSA hw params set stage
+  - each run produced exactly one new kernel error: `usb 1-1.3: 2:1: usb_set_interface failed (-110)`
+  - cumulative error count increased from 4 to 8 in lockstep with run count
+- During this failure window, the USB audio device remained enumerated and ALSA-visible (`card0=Device`), and no host-controller death/disconnect cascade occurred.
+- Low-level endpoint context snapshots across n0005->n0008 show progressive degradation:
+  - control endpoint state transitioned `running -> stopped`
+  - isochronous IN endpoint transitioned `running -> disabled`
+  - slot remained configured and USB topology remained present
+
+### Current interpretation
+- Proximate cause is now strongly established: stream/interface activation on the C-Media USB device times out in `usb_set_interface` (`-110`).
+- Continuous retry loops can amplify damage/rate of failure, but are not the primary trigger; a single manual run reproduces the same failure signature.
+- Current data narrows the issue to the kernel/xHCI handling path on this image line, but does not yet provide line-level kernel proof (usbmon/USB trace events unavailable on this build).
+
+### Current test posture
+1. Keep startup script disabled (manual testing only).
+2. Keep enhanced monitor running for event-bundle collection.
+3. Use controlled manual triggers for reproducible, low-noise evidence.
+
+## Earlier Checkpoint (2026-05-09 - Phase 1 diff: ALSA card ordering hypothesis, now superseded as primary root cause)
+
+### TL;DR
+- Userspace between Golden (`root@192.168.8.246`, LTC works) and Buildroot replica (`root@192.168.8.245`, LTC fails) is **byte-identical**: same sha256 for `alsa-ltc`, `sdl-clock`, `clock-bridge`, every `*_cmd.sh` / `*_pokemon.sh`, `/root/clock.ini`, fonts, and every `S03copy_*` / `S99*` init script. The Buildroot copy-based pivot is correctly delivering Golden's userspace.
+- Two systemic differences remain:
+  1. **Kernel build differs.** Golden runs `6.12.41-v8` (16 KiB-page, 73 MB Image, sha `3062308d…`). Buildroot replica runs `6.12.41-v8-4k` (4 KiB-page, 132 MB Image, sha `c657863d…`). cm5 build output's `Image` hash matches the flashed unit, so flash is faithful — the build is just selecting the `-v8-4k` kernel variant.
+  2. **ALSA card index ordering is reversed.** Golden: card0=vc4hdmi0, card1=vc4hdmi1, **card2=USB-Audio C-Media**. Failed replica: **card0=USB-Audio C-Media**, card1=vc4hdmi0, card2=vc4hdmi1. `alsa-ltc_cmd.sh` hardcodes `plughw:2,0`, which on Golden points at the C-Media USB ADC (the actual LTC source) but on the replica points at vc4-hdmi playback — `arecord` therefore cannot capture LTC. The hifiberry-dacplusadcpro overlay loads on both units but produces no card on either; the C-Media USB ADC is the real LTC source on both.
+- Snapshots and full three-column diff captured in `/tmp/clock8002-phase1/`:
+  - `golden-246.txt`, `failed-245.txt`, `cm5.txt`
+  - `PHASE1_DIFF.md` (sections A–G + root-cause + Strategy A/B/C/D menu)
+
+### Strategy menu (no build changes yet — awaiting user choice)
+- **B (recommended):** change `plughw:2,0` → `plughw:CARD=Device,DEV=0` in `buildroot-external/board/clock8002-rpi5/golden-working-card/root/alsa-ltc_cmd.sh`. One-line, kernel-independent, smallest diff.
+- **C:** pin card indices via `/etc/modprobe.d/alsa-base.conf` (`options snd-usb-audio index=2`, `options snd_bcm2835 index=0`).
+- **A:** force Buildroot to build the `-v8` (16 KiB-page) Pi5 kernel to match Golden. Most invasive.
+- **D:** rebuild `alsa-ltc` as a Buildroot package — already proven unnecessary (binary is byte-identical).
+
+### Suggested read-only validation before any build change
+On both live units:
+```sh
+arecord -L | grep -A1 -i 'CARD=Device'
+arecord -D plughw:CARD=Device,DEV=0 -d 1 -f S16_LE -r 48000 /tmp/probe.wav && echo OK
+```
+If both succeed, Strategy B is confirmed viable.
+
+### Live units (both password `clockworkadmin`)
+- Golden: `root@192.168.8.246` (`sdl-clock` hostname). LTC works.
+- Failed: `root@192.168.8.245` (`piClock` hostname). LTC fails as described above.
+
+## Previous Checkpoint (2026-05-09 - fuller Golden `/boot` image still not an exact Golden replica)
+
+### Local repository status
+- Branch: `feature/root-ram`
+- HEAD: `74439b3`
+- The working tree now includes a copy-based Buildroot pivot on top of earlier root-ram/parity changes.
+- Important local delta for this checkpoint:
+  - New copied working-card payload under `buildroot-external/board/clock8002-rpi5/golden-working-card/`
+  - Build glue changes in `buildroot-external/board/clock8002-rpi5/post-build.sh` and `buildroot-external/board/clock8002-rpi5/post-image.sh`
+  - Earlier parity/runtime edits remain present in the working tree and were overlaid into the remote build clone as part of this run.
+
+### What This Build Is
+- This is still a normal Buildroot image build, not a raw SD-card clone.
+- Buildroot continues to supply the base userspace, package graph, kernel, and image construction.
+- The new part is that the runtime payload is copied from the captured working card instead of being reconstructed from the newer overlay assumptions.
+- The image shape remains the current root-ram model in this branch: single FAT boot partition plus kernel-embedded initramfs.
+
+### Copy-Based Payload Pivot
+- New source-of-truth payload directory:
+  - `buildroot-external/board/clock8002-rpi5/golden-working-card/`
+- Contents copied from the working card snapshot include:
+  - boot payload files (`clock.ini`, `config.txt`, `cmdline.txt`, `interfaces`, `ntp.conf`, `enable_*` flags)
+  - selected init scripts (`S03copy_*`, `S99alsa-ltc`, `S99clock`, `S99clock_bridge`)
+  - persistent `/root` runtime payload (`sdl-clock`, `alsa-ltc`, `clock-bridge`, wrapper scripts, fonts)
+- Buildroot glue behavior changed accordingly:
+  - `post-build.sh` now copies the golden rootfs payload into `TARGET_DIR`
+  - `post-build.sh` removes the synthetic `/root` tmpfs path and drops the old `S02setup-root` / `S98oled` behavior for this build path
+  - `post-image.sh` now syncs the golden boot payload into `BINARIES_DIR` and boot.vfat on every build
+
+### Active cm5 Build
+- Build host: `pi@cm5.local`
+- Buildroot tree: `/home/pi/buildroot-2025.11`
+- Fresh source clone for this run: `/tmp/clock8002-root-ram-goldencopy-20260509-000403`
+- Remote clone was overlaid with the local uncommitted working tree before the build was launched.
+- Output tree: `/home/pi/output-root-ram-goldencopy-20260509-000403`
+- `screen` session: `br-root-ram-goldencopy-20260509-000403`
+- Initial build log: `/tmp/br-root-ram-goldencopy-20260509-000403.log`
+- Initial exit marker: `/tmp/br-root-ram-goldencopy-20260509-000403.exit`
+- Targeted rerun log: `/tmp/br-root-ram-goldencopy-20260509-000403-rerun.log`
+- Targeted rerun exit marker: `/tmp/br-root-ram-goldencopy-20260509-000403-rerun.exit`
+- Second incremental rerun log: `/tmp/br-root-ram-goldencopy-20260509-000403-rerun2.log`
+- Second incremental rerun exit marker: `/tmp/br-root-ram-goldencopy-20260509-000403-rerun2.exit`
+- Current observed state:
+  - initial full build reached `post-image.sh` and failed during genimage boot image creation
+  - root cause was a CRLF `kernel=Image^M` line in the copied golden `config.txt`, which corrupted the generated `genimage.cfg`
+  - local fix in `buildroot-external/board/clock8002-rpi5/post-image.sh` strips `\r` from the extracted kernel filename before generating the genimage file list
+  - first rerun of the existing output tree completed successfully with `BR_BUILD_EXIT:0`
+  - live Golden-vs-replica comparison then showed the earlier copy-based image still was not a literal Golden `/boot` clone because the FAT root lacked Golden runtime payload files (`alsa-ltc`, `sdl-clock`, `clock-bridge`, related launcher scripts), firmware root files (`start*.elf`, `fixup*.dat`, `bootcode.bin`), and `voices/`
+  - `post-image.sh` was then expanded to inject the captured Golden runtime payload from `golden-working-card/root`, the Buildroot `rpi-firmware` root files, and the repo `v4/voices/` tree into `boot.vfat`
+  - second incremental rerun completed successfully with `BR_BUILD_EXIT:0`
+  - the resulting image `/Users/jp/Desktop/piClock-74439b3-goldencopy-fullboot-sdcard.img` was flashed and tested
+  - user-reported result: it failed again and is still not an exact copy of the Golden build
+  - no fresh post-flash live diff was captured in this turn, so the remaining mismatch is still unresolved
+- Produced artifacts:
+  - cm5 image: `/home/pi/output-root-ram-goldencopy-20260509-000403/images/sdcard.img`
+  - local copy from first rerun: `/Users/jp/Desktop/piClock-74439b3-goldencopy-sdcard.img`
+  - first rerun sha256: `760d9c3110289a376f5ac097648f52f3af5add822461244d5630fc612a2676bc`
+  - local copy from second rerun: `/Users/jp/Desktop/piClock-74439b3-goldencopy-fullboot-sdcard.img`
+  - second rerun sha256: `1d4014e89ae8d2b6f083e916204b841de6639da5256eabc6190da63f2364619a`
+  - verified `boot.vfat` from the second rerun now contains the previously missing Golden-style FAT-root payload entries including `alsa-ltc`, `sdl-clock`, `clock-bridge`, `start.elf`, `start4.elf`, `fixup.dat`, `fixup4.dat`, `bootcode.bin`, and `voices/`
+- Host patch note:
+  - `apply-build-host-patches.sh` completed and warned that current `rpi-firmware` version/hash content in the cm5 Buildroot tree was unexpected, but the launch continued and did not fail at that step
+
+### Next actions
+1. Capture an exact live diff between Golden `.246` and the newly failed flashed image before making more build changes, starting with `/boot`, copied `/root` payload, service state, and ALSA enumeration.
+2. Determine whether the remaining mismatch is payload content, boot sequence, or hardware-driven device ordering rather than missing FAT-root files.
+3. Only then adjust build glue or image composition again; the fuller `/boot` staging by itself was insufficient.
+
+## Current Checkpoint (2026-05-09 - live unit on `ram-root` SDL3 binary)
+
+### Local repository status
+- Branch: `feature/root-ram`
+- HEAD: `74439b3`
+- Live-unit validation in this checkpoint stayed on the current branch and did not require repository source edits beyond recording the outcome here.
+
+### Live test unit state
+- Unit access:
+  - primary SSH: `root@10.0.0.192`
+  - secondary/static alias: `192.168.8.245`
+- The unit was moved from alias `.244` to `.245` by updating both `/boot/interfaces` and `/etc/network/interfaces`, then applying the alias live on `eth0:1`.
+- `/boot/config.txt` on the unit was missing the repo UART overlay lines; the following were added and then validated after reboot:
+  - `dtoverlay=uart2`
+  - `dtoverlay=uart3`
+  - `dtparam=uart0=on`
+- After reboot the unit exposed `/dev/ttyAMA0`, `/dev/ttyAMA2`, `/dev/ttyAMA3`, and `/dev/ttyAMA10`.
+
+### Clock/runtime validation
+- Repo default `v4/clock.ini.default` is now active on the unit and stable.
+- Current key lines in `/boot/clock.ini`:
+  - `app-version=ram-root`
+  - `Format12h=true`
+  - `source1.text=Limitimer`
+  - `source1.counter=5`
+  - `limitimer-mode=receive`
+  - `limitimer-serial=/dev/ttyAMA3`
+- Web config remains enabled and reachable on both:
+  - `http://10.0.0.192/`
+  - `http://192.168.8.245/`
+  - auth: `admin` / `clockwork`
+- `feature/squashfs-readonly` was searched for the AM/PM / 12-hour text clock work; the relevant SDL3 formatting code is already present on `feature/root-ram` too. The missing behavior on the unit was due to running the old exact `v1.3.5` binary, not a missing code path on `feature/root-ram`.
+- Final live binary deployed on the unit:
+  - source branch: `feature/root-ram`
+  - source commit: `74439b3`
+  - cm5 build command shape: `make GIT_TAG=ram-root sdl3-clock`
+  - installed hash: `3e1b789c80eae6c59f249856bb23cb6239681e656be54c1b3afe32182523621d`
+- Post-install restart validated successfully; live processes are `/root/clock_pokemon.sh start` and `/root/sdl-clock -C /boot/clock.ini`.
+
+### Intermediate findings worth preserving
+- BusyBox/Buildroot target did not support modern SFTP-based `scp`; the reliable transfer path was SSH streaming via the local machine with `sshpass`, or legacy `scp -O` where auth permits.
+- Foreground `ssh` runs of `sdl-clock` can fail with `Failed to initialize SDL: No available video device`; normal service startup under KMS/DRM is the valid runtime check.
+- A full-clone tagged build from `feature/squashfs-readonly` improved version stamping over the shallow-clone fallback, but the final user-facing runtime label needed to read `ram-root`, so the live deployment returned to `feature/root-ram` with explicit `GIT_TAG=ram-root`.
+
+### Open follow-ups
+1. The background Buildroot image build on cm5 from `/tmp/clock8002-root-ram-build-current` was not re-polled during the live-unit validation work; refresh its status before using that image path again.
+2. If branch test builds should always present a friendly runtime label, decide whether to keep passing `GIT_TAG=ram-root` explicitly or create a real Git tag for that line of work.
+
+## Current Checkpoint (2026-05-08 - SDL3-only `.244` parity build running on cm5)
+
+### Local repository status
+- Branch: `feature/root-ram`
+- HEAD: `74439b3`
+- Relevant uncommitted parity/runtime edits in the working tree:
+  - Board/runtime payload: `buildroot-external/board/clock8002-rpi5/{cmdline.txt,config.txt,post-image.sh,interfaces,enable_clock,enable_ltc}`
+  - Rootfs overlay init/watchdog scripts: `buildroot-external/board/clock8002-rpi5/rootfs-overlay/etc/init.d/{S02setup-root,S03copy_alsa-ltc_files,S03copy_clock_files,S99alsa-ltc,S99clock}`
+  - Rootfs overlay command wrappers: `buildroot-external/board/clock8002-rpi5/rootfs-overlay/opt/clock8002/{alsa-ltc_cmd.sh,alsa-ltc_pokemon.sh,clock_cmd.sh,clock_pokemon.sh}`
+  - Build/package plumbing: `buildroot-external/configs/clock8002_rpi5_defconfig.sample`, `buildroot-external/external.mk`, `buildroot-external/package/clock8002/{Config.in,clock8002.mk}`, `buildroot-external/scripts/apply-build-host-patches.sh`
+- Change intent:
+  - Keep the `.244`-style boot/runtime behavior (`/boot` payload, `/root` tmpfs seeding, enable-file gating, explicit `plughw:2,0` for LTC) while preserving the current SDL3 clock implementation.
+  - `sdl-clock` remains only a deployed compatibility name; the binary itself is built from `v4/cmd/sdl3-clock` and installed alongside `sdl3-clock`.
+  - Do not use SDL2 and do not revive the old standalone `clock-bridge` or anything from `v3`.
+
+### Key decisions locked in
+- The working `.244` unit's deployed `sdl-clock` binary is SDL3-based, not SDL2-based.
+- The active code path stays in `v4` only; `v4/cmd/sdl3-clock` is the source of truth for the deployed clock binary.
+- The bridge behavior already exists inside the `v4` engine/OSC path, so no separate `clock-bridge` service is being carried forward into the Buildroot image.
+- Active Go path is already current enough for this work: `v4/go.mod` declares `go 1.24.0`, and Buildroot `2025.11` on cm5 provides Go `1.24.2`.
+
+### cm5 Buildroot 2025.11 build state
+- Dedicated Buildroot tree on cm5: `/home/pi/buildroot-2025.11`
+- Fresh source clone used for this run: `/tmp/clock8002-root-ram-build-current`
+- Output tree: `/home/pi/output-root-ram-sdl3alias-20260508`
+- Active `screen` session: `br-root-ram-sdl3alias-20260508`
+- Build log: `/tmp/br-root-ram-sdl3alias-20260508.log`
+- Exit marker: `/tmp/br-root-ram-sdl3alias-20260508.exit`
+- Relaunch sequence already completed:
+  - Synced the current local uncommitted patchset into the fresh cm5 clone.
+  - Added the previously missing `enable_clock` and `enable_ltc` sentinel files to the repo so the `.244`-style boot gates are explicit and can be staged into FAT.
+  - Made `buildroot-external/scripts/apply-build-host-patches.sh` version-aware so the earlier Mesa `25.2.7` hash mismatch does not recur on Buildroot `2025.11`.
+  - Copied the sample defconfig into the cm5 Buildroot tree and rewired `BR2_PACKAGE_CLOCK8002_SOURCE_DIR` to the fresh clone's `v4` path before launching the build in `screen`.
+- Current observed state:
+  - `BUILD_RUNNING`
+  - Latest observed log tail shows the build progressing through toolchain/binutils compilation rather than failing in the earlier Mesa download step.
+
+### Next actions
+1. Wait for `/tmp/br-root-ram-sdl3alias-20260508.exit` and confirm `BR_BUILD_EXIT:0` or inspect the first failing step if it exits non-zero.
+2. If the build succeeds, copy the resulting `sdcard.img` to Desktop with the final image name based on the deployed commit hash and prepare the flash command.
+3. Boot the new image on the test unit and rerun LTC/USB validation against the `.244` baseline behavior.
+
+## Current Checkpoint (2026-05-06 - root-ram USB stabilization + rebuild in progress)
+
+### Local repository status
+- Branch: `feature/root-ram`
+- HEAD: `74439b3`
+- Working tree currently has uncommitted edits in three files:
+  - `buildroot-external/board/clock8002-rpi5/rootfs-overlay/etc/init.d/S99alsa-ltc`
+  - `buildroot-external/board/clock8002-rpi5/rootfs-overlay/opt/clock8002/alsa-ltc_pokemon.sh`
+  - `buildroot-external/configs/clock8002_rpi5_defconfig.sample`
+- Change intent:
+  - Harden LTC service lifecycle (deterministic stop/start, pid/lock handling, single-instance guard).
+  - Pin kernel tarball from 6.12.41 (`b1b490ba...`) to 6.12.47 candidate (`359f37f0...`).
+
+### Live runtime validation completed on test unit (`root@piClock.local`)
+- 25-minute restart/soak (`/tmp/alsa-soak-20260506-115902.log`) completed with `SOAK_EXIT:1`.
+- Result split:
+  - Process multiplication issue was eliminated during soak (`wd=1 cmd=1 ltc=1` for the run, except brief transient recovery minute 23 where `cmd/ltc=0`).
+  - USB stability issue remains: `usb_set_interface failed (-110)` started growing at minute 19, ending `err_delta=52`.
+- Conclusion: lifecycle fix is valid, but kernel/USB path still needs the new-image test.
+
+### Active cm5 Buildroot build (in progress)
+- Build host: `pi@10.0.0.101` (`cm5.local` fallback)
+- `screen` session: `br-root-ram-74439b3-k641247-usbfix2`
+- Output dir: `/home/pi/buildroot/output-root-ram-74439b3-k641247-usbfix2`
+- Log: `/tmp/br-root-ram-74439b3-k641247-usbfix2.log`
+- Exit marker: `/tmp/br-root-ram-74439b3-k641247-usbfix2.exit`
+- Monitor:
+  - `ssh pi@10.0.0.101 'screen -ls; tail -f /tmp/br-root-ram-74439b3-k641247-usbfix2.log'`
+  - `ssh pi@10.0.0.101 '[ -f /tmp/br-root-ram-74439b3-k641247-usbfix2.exit ] && cat /tmp/br-root-ram-74439b3-k641247-usbfix2.exit || echo BUILD_RUNNING'`
+
+### Next actions after build completion
+1. Confirm `BR_BUILD_EXIT:0` and image at `.../images/sdcard.img`.
+2. Copy image to Desktop and flash test SD card.
+3. Re-run the same 25-minute restart/soak on the rebuilt image to validate whether 6.12.47 removes `usb_set_interface -110` growth.
 
 ## Current Checkpoint (2026-05-01 - root-ram parity prep)
 
@@ -983,3 +1529,34 @@ Committed changes in `v4/alsa-ltc.c`, `v4/alsa-ltc.service`, and Buildroot overl
 ## Next Suggested Release
 
 - Next planned release: **v1.4.0** — next Buildroot release cycle.
+
+
+## Update (2026-05-09, LTC recovered + .245 provenance snapshot + payload build status)
+
+- User-confirmed state: LTC is working again on `.245`.
+- Final `.245` provenance snapshot captured at `2026-05-09T22:50:08Z`:
+  - host: `sdl-clock`
+  - kernel: `Linux sdl-clock 6.12.41-v8 #3 SMP PREEMPT Wed Jan 14 11:49:24 UTC 2026 aarch64 GNU/Linux`
+  - active runtime processes included:
+    - `/bin/sh /root/alsa-ltc_pokemon.sh start`
+    - `/root/alsa-ltc plughw:2,0 255.255.255.255 1245`
+    - `/root/sdl-clock -C /boot/clock.ini`
+    - `/root/clock-bridge`
+- Snapshot hashes (`SHA256:path:sum`):
+  - `/boot/Image`: `3062308d7916349dc5737c9c02dbbffac6f23a9344fb14b6d3d442bc09c83f80`
+  - `/boot/alsa-ltc`: `c78c3fc8094dd701a9f63465641525998812db9c56be68f703173178eb830417`
+  - `/boot/sdl-clock`: `3e1b789c80eae6c59f249856bb23cb6239681e656be54c1b3afe32182523621d`
+  - `/boot/clock-bridge`: `09c4bf22e4956a172153f636a8f311bb73c404f8aa8a67ebe89ec419eb7a75dd`
+  - `/boot/alsa-ltc_cmd.sh`: `67ca8da31b6791c8ba0438edae2467322a4a02641ec1aa2e9cc75ff24506fb82`
+  - `/root/alsa-ltc`: `c78c3fc8094dd701a9f63465641525998812db9c56be68f703173178eb830417`
+  - `/root/sdl-clock`: `3e1b789c80eae6c59f249856bb23cb6239681e656be54c1b3afe32182523621d`
+  - `/root/clock-bridge`: `09c4bf22e4956a172153f636a8f311bb73c404f8aa8a67ebe89ec419eb7a75dd`
+  - `/root/alsa-ltc_cmd.sh`: `67ca8da31b6791c8ba0438edae2467322a4a02641ec1aa2e9cc75ff24506fb82`
+- LTC command file content at snapshot time remained:
+  - `/root/alsa-ltc - 255.255.255.255 1245`
+- Current payload run on cm5 (`br-payload-20260509-154818`) completed successfully:
+  - exit marker: `BR_BUILD_EXIT:0`
+  - log confirms payload injections:
+    - `Payload mode: injected prebuilt kernel modules from /srv/clock8002/prebuilt-kernel-bundles/current/modules/lib`
+    - `Payload mode: injected prebuilt kernel assets from /srv/clock8002/prebuilt-kernel-bundles/current`
+  - same log also contains kernel link markers (`vmlinux`, `.tmp_vmlinux*`) during the run; this indicates the attempted skip path did not fully eliminate kernel build steps in this invocation.

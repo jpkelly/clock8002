@@ -9,6 +9,14 @@ start)
 	mkdir -p /root
 	chmod 700 /root
 
+	# Seed /root with the binaries used by the legacy boot-copy runtime.
+	for binary in sdl-clock sdl3-clock alsa-ltc; do
+		if [ -f "/opt/clock8002/${binary}" ]; then
+			cp "/opt/clock8002/${binary}" "/root/${binary}"
+			chmod +x "/root/${binary}"
+		fi
+	done
+
 	# Copy launcher scripts from /opt/clock8002/ to /root/
 	for script in clock_pokemon.sh clock_cmd.sh \
 		alsa-ltc_pokemon.sh alsa-ltc_cmd.sh \

@@ -2,13 +2,16 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/Zyko0/go-sdl3/sdl"
 	"github.com/Zyko0/go-sdl3/ttf"
+
 	// "gitlab.com/Depili/clock-8001/v4/clock"
-	"gitlab.com/clock-8001/clock-8001/v4/debug"
 	"log"
 	"math"
 	"time"
+
+	"gitlab.com/clock-8001/clock-8001/v4/debug"
 )
 
 var countdown struct {

@@ -72,6 +72,18 @@ Buildroot image workflow note:
 - Deploy binary directly (no install.sh on BR): `/etc/init.d/S99clock stop && cp <binary> /opt/clock8002/sdl3-clock && /etc/init.d/S99clock start`. WARNING: on squashfs images (`feature/squashfs-readonly` and `master` after merge), `/opt/clock8002` is read-only squashfs — `cp` will fail. Dev deploys require a full reflash on squashfs images.
 - After a fresh Buildroot checkout, always run `buildroot-external/scripts/apply-build-host-patches.sh ~/buildroot` before building — this applies the Mesa 25.0.7 upgrade and host-xz libtool workaround (see issue #29).
 
+Terminal reliability note (avoid VS Code zsh exit 128/255 during orchestration):
+- For local orchestration wrappers (especially ssh/git/build), default to a no-crash pattern:
+  - Do not use top-level `set -e`.
+  - Track failures with an explicit non-special variable such as `cmd_status` or `rc`.
+  - Capture step logs in `/tmp/<name>.log` and print `*_STATUS` markers.
+  - End the wrapper with `exit 0` after reporting the result so the interactive shell session stays alive.
+- Prefer path-explicit git commands (`git -C <repo> ...`) or guarded `cd <repo> || cmd_status=1`; do not rely on inherited cwd in long chained commands.
+- Before checking out a branch on cm5, check for worktree conflicts using `git -C ~/clock8002 worktree list`.
+  - If the target branch is already attached elsewhere, operate in that existing worktree instead of forcing another checkout.
+- For long remote operations, always use unique session/log/exit files (for example `/tmp/<session>.log` and `/tmp/<session>.exit`) and provide explicit monitor + exit-check commands.
+- For diagnostic probes where failure is acceptable (missing files, no screen session, optional logs), guard commands with `|| true` so probes do not abort orchestration.
+
 Codebase orientation note:
 - Active code is in `v4/` only. `v3/` is historical — never edit it.
 - Go module: `gitlab.com/clock-8001/clock-8001/v4` (Go 1.24). Build: `cd v4 && make build`. Test: `make test` (runs `go test -short ./clock`).

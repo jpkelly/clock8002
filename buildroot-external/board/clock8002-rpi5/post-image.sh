@@ -2,31 +2,128 @@
 set -eu
 
 BOARD_DIR="$(dirname "$0")"
+GOLDEN_DIR="${BOARD_DIR}/golden-working-card"
+BOOT_SOURCE_DIR="${GOLDEN_DIR}/boot"
+GOLDEN_ROOT_DIR="${GOLDEN_DIR}/root"
 BOARD_NAME="$(basename "${BOARD_DIR}")"
 GENIMAGE_CFG="${BOARD_DIR}/genimage-${BOARD_NAME}.cfg"
 GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
+BOOT_RUNTIME_FILES="alsa-ltc alsa-ltc_cmd.sh alsa-ltc_pokemon.sh sdl-clock clock_cmd.sh clock_pokemon.sh clock-bridge clock_bridge_cmd.sh clock_bridge_pokemon.sh"
+VOICE_SRC="${BUILD_DIR}/clock8002-prototype/voices"
+
+RPI_FW_BOOT_DIR=""
+for candidate in "${BUILD_DIR}"/rpi-firmware-*/boot; do
+	if [ -d "${candidate}" ]; then
+		RPI_FW_BOOT_DIR="${candidate}"
+		break
+	fi
+done
+
+if [ ! -d "${BOOT_SOURCE_DIR}" ]; then
+	echo "Missing golden working-card boot payload: ${BOOT_SOURCE_DIR}" >&2
+	exit 1
+fi
+
+# Always sync the copied working-card boot payload into BINARIES_DIR so
+# incremental image rebuilds do not reuse stale staged files.
+for f in config.txt cmdline.txt; do
+	if [ -f "${BOOT_SOURCE_DIR}/${f}" ]; then
+		cp -f "${BOOT_SOURCE_DIR}/${f}" "${BINARIES_DIR}/rpi-firmware/${f}"
+	elif [ -f "${BOARD_DIR}/${f}" ]; then
+		cp -f "${BOARD_DIR}/${f}" "${BINARIES_DIR}/rpi-firmware/${f}"
+	fi
+done
+if [ -f "${BINARIES_DIR}/rpi-firmware/config.txt" ]; then
+	cp -f "${BINARIES_DIR}/rpi-firmware/config.txt" "${BINARIES_DIR}/config.txt"
+fi
+if [ -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" ]; then
+	cp -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" "${BINARIES_DIR}/cmdline.txt"
+fi
+for staged in "${BOOT_SOURCE_DIR}"/*; do
+	[ -f "${staged}" ] || continue
+	case "$(basename "${staged}")" in
+		config.txt|cmdline.txt)
+			continue
+			;;
+	esac
+	cp -f "${staged}" "${BINARIES_DIR}/$(basename "${staged}")"
+done
+if [ -d "${GOLDEN_ROOT_DIR}" ]; then
+	for staged in ${BOOT_RUNTIME_FILES}; do
+		if [ -f "${GOLDEN_ROOT_DIR}/${staged}" ]; then
+			cp -f "${GOLDEN_ROOT_DIR}/${staged}" "${BINARIES_DIR}/${staged}"
+		fi
+	done
+fi
+
+# Failure mode default: inject prebuilt kernel assets unless explicitly
+# disabled with CLOCK8002_PREBUILT_KERNEL=0.
+if [ "${CLOCK8002_PREBUILT_KERNEL:-1}" != "0" ]; then
+	PREBUILT_STORE="${CLOCK8002_PREBUILT_KERNEL_STORE:-/srv/clock8002/prebuilt-kernel-bundles}"
+	DEFAULT_BUNDLE="${PREBUILT_STORE}/current"
+	BUNDLE_DIR="${CLOCK8002_PREBUILT_KERNEL_BUNDLE:-${DEFAULT_BUNDLE}}"
+	if [ -z "${BUNDLE_DIR}" ] || [ ! -d "${BUNDLE_DIR}" ]; then
+		echo "Payload mode requires prebuilt kernel bundle: ${BUNDLE_DIR}" >&2
+		exit 1
+	fi
+
+	if [ -f "${BUNDLE_DIR}/SHA256SUMS" ]; then
+		(cd "${BUNDLE_DIR}" && sha256sum -c SHA256SUMS >/dev/null)
+	fi
+
+	if [ ! -f "${BUNDLE_DIR}/Image" ]; then
+		echo "Plan B bundle missing kernel Image: ${BUNDLE_DIR}/Image" >&2
+		exit 1
+	fi
+	cp -f "${BUNDLE_DIR}/Image" "${BINARIES_DIR}/Image"
+
+	DTB_SRC=""
+	if [ -d "${BUNDLE_DIR}/dtbs" ]; then
+		DTB_SRC="${BUNDLE_DIR}/dtbs"
+	elif [ -d "${BUNDLE_DIR}/dtb" ]; then
+		DTB_SRC="${BUNDLE_DIR}/dtb"
+	fi
+
+	if [ -z "${DTB_SRC}" ]; then
+		echo "Plan B bundle missing dtbs directory (expected dtbs/ or dtb/): ${BUNDLE_DIR}" >&2
+		exit 1
+	fi
+
+	rm -f "${BINARIES_DIR}"/*.dtb
+	DTB_COUNT=0
+	for dtb in $(find "${DTB_SRC}" -type f -name '*.dtb'); do
+		cp -f "${dtb}" "${BINARIES_DIR}/$(basename "${dtb}")"
+		DTB_COUNT=$((DTB_COUNT + 1))
+	done
+	if [ "${DTB_COUNT}" -eq 0 ]; then
+		echo "Plan B bundle dtbs directory contains no .dtb files: ${DTB_SRC}" >&2
+		exit 1
+	fi
+
+	OVERLAY_SRC="${BUNDLE_DIR}/overlays"
+	if [ ! -d "${OVERLAY_SRC}" ]; then
+		echo "Plan B bundle missing overlays directory: ${OVERLAY_SRC}" >&2
+		exit 1
+	fi
+	mkdir -p "${BINARIES_DIR}/rpi-firmware/overlays"
+	OVERLAY_COUNT=0
+	for overlay in "${OVERLAY_SRC}"/*; do
+		[ -f "${overlay}" ] || continue
+		cp -f "${overlay}" "${BINARIES_DIR}/rpi-firmware/overlays/"
+		OVERLAY_COUNT=$((OVERLAY_COUNT + 1))
+	done
+	if [ "${OVERLAY_COUNT}" -eq 0 ]; then
+		echo "Plan B bundle overlays directory contains no files: ${OVERLAY_SRC}" >&2
+		exit 1
+	fi
+
+	echo "Payload mode: injected prebuilt kernel assets from ${BUNDLE_DIR}" >&2
+fi
 
 # Generate genimage config from template when a board-specific cfg is absent.
 if [ ! -e "${GENIMAGE_CFG}" ]; then
 	GENIMAGE_CFG="${BINARIES_DIR}/genimage.cfg"
 	rm -f "${GENIMAGE_CFG}"
-
-	# Always sync board config/cmdline over the rpi-firmware cached copies
-	# so image rebuilds pick up changes without rpi-firmware-dirclean.
-	for f in config.txt cmdline.txt; do
-		if [ -f "${BOARD_DIR}/${f}" ]; then
-			cp -f "${BOARD_DIR}/${f}" "${BINARIES_DIR}/rpi-firmware/${f}"
-		fi
-	done
-
-	# Promote rpi-firmware config/cmdline to the top-level binaries dir so
-	# genimage places them at the root of the FAT partition (/boot/firmware/).
-	if [ -f "${BINARIES_DIR}/rpi-firmware/config.txt" ]; then
-		cp -f "${BINARIES_DIR}/rpi-firmware/config.txt" "${BINARIES_DIR}/config.txt"
-	fi
-	if [ -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" ]; then
-		cp -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" "${BINARIES_DIR}/cmdline.txt"
-	fi
 
 	FILES=""
 
@@ -62,6 +159,7 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	elif [ -f "${BINARIES_DIR}/config.txt" ]; then
 		KERNEL="$(sed -n 's/^kernel=//p' "${BINARIES_DIR}/config.txt")"
 	fi
+	KERNEL="$(printf '%s' "${KERNEL}" | tr -d '\r')"
 	if [ -z "${KERNEL}" ] && [ -f "${BINARIES_DIR}/Image" ]; then
 		KERNEL="Image"
 	fi
@@ -117,6 +215,46 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 		[ -f "${ini}" ] || continue
 		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${ini}" ::piclock/
 	done
+	for staged in "${BOOT_SOURCE_DIR}"/*; do
+		[ -f "${staged}" ] || continue
+		case "$(basename "${staged}")" in
+			config.txt|cmdline.txt)
+				continue
+				;;
+		esac
+		[ -f "${BINARIES_DIR}/$(basename "${staged}")" ] || continue
+		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
+			"${BINARIES_DIR}/$(basename "${staged}")" ::
+	done
+	for staged in ${BOOT_RUNTIME_FILES}; do
+		[ -f "${BINARIES_DIR}/${staged}" ] || continue
+		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
+			"${BINARIES_DIR}/${staged}" ::
+	done
+	if [ -n "${RPI_FW_BOOT_DIR}" ]; then
+		for staged in "${RPI_FW_BOOT_DIR}"/*; do
+			[ -f "${staged}" ] || continue
+			case "$(basename "${staged}")" in
+				config.txt|cmdline.txt)
+					continue
+					;;
+			esac
+			MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${staged}" ::
+		done
+	fi
+	if [ -d "${VOICE_SRC}" ]; then
+		MTOOLS_SKIP_CHECK=1 mmd -i "${BOOT_IMG}" ::voices 2>/dev/null || true
+		for voice_dir in "${VOICE_SRC}"/*; do
+			[ -d "${voice_dir}" ] || continue
+			voice_name="$(basename "${voice_dir}")"
+			MTOOLS_SKIP_CHECK=1 mmd -i "${BOOT_IMG}" "::voices/${voice_name}" 2>/dev/null || true
+			for voice_file in "${voice_dir}"/*; do
+				[ -f "${voice_file}" ] || continue
+				MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
+					"${voice_file}" "::voices/${voice_name}/"
+			done
+		done
+	fi
 
 	# Compile custom gpu-enable overlay (D0-stepping GPU compatible fix).
 	GPU_OVERLAY_SRC="${BOARD_DIR}/gpu-enable.dts"

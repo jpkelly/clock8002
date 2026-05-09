@@ -1,35 +1,51 @@
 #!/bin/sh
-# Mount the boot FAT partition and copy sdl-clock binaries/scripts from /boot
-# so they can be updated by placing files on the SD card boot partition.
 
-SERVICE="sdl-clock"
-BIN_FILE="sdl3-clock"
-POKEMON_FILE="clock_pokemon.sh"
-CMD_FILE="clock_cmd.sh"
+INTERFACES_FILE="/boot/interfaces"
+HOSTNAME_FILE="/boot/hostname"
+CLOCK_FILE="/boot/sdl-clock"
+CLOCK_CMD="/boot/clock_cmd.sh"
+CLOCK_POKEMON="/boot/clock_pokemon.sh"
+NTP_CONF="/boot/ntp.conf"
 
 start() {
-	echo "Setting up $SERVICE configuration"
+	echo "Setting up clock configuration"
+	sleep 5
 	mkdir -p /boot
 	if [ -e /dev/mmcblk0p1 ]; then
 		mount -r /dev/mmcblk0p1 /boot 2>/dev/null || true
+	else
+		mount -r /dev/mmcblk0 /boot 2>/dev/null || true
 	fi
-	if [ -e "/boot/$BIN_FILE" ]; then
-		echo "Copying $SERVICE binary from boot"
-		mkdir -p /root
-		cp /boot/$BIN_FILE /root/
-		chmod a+x /root/$BIN_FILE
+	if [ -e "$INTERFACES_FILE" ]; then
+		echo "Copying network settings"
+		cp "$INTERFACES_FILE" /etc/network/interfaces
 	fi
-	if [ -e "/boot/$CMD_FILE" ]; then
-		echo "Copying $SERVICE configuration from boot"
-		mkdir -p /root
-		cp /boot/$CMD_FILE /root/
-		chmod a+x /root/$CMD_FILE
+	if [ -e "$HOSTNAME_FILE" ]; then
+		echo "Setting hostname"
+		hostname "$(cat "$HOSTNAME_FILE")"
+		cp "$HOSTNAME_FILE" /etc/hostname
 	fi
-	if [ -e "/boot/$POKEMON_FILE" ]; then
-		echo "Copying $SERVICE pokemon configuration from boot"
+	if [ -e "$CLOCK_FILE" ]; then
+		echo "Copying clock binary"
 		mkdir -p /root
-		cp /boot/$POKEMON_FILE /root/
-		chmod a+x /root/$POKEMON_FILE
+		cp "$CLOCK_FILE" /root/sdl-clock
+		chmod a+x /root/sdl-clock
+	fi
+	if [ -e "$CLOCK_CMD" ]; then
+		echo "Copying clock configuration"
+		mkdir -p /root
+		cp "$CLOCK_CMD" /root/clock_cmd.sh
+		chmod a+x /root/clock_cmd.sh
+	fi
+	if [ -e "$CLOCK_POKEMON" ]; then
+		echo "Copying clock pokemon configuration"
+		mkdir -p /root
+		cp "$CLOCK_POKEMON" /root/clock_pokemon.sh
+		chmod a+x /root/clock_pokemon.sh
+	fi
+	if [ -e "$NTP_CONF" ]; then
+		echo "Copying ntp configuration"
+		cp "$NTP_CONF" /etc/ntp.conf
 	fi
 	if [ -e "/boot/piclock/authorized_keys" ]; then
 		echo "Installing SSH authorized_keys from boot"
@@ -48,8 +64,12 @@ case "$1" in
 	start)
 		start
 		;;
-	stop|restart|reload)
+	stop)
 		stop
+		;;
+	restart|reload)
+		stop
+		start
 		;;
 	*)
 		echo "Usage: $0 {start|stop|restart}"

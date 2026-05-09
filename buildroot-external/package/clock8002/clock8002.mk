@@ -12,7 +12,8 @@ CLOCK8002_DEPENDENCIES = host-go sdl3 sdl3-ttf sdl3-image libltc
 CLOCK8002_CONFIG_SUFFIX = default
 
 CLOCK8002_GIT_DIR = $(realpath $(CLOCK8002_SITE)/..)
-CLOCK8002_GIT_TAG = $(shell cd $(CLOCK8002_GIT_DIR) && git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0.1")
+# The root-ram feature line is intentionally labeled as ram-root in runtime UI/config.
+CLOCK8002_GIT_TAG = $(shell cd $(CLOCK8002_GIT_DIR) && branch=$$(git branch --show-current 2>/dev/null || true); if [ "$$branch" = "feature/root-ram" ]; then echo "ram-root"; else git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0.1"; fi)
 CLOCK8002_GIT_COMMIT = $(shell cd $(CLOCK8002_GIT_DIR) && git rev-list -1 HEAD 2>/dev/null || echo "unknown")
 CLOCK8002_BUILD_DATE = $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 CLOCK8002_VERSION_PKG = gitlab.com/clock-8001/clock-8001/v4/clock
@@ -38,10 +39,14 @@ define CLOCK8002_BUILD_CMDS
 		-I$(STAGING_DIR)/usr/include \
 		-o $(@D)/alsa-ltc $(@D)/alsa-ltc.c \
 		-L$(STAGING_DIR)/usr/lib -lasound -lltc
+	# Keep the legacy deployment name expected by the .244-style boot scripts,
+	# but source it from the SDL3 build rather than reviving the old SDL2 binary.
+	cp -f $(@D)/sdl3-clock $(@D)/sdl-clock
 endef
 
 define CLOCK8002_INSTALL_TARGET_CMDS
 	$(INSTALL) -d $(TARGET_DIR)/opt/clock8002
+	$(INSTALL) -m 0755 $(@D)/sdl-clock $(TARGET_DIR)/opt/clock8002/sdl-clock
 	$(INSTALL) -m 0755 $(@D)/sdl3-clock $(TARGET_DIR)/opt/clock8002/sdl3-clock
 	$(INSTALL) -m 0755 $(@D)/alsa-ltc $(TARGET_DIR)/opt/clock8002/alsa-ltc
 	$(INSTALL) -D -m 0644 $(@D)/clock.ini.$(CLOCK8002_CONFIG_SUFFIX) \

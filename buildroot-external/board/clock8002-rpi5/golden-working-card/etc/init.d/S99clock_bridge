@@ -1,0 +1,34 @@
+#!/bin/sh
+
+start() {
+	ifup eth0:1
+	if [ -e "/boot/enable_bridge" ]; then
+		/root/clock_bridge_pokemon.sh start &
+	fi
+}
+
+stop() {
+	true
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+	;;
+	restart|reload)
+		restart
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+esac
+
+exit $?

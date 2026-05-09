@@ -1,1 +1,1 @@
-/opt/clock8002/sdl3-clock --fullscreen --font-path=/opt/clock8002
+/root/sdl-clock -C /boot/clock.ini --font-path=/opt/clock8002

@@ -1,6 +1,6 @@
 # clock8002 Buildroot defconfig (prototype)
-# Tested against: Buildroot 2025.02
-# Kernel matched to 3rd party reference unit (b1b490ba, v6.12.41)
+# Tested against: Buildroot 2025.11
+# Kernel matched to the 3rd-party reference unit (b1b490ba, v6.12.41)
 # Base: raspberrypi5_defconfig
 #
 # Usage:
@@ -95,9 +95,9 @@ BR2_PACKAGE_SDL3=y
 BR2_PACKAGE_SDL3_IMAGE=y
 BR2_PACKAGE_SDL3_TTF=y
 
-# Boot splash
-BR2_PACKAGE_FBV=y
-BR2_PACKAGE_FBV_PNG=y
+# Boot splash disabled
+# BR2_PACKAGE_FBV is not set
+# BR2_PACKAGE_FBV_PNG is not set
 
 # Networking
 BR2_PACKAGE_NETWORK_MANAGER=y
