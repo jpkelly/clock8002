@@ -1,6 +1,15 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-09 - 74439b3 image built, flashed, and user-verified with LTC running.
+Last updated: 2026-05-09 - hard rule locked: test-image kernel+modules must come from payload bundle.
+
+## Hard Rule (2026-05-09 - payload kernel + modules mandatory for test validation)
+
+- For `feature/root-ram` test-image validation, the kernel and modules must come from the same prebuilt payload bundle.
+- Required payload set is matched and complete: `Image`, `dtbs/` (or `dtb/`) + `overlays/`, and `modules/` (or `modules/lib/modules/`).
+- Compile-kernel Buildroot image runs are non-compliant for this validation objective and must not be used for sign-off.
+- Exception policy: only bypass this rule if the user explicitly overrides it in that session.
+- Wrapper policy update: `buildroot-external/scripts/build-with-kernel-fallback.sh` is now payload-only (legacy filename retained for compatibility).
+- Historical Mode A / Mode B notes below are archival context and are superseded by this hard rule.
 
 ## Current Checkpoint (2026-05-09 - root-ram image build + flash verification)
 

@@ -11,9 +11,7 @@ This document covers building, flashing, and maintaining the Buildroot-based SD 
     - [1. Mesa 25.0.7 upgrade](#1-mesa-2507-upgrade)
     - [2. host-xz libtool workaround](#2-host-xz-libtool-workaround)
 - [Building an Image](#building-an-image)
-  - [Build Mode Selection (A vs B)](#build-mode-selection-a-vs-b)
-    - [Mode A - Normal kernel compile (default)](#mode-a---normal-kernel-compile-default)
-    - [Mode B - Plan B prebuilt kernel fallback (failure-only)](#mode-b---plan-b-prebuilt-kernel-fallback-failure-only)
+  - [Payload Kernel Policy (Mandatory)](#payload-kernel-policy-mandatory)
   - [Full image build](#full-image-build)
   - [Partial rebuilds](#partial-rebuilds-when-to-use-each)
   - [Release build (password only, no SSH key)](#release-build-password-only-no-ssh-key)
@@ -115,55 +113,25 @@ Before any build, always sync the clock8002 source on the build host:
 ssh pi@cm5.local 'cd ~/clock8002 && git pull --ff-only'
 ```
 
-### Build Mode Selection (A vs B)
+### Payload Kernel Policy (Mandatory)
 
-Use this decision gate before starting a build:
+There is no A/B kernel mode selection for test-image validation.
 
-| Condition | Build mode |
-|---|---|
-| Normal operation, release work, or first attempt | Mode A |
-| Kernel compile path cannot produce a working kernel | Mode B |
+All validation builds must use a prebuilt payload bundle for kernel assets:
 
-Rules:
+1. `Image`
+2. DTBs (`dtbs/` or `dtb/`) plus `overlays/`
+3. Modules (`modules/` or `modules/lib/modules/`)
 
-1. Always attempt Mode A first.
-2. Mode B is fallback-only. Do not use it when Mode A is healthy.
-3. Mode B must use a matched prebuilt kernel bundle from the known-good Golden source:
-  - `Image`
-  - DTBs and overlays
-  - `/lib/modules/<kernel-release>`
-4. Mode B must be checksum/version gated (fail closed on mismatch).
+`buildroot-external/scripts/build-with-kernel-fallback.sh` is now a payload-only wrapper despite the legacy filename.
 
-#### Mode A - Normal kernel compile (default)
-
-This is the standard path and remains the default for development and releases.
-
-- Buildroot compiles kernel + userspace.
-- Use the existing full/release/dev commands in this document.
-
-#### Mode B - Plan B prebuilt kernel fallback (failure-only)
-
-This path is only for cases where the kernel compile path does not produce a working kernel.
-
-- Buildroot still produces the image/userspace payload.
-- Kernel assets are sourced from a prebuilt known-good bundle instead of kernel compilation output.
-
-Current repo status:
-
-1. Policy is approved and documented in [HANDOFF.md](../HANDOFF.md).
-2. Hook points exist in:
-  - `board/clock8002-rpi5/post-build.sh`
-  - `board/clock8002-rpi5/post-image.sh`
-3. Fallback wrapper exists:
-  - `buildroot-external/scripts/build-with-kernel-fallback.sh`
-
-Mode B command (wrapper):
+Payload build command (default `current` bundle):
 
 ```bash
 ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
 ```
 
-Mode B command (explicit bundle override):
+Payload build command (explicit bundle override):
 
 ```bash
 ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot /path/to/prebuilt-kernel-bundle'
@@ -171,14 +139,10 @@ ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002/buildroot-external/scripts/build
 
 Wrapper behavior:
 
-1. Runs Mode A first (`make`).
-2. If Mode A succeeds, exits normally (no fallback).
-3. If Mode A fails and failure is kernel-path related, enables Plan B and retries once with:
-   - `CLOCK8002_PREBUILT_KERNEL=1`
-   - `CLOCK8002_PREBUILT_KERNEL_BUNDLE=<bundle>`
-  - strict bundle preflight validation (layout + required assets + checksum when present)
-4. If no bundle path/env is passed, wrapper auto-uses `/srv/clock8002/prebuilt-kernel-bundles/current` when it exists.
-5. If Mode A fails for non-kernel reasons, Plan B is not used.
+1. Verifies the bundle before build (layout + required assets + checksum when available).
+2. Runs a single payload-mode build with `CLOCK8002_PREBUILT_KERNEL=1`.
+3. Fails closed on missing/invalid bundle.
+4. Does not run any kernel-mode decision flow; payload is mandatory.
 
 Expected prebuilt bundle layout:
 
@@ -229,39 +193,37 @@ buildroot-external/scripts/verify-prebuilt-kernel-bundle.sh \
 
 Operational requirements:
 
-1. Choose Mode A by default.
-2. Use Mode B only when Mode A cannot produce a working kernel.
-3. Keep the active fallback bundle promoted under `/srv/clock8002/prebuilt-kernel-bundles/current`.
-4. Record the decision and provenance (kernel source = prebuilt fallback + bundle id) in HANDOFF before flash/test.
+1. Keep the active validation bundle promoted under `/srv/clock8002/prebuilt-kernel-bundles/current`.
+2. Record bundle provenance in HANDOFF before flash/test.
 
 ### Full image build
 
 ```bash
-ssh pi@cm5.local 'cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
+ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
 ```
 
 Monitor progress:
 
 ```bash
-ssh pi@cm5.local 'tail -f /tmp/br-build.log'
+ssh pi@cm5.local 'L=$(ls -1t /tmp/br-payload-*.log 2>/dev/null | head -n1); [ -n "$L" ] && tail -f "$L" || echo "No payload build log yet"'
 ```
 
 ### Partial rebuilds (when to use each)
 
 | Change type | Command |
 |---|---|
-| sdl-clock / alsa-ltc code | `make clock8002-dirclean && make` |
-| Kernel config (`linux.config`) | `make linux-dirclean && make` |
-| Defconfig changes | `make clock8002_rpi5_defconfig` then `make` |
-| `rpi-firmware` / `config.txt` | `make rpi-firmware-dirclean && make` (or just `make` — post-image.sh force-syncs config.txt) |
-| Rootfs overlay only | `make` |
+| sdl-clock / alsa-ltc code | `CLOCK8002_PREBUILT_KERNEL=1 CLOCK8002_PREBUILT_KERNEL_BUNDLE=/srv/clock8002/prebuilt-kernel-bundles/current make clock8002-dirclean && CLOCK8002_PREBUILT_KERNEL=1 CLOCK8002_PREBUILT_KERNEL_BUNDLE=/srv/clock8002/prebuilt-kernel-bundles/current make` |
+| Kernel config (`linux.config`) | Not used for payload-validated images (kernel comes from prebuilt payload bundle). |
+| Defconfig changes | `make clock8002_rpi5_defconfig` then payload wrapper command |
+| `rpi-firmware` / `config.txt` | `CLOCK8002_PREBUILT_KERNEL=1 CLOCK8002_PREBUILT_KERNEL_BUNDLE=/srv/clock8002/prebuilt-kernel-bundles/current make rpi-firmware-dirclean && CLOCK8002_PREBUILT_KERNEL=1 CLOCK8002_PREBUILT_KERNEL_BUNDLE=/srv/clock8002/prebuilt-kernel-bundles/current make` |
+| Rootfs overlay only | `CLOCK8002_PREBUILT_KERNEL=1 CLOCK8002_PREBUILT_KERNEL_BUNDLE=/srv/clock8002/prebuilt-kernel-bundles/current make` |
 
 ### Release build (password only, no SSH key)
 
 Release builds must use `make clean` — not `clock8002-dirclean` — to wipe `output/target/` completely. `clock8002-dirclean` only cleans the package build dir; stale files (including SSH keys from prior dev builds) persist in `output/target/` across partial rebuilds. `post-build.sh` also actively purges any stale key, but `make clean` ensures a provably clean rootfs.
 
 ```bash
-ssh pi@cm5.local 'cd ~/clock8002 && git fetch --tags origin && git checkout vX.X.X && cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
+ssh pi@cm5.local 'cd ~/clock8002 && git fetch --tags origin && git checkout vX.X.X && cd ~/buildroot && make clean && ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
 ```
 
 > Replace `vX.X.X` with the release tag. `make clean` is slower (full rebuild of all packages) but required for release integrity.
@@ -279,7 +241,7 @@ ssh pi@cm5.local 'echo "export BR2_PICLOCKKEY=\"ssh-ed25519 AAAA... you@host\"" 
 **Dev build command:**
 
 ```bash
-ssh pi@cm5.local 'source ~/buildroot-keys.env && cd ~/clock8002 && git pull --ff-only && cd ~/buildroot && make clock8002-dirclean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
+ssh pi@cm5.local 'source ~/buildroot-keys.env && cd ~/clock8002 && git pull --ff-only && cd ~/buildroot && CLOCK8002_PREBUILT_KERNEL=1 CLOCK8002_PREBUILT_KERNEL_BUNDLE=/srv/clock8002/prebuilt-kernel-bundles/current ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
 ```
 
 > Dev builds can use `clock8002-dirclean` for speed. The SSH key is re-injected on every build by `post-build.sh` when `BR2_PICLOCKKEY` is set.
