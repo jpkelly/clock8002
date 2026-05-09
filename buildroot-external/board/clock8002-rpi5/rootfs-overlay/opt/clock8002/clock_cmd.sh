@@ -1,1 +1,1 @@
-/root/sdl-clock -C /boot/clock.ini --font-path=/opt/clock8002
+/root/sdl-clock -C /boot/piclock/clock.ini --font-path=/opt/clock8002

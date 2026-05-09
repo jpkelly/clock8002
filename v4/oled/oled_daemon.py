@@ -10,12 +10,19 @@ from luma.core.interface.serial import i2c
 from luma.oled.device import ssd1306
 from PIL import ImageDraw, ImageFont, Image
 
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _INI_CANDIDATES = [
-    os.path.expanduser('~/.config/clock-8001/clock.ini'),  # Trixie / dev
     '/boot/piclock/clock.ini',                              # Buildroot
+    '/boot/firmware/piclock/clock.ini',                     # Trixie
+    os.path.expanduser('~/.config/clock-8001/clock.ini'),  # Legacy/dev fallback
 ]
 INI_PATH = next((p for p in _INI_CANDIDATES if os.path.exists(p)), _INI_CANDIDATES[0])
-OLED_INI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oled.ini')
+_OLED_INI_CANDIDATES = [
+    '/boot/piclock/oled.ini',                               # Buildroot
+    '/boot/firmware/piclock/oled.ini',                      # Trixie
+    os.path.join(_SCRIPT_DIR, 'oled.ini'),                  # Legacy/dev fallback
+]
+OLED_INI_PATH = next((p for p in _OLED_INI_CANDIDATES if os.path.exists(p)), _OLED_INI_CANDIDATES[0])
 _LOGO_CANDIDATES = [
     '/root/piclockLogo.bin',                              # Buildroot
     os.path.expanduser('~/piclockLogo.bin'),               # Trixie / dev

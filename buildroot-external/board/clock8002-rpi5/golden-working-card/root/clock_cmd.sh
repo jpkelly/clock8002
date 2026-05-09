@@ -1,1 +1,1 @@
-/root/sdl-clock -C /boot/clock.ini
+/root/sdl-clock -C /boot/piclock/clock.ini
