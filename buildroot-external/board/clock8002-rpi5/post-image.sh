@@ -8,7 +8,7 @@ GOLDEN_ROOT_DIR="${GOLDEN_DIR}/root"
 BOARD_NAME="$(basename "${BOARD_DIR}")"
 GENIMAGE_CFG="${BOARD_DIR}/genimage-${BOARD_NAME}.cfg"
 GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
-BOOT_RUNTIME_FILES="alsa-ltc alsa-ltc_cmd.sh alsa-ltc_pokemon.sh sdl-clock clock_cmd.sh clock_pokemon.sh clock-bridge clock_bridge_cmd.sh clock_bridge_pokemon.sh"
+BOOT_RUNTIME_FILES="alsa-ltc alsa-ltc_cmd.sh alsa-ltc_pokemon.sh sdl-clock clock_cmd.sh clock_pokemon.sh clock-bridge clock_bridge_cmd.sh clock_bridge_pokemon.sh DejaVuSans.ttf"
 VOICE_SRC="${BUILD_DIR}/clock8002-prototype/voices"
 
 RPI_FW_BOOT_DIR=""
@@ -264,6 +264,12 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 		[ -f "${BINARIES_DIR}/${staged}" ] || continue
 		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
 			"${BINARIES_DIR}/${staged}" ::
+	done
+	# Inject OLED assets (daemon binary and logo) to FAT root.
+	for oled_asset in oled-daemon piclockLogo.bin; do
+		[ -f "${BINARIES_DIR}/${oled_asset}" ] || continue
+		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
+			"${BINARIES_DIR}/${oled_asset}" ::
 	done
 	if [ -n "${RPI_FW_BOOT_DIR}" ]; then
 		for staged in "${RPI_FW_BOOT_DIR}"/*; do
