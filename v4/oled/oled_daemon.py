@@ -185,12 +185,12 @@ def get_build_version():
             out = subprocess.check_output(
                 ['sh', '-c',
                  r"strings " + binary_path +
-                 r" | grep -m1 'clock\.gitTag=v'"],
+                 r" | grep -m1 'clock\.gitTag='"],
                 stderr=subprocess.STDOUT,
                 timeout=2.0,
             )
             text = out.decode(errors='ignore').strip()
-            match = re.search(r'clock\.gitTag=(v[0-9]+\.[0-9]+\.[0-9]+)', text)
+            match = re.search(r'clock\.gitTag=([^\s"]+)', text)
             if match:
                 return match.group(1)
         except Exception:
@@ -199,7 +199,7 @@ def get_build_version():
         try:
             with open(binary_path, 'rb') as f:
                 data = f.read()
-            match = re.search(rb'clock\.gitTag=(v[0-9]+\.[0-9]+\.[0-9]+)', data)
+            match = re.search(rb'clock\.gitTag=([^\s"]+)', data)
             if match:
                 return match.group(1).decode('ascii')
         except Exception:
