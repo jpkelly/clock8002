@@ -1,8 +1,40 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-10 - `piClock-b5b8416-sdcard.img` ready to flash; OLED version fix + authorized_keys live fix complete.
+Last updated: 2026-05-10 - `piClock-5dd5c53-sdcard.img` flashed; Mac key baked in, OLED version fix baked in.
 
-## Current Checkpoint (2026-05-10 - b5b8416 ready to flash; OLED version + SSH key fixes)
+## Current Checkpoint (2026-05-10 - 5dd5c53 flashed; Mac key + OLED version fix)
+
+### TL;DR
+- `piClock-5dd5c53-sdcard.img` flashed to `/dev/disk6` and ejected. Device booting (or ready to boot).
+- `jp@Sapporo.local` key is **baked into the image** via `golden-working-card/piclock/authorized_keys` — no live key fix needed after flash.
+- `BR2_PICLOCKKEY` now appends (not overwrites), so cm5's key is also present alongside the Mac key.
+- OLED `get_build_version()` rewrite baked in (uses `SDL_CLOCK_PATH`, Python byte-scan fallback).
+- `post-image.sh` now stages all files from `golden-working-card/piclock/` (not just `*.sh`).
+
+### Commit chain (HEAD → oldest)
+- `5dd5c53` — oled, build scripts, authorized_keys: Mac key baked in + OLED version fix (**HEAD**)
+- `6c5ecbc` — HANDOFF.md update
+- `b5b8416` — post-image.sh: fix OLED asset staging to FAT
+- `8f6ac6c` — post-image.sh: inject BR2_PICLOCKKEY into piclock/authorized_keys on FAT
+- `3985557` — oled-daemon: build PyInstaller binary, ship on FAT, enable i2c_arm
+
+### What to verify after boot
+1. `ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa root@192.168.8.245 'echo OK'` — passwordless from Mac
+2. OLED shows splash with version number in lower right
+3. LTC running: `ps | grep alsa-ltc`
+
+### Build infra
+- Output dir: `/home/pi/output-root-ram-payload-20260509-165344` on cm5
+- BR2_EXTERNAL clone: `/tmp/clock8002-build-initramfs-20260510` (at `5dd5c53`)
+- `.config` patched: `BR2_PACKAGE_CLOCK8002_SOURCE_DIR` and `BR2_EXTERNAL_CLOCK8002_PATH` point to initramfs clone
+- Future rebuilds: dirclean needed if `oled_daemon.py` changes (PyInstaller caches)
+
+### Flash workflow note
+- User flashes SD card manually. Copilot: transfer image to Desktop and provide `dd` command only — do not run `dd`.
+
+---
+
+## Previous Checkpoint (2026-05-10 - b5b8416 ready to flash; OLED version + SSH key fixes)
 
 ### TL;DR
 - `piClock-b5b8416-sdcard.img` is on the Desktop, verified. Device powered off. Ready to flash to `/dev/disk6`.
