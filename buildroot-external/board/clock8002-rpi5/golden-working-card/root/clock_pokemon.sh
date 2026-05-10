@@ -8,17 +8,9 @@ start() {
 	echo -"Starting Clock"
 	mount -o remount,rw /boot
 
-	# Install SSH authorized_keys from boot partition
-	if [ -f /boot/piclock/authorized_keys ]; then
-		mkdir -p /root/.ssh
-		chmod 700 /root/.ssh
-		cp /boot/piclock/authorized_keys /root/.ssh/authorized_keys
-		chmod 600 /root/.ssh/authorized_keys
-	fi
-
-	# Start OLED daemon
-	if [ -x /opt/clock8002/oled/oled_daemon.py ]; then
-		/opt/clock8002/oled/oled_daemon.py &
+	# Run user setup script if present (authorized_keys, OLED, etc.)
+	if [ -f /boot/piclock/setup.sh ]; then
+		sh /boot/piclock/setup.sh
 	fi
 
 	cd /root

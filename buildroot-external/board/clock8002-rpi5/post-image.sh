@@ -190,6 +190,13 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		DST="${pair##*:}"
 		[ -f "${SRC}" ] && cp -f "${SRC}" "${BINARIES_DIR}/piclock/${DST}"
 	done
+	# Stage board-provided piclock scripts (e.g. setup.sh).
+	if [ -d "${GOLDEN_DIR}/piclock" ]; then
+		for f in "${GOLDEN_DIR}/piclock"/*.sh; do
+			[ -f "${f}" ] || continue
+			cp -f "${f}" "${BINARIES_DIR}/piclock/$(basename "${f}")"
+		done
+	fi
 	# Fix path comment in network.ini (v4 source references Trixie's
 	# /boot/firmware/piclock/; on Buildroot the FAT partition mounts at /boot).
 	if [ -f "${BINARIES_DIR}/piclock/network.ini" ]; then
@@ -225,6 +232,10 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 	for ini in "${BINARIES_DIR}"/piclock/*.ini; do
 		[ -f "${ini}" ] || continue
 		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${ini}" ::piclock/
+	done
+	for sh in "${BINARIES_DIR}"/piclock/*.sh; do
+		[ -f "${sh}" ] || continue
+		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${sh}" ::piclock/
 	done
 	for staged in "${BOOT_SOURCE_DIR}"/*; do
 		[ -f "${staged}" ] || continue
