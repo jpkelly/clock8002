@@ -208,6 +208,14 @@ Monitor progress:
 ssh pi@cm5.local 'L=$(ls -1t /tmp/br-payload-*.log 2>/dev/null | head -n1); [ -n "$L" ] && tail -f "$L" || echo "No payload build log yet"'
 ```
 
+Quoting-safe status probe (recommended for ad-hoc checks):
+
+```bash
+tools/buildroot/cm5-build-status.sh --session <session-name>
+```
+
+This helper avoids fragile inline SSH quoting and reports state, elapsed time, active make process, last package stamp, strict kernel-compile markers, and a log tail.
+
 ### Partial rebuilds (when to use each)
 
 | Change type | Command |
