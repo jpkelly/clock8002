@@ -52,10 +52,8 @@ rm -f "${TARGET_DIR}/etc/init.d/S02setup-root" \
         "${TARGET_DIR}/etc/init.d/S04power-button" \
         "${TARGET_DIR}/etc/init.d/S98oled"
 
-# Bootsplash is intentionally disabled for failure-mode payload builds.
-rm -f "${TARGET_DIR}/etc/init.d/S05bootsplash" \
-        "${TARGET_DIR}/opt/clock8002/bootsplash.png" \
-        "${TARGET_DIR}/opt/clock8002/bootsplash.sh"
+# Splash assets and S05bootsplash are kept in the image; whether to display
+# the splash at boot is controlled by splash_enabled in /boot/piclock/piclock.ini.
 
 # Make init.d scripts executable.
 for script in \

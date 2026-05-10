@@ -1,8 +1,18 @@
 #!/bin/sh
 PIDFILE=/var/run/bootsplash.pid
+PICLOCK_INI=/boot/piclock/piclock.ini
+
+_splash_enabled() {
+	[ -f "${PICLOCK_INI}" ] || return 1
+	val=$(awk -F= '/^splash_enabled/ { gsub(/[[:space:]]/, "", $2); print $2 }' "${PICLOCK_INI}")
+	[ "${val}" = "true" ]
+}
 
 case "$1" in
 	start)
+		if ! _splash_enabled; then
+			exit 0
+		fi
 		if [ -f /opt/clock8002/bootsplash.png ] && [ -x /opt/clock8002/bootsplash.sh ]; then
 			echo "Starting boot splash"
 			/opt/clock8002/bootsplash.sh &
