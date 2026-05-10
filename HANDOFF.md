@@ -1,8 +1,57 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-10 - `piClock-3f1ce4c-sdcard.img` flashed and confirmed fully working.
+Last updated: 2026-05-10 - `piClock-2b9e641-sdcard.img` flashed; bootsplash via raw fb0 dd under test.
 
-## Current Checkpoint (2026-05-10 - 3f1ce4c flashed and confirmed working)
+## Current Checkpoint (2026-05-10 - 2b9e641 flashed; bootsplash fb0 implementation)
+
+### TL;DR
+- `piClock-2b9e641-sdcard.img` flashed 2026-05-10. Boot splash under test.
+- **Bootsplash**: implemented via raw RGB565 `dd` to `/dev/fb0` from `setup.sh`. No `fbv`/`fbi` needed — works within embedded initramfs constraint.
+- **piclock.ini**: new FAT config file at `/boot/piclock/piclock.ini`; controls feature toggles. Default: `splash_enabled=true`.
+- Build: `bootsplash.raw` (RGB565, 1920×1080) generated at build time via `ffmpeg` and staged to FAT `piclock/`.
+- `setup.sh`: reads `piclock.ini`; if `splash_enabled=true` and `bootsplash.raw` exists, `dd`s it to `/dev/fb0`.
+- Root cause of previous splash attempts failing: embedded initramfs (not our Buildroot rootfs.cpio) is what actually boots — `S05bootsplash` and `/opt/clock8002/` from cpio were never reachable.
+- Splash timing: appears when `S99clock` runs (after networking etc.), before SDL3 clock starts.
+
+### Commit chain (HEAD → oldest)
+- `2b9e641` — bootsplash: implement via raw fb0 dd from setup.sh (**HEAD**)
+- `53085e6` — piclock.ini: default splash_enabled=true
+- `0f5ce12` — piclock.ini: add splash_enabled toggle; S05bootsplash reads it at boot
+- `cf66b9d` — HANDOFF.md update
+- `3f1ce4c` — copilot-instructions: document clock8002-dirclean requirement
+
+### Live device state
+- Image: `piClock-2b9e641-sdcard.img` (flashed 2026-05-10)
+- Splash: under test (splash_enabled=true in piclock.ini)
+- OLED: logo + `ram-root` version string confirmed ✅ (from prior image)
+- Passwordless SSH from Mac: confirmed ✅
+
+### Key architecture note
+- The Pi boots from the **prebuilt kernel's embedded initramfs** — NOT from `rootfs.cpio.gz` on FAT.
+- `rootfs.cpio.gz` is generated but NOT loaded (`initramfs` line in `config.txt` is commented out by design).
+- All runtime customisation must flow through **FAT partition** (`/boot/piclock/`) via `setup.sh`.
+- `setup.sh` is sourced by `clock_pokemon.sh` before the clock loop starts.
+- `S05bootsplash` and `/opt/clock8002/` in the cpio are unreachable at runtime on this boot model.
+
+### piclock.ini feature toggles
+- Location: `/boot/piclock/piclock.ini` (FAT — editable from any OS)
+- `splash_enabled=true|false` — show bootsplash on boot
+
+### Build infra
+- Output dir: `/home/pi/output-root-ram-payload-20260509-165344` on cm5
+- cm5 source repos: `~/clock8002-root-ram` (BR2_EXTERNAL) and `/tmp/clock8002-build-initramfs-20260510` (CLOCK8002_SOURCE_DIR)
+- Standard build command (always use dirclean):
+  ```
+  screen -S br-build-<commit> -dm bash -lc "{ CLOCK8002_PREBUILT_KERNEL=1 make O=/home/pi/output-root-ram-payload-20260509-165344 BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external -C /home/pi/buildroot clock8002-dirclean && CLOCK8002_PREBUILT_KERNEL=1 make O=/home/pi/output-root-ram-payload-20260509-165344 BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external -C /home/pi/buildroot BR2_PICLOCKKEY=\"$(cat ~/.ssh/id_rsa.pub)\"; } > /tmp/br-build-<commit>.log 2>&1; echo BR_BUILD_EXIT:\$? > /tmp/br-build-<commit>.exit"
+  ```
+
+### Flash workflow
+- Transfer: `scp pi@cm5.local:/home/pi/output-root-ram-payload-20260509-165344/images/sdcard.img /Users/jp/Desktop/piClock-<commit>-sdcard.img`
+- Flash (user runs): `diskutil unmountDisk /dev/disk6 && sudo dd if=/Users/jp/Desktop/piClock-<commit>-sdcard.img of=/dev/rdisk6 bs=4m status=progress && diskutil eject /dev/disk6`
+
+---
+
+## Previous Checkpoint (2026-05-10 - 3f1ce4c flashed and confirmed working)
 
 ### TL;DR
 - `piClock-3f1ce4c-sdcard.img` flashed and all changes confirmed working. ✅
