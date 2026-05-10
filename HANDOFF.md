@@ -1,6 +1,31 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-09 - future builds now exclude legacy /boot/clock.ini.
+Last updated: 2026-05-10 - issue #44 authorized_keys: key auth proven working manually on live unit; root cause of build mismatch identified; fix must be committed before next build.
+
+## Current Checkpoint (2026-05-10 - issue #44 authorized_keys: manual proof + build mismatch root cause)
+
+### Diagnosis summary
+- After flashing `piClock-4e7b636-sdcard.img`, passwordless SSH still failed.
+- SSH daemon on this image is **Dropbear** (`/usr/sbin/dropbear -R`). No `/etc/ssh/sshd_config`. Dropbear uses `/root/.ssh/authorized_keys` by default — correct path, no sshd_config changes needed.
+- Live S03copy_clock_files on the unit was the **old unpatched version** (1654 bytes, Jan 14 timestamp). The authorized_keys import block never ran.
+- `/boot/piclock/authorized_keys` was present (570 bytes) but `/root/.ssh` directory did not exist.
+
+### Root cause of build mismatch
+- The `br-build-root-ram-authkeys-20260509-214652` build created a fresh git clone on cm5. The S03copy_clock_files fix was **not committed** to git at the time, so the fresh clone contained the unpatched version and baked it into the squashfs.
+- The scp'd patched file had been placed in the `build-payload-rerun-*` clone, not the authkeys build clone.
+
+### Manual proof — key auth works
+- Manually created `/root/.ssh/` (mode 700) and copied `/boot/piclock/authorized_keys` → `/root/.ssh/authorized_keys` (mode 600) on the live unit.
+- Confirmed: `ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_rsa root@192.168.8.245` returned `KEYAUTH_OK user=root` with `KEYAUTH_RC:0`.
+- The import block logic in S03copy_clock_files is correct; it simply never reached the squashfs.
+
+### Warning
+- The manual `/root/.ssh/authorized_keys` will be lost on reboot — `/root` is seeded fresh from the squashfs each boot. Must fix via a committed build.
+
+### Next required steps
+1. **Commit** `buildroot-external/board/clock8002-rpi5/golden-working-card/etc/init.d/S03copy_clock_files` (with authorized_keys import block) on branch `feature/root-ram`.
+2. Run a fresh incremental build from the committed source on cm5.
+3. Flash the resulting image and verify passwordless SSH via `/boot/piclock/authorized_keys` survives reboot.
 
 ## Hard Rule (2026-05-09 - payload kernel + modules mandatory for test validation)
 
@@ -10,6 +35,35 @@ Last updated: 2026-05-09 - future builds now exclude legacy /boot/clock.ini.
 - Exception policy: only bypass this rule if the user explicitly overrides it in that session.
 - Wrapper policy update: `buildroot-external/scripts/build-with-kernel-fallback.sh` is now payload-only (legacy filename retained for compatibility).
 - Historical Mode A / Mode B notes below are archival context and are superseded by this hard rule.
+
+## Current Checkpoint (2026-05-09 - issue #44 authorized_keys field provisioning fix)
+
+### Problem confirmed on test image
+- Placing `/boot/piclock/authorized_keys` on the boot partition did not enable passwordless SSH login.
+- Root cause: Buildroot `post-build.sh` copies selected init scripts from `buildroot-external/board/clock8002-rpi5/golden-working-card/etc/init.d/` into the target rootfs.
+- The golden `S03copy_clock_files` script did not include the `/boot/piclock/authorized_keys` import block, even though the overlay copy did.
+
+### Fix applied (local worktree)
+- Added authorized key import to:
+  - `buildroot-external/board/clock8002-rpi5/golden-working-card/etc/init.d/S03copy_clock_files`
+- Added behavior at boot:
+  - if `/boot/piclock/authorized_keys` exists, copy to `/root/.ssh/authorized_keys`
+  - enforce `/root/.ssh` mode `700` and `authorized_keys` mode `600`
+
+### Build status after fix
+- Incremental payload test build launched on cm5 in screen session:
+  - `br-build-root-ram-authkeys-20260509-214652`
+- Result:
+  - `PREP_RC:0`
+  - `CONFIG_RC:0`
+  - `DIRCLEAN_RC:0`
+  - `BR_BUILD_EXIT:0`
+- Artifact:
+  - cm5 image: `/home/pi/output-root-ram-payload-20260509-165344/images/sdcard.img`
+  - local copy refreshed: `/Users/jp/Desktop/piClock-4e7b636-sdcard.img` (timestamp `2026-05-09 21:48`)
+
+### Validation state
+- Runtime on-device verification of passwordless login from `/boot/piclock/authorized_keys` is pending after flash/boot of the refreshed image.
 
 ## Current Checkpoint (2026-05-09 - remove legacy /boot/clock.ini from future images)
 
