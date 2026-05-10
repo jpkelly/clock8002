@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-09 - hard rule locked: test-image kernel+modules must come from payload bundle.
+Last updated: 2026-05-09 - payload incremental build in progress (feature/root-ram, payload-only policy).
 
 ## Hard Rule (2026-05-09 - payload kernel + modules mandatory for test validation)
 
@@ -10,6 +10,26 @@ Last updated: 2026-05-09 - hard rule locked: test-image kernel+modules must come
 - Exception policy: only bypass this rule if the user explicitly overrides it in that session.
 - Wrapper policy update: `buildroot-external/scripts/build-with-kernel-fallback.sh` is now payload-only (legacy filename retained for compatibility).
 - Historical Mode A / Mode B notes below are archival context and are superseded by this hard rule.
+
+## Current Checkpoint (2026-05-09 - payload incremental build in progress)
+
+### Snapshot (local + cm5)
+- Local repo snapshot at capture time:
+  - `git branch --show-current` -> `feature/root-ram`
+  - `git status --short` -> clean working tree
+- Active payload build session on cm5:
+  - session: `br-build-root-ram-payload-20260509-165344`
+  - output dir: `/home/pi/output-root-ram-payload-20260509-165344`
+  - state: `RUNNING`
+  - elapsed at sample: `1263s`
+  - last package stamp: `glibc-2.41-5-gcb7f20653724029be89224ed3a35d627cc5b4163/.stamp_configured`
+- Kernel compile guardrail signal:
+  - strict kernel compile marker scan returned no lines in the sampled window
+  - build tail shows glibc userspace compile/configure activity
+
+### Build cadence decision
+- Development work should use incremental payload-mode builds to reduce turnaround time.
+- Reserve full clean rebuilds for release-candidate prep unless the user explicitly overrides.
 
 ## Current Checkpoint (2026-05-09 - root-ram image build + flash verification)
 
