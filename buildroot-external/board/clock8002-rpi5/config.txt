@@ -8,7 +8,7 @@ kernel=Image
 boot_delay=0
 
 # External initramfs (built by Buildroot from TARGET_DIR)
-initramfs rootfs.cpio.gz
+initramfs rootfs.cpio.gz followkernel
 
 # Disable overscan assuming the display supports displaying the full resolution
 # If the text shown on the screen disappears off the edge, comment this out
