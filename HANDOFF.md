@@ -1,40 +1,41 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-10 - `piClock-5dd5c53-sdcard.img` flashed; Mac key baked in, OLED version fix baked in.
+Last updated: 2026-05-10 - OLED version string confirmed working (`ram-root`); `a296051` deployed live to `/boot/oled-daemon`.
 
-## Current Checkpoint (2026-05-10 - 5dd5c53 flashed; Mac key + OLED version fix)
+## Current Checkpoint (2026-05-10 - OLED version confirmed; a296051 live-deployed)
 
 ### TL;DR
-- `piClock-5dd5c53-sdcard.img` flashed to `/dev/disk6` and ejected. Device booting (or ready to boot).
-- `jp@Sapporo.local` key is **baked into the image** via `golden-working-card/piclock/authorized_keys` — no live key fix needed after flash.
-- `BR2_PICLOCKKEY` now appends (not overwrites), so cm5's key is also present alongside the Mac key.
-- OLED `get_build_version()` rewrite baked in (uses `SDL_CLOCK_PATH`, Python byte-scan fallback).
-- `post-image.sh` now stages all files from `golden-working-card/piclock/` (not just `*.sh`).
+- OLED splash confirmed showing version string `ram-root` on hardware. ✅
+- Root cause of missing version: `CLOCK8002_GIT_TAG` is `ram-root` on `feature/root-ram`, but the regex required `v\d+.\d+.\d+` semver. Fixed in `a296051` to capture any non-whitespace/quote value.
+- Fix live-deployed to `/boot/oled-daemon` on the running device. Not yet baked into a new full image.
+- Mac passwordless SSH confirmed working (`jp@Sapporo.local` key baked in via `golden-working-card/piclock/authorized_keys`). ✅
+- LTC status not yet checked this session.
 
 ### Commit chain (HEAD → oldest)
-- `5dd5c53` — oled, build scripts, authorized_keys: Mac key baked in + OLED version fix (**HEAD**)
-- `6c5ecbc` — HANDOFF.md update
+- `a296051` — oled_daemon: broaden gitTag regex to match non-semver tags (**HEAD**)
+- `5dd5c53` — oled, build scripts, authorized_keys: Mac key baked in + OLED version fix
+- `8be6576` — HANDOFF.md update
 - `b5b8416` — post-image.sh: fix OLED asset staging to FAT
-- `8f6ac6c` — post-image.sh: inject BR2_PICLOCKKEY into piclock/authorized_keys on FAT
-- `3985557` — oled-daemon: build PyInstaller binary, ship on FAT, enable i2c_arm
 
-### What to verify after boot
-1. `ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa root@192.168.8.245 'echo OK'` — passwordless from Mac
-2. OLED shows splash with version number in lower right
-3. LTC running: `ps | grep alsa-ltc`
+### Live device state (`root@192.168.8.245`)
+- Image: `piClock-5dd5c53-sdcard.img` (flashed 2026-05-10)
+- `/boot/oled-daemon`: live-patched to `a296051` binary (17331192 bytes)
+- `/root/sdl-clock`: `74439b3` build, tag `ram-root`
+- `/boot/piclock/authorized_keys`: cm5 key + `jp@Sapporo.local` key (2 entries)
+- `/dev/i2c-1` present; OLED at `i2c_port=1`, `i2c_address=0x3c`, `rotation=2`
 
-### Build infra
-- Output dir: `/home/pi/output-root-ram-payload-20260509-165344` on cm5
-- BR2_EXTERNAL clone: `/tmp/clock8002-build-initramfs-20260510` (at `5dd5c53`)
-- `.config` patched: `BR2_PACKAGE_CLOCK8002_SOURCE_DIR` and `BR2_EXTERNAL_CLOCK8002_PATH` point to initramfs clone
-- Future rebuilds: dirclean needed if `oled_daemon.py` changes (PyInstaller caches)
+### Next full image rebuild
+- `a296051` not yet baked into a full image — next `make` will include it via dirclean rebuild
+- BR2_EXTERNAL clone on cm5 `/tmp/clock8002-build-initramfs-20260510` is at `a296051`
+- Output dir: `/home/pi/output-root-ram-payload-20260509-165344`
+- `.config` patched: source paths point to initramfs clone
 
 ### Flash workflow note
 - User flashes SD card manually. Copilot: transfer image to Desktop and provide `dd` command only — do not run `dd`.
 
 ---
 
-## Previous Checkpoint (2026-05-10 - b5b8416 ready to flash; OLED version + SSH key fixes)
+## Previous Checkpoint (2026-05-10 - 5dd5c53 flashed; Mac key + OLED version fix)
 
 ### TL;DR
 - `piClock-b5b8416-sdcard.img` is on the Desktop, verified. Device powered off. Ready to flash to `/dev/disk6`.
