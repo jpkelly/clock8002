@@ -11,6 +11,7 @@ if [ -f /boot/piclock/authorized_keys ]; then
 fi
 
 # Start OLED daemon
-if [ -x /opt/clock8002/oled/oled_daemon.py ]; then
-	/opt/clock8002/oled/oled_daemon.py &
+if [ -x /boot/oled-daemon ]; then
+	modprobe i2c-dev 2>/dev/null || true
+	/boot/oled-daemon &
 fi

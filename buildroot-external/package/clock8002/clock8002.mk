@@ -42,6 +42,21 @@ define CLOCK8002_BUILD_CMDS
 	# Keep the legacy deployment name expected by the .244-style boot scripts,
 	# but source it from the SDL3 build rather than reviving the old SDL2 binary.
 	cp -f $(@D)/sdl3-clock $(@D)/sdl-clock
+	# Build oled-daemon frozen binary via PyInstaller (uses host venv on cm5).
+	if [ -f $(@D)/oled/oled_daemon.py ] && [ -x /home/pi/oled-build-venv/bin/pyinstaller ]; then \
+		/home/pi/oled-build-venv/bin/pyinstaller \
+			--onefile \
+			--name oled-daemon \
+			--hidden-import luma.core.interface.serial \
+			--hidden-import luma.core.mixin \
+			--hidden-import luma.oled.device \
+			--hidden-import smbus2 \
+			--distpath $(@D)/oled \
+			--workpath /tmp/oled-pyinstaller-build \
+			--specpath /tmp \
+			$(@D)/oled/oled_daemon.py \
+			> /tmp/oled-pyinstaller.log 2>&1; \
+	fi
 endef
 
 define CLOCK8002_INSTALL_TARGET_CMDS
@@ -59,6 +74,10 @@ define CLOCK8002_INSTALL_TARGET_CMDS
 	if [ -f $(@D)/oled/oled_daemon.py ]; then \
 		$(INSTALL) -D -m 0755 $(@D)/oled/oled_daemon.py \
 			$(TARGET_DIR)/opt/clock8002/oled/oled_daemon.py; \
+	fi
+	if [ -f $(@D)/oled/oled-daemon ]; then \
+		$(INSTALL) -D -m 0755 $(@D)/oled/oled-daemon \
+			$(TARGET_DIR)/opt/clock8002/oled/oled-daemon; \
 	fi
 	if [ -f $(@D)/oled/piclockLogo.bin ]; then \
 		$(INSTALL) -D -m 0644 $(@D)/oled/piclockLogo.bin \

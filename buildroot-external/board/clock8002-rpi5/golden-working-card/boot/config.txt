@@ -27,6 +27,7 @@ hdmi_force_hotplug=1
 
 # For Unicorn hd and ubercorn hats
 dtparam=spi=on
+dtparam=i2c_arm=on
 
 dtparam=audio=on
 arm_64bit=1

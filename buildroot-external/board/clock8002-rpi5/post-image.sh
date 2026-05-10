@@ -197,6 +197,15 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 			cp -f "${f}" "${BINARIES_DIR}/piclock/$(basename "${f}")"
 		done
 	fi
+
+	# Stage OLED assets to FAT root (logo + daemon binary).
+	OLED_SRC="${BUILD_DIR}/clock8002-prototype/oled"
+	if [ -f "${OLED_SRC}/piclockLogo.bin" ]; then
+		cp -f "${OLED_SRC}/piclockLogo.bin" "${BINARIES_DIR}/piclockLogo.bin"
+	fi
+	if [ -f "${OLED_SRC}/oled-daemon" ]; then
+		cp -f "${OLED_SRC}/oled-daemon" "${BINARIES_DIR}/oled-daemon"
+	fi
 	# Fix path comment in network.ini (v4 source references Trixie's
 	# /boot/firmware/piclock/; on Buildroot the FAT partition mounts at /boot).
 	if [ -f "${BINARIES_DIR}/piclock/network.ini" ]; then

@@ -25,10 +25,15 @@ _OLED_INI_CANDIDATES = [
 OLED_INI_PATH = next((p for p in _OLED_INI_CANDIDATES if os.path.exists(p)), _OLED_INI_CANDIDATES[0])
 _LOGO_CANDIDATES = [
     '/root/piclockLogo.bin',                              # Buildroot
+    '/boot/piclockLogo.bin',                              # Buildroot embedded-initramfs (FAT)
     os.path.expanduser('~/piclockLogo.bin'),               # Trixie / dev
 ]
 LOGO_PATH = next((p for p in _LOGO_CANDIDATES if os.path.exists(p)), _LOGO_CANDIDATES[0])
-SDL_CLOCK_PATH = '/opt/clock8002/sdl3-clock'
+_SDL_CLOCK_CANDIDATES = [
+    '/opt/clock8002/sdl3-clock',  # Buildroot squashfs
+    '/root/sdl-clock',            # Buildroot embedded-initramfs (FAT)
+]
+SDL_CLOCK_PATH = next((p for p in _SDL_CLOCK_CANDIDATES if os.path.exists(p)), _SDL_CLOCK_CANDIDATES[0])
 LOGO_SECONDS = 8
 
 # OLED hardware defaults
@@ -68,6 +73,7 @@ _signal.signal(_signal.SIGINT, _blank_and_exit)
 _FONT_CANDIDATES = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # Debian/Trixie
     "/opt/clock8002/DejaVuSans.ttf",                     # Buildroot (bundled)
+    "/boot/DejaVuSans.ttf",                              # Buildroot embedded-initramfs (FAT)
 ]
 _FONT_PATH = next((p for p in _FONT_CANDIDATES if os.path.exists(p)), None)
 
