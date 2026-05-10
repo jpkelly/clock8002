@@ -1,39 +1,36 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-10 - `piClock-3f1ce4c-sdcard.img` built with dirclean; ready to flash.
+Last updated: 2026-05-10 - `piClock-3f1ce4c-sdcard.img` flashed and confirmed fully working.
 
-## Current Checkpoint (2026-05-10 - 3f1ce4c image ready to flash)
+## Current Checkpoint (2026-05-10 - 3f1ce4c flashed and confirmed working)
 
 ### TL;DR
-- New image `piClock-3f1ce4c-sdcard.img` on Mac Desktop, ready for user to flash. ✅
-- Root cause of missing version on `113da10` image: incremental build skipped `clock8002-dirclean`, so oled-daemon was NOT rebuilt — old binary (pre-`a296051` regex fix) ended up on FAT.
-- Fix: build command now always runs `clock8002-dirclean` before `make`. PyInstaller ran confirmed in build log.
-- `3f1ce4c` documents this in `copilot-instructions.md`. The `a296051` regex fix (broaden gitTag pattern) is now baked in.
-- Mac SSH key (`jp@Sapporo.local`) baked in via `golden-working-card/piclock/authorized_keys`. ✅
-- Flash target: `/dev/disk6` (31.9 GB, user flashes manually).
+- `piClock-3f1ce4c-sdcard.img` flashed and all changes confirmed working. ✅
+- OLED splash: logo + version string `ram-root` confirmed appearing. ✅
+- Mac passwordless SSH confirmed working (`jp@Sapporo.local` key baked in). ✅
+- Root cause of previous missing version (on `113da10` image): incremental build skipped `clock8002-dirclean`, so stale oled-daemon (pre-`a296051` regex fix) ended up on FAT.
+- Fix baked in: build command now always runs `clock8002-dirclean` before `make`. Documented in `copilot-instructions.md`.
 
 ### Commit chain (HEAD → oldest)
-- `3f1ce4c` — copilot-instructions: document clock8002-dirclean requirement for root-ram builds (**HEAD**)
-- `113da10` — HANDOFF.md: OLED version confirmed; a296051 live-deployed
+- `a478096` — HANDOFF.md update (**HEAD**)
+- `3f1ce4c` — copilot-instructions: document clock8002-dirclean requirement for root-ram builds
+- `113da10` — HANDOFF.md update
 - `a296051` — oled_daemon: broaden gitTag regex to match non-semver tags
 - `5dd5c53` — oled, build scripts, authorized_keys: Mac key baked in + OLED version fix
 
-### Image info
-- File: `/Users/jp/Desktop/piClock-3f1ce4c-sdcard.img` (500MB)
-- Built: 2026-05-10 08:53 on cm5, `BR_BUILD_EXIT:0`
-- PyInstaller ran: confirmed (oled-daemon rebuilt from source with `a296051` regex)
-- Output dir: `/home/pi/output-root-ram-payload-20260509-165344`
-- cm5 worktree: `/home/pi/clock8002-root-ram` at `3f1ce4c`
+### Live device state
+- Image: `piClock-3f1ce4c-sdcard.img` (flashed 2026-05-10)
+- OLED: logo + `ram-root` version string confirmed ✅
+- Passwordless SSH from Mac: confirmed ✅
+- `/dev/i2c-1` present, `oled.ini`: `i2c_port=1`, `i2c_address=0x3c`, `rotation=2`
 
-### Flash command
-```
-diskutil unmountDisk /dev/disk6 && sudo dd if=/Users/jp/Desktop/piClock-3f1ce4c-sdcard.img of=/dev/rdisk6 bs=4m status=progress && diskutil eject /dev/disk6
-```
-
-### Expected post-flash state
-- OLED splash: logo + version string `ram-root` in lower right ✅ (if fix works as intended)
-- Passwordless SSH: `ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa root@piClock.local`
-- `/dev/i2c-1` present (dtparam=i2c_arm=on in config.txt)
+### Build infra
+- Output dir: `/home/pi/output-root-ram-payload-20260509-165344` on cm5
+- cm5 worktree: `/home/pi/clock8002-root-ram`
+- Standard build command (always use dirclean):
+  ```
+  screen -S br-build-<commit> -dm bash -lc "{ CLOCK8002_PREBUILT_KERNEL=1 make O=/home/pi/output-root-ram-payload-20260509-165344 BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external -C /home/pi/buildroot clock8002-dirclean && CLOCK8002_PREBUILT_KERNEL=1 make O=/home/pi/output-root-ram-payload-20260509-165344 BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external -C /home/pi/buildroot BR2_PICLOCKKEY=\"$(cat ~/.ssh/id_rsa.pub)\"; } > /tmp/br-build-<commit>.log 2>&1; echo BR_BUILD_EXIT:\$? > /tmp/br-build-<commit>.exit"
+  ```
 
 ### Flash workflow note
 - User flashes SD card manually. Copilot: transfer image to Desktop and provide `dd` command only — do not run `dd`.
