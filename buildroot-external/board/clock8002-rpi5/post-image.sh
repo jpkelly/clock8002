@@ -168,6 +168,17 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		FILES="${FILES}\t\t\t\"${KERNEL}\",\n"
 	fi
 
+	# Stage compressed initramfs for external loading by the Pi firmware.
+	# The prebuilt kernel Image may contain an embedded initramfs; the external
+	# one takes precedence and ensures TARGET_DIR changes (e.g. init scripts)
+	# are actually used at runtime.
+	if [ -f "${BINARIES_DIR}/rootfs.cpio" ]; then
+		gzip -c "${BINARIES_DIR}/rootfs.cpio" > "${BINARIES_DIR}/rootfs.cpio.gz"
+		CPIO_GZ_SIZE=$(stat -c %s "${BINARIES_DIR}/rootfs.cpio.gz" 2>/dev/null || stat -f %z "${BINARIES_DIR}/rootfs.cpio.gz")
+		echo "Staged rootfs.cpio.gz (${CPIO_GZ_SIZE} bytes)" >&2
+		FILES="${FILES}\t\t\t\"rootfs.cpio.gz\",\n"
+	fi
+
 	# Prepare piclock config files (injected via mtools after genimage).
 	mkdir -p "${BINARIES_DIR}/piclock"
 	CLOCK8002_SRC="${BUILD_DIR}/clock8002-prototype"
