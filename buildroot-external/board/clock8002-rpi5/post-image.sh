@@ -214,6 +214,18 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	if [ -f "${OLED_SRC}/oled-daemon" ]; then
 		cp -f "${OLED_SRC}/oled-daemon" "${BINARIES_DIR}/oled-daemon"
 	fi
+
+	# Convert bootsplash PNG to raw RGB565 for direct dd to /dev/fb0 at boot.
+	# The embedded initramfs has no fbv/fbi, so we write raw pixels from setup.sh.
+	SPLASH_PNG="${BUILD_DIR}/clock8002-prototype/splash/bootsplash.png"
+	if [ -f "${SPLASH_PNG}" ] && command -v ffmpeg >/dev/null 2>&1; then
+		ffmpeg -y -i "${SPLASH_PNG}" \
+			-f rawvideo -pix_fmt rgb565le \
+			"${BINARIES_DIR}/piclock/bootsplash.raw" \
+			>/dev/null 2>&1 && \
+			echo "Staged bootsplash.raw ($(stat -c %s "${BINARIES_DIR}/piclock/bootsplash.raw") bytes)" >&2 || \
+			echo "WARNING: bootsplash.raw conversion failed" >&2
+	fi
 	# Fix path comment in network.ini (v4 source references Trixie's
 	# /boot/firmware/piclock/; on Buildroot the FAT partition mounts at /boot).
 	if [ -f "${BINARIES_DIR}/piclock/network.ini" ]; then
