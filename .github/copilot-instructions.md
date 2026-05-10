@@ -83,6 +83,7 @@ Terminal reliability note (avoid VS Code zsh exit 128/255 during orchestration):
   - If the target branch is already attached elsewhere, operate in that existing worktree instead of forcing another checkout.
 - For long remote operations, always use unique session/log/exit files (for example `/tmp/<session>.log` and `/tmp/<session>.exit`) and provide explicit monitor + exit-check commands.
 - For diagnostic probes where failure is acceptable (missing files, no screen session, optional logs), guard commands with `|| true` so probes do not abort orchestration.
+- For remote status/probe commands that include regex, globs, or shell variables, do not use inline quoted `ssh "..."` one-liners. Use a heredoc (`ssh <host> 'sh' <<'REMOTE' ...`) or a checked-in helper script (for example `tools/buildroot/cm5-build-status.sh`) to avoid local zsh expansion/quoting breakage.
 
 Codebase orientation note:
 - Active code is in `v4/` only. `v3/` is historical — never edit it.
