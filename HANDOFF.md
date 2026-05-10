@@ -1,31 +1,150 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-10 - issue #44 authorized_keys: key auth proven working manually on live unit; root cause of build mismatch identified; fix must be committed before next build.
+Last updated: 2026-05-10 - `piClock-b5b8416-sdcard.img` ready to flash; OLED version fix + authorized_keys live fix complete.
 
-## Current Checkpoint (2026-05-10 - issue #44 authorized_keys: manual proof + build mismatch root cause)
+## Current Checkpoint (2026-05-10 - b5b8416 ready to flash; OLED version + SSH key fixes)
 
-### Diagnosis summary
-- After flashing `piClock-4e7b636-sdcard.img`, passwordless SSH still failed.
-- SSH daemon on this image is **Dropbear** (`/usr/sbin/dropbear -R`). No `/etc/ssh/sshd_config`. Dropbear uses `/root/.ssh/authorized_keys` by default — correct path, no sshd_config changes needed.
-- Live S03copy_clock_files on the unit was the **old unpatched version** (1654 bytes, Jan 14 timestamp). The authorized_keys import block never ran.
-- `/boot/piclock/authorized_keys` was present (570 bytes) but `/root/.ssh` directory did not exist.
+### TL;DR
+- `piClock-b5b8416-sdcard.img` is on the Desktop, verified. Device powered off. Ready to flash to `/dev/disk6`.
+- OLED version display fixed in source (`oled_daemon.py` `get_build_version()`) and baked into b5b8416 oled-daemon binary via PyInstaller in `clock8002.mk`.
+- Mac passwordless SSH fixed live on running device. **Not baked into b5b8416 image** — will need re-adding after flash (see below).
+- `golden-working-card/piclock/authorized_keys` in repo still has only cm5's key. Needs updating.
 
-### Root cause of build mismatch
-- The `br-build-root-ram-authkeys-20260509-214652` build created a fresh git clone on cm5. The S03copy_clock_files fix was **not committed** to git at the time, so the fresh clone contained the unpatched version and baked it into the squashfs.
-- The scp'd patched file had been placed in the `build-payload-rerun-*` clone, not the authkeys build clone.
+### Flash target
+- Image: `/Users/jp/Desktop/piClock-b5b8416-sdcard.img`
+- Disk: `/dev/disk6` (31.9 GB external, FAT `piClock` at `disk6s1`)
+- Flash command (run manually):
+  ```
+  diskutil unmountDisk /dev/disk6 && sudo dd if=/Users/jp/Desktop/piClock-b5b8416-sdcard.img of=/dev/rdisk6 bs=4m status=progress && diskutil eject /dev/disk6
+  ```
 
-### Manual proof — key auth works
-- Manually created `/root/.ssh/` (mode 700) and copied `/boot/piclock/authorized_keys` → `/root/.ssh/authorized_keys` (mode 600) on the live unit.
-- Confirmed: `ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_rsa root@192.168.8.245` returned `KEYAUTH_OK user=root` with `KEYAUTH_RC:0`.
-- The import block logic in S03copy_clock_files is correct; it simply never reached the squashfs.
+### What b5b8416 contains
+- All OLED assets on FAT: `oled-daemon` (17329928B), `piclockLogo.bin` (1024B), `DejaVuSans.ttf` (756072B)
+- `dtparam=i2c_arm=on` in `config.txt` → `/dev/i2c-1` available at boot
+- `setup.sh` on FAT runs at boot: installs authorized_keys, starts oled-daemon
+- `oled_daemon.py` `get_build_version()` fixed to use `SDL_CLOCK_PATH` (`/root/sdl-clock`) and Python byte-scan fallback — version should appear on OLED splash
+- authorized_keys on FAT contains **cm5's key only** (built with `BR2_PICLOCKKEY=$(cat ~/.ssh/id_rsa.pub)` on cm5)
 
-### Warning
-- The manual `/root/.ssh/authorized_keys` will be lost on reboot — `/root` is seeded fresh from the squashfs each boot. Must fix via a committed build.
+### Post-flash steps
+1. Flash image, boot device
+2. Verify `/boot/oled-daemon`, `/boot/piclockLogo.bin`, `/boot/DejaVuSans.ttf` present
+3. Verify `/dev/i2c-1` present; oled-daemon in process list
+4. Verify OLED shows splash with version number in lower right
+5. **Re-add Mac key** (password login required first):
+   ```sh
+   ssh root@192.168.8.245  # password: clockworkadmin
+   mount -o remount,rw /boot
+   echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDYCpnx51J6CmS3VhfPxE+xlnb5zu48Nh5+hOXiQYXxNUJVd8uCf4NP7RWYda+cC72kVvKhTKWfG8ZYD7pyoR97YpoJSU7RPzZDs2VFh/us5dBwFL42+rU58VZrx5arN5gMl0h2WmCJlNjKXI8b2CcOJVomhdYDDfzPFNrpovawmmzrgJgOShehLwIOlvGt0OwZBzl12ucpOslm88YNMlDTHgQ2TEpVSdeeCd9N+KW+hAT48bKjeg3vrEbXUDaCpkeXsMARTBtIq+LYTYKXwDedLDMJkqsR6oaKFtHe76R9RP/ZCB+9nBKWv/NtCFNZ2daa8XOXgiuLWCzK5JD90Xohi2ObLEL98sAVX0ra55UMxq73Baspzjdgy0lsCwqSjKQqwD2AY38Oz9uXk0jZve2ugrAYvCJfkFsFe6KfYKhxWGlG8ebSbmKm4001l1lJwvY/k7UFo74mCHLuEDNENm43jdznbK81EDBpaxN1+y47gLgunWtry0vc6M9uurpOhKM= jp@Sapporo.local' >> /boot/piclock/authorized_keys
+   echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDYCpnx51J6CmS3VhfPxE+xlnb5zu48Nh5+hOXiQYXxNUJVd8uCf4NP7RWYda+cC72kVvKhTKWfG8ZYD7pyoR97YpoJSU7RPzZDs2VFh/us5dBwFL42+rU58VZrx5arN5gMl0h2WmCJlNjKXI8b2CcOJVomhdYDDfzPFNrpovawmmzrgJgOShehLwIOlvGt0OwZBzl12ucpOslm88YNMlDTHgQ2TEpVSdeeCd9N+KW+hAT48bKjeg3vrEbXUDaCpkeXsMARTBtIq+LYTYKXwDedLDMJkqsR6oaKFtHe76R9RP/ZCB+9nBKWv/NtCFNZ2daa8XOXgiuLWCzK5JD90Xohi2ObLEL98sAVX0ra55UMxq73Baspzjdgy0lsCwqSjKQqwD2AY38Oz9uXk0jZve2ugrAYvCJfkFsFe6KfYKhxWGlG8ebSbmKm4001l1lJwvY/k7UFo74mCHLuEDNENm43jdznbK81EDBpaxN1+y47gLgunWtry0vc6M9uurpOhKM= jp@Sapporo.local' >> /root/.ssh/authorized_keys
+   ```
+6. **Persist Mac key in repo**: update `buildroot-external/board/clock8002-rpi5/golden-working-card/piclock/authorized_keys` to include Mac key so future builds don't require the live fix
 
-### Next required steps
-1. **Commit** `buildroot-external/board/clock8002-rpi5/golden-working-card/etc/init.d/S03copy_clock_files` (with authorized_keys import block) on branch `feature/root-ram`.
-2. Run a fresh incremental build from the committed source on cm5.
-3. Flash the resulting image and verify passwordless SSH via `/boot/piclock/authorized_keys` survives reboot.
+### Known remaining work (not yet done)
+- `golden-working-card/piclock/authorized_keys` still cm5-only → future builds still need live Mac key fix
+- Version display unconfirmed on hardware (needs post-flash boot test)
+
+### Build infra
+- Output dir: `/home/pi/output-root-ram-payload-20260509-165344` on cm5
+- BR2_EXTERNAL clone: `/tmp/clock8002-build-initramfs-20260510` (at `b5b8416`)
+- .config patched: `BR2_PACKAGE_CLOCK8002_SOURCE_DIR` and `BR2_EXTERNAL_CLOCK8002_PATH` point to initramfs clone
+
+---
+
+## Previous Checkpoint (2026-05-10 - OLED asset staging fix + b5b8416 image)
+
+### TL;DR
+- Root cause of blank OLED on `8f6ac6c` image: `oled-daemon` and `piclockLogo.bin` were staged to `BINARIES_DIR` by `post-image.sh` but had no `mcopy` calls to inject them into the FAT. `DejaVuSans.ttf` was not staged at all.
+- All three issues fixed in `b5b8416`. Build succeeded. FAT verified. Image on Desktop.
+
+### Commit chain
+- `3985557` — oled-daemon: build PyInstaller binary, ship on FAT, enable i2c_arm
+- `8f6ac6c` — post-image.sh: inject BR2_PICLOCKKEY into piclock/authorized_keys on FAT
+- `b5b8416` — post-image.sh: fix OLED asset staging to FAT (**HEAD**)
+
+### What was fixed in b5b8416
+- `BOOT_RUNTIME_FILES` now includes `DejaVuSans.ttf` — staged from `golden-working-card/root/` and mcopy'd to FAT root via existing loop.
+- New `mcopy` loop after BOOT_RUNTIME_FILES loop injects `oled-daemon` and `piclockLogo.bin` to FAT root:
+  ```sh
+  for oled_asset in oled-daemon piclockLogo.bin; do
+      [ -f "${BINARIES_DIR}/${oled_asset}" ] || continue
+      MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
+          "${BINARIES_DIR}/${oled_asset}" ::
+  done
+  ```
+
+### Build and artifact status
+- Build: `BR_BUILD_EXIT:0` for `b5b8416` (dirclean rebuild)
+- Output dir: `/home/pi/output-root-ram-payload-20260509-165344` on cm5
+- BR2_EXTERNAL clone: `/tmp/clock8002-build-initramfs-20260510`
+- FAT verified via `mdir`:
+  - `oled-daemon` — 17329928 bytes
+  - `piclockLogo.bin` — 1024 bytes
+  - `DejaVuSans.ttf` — 756072 bytes
+- Local image: `/Users/jp/Desktop/piClock-b5b8416-sdcard.img`
+- Flash target: `/dev/disk6` — user flashing manually
+
+### OLED daemon known-good test result (on 8f6ac6c image before flash)
+- After manual deploy of built binary to live device (`dd` over SSH stdin):
+  - `modprobe i2c-dev` creates `/dev/i2c-1` (from `dtparam=i2c_arm=on` in config.txt)
+  - `oled-daemon` with `i2c_port=1` and logo at `/boot/piclockLogo.bin` runs cleanly: `EXIT:0`, no tracebacks
+  - OLED daemon binary is confirmed functional on the hardware
+- Note: on the 8f6ac6c image the daemon only ran after manual file deploy; b5b8416 image has all assets on FAT from build time.
+
+### setup.sh / authorized_keys mechanism status
+- `setup.sh` is on FAT at `/boot/piclock/setup.sh`, confirmed present on device
+- `clock_pokemon.sh` delegates to `setup.sh` if present (committed `e2fde39`)
+- `BR2_PICLOCKKEY` at build time = cm5's `~/.ssh/id_rsa.pub` (injected into `piclock/authorized_keys` on FAT)
+- Mac's SSH key is **not** in `authorized_keys` — password login required from Mac until Mac key is added to FAT's `authorized_keys`
+
+### Stale .config path risk (known issue)
+- After `clock8002-dirclean`, Buildroot tried to rsync from the old deleted clone path.
+- Root cause: `BR2_PACKAGE_CLOCK8002_SOURCE_DIR` and `BR2_EXTERNAL_CLOCK8002_PATH` in the output dir's `.config` were hardcoded to `/tmp/clock8002-build-payload-rerun-20260509-184110`.
+- Fix applied: `sed -i` on cm5 to point both to `/tmp/clock8002-build-initramfs-20260510`.
+- Risk: this will recur if the output dir is reused after the source clone path changes. Always patch `.config` or use explicit `BR2_EXTERNAL=` override.
+
+### Next steps
+1. Boot b5b8416 image, confirm:
+   - `/boot/oled-daemon`, `/boot/piclockLogo.bin`, `/boot/DejaVuSans.ttf` present
+   - `/dev/i2c-1` present after boot (dtparam takes effect)
+   - `oled-daemon` running in process list (started by `setup.sh`)
+   - OLED display shows splash/info screen
+2. Add Mac's public key to `/boot/piclock/authorized_keys` on FAT if passwordless SSH from Mac is required
+3. Update HANDOFF.md after successful boot verification
+
+
+
+## Current Checkpoint (2026-05-10 - issue #44 authorized_keys: definitive root cause)
+
+### Definitive root cause — kernel-embedded initramfs
+
+- `feature/root-ram` builds use `CLOCK8002_PREBUILT_KERNEL=1`. The prebuilt kernel has an **old initramfs baked into it** predating the authorized_keys commits.
+- The sdcard.img produced by these builds has a **single FAT32 partition** only — no squashfs, no separate rootfs partition.
+- `rootfs.cpio.gz` in the output `images/` dir is generated fresh each build (with the correct S03copy_clock_files), but `initramfs rootfs.cpio.gz followkernel` is **commented out** in config.txt.
+- The external cpio is therefore **never loaded**. The device boots from the kernel-embedded initramfs — the old version without the authorized_keys block.
+- All incremental rebuilds, target-dir patches, and squashfs stamp clears were irrelevant — they never changed what the device boots.
+
+### What IS correct
+- Both source files have the authorized_keys block committed (`bba6bc0`, `8ad295e`).
+- The cm5 target/ has the correct block. post-build.sh ran. rootfs.cpio.gz was regenerated.
+- Manual key auth works (confirmed on live unit): placing `/boot/piclock/authorized_keys` on the FAT partition and manually copying it to `/root/.ssh/authorized_keys` (mode 700/600) produces passwordless SSH via Dropbear.
+- LTC is working on `cf519f7` image: `alsa-ltc plughw:2,0` is running, card 2 is present, no bandwidth errors.
+
+### Rejected approaches
+- Re-enabling `initramfs rootfs.cpio.gz followkernel` in config.txt: previously caused USB audio bandwidth failure at ~30s (`Not enough bandwidth for altsetting 0`). **Rejected.**
+- Full kernel rebuild (drop `CLOCK8002_PREBUILT_KERNEL=1`): **Rejected.**
+
+### Proposed path forward (pending user approval)
+- Add the authorized_keys install block to a **FAT-resident runtime script** (e.g. `golden-working-card/clock_pokemon.sh` or `alsa-ltc_pokemon.sh`).
+- These scripts are copied from the FAT partition by the kernel-embedded init at boot, then executed as root. `/boot/piclock/` is accessible at that point.
+- Only `boot.vfat` changes — no kernel rebuild required.
+- Status: **proposed, not yet approved.**
+
+### Device state at session end
+- Unit: `root@192.168.8.245` (hostname `sdl-clock`), running `piClock-cf519f7-authkeys-sdcard.img`
+- Flashed image on Desktop: `/Users/jp/Desktop/piClock-cf519f7-authkeys-sdcard.img`
+- SD card: `/dev/disk6`
+- LTC running, USB audio card present, clock and clock-bridge running
+- `/root/.ssh/` does NOT exist on fresh boot — passwordless SSH requires password
 
 ## Hard Rule (2026-05-09 - payload kernel + modules mandatory for test validation)
 
