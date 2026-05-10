@@ -198,6 +198,13 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		done
 	fi
 
+	# Inject dev SSH key into piclock/ if BR2_PICLOCKKEY is set at build time.
+	# Leave unset for production/release builds — no key is baked in.
+	if [ -n "${BR2_PICLOCKKEY:-}" ]; then
+		echo "${BR2_PICLOCKKEY}" > "${BINARIES_DIR}/piclock/authorized_keys"
+		chmod 600 "${BINARIES_DIR}/piclock/authorized_keys"
+	fi
+
 	# Stage OLED assets to FAT root (logo + daemon binary).
 	OLED_SRC="${BUILD_DIR}/clock8002-prototype/oled"
 	if [ -f "${OLED_SRC}/piclockLogo.bin" ]; then
@@ -238,13 +245,9 @@ genimage \
 BOOT_IMG="${BINARIES_DIR}/boot.vfat"
 if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 	MTOOLS_SKIP_CHECK=1 mmd -i "${BOOT_IMG}" ::piclock 2>/dev/null || true
-	for ini in "${BINARIES_DIR}"/piclock/*.ini; do
-		[ -f "${ini}" ] || continue
-		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${ini}" ::piclock/
-	done
-	for sh in "${BINARIES_DIR}"/piclock/*.sh; do
-		[ -f "${sh}" ] || continue
-		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${sh}" ::piclock/
+	for f in "${BINARIES_DIR}"/piclock/*; do
+		[ -f "${f}" ] || continue
+		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${f}" ::piclock/
 	done
 	for staged in "${BOOT_SOURCE_DIR}"/*; do
 		[ -f "${staged}" ] || continue
