@@ -1,6 +1,6 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-09 - payload incremental build in progress (feature/root-ram, payload-only policy).
+Last updated: 2026-05-09 - future builds now exclude legacy /boot/clock.ini.
 
 ## Hard Rule (2026-05-09 - payload kernel + modules mandatory for test validation)
 
@@ -10,6 +10,27 @@ Last updated: 2026-05-09 - payload incremental build in progress (feature/root-r
 - Exception policy: only bypass this rule if the user explicitly overrides it in that session.
 - Wrapper policy update: `buildroot-external/scripts/build-with-kernel-fallback.sh` is now payload-only (legacy filename retained for compatibility).
 - Historical Mode A / Mode B notes below are archival context and are superseded by this hard rule.
+
+## Current Checkpoint (2026-05-09 - remove legacy /boot/clock.ini from future images)
+
+### Decision
+- To avoid user confusion from dual config files, legacy `/boot/clock.ini` must not be shipped in new images.
+- Intended single boot-partition config path remains `/boot/piclock/clock.ini`.
+
+### Implemented changes (feature/root-ram)
+- `buildroot-external/board/clock8002-rpi5/post-image.sh` now excludes `clock.ini` in both `BOOT_SOURCE_DIR` copy loops.
+- `buildroot-external/board/clock8002-rpi5/golden-working-card/boot/clock.ini` was removed so it cannot be staged into future artifacts.
+
+### Runtime context from live target
+- Live probe on `192.168.8.245` showed current booted card running `/root/sdl-clock -C /boot/clock.ini`.
+- Cause: `/boot/clock_cmd.sh` override path on that flashed unit.
+- Scope: this fix affects future builds/images only; already-flashed cards keep their existing boot partition files.
+
+### Build state at capture
+- Branch: `feature/root-ram`
+- Active payload build session: `br-build-root-ram-payload-20260509-165344`
+- Remote state: `RUNNING`, elapsed `5291s`, last package stamp `nano-8.2/.stamp_patched`
+- Strict kernel compile marker scan: empty in sampled window.
 
 ## Current Checkpoint (2026-05-09 - payload incremental build in progress)
 

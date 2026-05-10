@@ -42,7 +42,7 @@ fi
 for staged in "${BOOT_SOURCE_DIR}"/*; do
 	[ -f "${staged}" ] || continue
 	case "$(basename "${staged}")" in
-		config.txt|cmdline.txt)
+		config.txt|cmdline.txt|clock.ini)
 			continue
 			;;
 	esac
@@ -218,7 +218,7 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 	for staged in "${BOOT_SOURCE_DIR}"/*; do
 		[ -f "${staged}" ] || continue
 		case "$(basename "${staged}")" in
-			config.txt|cmdline.txt)
+			config.txt|cmdline.txt|clock.ini)
 				continue
 				;;
 		esac
