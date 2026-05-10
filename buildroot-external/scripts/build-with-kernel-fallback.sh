@@ -113,7 +113,12 @@ if [ "${RC_SRC}" -ne 0 ]; then
         exit "${RC_SRC}"
 fi
 
-LINUX_DIR="$(find "${OUTPUT_DIR}/build" -maxdepth 1 -type d -name 'linux*' 2>/dev/null | head -n 1)"
+LINUX_DIR=""
+if [ -d "${OUTPUT_DIR}/build/linux-custom" ]; then
+        LINUX_DIR="${OUTPUT_DIR}/build/linux-custom"
+else
+        LINUX_DIR="$(find "${OUTPUT_DIR}/build" -maxdepth 1 -type d -name 'linux*' 2>/dev/null | head -n 1)"
+fi
 if [ -z "${LINUX_DIR}" ]; then
         echo "PAYLOAD_STATUS:no_linux_build_dir"
         echo "PAYLOAD_OUTPUT_DIR:${OUTPUT_DIR}"
@@ -124,6 +129,8 @@ for stamp in \
         .stamp_downloaded \
         .stamp_extracted \
         .stamp_patched \
+        .stamp_dotconfig \
+        .stamp_kconfig_fixup_done \
         .stamp_configured \
         .stamp_built \
         .stamp_staging_installed \

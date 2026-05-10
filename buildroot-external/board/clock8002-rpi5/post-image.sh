@@ -190,18 +190,19 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		DST="${pair##*:}"
 		[ -f "${SRC}" ] && cp -f "${SRC}" "${BINARIES_DIR}/piclock/${DST}"
 	done
-	# Stage board-provided piclock scripts (e.g. setup.sh).
+	# Stage board-provided piclock files (setup.sh, authorized_keys, etc.).
 	if [ -d "${GOLDEN_DIR}/piclock" ]; then
-		for f in "${GOLDEN_DIR}/piclock"/*.sh; do
+		for f in "${GOLDEN_DIR}/piclock"/*; do
 			[ -f "${f}" ] || continue
 			cp -f "${f}" "${BINARIES_DIR}/piclock/$(basename "${f}")"
 		done
 	fi
 
-	# Inject dev SSH key into piclock/ if BR2_PICLOCKKEY is set at build time.
-	# Leave unset for production/release builds — no key is baked in.
+	# Append extra dev SSH key into piclock/ if BR2_PICLOCKKEY is set at build time.
+	# Leave unset for production/release builds. Appends so golden authorized_keys
+	# (containing jp@Sapporo.local) is preserved.
 	if [ -n "${BR2_PICLOCKKEY:-}" ]; then
-		echo "${BR2_PICLOCKKEY}" > "${BINARIES_DIR}/piclock/authorized_keys"
+		echo "${BR2_PICLOCKKEY}" >> "${BINARIES_DIR}/piclock/authorized_keys"
 		chmod 600 "${BINARIES_DIR}/piclock/authorized_keys"
 	fi
 

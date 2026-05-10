@@ -175,38 +175,49 @@ def flush_logo_buffer(buf):
 
 
 def get_build_version():
-    # Primary source: parse embedded build ldflags from the binary itself.
-    # Use grep -m1 so command exits quickly after first match.
-    try:
-        out = subprocess.check_output(
-            [
-                'sh',
-                '-c',
-                r"strings /opt/clock8002/sdl3-clock | grep -m1 -oE 'clock\.gitTag=v[0-9]+\.[0-9]+\.[0-9]+'"
-            ],
-            stderr=subprocess.STDOUT,
-            timeout=1.0,
-        )
-        text = out.decode(errors='ignore').strip()
-        match = re.search(r'clock\.gitTag=(v[0-9]+\.\d+\.\d+)', text)
-        if match:
-            return match.group(1)
-    except Exception:
-        pass
+    # Scan the clock binary for the embedded build ldflag version string.
+    # Try subprocess (strings + grep) first; fall back to direct Python byte
+    # scan so this works on BusyBox where 'strings' or 'grep -oE' may be absent.
+    for binary_path in (SDL_CLOCK_PATH, '/opt/clock8002/sdl3-clock'):
+        if not os.path.exists(binary_path):
+            continue
+        try:
+            out = subprocess.check_output(
+                ['sh', '-c',
+                 r"strings " + binary_path +
+                 r" | grep -m1 'clock\.gitTag=v'"],
+                stderr=subprocess.STDOUT,
+                timeout=2.0,
+            )
+            text = out.decode(errors='ignore').strip()
+            match = re.search(r'clock\.gitTag=(v[0-9]+\.[0-9]+\.[0-9]+)', text)
+            if match:
+                return match.group(1)
+        except Exception:
+            pass
+        # Python fallback: scan binary bytes directly (no external tools needed).
+        try:
+            with open(binary_path, 'rb') as f:
+                data = f.read()
+            match = re.search(rb'clock\.gitTag=(v[0-9]+\.[0-9]+\.[0-9]+)', data)
+            if match:
+                return match.group(1).decode('ascii')
+        except Exception:
+            pass
+        break  # only attempt the first existing path
 
-    # Fallback for builds that support --version directly.
+    # Last resort: --version flag.
     try:
-        out = subprocess.check_output([SDL_CLOCK_PATH, '--version'], stderr=subprocess.STDOUT, timeout=1.5)
+        out = subprocess.check_output([SDL_CLOCK_PATH, '--version'],
+                                      stderr=subprocess.STDOUT, timeout=1.5)
         text = out.decode(errors='ignore').strip()
+        match = re.search(r'v[0-9]+\.[0-9]+\.[0-9]+', text)
+        if match:
+            return match.group(0)
+        first_line = text.splitlines()[0] if text else ''
+        return first_line[:18]
     except Exception:
         return ''
-
-    match = re.search(r'v[0-9]+\.\d+\.\d+', text)
-    if match:
-        return match.group(0)
-
-    first_line = text.splitlines()[0] if text else ''
-    return first_line[:18]
 
 
 def parse_ini_settings():
