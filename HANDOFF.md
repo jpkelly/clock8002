@@ -1,17 +1,19 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-10 - `piClock-2b9e641-sdcard.img` flashed; bootsplash via raw fb0 dd under test.
+Last updated: 2026-05-13 - `piClock-2b9e641-sdcard.img` confirmed working; bootsplash functional with known cosmetic issue.
 
-## Current Checkpoint (2026-05-10 - 2b9e641 flashed; bootsplash fb0 implementation)
+## Current Checkpoint (2026-05-13 - 2b9e641 confirmed; bootsplash working)
 
 ### TL;DR
-- `piClock-2b9e641-sdcard.img` flashed 2026-05-10. Boot splash under test.
-- **Bootsplash**: implemented via raw RGB565 `dd` to `/dev/fb0` from `setup.sh`. No `fbv`/`fbi` needed — works within embedded initramfs constraint.
-- **piclock.ini**: new FAT config file at `/boot/piclock/piclock.ini`; controls feature toggles. Default: `splash_enabled=true`.
-- Build: `bootsplash.raw` (RGB565, 1920×1080) generated at build time via `ffmpeg` and staged to FAT `piclock/`.
-- `setup.sh`: reads `piclock.ini`; if `splash_enabled=true` and `bootsplash.raw` exists, `dd`s it to `/dev/fb0`.
-- Root cause of previous splash attempts failing: embedded initramfs (not our Buildroot rootfs.cpio) is what actually boots — `S05bootsplash` and `/opt/clock8002/` from cpio were never reachable.
-- Splash timing: appears when `S99clock` runs (after networking etc.), before SDL3 clock starts.
+- `piClock-2b9e641-sdcard.img` flashed 2026-05-10, confirmed working. ✅
+- **Bootsplash**: CONFIRMED WORKING via raw RGB565 `dd` to `/dev/fb0` from `setup.sh`. ✅
+- **Known issue**: init script console text overwrites splash before SDL3 clock takes over. Deferred — not blocking.
+  - Best fix when ready: move `dd` write to just before clock loop in `clock_pokemon.sh` so it fires after init text settles.
+  - Alternative: redirect console off display (`console=ttyAMA0` in `cmdline.txt`).
+- **piclock.ini**: FAT config file at `/boot/piclock/piclock.ini`; toggle `splash_enabled=true|false`.
+- Build: `bootsplash.raw` (RGB565, 1920×1080) generated at build time via `ffmpeg`, staged to `piclock/` on FAT.
+- Root cause of previous splash attempts failing: embedded initramfs (not our Buildroot rootfs.cpio) boots — `S05bootsplash` and `/opt/clock8002/` from cpio are unreachable.
+- No code changes since 2026-05-10. Holding on splash cosmetic fix.
 
 ### Commit chain (HEAD → oldest)
 - `2b9e641` — bootsplash: implement via raw fb0 dd from setup.sh (**HEAD**)
