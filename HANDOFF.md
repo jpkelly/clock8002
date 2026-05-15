@@ -1,8 +1,51 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-14 - alsa-ltc root cause determined; two paths to kernel builds documented.
+Last updated: 2026-05-14 - Option B implemented; full rebuild in progress on cm5.
 
-## Current Checkpoint (2026-05-14 - alsa-ltc root cause determined)
+## Current Checkpoint (2026-05-14 - Option B: mdev blacklist + external initramfs)
+
+### TL;DR
+- **Option B implemented** in commit `744a7a6` — re-enables external initramfs while fixing mdev timing.
+- Full `make clean && make` rebuild running on cm5 (screen `br-full-744a7a6`). Image not yet transferred.
+- Goal: alsa-ltc works reliably AND all overlay/feature changes now take effect normally on each build.
+
+### What changed (commit `744a7a6`)
+- **New**: `rootfs-overlay/etc/modprobe.d/snd-usb-audio.conf`
+  - `blacklist snd_usb_audio` — prevents mdev from auto-loading via `$MODALIAS` at ~1.5s
+  - Explicit `modprobe snd_usb_audio` in `alsa-ltc_pokemon.sh` still works (blacklist only blocks alias-based loading)
+- **Changed**: `config.txt` — `initramfs rootfs.cpio.gz followkernel` uncommented
+  - Our Buildroot rootfs.cpio.gz now actually loads at boot (was commented out, blocking all overlay changes)
+
+### Why this matters for feature development
+- With `initramfs rootfs.cpio.gz followkernel` previously commented out, **no overlay changes ever reached the running system** — only FAT-resident files via `setup.sh` could change behaviour
+- Option B restores the standard Buildroot workflow: edit overlay → `make` → flash → test
+- Both prebuilt-kernel path (`CLOCK8002_PREBUILT_KERNEL=1`) and future compiled-kernel path inherit the fix automatically
+
+### Build in progress
+- Screen session: `br-full-744a7a6` on cm5
+- Command: `make clean && make` (full rebuild, no shortcuts)
+- Log: `/tmp/br-full-744a7a6.log`
+- Exit file: `/tmp/br-full-744a7a6.exit`
+- Started: ~17:04 UTC 2026-05-14; expect 30-60 min
+- Monitor: `ssh pi@10.0.0.101 'tail -f /tmp/br-full-744a7a6.log'`
+- Check done: `ssh pi@10.0.0.101 'cat /tmp/br-full-744a7a6.exit'`
+
+### Post-build steps (once `BR_BUILD_EXIT:0`)
+1. Transfer image: `scp pi@10.0.0.101:/home/pi/output-root-ram-payload-20260509-165344/images/sdcard.img /Users/jp/Desktop/piClock-744a7a6-sdcard.img`
+2. Verify config.txt in image has `initramfs rootfs.cpio.gz followkernel` (not commented)
+3. Flash to `/dev/disk6` (verify disk number first: `diskutil list external physical`)
+4. Boot and confirm:
+   - alsa-ltc running past 30s without bandwidth errors (`dmesg | grep -i "bandwidth\|alsa\|usb"`)
+   - `ps | grep alsa` shows `/root/alsa-ltc plughw:2,0` running
+   - Clock and OLED working as before
+
+### Device / build state
+- Live image: `piClock-2b9e641-sdcard.img` — still on device, unchanged
+- HEAD: `744a7a6` on `feature/root-ram`
+- cm5 worktree: `/home/pi/clock8002-root-ram` at `744a7a6`
+- Output dir: `/home/pi/output-root-ram-payload-20260509-165344`
+
+## Previous Checkpoint (2026-05-14 - alsa-ltc root cause determined)
 
 ### TL;DR
 - Root cause of alsa-ltc reliability failure on Buildroot-built kernels: **identified**.
