@@ -1,6 +1,50 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-13 - `piClock-2b9e641-sdcard.img` confirmed working; bootsplash functional with known cosmetic issue.
+Last updated: 2026-05-14 - alsa-ltc root cause determined; two paths to kernel builds documented.
+
+## Current Checkpoint (2026-05-14 - alsa-ltc root cause determined)
+
+### TL;DR
+- Root cause of alsa-ltc reliability failure on Buildroot-built kernels: **identified**.
+- Current image (`piClock-2b9e641`) continues to work — no code changes this session.
+- Two concrete options documented to enable building the kernel ourselves.
+
+### Root cause: mdev `$MODALIAS` timing in Buildroot 2025.11 rootfs
+
+The prebuilt kernel (`bundle-245-6.12.41-v8-20260509-161234`, 73,177,600 bytes) has an **embedded initramfs** baked in, compiled by Buildroot 2021.11 on January 14, 2026. That embedded rootfs has an old `mdev.conf` that does **not** auto-load USB modules via `$MODALIAS`. Result: `snd_usb_audio` only loads at ~17s via the explicit `modprobe` in `alsa-ltc_pokemon.sh`, well after the USB host controller is settled.
+
+Our Buildroot 2025.11 `mdev.conf` **does** have `$MODALIAS` auto-load rules. So:
+- **With `initramfs rootfs.cpio.gz followkernel` re-enabled**: Pi firmware appends our fresh rootfs on top of the embedded one. mdev immediately loads `snd_usb_audio` at ~1.5s (USB device enumeration). This causes `Not enough bandwidth for altsetting 0` at ~30s when alsa-ltc opens the device. **This is why re-enabling external initramfs broke alsa-ltc.**
+- **With a freshly-built Buildroot kernel (no embedded initramfs, external cpio)**: Same mdev timing problem — snd_usb_audio loads too early via `$MODALIAS`.
+
+### Golden system facts (for reference)
+- Host: `root@10.0.0.162`, hostname `sdl-clock`
+- Kernel: `Linux sdl-clock 6.12.41-v8 #3 SMP PREEMPT Wed Jan 14 11:49:24 UTC 2026 aarch64`
+- Compiler: `aarch64-linux-gcc.br_real (Buildroot 2021.11-18033-g83947c7bb6) 14.3.0`
+- Image size: 73,177,600 bytes — identical to prebuilt bundle Image
+- alsa-ltc running clean: `/root/alsa-ltc plughw:2,0 255.255.255.255 1245`
+- ALSA cards: 0=vc4-hdmi-0, 1=vc4-hdmi-1, 2=USB Audio Device (C-Media 0d8c:0014)
+- No `/proc/config.gz` on golden (no IKCONFIG_PROC)
+
+### Paths to building the kernel ourselves
+
+**Option A — Embed rootfs in new kernel (`CONFIG_INITRAMFS_SOURCE`)**
+- Enable `BR2_LINUX_KERNEL=y` in defconfig; set `CONFIG_INITRAMFS_SOURCE` in `linux.config` to the Buildroot target dir.
+- Buildroot bakes the rootfs into the kernel Image at build time.
+- mdev sees the same old-style rootfs it does today — no timing regression.
+- Requires full kernel build (slow; not yet tested).
+
+**Option B — Fix mdev timing in external initramfs** _(lower risk, no kernel rebuild)_
+- Add a custom mdev.conf fragment to `buildroot-external/board/clock8002-rpi5/rootfs-overlay/etc/mdev.conf` that **blocks** `$MODALIAS` auto-load for `snd_usb_audio` and related sound modules.
+- Re-enable `initramfs rootfs.cpio.gz followkernel` in `config.txt`.
+- `snd_usb_audio` then only loads via the explicit `modprobe` in `alsa-ltc_pokemon.sh` at the correct time.
+- Works with both the prebuilt kernel and a freshly-built one.
+- **Pending user approval before implementing.**
+
+### Device / build state
+- Live image: `piClock-2b9e641-sdcard.img` — unchanged, working
+- HEAD: `2b9e641` on `feature/root-ram`
+- No new commits this session
 
 ## Current Checkpoint (2026-05-13 - 2b9e641 confirmed; bootsplash working)
 
