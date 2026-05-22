@@ -40,6 +40,13 @@ Target build session baseline: br-root-ram-20260522-090437
     - Wi-Fi AP using `wpa_supplicant` (+ `dnsmasq` when available)
   - `v4/network.ini.default` updated to document `dual` mode and `ap_country`.
 
+- [x] Issue 44 follow-up: enable UART1 so Perfect Cue path `/dev/ttyAMA1` is available by default.
+  - Added `dtoverlay=uart1` to Buildroot firmware config source:
+    - `buildroot-external/board/clock8002-rpi5/config.txt`
+  - Added `dtoverlay=uart1` to golden working-card boot config:
+    - `buildroot-external/board/clock8002-rpi5/golden-working-card/boot/config.txt`
+  - Commit pushed: `59aa59a` (`buildroot: enable uart1 in boot configs`).
+
 ## Build/Test Queue (Incremental)
 
 - [ ] Build image with only the currently queued changes.
@@ -51,4 +58,7 @@ Target build session baseline: br-root-ram-20260522-090437
   - [ ] `static` mode: eth0 uses configured static address.
   - [ ] `dual` mode: eth0 gets DHCP and eth0:1 gets static alias.
 - [ ] Validate Wi-Fi AP options from network.ini (`ap_enabled`, `ap_ssid`, `ap_password`, `ap_channel`, `ap_country`).
+- [ ] Validate UART1/Perfect Cue path on flashed image:
+  - [ ] `/dev/ttyAMA1` exists after boot.
+  - [ ] `cue-serial=/dev/ttyAMA1` receives cue input as expected.
 - [ ] Record outcomes on Issue #44 and in HANDOFF.
