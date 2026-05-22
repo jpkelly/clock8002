@@ -1,42 +1,36 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-22 - Build A committed/pushed; incremental build running on cm5.
+Last updated: 2026-05-22 - Build A clean non-prebuilt build running on cm5 after host-python reset.
 
-## Current Checkpoint (2026-05-22 - Build A commit complete; build in progress)
+## Current Checkpoint (2026-05-22 - Clean non-prebuilt Build A in progress)
 
 ### TL;DR
-- User requested risk reduction: split changes into **Build A** (power button + machine-id + UART1) and defer network behavior changes.
-- Build A branch: `feature/root-ram-build-a`.
-- Build A commit: `6a00788` (`build-a: power button, machine-id path, and uart1 enable`) pushed to `origin/feature/root-ram-build-a`.
-- Runtime changes included in Build A commit:
-  - `buildroot-external/board/clock8002-rpi5/golden-working-card/etc/init.d/S04power-button` (new)
-  - `buildroot-external/board/clock8002-rpi5/golden-working-card/root/power-button.sh` (new)
-  - `buildroot-external/board/clock8002-rpi5/rootfs-overlay/etc/init.d/S12machine-id` (`/boot/.piclock-machine-id`)
-  - `buildroot-external/board/clock8002-rpi5/post-build.sh` power-button wiring only (no network behavior hunks)
-  - `buildroot-external/board/clock8002-rpi5/config.txt` add `dtoverlay=uart1`
-  - `buildroot-external/board/clock8002-rpi5/golden-working-card/boot/config.txt` add `dtoverlay=uart1`
-- OpenSSH sanity check completed:
-  - `buildroot-external/configs/clock8002_rpi5_defconfig.sample` enables OpenSSH server.
-  - cm5 `~/buildroot/.config` shows OpenSSH enabled and Dropbear disabled.
+- Build branch/source: `feature/root-ram-build-a`, source clone `/tmp/clock8002-build-a-6a00788` (base commit `6a00788`).
+- Build mode is explicit non-prebuilt kernel: `CLOCK8002_PREBUILT_KERNEL=0`.
+- Full clean rebuild was started to break recurring stale host-python package failures in reused output trees.
+- Active session: `br-build-a-6a00788-clean1`.
+- Output tree: `/home/pi/output-root-ram-goldencopy-20260509-000403`.
+- Current log stage: glibc build (`>>> glibc ... Building`), no new error marker in latest sampled window.
+- Build A runtime scope remains: power-button handler, machine-id persistence path move, UART1 enablement.
+- ALSA/LTC timing path included: external initramfs enabled, `snd_usb_audio` blacklisted for modalias autoload, explicit later `modprobe snd_usb_audio` retained.
 
 ### Build / image status
-- Latest previously flashed image was still from commit `337aa9c`; missing Build A fixes, which triggered this rebuild.
-- Active Build A session on cm5: `br-build-a-6a00788-r2`.
-- Build clone: `/tmp/clock8002-build-a-6a00788`.
-- Output dir: `/home/pi/output-root-ram-build-a-6a00788`.
-- Log: `/tmp/br-build-a-6a00788-r2.log`.
-- Exit marker: `/tmp/br-build-a-6a00788-r2.exit`.
-- Current stage: host GCC/toolchain compile (`g++ ... ../../gcc/tree-ssa-*`), build still running.
+- Previous incremental attempts (`alt2`, `fix1`, `fix2`, `fix3`, `finaltry`) failed due host-python dependency drift (`installer`, `pyproject_hooks`, `wheel` / `pyproject-build` conflicts).
+- Host-python dependency chain was force-reset and verified (`installer`, `pyproject_hooks`, `build`, `packaging`, `setuptools` imports OK) before pivoting to clean build.
+- Active clean run artifacts:
+  - session: `br-build-a-6a00788-clean1`
+  - log: `/tmp/br-build-a-6a00788-clean1.log`
+  - exit marker: `/tmp/br-build-a-6a00788-clean1.exit`
 
 ### Monitor commands
-- `ssh -o IdentitiesOnly=yes -i /Users/jp/.ssh/id_rsa pi@cm5.local 'tail -f /tmp/br-build-a-6a00788-r2.log'`
-- `ssh -o IdentitiesOnly=yes -i /Users/jp/.ssh/id_rsa pi@cm5.local 'cat /tmp/br-build-a-6a00788-r2.exit'`
+- `ssh -o IdentitiesOnly=yes -i /Users/jp/.ssh/id_rsa pi@cm5.local 'tail -f /tmp/br-build-a-6a00788-clean1.log'`
+- `ssh -o IdentitiesOnly=yes -i /Users/jp/.ssh/id_rsa pi@cm5.local 'cat /tmp/br-build-a-6a00788-clean1.exit'`
 
 ### Next actions after reboot
-1. Wait for `BR_BUILD_EXIT:0` in `/tmp/br-build-a-6a00788-r2.exit`.
-2. Transfer image from `/home/pi/output-root-ram-build-a-6a00788/images/sdcard.img` to Desktop with unique timestamped filename.
+1. Wait for `BR_BUILD_EXIT:0` in `/tmp/br-build-a-6a00788-clean1.exit`.
+2. Transfer image from `/home/pi/output-root-ram-goldencopy-20260509-000403/images/sdcard.img` to Desktop with a unique filename.
 3. Flash SD card (verify disk number first).
-4. Validate Build A runtime scope only: power button shutdown path, machine-id persistence, ttyAMA1/Perfect Cue path.
+4. Validate LTC reliability first, then Build A runtime scope (power button, machine-id persistence, ttyAMA1/Perfect Cue).
 
 ## Current Checkpoint (2026-05-14 - Option B: mdev blacklist + external initramfs)
 
