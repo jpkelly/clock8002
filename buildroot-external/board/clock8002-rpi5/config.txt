@@ -38,6 +38,7 @@ dtoverlay=hifiberry-dacplusadcpro
 
 # Hifiberry DAC+ ADC Pro for LTC reception
 dtoverlay=hifiberry-dacplusadcpro
+dtoverlay=uart1
 dtoverlay=uart2
 dtoverlay=uart3
 dtparam=uart0=on
