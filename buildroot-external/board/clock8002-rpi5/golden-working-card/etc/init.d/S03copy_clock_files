@@ -1,6 +1,5 @@
 #!/bin/sh
 
-INTERFACES_FILE="/boot/interfaces"
 HOSTNAME_FILE="/boot/hostname"
 CLOCK_FILE="/boot/sdl-clock"
 CLOCK_CMD="/boot/clock_cmd.sh"
@@ -15,10 +14,6 @@ start() {
 		mount -r /dev/mmcblk0p1 /boot
         else
 		mount -r /dev/mmcblk0 /boot
-        fi
-        if [ -e "$INTERFACES_FILE" ]; then
-                echo "Copying network settings"
-                cp $INTERFACES_FILE /etc/network/interfaces
         fi
         if [ -e "$HOSTNAME_FILE" ]; then
                 echo "Setting hostname"

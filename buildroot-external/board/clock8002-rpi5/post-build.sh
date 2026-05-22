@@ -21,14 +21,10 @@ fi
 if [ -f "${GOLDEN_DIR}/etc/hosts" ]; then
         cp -f "${GOLDEN_DIR}/etc/hosts" "${TARGET_DIR}/etc/hosts"
 fi
-if [ -f "${GOLDEN_DIR}/etc/network/interfaces" ]; then
-        mkdir -p "${TARGET_DIR}/etc/network"
-        cp -f "${GOLDEN_DIR}/etc/network/interfaces" \
-                "${TARGET_DIR}/etc/network/interfaces"
-fi
 if [ -d "${GOLDEN_DIR}/etc/init.d" ]; then
         mkdir -p "${TARGET_DIR}/etc/init.d"
         for script in \
+                                S04power-button \
                 S03copy_alsa-ltc_files \
                 S03copy_clock_bridge_files \
                 S03copy_clock_files \
@@ -49,14 +45,14 @@ fi
 # Remove the synthetic /opt -> /root init hooks that do not exist on the
 # working card and would overwrite the copied runtime payload.
 rm -f "${TARGET_DIR}/etc/init.d/S02setup-root" \
-        "${TARGET_DIR}/etc/init.d/S04power-button" \
-        "${TARGET_DIR}/etc/init.d/S98oled"
+                "${TARGET_DIR}/etc/init.d/S98oled"
 
 # Splash assets and S05bootsplash are kept in the image; whether to display
 # the splash at boot is controlled by splash_enabled in /boot/piclock/piclock.ini.
 
 # Make init.d scripts executable.
 for script in \
+                S04power-button \
         S03copy_alsa-ltc_files \
         S03copy_clock_bridge_files \
         S03copy_clock_files \
@@ -80,6 +76,7 @@ for entry in \
         sdl-clock \
         alsa-ltc \
         clock-bridge \
+                power-button.sh \
         alsa-ltc_pokemon.sh \
         alsa-ltc_cmd.sh \
         clock_pokemon.sh \
@@ -88,7 +85,7 @@ for entry in \
         clock_bridge_cmd.sh; do
                 F="${TARGET_DIR}/root/${entry}"
                 if [ -f "${F}" ]; then
-                        chmod +x "${F}"
+                                chmod +x "${F}"
                 fi
 done
 

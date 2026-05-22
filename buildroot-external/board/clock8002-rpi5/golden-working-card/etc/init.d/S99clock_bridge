@@ -1,7 +1,6 @@
 #!/bin/sh
 
 start() {
-	ifup eth0:1
 	if [ -e "/boot/enable_bridge" ]; then
 		/root/clock_bridge_pokemon.sh start &
 	fi

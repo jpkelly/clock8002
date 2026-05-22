@@ -1,8 +1,66 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-14 - Option B implemented; full rebuild in progress on cm5.
+Last updated: 2026-05-22 - Issue #44 incremental queue prepared; cm5 build still running.
 
-## Current Checkpoint (2026-05-14 - Option B: mdev blacklist + external initramfs)
+## Current Checkpoint (2026-05-22 - Issue #44 incremental queue prepared; cm5 build still running)
+
+### TL;DR
+- Unit at `192.168.8.245` is currently running build identity `74439b3` (binary hash-anchored) after flashing `piClock-fb6d5d4-sdcard.img`.
+- User-observed behavior: `alsa-ltc` is running stably on the current boot.
+- RAM-root headroom is strong on the live unit: ~1.6 GB `MemAvailable`, no swap, `/tmp` tmpfs at 4%.
+- A separate full Buildroot image build is actively running on cm5 from commit `337aa9c` (session `br-root-ram-20260522-090437`).
+- Local Issue #44 changes are queued in source (not yet built/flashed): power button wiring, machine-id path move, and network.ini backend-aligned dual-mode apply path.
+
+### Live unit state (.245)
+- Host: `sdl-clock` (`root@192.168.8.245`)
+- Running/boot binary hashes:
+  - `/root/sdl-clock`: `3e1b789c80eae6c59f249856bb23cb6239681e656be54c1b3afe32182523621d`
+  - `/boot/sdl-clock`: `3e1b789c80eae6c59f249856bb23cb6239681e656be54c1b3afe32182523621d`
+- Hash maps to source commit `74439b3` (previously documented in this handoff).
+- `alsa-ltc` process observed: `/root/alsa-ltc plughw:2,0 255.255.255.255 1245`
+
+### RAM-root memory headroom (.245)
+- `MemTotal`: `2028180 kB`
+- `MemAvailable`: `1677568 kB` (~1.6 GB available)
+- Swap: not configured (`SwapTotal=0`)
+- Top RSS sample:
+  - `sdl-clock` ~52 MB
+  - `oled-daemon` ~25 MB
+  - `clock-bridge` ~6 MB
+  - `alsa-ltc` ~2.7 MB
+- tmpfs usage sample:
+  - `/tmp`: `43.4M / 990.3M` (4%)
+  - `/run`: near zero
+
+### cm5 build status (in progress)
+- Build host: `pi@cm5.local`
+- Active session: `br-root-ram-20260522-090437`
+- Build commit: `337aa9c` (`defconfig: add BR2_PACKAGE_HOST_DTC=y`)
+- Clone path: `/tmp/clock8002-root-ram-build-20260522-090437`
+- Output path: `/home/pi/output-root-ram-20260522-090437`
+- Log: `/tmp/br-root-ram-20260522-090437.log`
+- Exit marker: `/tmp/br-root-ram-20260522-090437.exit`
+- Current observed stage: Linux kernel compile (`CC fs/proc/*`, `CC io_uring/*`, `CC crypto/asymmetric_keys/*`).
+
+### Local queued source changes (not yet built/flashed)
+- Issue #44: power button support in golden runtime path
+  - Added `buildroot-external/board/clock8002-rpi5/golden-working-card/etc/init.d/S04power-button`
+  - Added `buildroot-external/board/clock8002-rpi5/golden-working-card/root/power-button.sh`
+  - Wired in `buildroot-external/board/clock8002-rpi5/post-build.sh`
+- Issue #44: machine-id persistence path
+  - `buildroot-external/board/clock8002-rpi5/rootfs-overlay/etc/init.d/S12machine-id`
+  - Store moved from `/boot/piclock/machine-id` to `/boot/.piclock-machine-id`
+- Issue #44: network + WiFi + ini path standardization
+  - Removed legacy `/boot/interfaces` copy path and `ifup eth0:1` startup dependency
+  - Added backend-aligned non-NM apply path for `network.ini` with explicit `dhcp`, `static`, and `dual` modes
+  - Updated `v4/network.ini.default` comments for `dual` and `ap_country`
+- Tracker file: `NEXT-BUILD-CHANGES.md`
+
+### Notes
+- The first launch attempt failed due to invalid target `clock8002-dirclean` in this invocation path.
+- The second launch required defconfig bootstrap for the fresh output directory, then resumed normally.
+
+## Previous Checkpoint (2026-05-14 - Option B: mdev blacklist + external initramfs)
 
 ### TL;DR
 - **Option B implemented** in commit `744a7a6` — re-enables external initramfs while fixing mdev timing.

@@ -1,7 +1,6 @@
 #!/bin/sh
 
 start() {
-	ifup eth0:1
 	if [ -e "/boot/enable_clock" ]; then
 		echo "Starting clock..."
 		sleep 1
