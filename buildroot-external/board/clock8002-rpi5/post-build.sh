@@ -29,6 +29,7 @@ fi
 if [ -d "${GOLDEN_DIR}/etc/init.d" ]; then
         mkdir -p "${TARGET_DIR}/etc/init.d"
         for script in \
+                S04power-button \
                 S03copy_alsa-ltc_files \
                 S03copy_clock_bridge_files \
                 S03copy_clock_files \
@@ -49,7 +50,6 @@ fi
 # Remove the synthetic /opt -> /root init hooks that do not exist on the
 # working card and would overwrite the copied runtime payload.
 rm -f "${TARGET_DIR}/etc/init.d/S02setup-root" \
-        "${TARGET_DIR}/etc/init.d/S04power-button" \
         "${TARGET_DIR}/etc/init.d/S98oled"
 
 # Splash assets and S05bootsplash are kept in the image; whether to display
@@ -57,6 +57,7 @@ rm -f "${TARGET_DIR}/etc/init.d/S02setup-root" \
 
 # Make init.d scripts executable.
 for script in \
+        S04power-button \
         S03copy_alsa-ltc_files \
         S03copy_clock_bridge_files \
         S03copy_clock_files \
@@ -80,6 +81,7 @@ for entry in \
         sdl-clock \
         alsa-ltc \
         clock-bridge \
+        power-button.sh \
         alsa-ltc_pokemon.sh \
         alsa-ltc_cmd.sh \
         clock_pokemon.sh \

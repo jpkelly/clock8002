@@ -1,9 +1,9 @@
 #!/bin/sh
 # Ensure a stable machine-id is available on squashfs+tmpfs builds.
 # /var/lib is tmpfs, so regenerate/restore machine-id each boot.
-# Persist canonical ID on FAT: /boot/piclock/machine-id.
+# Persist canonical ID on FAT in an internal location, not /boot/piclock.
 
-STORE="/boot/piclock/machine-id"
+STORE="/boot/.piclock-machine-id"
 RUNTIME_DIR="/var/lib/dbus"
 RUNTIME_ID="${RUNTIME_DIR}/machine-id"
 
@@ -30,7 +30,6 @@ start() {
 	else
 		generate_machine_id > "${RUNTIME_ID}"
 		echo "machine-id: generated runtime id"
-		mkdir -p /boot/piclock 2>/dev/null || true
 		cp -f "${RUNTIME_ID}" "${STORE}" 2>/dev/null || true
 	fi
 
