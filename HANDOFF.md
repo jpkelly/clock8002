@@ -1,6 +1,42 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-14 - Option B implemented; full rebuild in progress on cm5.
+Last updated: 2026-05-22 - Build A committed/pushed; incremental build running on cm5.
+
+## Current Checkpoint (2026-05-22 - Build A commit complete; build in progress)
+
+### TL;DR
+- User requested risk reduction: split changes into **Build A** (power button + machine-id + UART1) and defer network behavior changes.
+- Build A branch: `feature/root-ram-build-a`.
+- Build A commit: `6a00788` (`build-a: power button, machine-id path, and uart1 enable`) pushed to `origin/feature/root-ram-build-a`.
+- Runtime changes included in Build A commit:
+  - `buildroot-external/board/clock8002-rpi5/golden-working-card/etc/init.d/S04power-button` (new)
+  - `buildroot-external/board/clock8002-rpi5/golden-working-card/root/power-button.sh` (new)
+  - `buildroot-external/board/clock8002-rpi5/rootfs-overlay/etc/init.d/S12machine-id` (`/boot/.piclock-machine-id`)
+  - `buildroot-external/board/clock8002-rpi5/post-build.sh` power-button wiring only (no network behavior hunks)
+  - `buildroot-external/board/clock8002-rpi5/config.txt` add `dtoverlay=uart1`
+  - `buildroot-external/board/clock8002-rpi5/golden-working-card/boot/config.txt` add `dtoverlay=uart1`
+- OpenSSH sanity check completed:
+  - `buildroot-external/configs/clock8002_rpi5_defconfig.sample` enables OpenSSH server.
+  - cm5 `~/buildroot/.config` shows OpenSSH enabled and Dropbear disabled.
+
+### Build / image status
+- Latest previously flashed image was still from commit `337aa9c`; missing Build A fixes, which triggered this rebuild.
+- Active Build A session on cm5: `br-build-a-6a00788-r2`.
+- Build clone: `/tmp/clock8002-build-a-6a00788`.
+- Output dir: `/home/pi/output-root-ram-build-a-6a00788`.
+- Log: `/tmp/br-build-a-6a00788-r2.log`.
+- Exit marker: `/tmp/br-build-a-6a00788-r2.exit`.
+- Current stage: host GCC/toolchain compile (`g++ ... ../../gcc/tree-ssa-*`), build still running.
+
+### Monitor commands
+- `ssh -o IdentitiesOnly=yes -i /Users/jp/.ssh/id_rsa pi@cm5.local 'tail -f /tmp/br-build-a-6a00788-r2.log'`
+- `ssh -o IdentitiesOnly=yes -i /Users/jp/.ssh/id_rsa pi@cm5.local 'cat /tmp/br-build-a-6a00788-r2.exit'`
+
+### Next actions after reboot
+1. Wait for `BR_BUILD_EXIT:0` in `/tmp/br-build-a-6a00788-r2.exit`.
+2. Transfer image from `/home/pi/output-root-ram-build-a-6a00788/images/sdcard.img` to Desktop with unique timestamped filename.
+3. Flash SD card (verify disk number first).
+4. Validate Build A runtime scope only: power button shutdown path, machine-id persistence, ttyAMA1/Perfect Cue path.
 
 ## Current Checkpoint (2026-05-14 - Option B: mdev blacklist + external initramfs)
 
