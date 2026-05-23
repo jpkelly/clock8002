@@ -1,8 +1,54 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-22 - Issue #44 incremental queue prepared; cm5 build still running.
+Last updated: 2026-05-22 - SND_USB_AUDIO=y fix; incremental kernel rebuild in progress on cm5.
 
-## Current Checkpoint (2026-05-22 - Issue #44 incremental queue prepared; cm5 build still running)
+## Current Checkpoint (2026-05-22 — kernel: SND_USB_AUDIO=y fix, commit c942a36)
+
+### TL;DR
+- Root cause of LTC not working with non-prebuilt kernel: **found and fixed**.
+  - `CONFIG_SND_USB_AUDIO=m` in non-prebuilt kernel → USB audio loaded as a module, not built-in.
+  - Golden prebuilt kernel has it built-in (`=y`) → LTC works without any modprobe dependency.
+  - Fix: added `CONFIG_SND_USB_AUDIO=y` to `buildroot-external/board/clock8002-rpi5/linux.config` (commit `c942a36`).
+- Incremental kernel rebuild running on cm5 (`br-build-c942a36`) in output dir `output-root-ram-goldencopy-20260509-000403`.
+- Live unit `.245` is currently running the **golden prebuilt kernel** (`3062308d`) with LTC working; image from prior 6a00788 build.
+
+### Live unit state (.245)
+- IP: `192.168.8.245` (VPN); SSH: `sshpass -p clockworkadmin ssh -o IdentitiesOnly=no root@192.168.8.245`
+- Kernel: golden prebuilt `3062308d...` (`6.12.41-v8`) — manually swapped in this session
+- LTC: **working** (`alsa-ltc plughw:2,0 255.255.255.255 1245`, hw_params: S16_LE 44100 Hz mono)
+- `/boot/Image.bak`: not present (backup cp failed — FAT full); original non-prebuilt kernel `2d460a6...` is gone from unit
+
+### cm5 build in progress
+- Screen session: `br-build-c942a36`
+- Output dir: `/home/pi/output-root-ram-goldencopy-20260509-000403`
+- Log: `/tmp/br-build-c942a36.log`
+- Exit marker: `/tmp/br-build-c942a36.exit`
+- What's building: kernel-only incremental (`linux-dirclean` + `make`); all other packages cached
+- ETA: ~25 min from start
+
+Monitor:
+```
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'screen -ls; tail -f /tmp/br-build-c942a36.log'
+```
+Check done:
+```
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'cat /tmp/br-build-c942a36.exit'
+```
+
+### Post-build steps (once BR_BUILD_EXIT:0)
+1. Hash new Image to confirm it differs from `2d460a6...` (non-prebuilt) and `3062308d...` (golden)
+2. Transfer image: `scp pi@cm5.local:/home/pi/output-root-ram-goldencopy-20260509-000403/images/sdcard.img ~/Desktop/piClock-c942a36-sdcard.img`
+3. Flash to .245 and verify LTC works with the newly compiled kernel
+4. If LTC works: optionally promote new kernel as prebuilt bundle via `promote-prebuilt-kernel-bundle.sh`
+
+### Key findings this session
+- Both kernels report `6.12.41-v8` (`uname -r`) — same source tag, different compile
+- Diff extracted via `extract-ikconfig` from non-prebuilt Image: `CONFIG_SND_USB_AUDIO=m` vs golden (no IKCONFIG → built-in assumed)
+- The `output-root-ram-goldencopy-20260509-000403` dir (despite its name) contains the **non-prebuilt** compiled kernel
+- `.245` was the correct test unit all along (not `.246`); earlier session diagnostics were accidentally performed on `.246`
+- `.246` interfaces file shows it was configured for `.246` IP — it is a separate unit
+
+## Previous Checkpoint (2026-05-22 - Issue #44 incremental queue prepared; cm5 build still running)
 
 ### TL;DR
 - Unit at `192.168.8.245` is currently running build identity `74439b3` (binary hash-anchored) after flashing `piClock-fb6d5d4-sdcard.img`.
