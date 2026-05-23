@@ -48,13 +48,17 @@ for staged in "${BOOT_SOURCE_DIR}"/*; do
 	esac
 	cp -f "${staged}" "${BINARIES_DIR}/$(basename "${staged}")"
 done
-if [ -d "${GOLDEN_ROOT_DIR}" ]; then
-	for staged in ${BOOT_RUNTIME_FILES}; do
-		if [ -f "${GOLDEN_ROOT_DIR}/${staged}" ]; then
-			cp -f "${GOLDEN_ROOT_DIR}/${staged}" "${BINARIES_DIR}/${staged}"
-		fi
-	done
-fi
+
+# Runtime files: use freshly built binaries when not in prebuilt mode,
+# otherwise fall back to the golden working-card copies.
+CLOCK8002_BUILD_DIR="${BUILD_DIR}/clock8002-prototype"
+for staged in ${BOOT_RUNTIME_FILES}; do
+	if [ "${CLOCK8002_PREBUILT_KERNEL:-1}" = "0" ] && [ -f "${CLOCK8002_BUILD_DIR}/${staged}" ]; then
+		cp -f "${CLOCK8002_BUILD_DIR}/${staged}" "${BINARIES_DIR}/${staged}"
+	elif [ -d "${GOLDEN_ROOT_DIR}" ] && [ -f "${GOLDEN_ROOT_DIR}/${staged}" ]; then
+		cp -f "${GOLDEN_ROOT_DIR}/${staged}" "${BINARIES_DIR}/${staged}"
+	fi
+done
 
 # Failure mode default: inject prebuilt kernel assets unless explicitly
 # disabled with CLOCK8002_PREBUILT_KERNEL=0.
