@@ -1,52 +1,48 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-22 - SND_USB_AUDIO=y fix; incremental kernel rebuild in progress on cm5.
+Last updated: 2026-05-22 - CONFIG_SND=y fix; second incremental kernel rebuild queued on cm5.
 
-## Current Checkpoint (2026-05-22 — kernel: SND_USB_AUDIO=y fix, commit c942a36)
+## Current Checkpoint (2026-05-22 — kernel: CONFIG_SND=y + CONFIG_SND_USB_AUDIO=y fix)
 
 ### TL;DR
-- Root cause of LTC not working with non-prebuilt kernel: **found and fixed**.
-  - `CONFIG_SND_USB_AUDIO=m` in non-prebuilt kernel → USB audio loaded as a module, not built-in.
-  - Golden prebuilt kernel has it built-in (`=y`) → LTC works without any modprobe dependency.
-  - Fix: added `CONFIG_SND_USB_AUDIO=y` to `buildroot-external/board/clock8002-rpi5/linux.config` (commit `c942a36`).
-- Incremental kernel rebuild running on cm5 (`br-build-c942a36`) in output dir `output-root-ram-goldencopy-20260509-000403`.
-- Live unit `.245` is currently running the **golden prebuilt kernel** (`3062308d`) with LTC working; image from prior 6a00788 build.
+- **First fix attempt (c942a36) failed**: added `CONFIG_SND_USB_AUDIO=y` alone, but `CONFIG_SND=m` forced it back to `=m` during Kconfig `syncconfig`. Build completed but kernel still has `SND_USB_AUDIO=m`.
+- **Root cause fully diagnosed**: `bcm2712_defconfig` sets `CONFIG_SND=m` → `SND_USB_AUDIO` dependency forces `=m` regardless of fragment. Golden prebuilt kernel has both `SND=y` and `SND_USB_AUDIO=y` built-in.
+- **Corrected fix**: add `CONFIG_SND=y` + `CONFIG_SND_USB_AUDIO=y` to fragment (commit pending).
+- Live unit `.245` running golden prebuilt kernel `3062308d` with LTC working.
 
 ### Live unit state (.245)
 - IP: `192.168.8.245` (VPN); SSH: `sshpass -p clockworkadmin ssh -o IdentitiesOnly=no root@192.168.8.245`
 - Kernel: golden prebuilt `3062308d...` (`6.12.41-v8`) — manually swapped in this session
 - LTC: **working** (`alsa-ltc plughw:2,0 255.255.255.255 1245`, hw_params: S16_LE 44100 Hz mono)
-- `/boot/Image.bak`: not present (backup cp failed — FAT full); original non-prebuilt kernel `2d460a6...` is gone from unit
 
-### cm5 build in progress
-- Screen session: `br-build-c942a36`
-- Output dir: `/home/pi/output-root-ram-goldencopy-20260509-000403`
-- Log: `/tmp/br-build-c942a36.log`
-- Exit marker: `/tmp/br-build-c942a36.exit`
-- What's building: kernel-only incremental (`linux-dirclean` + `make`); all other packages cached
-- ETA: ~25 min from start
+### Build history
+- **Commit c942a36** (`CONFIG_SND_USB_AUDIO=y` only): build completed (`BR_BUILD_EXIT:0`), image `542d2a58...` (501MB), but `build/linux-custom/.config` still shows `CONFIG_SND_USB_AUDIO=m` because `CONFIG_SND=m` forced revert during syncconfig.
+- **Next build**: `CONFIG_SND=y` + `CONFIG_SND_USB_AUDIO=y` in fragment; `linux-dirclean` + `make` in same output dir.
+
+### cm5 build commands
+```
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'screen -S br-build-<commit> -dm bash -lc "{ make -C /home/pi/buildroot O=/home/pi/output-root-ram-goldencopy-20260509-000403 BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external linux-dirclean && make -C /home/pi/buildroot O=/home/pi/output-root-ram-goldencopy-20260509-000403 BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external; } > /tmp/br-build-<commit>.log 2>&1; echo BR_BUILD_EXIT:\$? > /tmp/br-build-<commit>.exit"'
+```
 
 Monitor:
 ```
-ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'screen -ls; tail -f /tmp/br-build-c942a36.log'
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'screen -ls; tail -f /tmp/br-build-<commit>.log'
 ```
 Check done:
 ```
-ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'cat /tmp/br-build-c942a36.exit'
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'cat /tmp/br-build-<commit>.exit'
 ```
 
-### Post-build steps (once BR_BUILD_EXIT:0)
-1. Hash new Image to confirm it differs from `2d460a6...` (non-prebuilt) and `3062308d...` (golden)
-2. Transfer image: `scp pi@cm5.local:/home/pi/output-root-ram-goldencopy-20260509-000403/images/sdcard.img ~/Desktop/piClock-c942a36-sdcard.img`
-3. Flash to .245 and verify LTC works with the newly compiled kernel
-4. If LTC works: optionally promote new kernel as prebuilt bundle via `promote-prebuilt-kernel-bundle.sh`
+### Post-build verification
+1. `grep "CONFIG_SND_USB_AUDIO" build/linux-custom/.config` → must show `=y`
+2. `grep "CONFIG_SND=" build/linux-custom/.config` → must show `=y`
+3. Transfer image, flash .245, verify LTC decodes with non-prebuilt kernel
 
 ### Key findings this session
+- `bcm2712_defconfig` sets `CONFIG_SND=m`; fragment override must include `CONFIG_SND=y` or Kconfig syncconfig reverts `SND_USB_AUDIO` to `=m`
+- Build log merge step shows `New value: CONFIG_SND_USB_AUDIO=y`, but subsequent `syncconfig` silently reverts it — no error, no warning
 - Both kernels report `6.12.41-v8` (`uname -r`) — same source tag, different compile
-- Diff extracted via `extract-ikconfig` from non-prebuilt Image: `CONFIG_SND_USB_AUDIO=m` vs golden (no IKCONFIG → built-in assumed)
-- The `output-root-ram-goldencopy-20260509-000403` dir (despite its name) contains the **non-prebuilt** compiled kernel
 - `.245` was the correct test unit all along (not `.246`); earlier session diagnostics were accidentally performed on `.246`
-- `.246` interfaces file shows it was configured for `.246` IP — it is a separate unit
 
 ## Previous Checkpoint (2026-05-22 - Issue #44 incremental queue prepared; cm5 build still running)
 
