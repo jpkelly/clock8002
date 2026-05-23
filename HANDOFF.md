@@ -1,6 +1,37 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-22 - Build A clean non-prebuilt build running on cm5 after host-python reset.
+Last updated: 2026-05-22 - Two-card A/B fingerprint completed; kernel lineage and naming convention pinned.
+
+## Current Checkpoint (2026-05-22 - Two-card A/B comparison complete)
+
+### TL;DR
+- Two SD cards reported the same app commit hash but are different system images.
+- App binary identity matches on both cards: `/root/sdl-clock` sha256 `3e1b789c80eae6c59f249856bb23cb6239681e656be54c1b3afe32182523621d`.
+- Embedded app commit is confirmed as `74439b3a431824d96752eb21053f394a9a00a319` (`74439b3` short).
+- Kernel lineage differs between cards and explains behavioral divergence.
+
+### Card lineage map
+- Card A (LTC working baseline):
+  - `uname -r`: `6.12.41-v8`
+  - `/boot/Image` sha256: `3062308d7916349dc5737c9c02dbbffac6f23a9344fb14b6d3d442bc09c83f80`
+  - `/boot/kernel_2712.img` sha256: `4270b0c8b4586cc5c629ddb184e87390998d776a4742c333268eab7fd0cca14d`
+  - lineage: prebuilt golden kernel
+- Card B (other card):
+  - `uname -r`: `6.12.41-v8-4k`
+  - `/boot/Image` sha256: `c657863dc1a45f713c1e762c2c615e98d6e90e3a276ad44e65e1f8f458e5b99e`
+  - `/boot/kernel_2712.img` sha256: `b6adad01473569868ae56b1cabb77991061d68ef1a87b0df297a97544ef64fa7`
+  - lineage: non-prebuilt kernel (not golden pair)
+
+### Naming convention (approved)
+- Use `_gk_` only for prebuilt golden kernel lineage.
+- Use no kernel marker for non-prebuilt lineage.
+- Examples for this A/B set:
+  - `74439b3_gk_3062308d79`
+  - `74439b3_c657863dc1`
+
+### Operational note
+- Commit hash alone is not sufficient as a full image identifier in this workflow.
+- Track image identity as: app commit + kernel lineage marker + `/boot/Image` hash prefix.
 
 ## Current Checkpoint (2026-05-22 - Clean non-prebuilt Build A in progress)
 
