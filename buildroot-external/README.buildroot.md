@@ -113,17 +113,19 @@ Before any build, always sync the clock8002 source on the build host:
 ssh pi@cm5.local 'cd ~/clock8002 && git pull --ff-only'
 ```
 
-### Payload Kernel Policy (Mandatory)
+### Kernel Build Policy
 
-There is no A/B kernel mode selection for test-image validation.
+**Default:** Buildroot compiles the kernel from source using the config fragment in `board/clock8002-rpi5/linux.config`. This is the default behavior — no extra variables are required.
 
-All validation builds must use a prebuilt payload bundle for kernel assets:
+**Opt-in prebuilt payload:** For faster incremental builds, you can skip kernel compilation and inject a prebuilt bundle instead. Use the payload wrapper or set `CLOCK8002_PREBUILT_KERNEL=1` explicitly.
+
+Prebuilt payload requirements (when opted in):
 
 1. `Image`
 2. DTBs (`dtbs/` or `dtb/`) plus `overlays/`
 3. Modules (`modules/` or `modules/lib/modules/`)
 
-`buildroot-external/scripts/build-with-kernel-fallback.sh` is now a payload-only wrapper despite the legacy filename.
+`buildroot-external/scripts/build-with-kernel-fallback.sh` is a payload-only wrapper. It is **not** the default path — it is an optional fast-path for builds where the kernel has not changed.
 
 Payload build command (default `current` bundle):
 
@@ -142,7 +144,6 @@ Wrapper behavior:
 1. Verifies the bundle before build (layout + required assets + checksum when available).
 2. Runs a single payload-mode build with `CLOCK8002_PREBUILT_KERNEL=1`.
 3. Fails closed on missing/invalid bundle.
-4. Does not run any kernel-mode decision flow; payload is mandatory.
 
 Expected prebuilt bundle layout:
 
@@ -191,7 +192,7 @@ buildroot-external/scripts/verify-prebuilt-kernel-bundle.sh \
   /srv/clock8002/prebuilt-kernel-bundles/current
 ```
 
-Operational requirements:
+Operational requirements when using prebuilt payload:
 
 1. Keep the active validation bundle promoted under `/srv/clock8002/prebuilt-kernel-bundles/current`.
 2. Record bundle provenance in HANDOFF before flash/test.

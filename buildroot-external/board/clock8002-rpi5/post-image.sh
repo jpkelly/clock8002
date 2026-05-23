@@ -53,16 +53,16 @@ done
 # otherwise fall back to the golden working-card copies.
 CLOCK8002_BUILD_DIR="${BUILD_DIR}/clock8002-prototype"
 for staged in ${BOOT_RUNTIME_FILES}; do
-	if [ "${CLOCK8002_PREBUILT_KERNEL:-1}" = "0" ] && [ -f "${CLOCK8002_BUILD_DIR}/${staged}" ]; then
+	if [ "${CLOCK8002_PREBUILT_KERNEL:-0}" = "0" ] && [ -f "${CLOCK8002_BUILD_DIR}/${staged}" ]; then
 		cp -f "${CLOCK8002_BUILD_DIR}/${staged}" "${BINARIES_DIR}/${staged}"
 	elif [ -d "${GOLDEN_ROOT_DIR}" ] && [ -f "${GOLDEN_ROOT_DIR}/${staged}" ]; then
 		cp -f "${GOLDEN_ROOT_DIR}/${staged}" "${BINARIES_DIR}/${staged}"
 	fi
 done
 
-# Failure mode default: inject prebuilt kernel assets unless explicitly
-# disabled with CLOCK8002_PREBUILT_KERNEL=0.
-if [ "${CLOCK8002_PREBUILT_KERNEL:-1}" != "0" ]; then
+# Default: use freshly built kernel assets. Prebuilt payload injection is
+# opt-in via CLOCK8002_PREBUILT_KERNEL=1.
+if [ "${CLOCK8002_PREBUILT_KERNEL:-0}" != "0" ]; then
 	PREBUILT_STORE="${CLOCK8002_PREBUILT_KERNEL_STORE:-/srv/clock8002/prebuilt-kernel-bundles}"
 	DEFAULT_BUNDLE="${PREBUILT_STORE}/current"
 	BUNDLE_DIR="${CLOCK8002_PREBUILT_KERNEL_BUNDLE:-${DEFAULT_BUNDLE}}"
