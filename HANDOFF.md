@@ -1,48 +1,54 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-22 - CONFIG_SND=y fix; second incremental kernel rebuild queued on cm5.
+Last updated: 2026-05-23 - post-image.sh fix committed; 62266c9-real build in progress.
 
-## Current Checkpoint (2026-05-22 — kernel: CONFIG_SND=y + CONFIG_SND_USB_AUDIO=y fix)
+## Current Checkpoint (2026-05-23 — commit 62266c9, build with CLOCK8002_PREBUILT_KERNEL=0)
 
 ### TL;DR
-- **First fix attempt (c942a36) failed**: added `CONFIG_SND_USB_AUDIO=y` alone, but `CONFIG_SND=m` forced it back to `=m` during Kconfig `syncconfig`. Build completed but kernel still has `SND_USB_AUDIO=m`.
-- **Root cause fully diagnosed**: `bcm2712_defconfig` sets `CONFIG_SND=m` → `SND_USB_AUDIO` dependency forces `=m` regardless of fragment. Golden prebuilt kernel has both `SND=y` and `SND_USB_AUDIO=y` built-in.
-- **Corrected fix**: add `CONFIG_SND=y` + `CONFIG_SND_USB_AUDIO=y` to fragment (commit pending).
-- Live unit `.245` running golden prebuilt kernel `3062308d` with LTC working.
-
-### Live unit state (.245)
-- IP: `192.168.8.245` (VPN); SSH: `sshpass -p clockworkadmin ssh -o IdentitiesOnly=no root@192.168.8.245`
-- Kernel: golden prebuilt `3062308d...` (`6.12.41-v8`) — manually swapped in this session
-- LTC: **working** (`alsa-ltc plughw:2,0 255.255.255.255 1245`, hw_params: S16_LE 44100 Hz mono)
+- **Commit 62266c9** (`CONFIG_SND=y` + `CONFIG_SND_USB_AUDIO=y`): fragment fix committed and pushed.
+- **First 62266c9 build FAILED silently**: `post-image.sh` replaced our built kernel with golden prebuilt `3062308d`. Image flashed to .245 was golden kernel, not custom.
+- **Root cause**: `CLOCK8002_PREBUILT_KERNEL` defaults to `1` (enabled). Build must use `CLOCK8002_PREBUILT_KERNEL=0`.
+- **Corrected rebuild**: `br-build-62266c9-real` running now with `CLOCK8002_PREBUILT_KERNEL=0`.
+- **Post-image fix** (`41a18fd`): When `CLOCK8002_PREBUILT_KERNEL=0`, runtime binaries are copied from fresh build output instead of stale golden copies.
+- `.245` currently running golden kernel (from accidental flash), LTC working.
 
 ### Build history
-- **Commit c942a36** (`CONFIG_SND_USB_AUDIO=y` only): build completed (`BR_BUILD_EXIT:0`), image `542d2a58...` (501MB), but `build/linux-custom/.config` still shows `CONFIG_SND_USB_AUDIO=m` because `CONFIG_SND=m` forced revert during syncconfig.
-- **Next build**: `CONFIG_SND=y` + `CONFIG_SND_USB_AUDIO=y` in fragment; `linux-dirclean` + `make` in same output dir.
+| Commit | Config fix | Prebuilt flag | Result | Image hash |
+|--------|-----------|---------------|--------|------------|
+| c942a36 | SND_USB_AUDIO=y only | default (1) | Kernel =m (syncconfig reverted) | 542d2a58... |
+| 62266c9 | SND=y + SND_USB_AUDIO=y | default (1) | Kernel compiled correctly, but post-image.sh swapped in golden prebuilt | 3062308d... (golden) |
+| 62266c9-real | SND=y + SND_USB_AUDIO=y | **0** | Build in progress | TBD |
 
-### cm5 build commands
-```
-ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'screen -S br-build-<commit> -dm bash -lc "{ make -C /home/pi/buildroot O=/home/pi/output-root-ram-goldencopy-20260509-000403 BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external linux-dirclean && make -C /home/pi/buildroot O=/home/pi/output-root-ram-goldencopy-20260509-000403 BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external; } > /tmp/br-build-<commit>.log 2>&1; echo BR_BUILD_EXIT:\$? > /tmp/br-build-<commit>.exit"'
-```
+### cm5 build status
+- **Screen**: `br-build-62266c9-real`
+- **Log**: `/tmp/br-build-62266c9-real.log`
+- **Exit marker**: `/tmp/br-build-62266c9-real.exit`
+- **Command**: `linux-dirclean && CLOCK8002_PREBUILT_KERNEL=0 make`
+- **Stage**: Kernel compile (lib/, fs/, drivers/ — ~95% done)
+- **ETA**: ~5 min
 
 Monitor:
 ```
-ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'screen -ls; tail -f /tmp/br-build-<commit>.log'
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'screen -ls; tail -f /tmp/br-build-62266c9-real.log'
 ```
 Check done:
 ```
-ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'cat /tmp/br-build-<commit>.exit'
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_rsa pi@cm5.local 'cat /tmp/br-build-62266c9-real.exit'
 ```
 
 ### Post-build verification
-1. `grep "CONFIG_SND_USB_AUDIO" build/linux-custom/.config` → must show `=y`
-2. `grep "CONFIG_SND=" build/linux-custom/.config` → must show `=y`
-3. Transfer image, flash .245, verify LTC decodes with non-prebuilt kernel
+1. `sha256sum images/Image` → must NOT be `3062308d...` (golden hash)
+2. `grep "CONFIG_SND=" build/linux-custom/.config` → `=y`
+3. `grep "CONFIG_SND_USB_AUDIO=" build/linux-custom/.config` → `=y`
+4. Flash .245, verify LTC decodes with custom kernel
 
 ### Key findings this session
-- `bcm2712_defconfig` sets `CONFIG_SND=m`; fragment override must include `CONFIG_SND=y` or Kconfig syncconfig reverts `SND_USB_AUDIO` to `=m`
-- Build log merge step shows `New value: CONFIG_SND_USB_AUDIO=y`, but subsequent `syncconfig` silently reverts it — no error, no warning
-- Both kernels report `6.12.41-v8` (`uname -r`) — same source tag, different compile
-- `.245` was the correct test unit all along (not `.246`); earlier session diagnostics were accidentally performed on `.246`
+- `bcm2712_defconfig` sets `CONFIG_SND=m`; fragment override must include `CONFIG_SND=y`
+- `post-image.sh` has `CLOCK8002_PREBUILT_KERNEL` guard — defaults to 1 (prebuilt injection)
+- Golden prebuilt bundle (`/srv/clock8002/prebuilt-kernel-bundles/current/`) has **zero `.ko` files** — fully monolithic
+- Old runtime binaries (sdl-clock, alsa-ltc) from golden card overwrite freshly built ones in `post-image.sh`
+- Fix `41a18fd`: When `CLOCK8002_PREBUILT_KERNEL=0`, copy runtime binaries from `${BUILD_DIR}/clock8002-prototype/`
+- `.245` is the correct test unit; `.246` is a separate unit with different config
 
 ## Previous Checkpoint (2026-05-22 - Issue #44 incremental queue prepared; cm5 build still running)
 
