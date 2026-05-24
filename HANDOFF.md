@@ -19,6 +19,19 @@
 4. Only promote to known-good after hardware validation (boot, services, LTC).
 5. If build inputs or outputs are not recorded in a manifest, treat the image as non-reproducible.
 
+## Current Active Build (2026-05-24)
+
+- Session: `br-build-repro-245`
+- Output dir: `/home/pi/output-repro-245-20260524-062711`
+- Manifest: `docs/manifests/build-manifest-repro-245-20260524-062711.md`
+- Purpose: reproduce current `.245` behavior from a deterministic input set.
+- Inputs pinned:
+  - `/home/pi/clock8002` at `3d835b27fc5e4ca5de689a1d79ee4df4b2d89c9b`
+  - `/home/pi/clock8002-root-ram` at `51703f6198f2d872daa4f654f5ca34c31c5dd535`
+  - prebuilt kernel bundle `/srv/clock8002/prebuilt-kernel-bundles/bundle-245-6.12.41-v8-20260509-161234`
+- Completion check: `ssh pi@cm5.local 'cat /tmp/br-build-repro-245.exit'`
+- Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-build-repro-245.log'`
+
 ## Known-Good State (2026-05-23)
 
 ### Verified working commit
