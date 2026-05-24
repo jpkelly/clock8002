@@ -22,10 +22,10 @@ all preflight checks pass and a manifest is produced.
 6. Output directory does not already exist.
 
 ## Standard Build Shape
-1. Run `clock8002_rpi5_defconfig` in a new `O=` output path.
-2. Run `clock8002-dirclean` before the main `make`.
+1. Launch with `tools/buildroot/cm5-build-launch.sh --purpose <label>`. This enforces all preflight checks, writes the manifest to `docs/manifests/` before the session starts, and arms automatic artifact-hash capture on completion.
+2. Run `clock8002-dirclean` before the main `make` (the launch script does this).
 3. Build with `CLOCK8002_PREBUILT_KERNEL=1` unless explicitly overridden.
-4. On success, compute hashes and write manifest.
+4. On success, confirm manifest PENDING fields are filled (hashes, elapsed time, exit code).
 
 ## Promotion Rules
 1. Candidate build: image produced + manifest complete.

@@ -210,6 +210,31 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		chmod 600 "${BINARIES_DIR}/piclock/authorized_keys"
 	fi
 
+	# Write build-info.txt into the piclock directory so every image carries its
+	# own provenance.  Lands at /boot/piclock/build-info.txt on the device.
+	# Use this to identify any SD card and find its matching manifest in git.
+	_SOURCE_REPO="$(dirname "${BR2_EXTERNAL_CLOCK8002_PATH}")"
+	_COMMIT=$(git -C "${_SOURCE_REPO}" rev-parse HEAD 2>/dev/null || echo "unknown")
+	_BRANCH=$(git -C "${_SOURCE_REPO}" branch --show-current 2>/dev/null || echo "unknown")
+	_BUNDLE="${CLOCK8002_PREBUILT_KERNEL_BUNDLE:-unknown}"
+	_SESSION="${CLOCK8002_BUILD_SESSION:-unknown}"
+	_MANIFEST="unknown"
+	if [ "${_SESSION}" != "unknown" ]; then
+		# Derive manifest name from session: br-<label>-<ts> -> build-manifest-<label>-<ts>.md
+		_MANIFEST="build-manifest-${_SESSION#br-}.md"
+	fi
+	cat > "${BINARIES_DIR}/piclock/build-info.txt" <<BUILDINFO
+manifest=${_MANIFEST}
+session=${_SESSION}
+commit=${_COMMIT}
+branch=${_BRANCH}
+bundle=${_BUNDLE}
+prebuilt_kernel=${CLOCK8002_PREBUILT_KERNEL:-1}
+br2_external_version=${BR2_EXTERNAL_CLOCK8002_VERSION:-unknown}
+build_timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+BUILDINFO
+	unset _SOURCE_REPO _COMMIT _BRANCH _BUNDLE _SESSION _MANIFEST
+
 	# Stage OLED assets to FAT root (logo + daemon binary).
 	OLED_SRC="${BUILD_DIR}/clock8002-prototype/oled"
 	if [ -f "${OLED_SRC}/piclockLogo.bin" ]; then

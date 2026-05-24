@@ -207,23 +207,34 @@ Operational requirements when using prebuilt payload:
 
 ### Full image build
 
+Use the build launch script.  It captures all reproducibility inputs, writes a
+manifest to `docs/manifests/` **before** the screen session starts, arms a
+post-build watcher to fill in artifact hashes automatically, and bakes a
+`build-info.txt` into the image so every SD card is self-identifying.
+
 ```bash
-ssh pi@cm5.local 'cd ~/buildroot && CLOCK8002_PREBUILT_KERNEL=1 CLOCK8002_PREBUILT_KERNEL_BUNDLE=/srv/clock8002/prebuilt-kernel-bundles/current make'
+tools/buildroot/cm5-build-launch.sh --purpose <label>
 ```
 
-Monitor progress:
+Examples:
 
 ```bash
-ssh pi@cm5.local 'L=$(ls -1t /tmp/br-payload-*.log 2>/dev/null | head -n1); [ -n "$L" ] && tail -f "$L" || echo "No payload build log yet"'
+tools/buildroot/cm5-build-launch.sh --purpose ltc-fix
+tools/buildroot/cm5-build-launch.sh --purpose release-1.3 --key "$(cat ~/.ssh/id_rsa.pub)"
 ```
 
-Quoting-safe status probe (recommended for ad-hoc checks):
+The script prints the manifest path and monitoring commands on launch.
+
+To reproduce any previous build: find its manifest in `docs/manifests/`, take
+the **Reproduce with** command from the **Build Command** section, and run it
+on cm5 in a new screen session using `cm5-build-launch.sh` with the same commit
+checked out.
+
+Monitor progress (quoting-safe):
 
 ```bash
 tools/buildroot/cm5-build-status.sh --session <session-name>
 ```
-
-This helper avoids fragile inline SSH quoting and reports state, elapsed time, active make process, last package stamp, strict kernel-compile markers, and a log tail.
 
 ### Partial rebuilds (when to use each)
 

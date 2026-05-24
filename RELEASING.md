@@ -49,13 +49,13 @@ ssh pi@cm5.local 'cd ~/clock8002 && git fetch --tags origin && git reset --hard 
 
 ### 4. Build on cm5
 
-**Release images must never include an SSH key.** Always build without `BR2_PICLOCKKEY`.
+**Release images must never include an SSH key.** Always build without `--key`.
 
 ```bash
-ssh pi@cm5.local 'cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'
+tools/buildroot/cm5-build-launch.sh --purpose release-<VERSION>
 ```
 
-Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-build.log'`
+The launch script writes a manifest to `docs/manifests/` and prints monitor commands on launch.
 
 ### 5. Transfer image
 
