@@ -19,6 +19,44 @@
 4. Only promote to known-good after hardware validation (boot, services, LTC).
 5. If build inputs or outputs are not recorded in a manifest, treat the image as non-reproducible.
 
+## Root-Ram To Master Cutover Checklist (Concise)
+
+Use this only after feature/root-ram is functionally complete.
+
+1. **Freeze feature work**
+  - Stop adding new features on `feature/root-ram`.
+  - Fix only blockers/regressions.
+
+2. **Pick release-candidate commit**
+  - Select one commit SHA on `feature/root-ram` as RC.
+  - Build from that SHA using fresh output dir + manifest.
+
+3. **Run final hardware validation on .245**
+  - Boot success.
+  - `clock8002`, `alsa-ltc`, `oled-daemon` running.
+  - LTC decode confirmed.
+  - Required network/serial features confirmed.
+
+4. **Record known-good evidence**
+  - Complete manifest with image + runtime hashes.
+  - Add short validation result block to HANDOFF.
+
+5. **Prepare rollback point on master**
+  - Tag current `master` before promotion.
+  - Keep rollback tag documented in HANDOFF.
+
+6. **Promote to master**
+  - Preferred: fast-forward `master` to RC commit.
+  - If needed: normal merge commit (no history rewrite).
+
+7. **Retag and document release baseline**
+  - Tag promoted commit as new baseline/release tag.
+  - Update HANDOFF latest tag + commit + status.
+
+8. **Switch default workflow to master**
+  - Update instructions/docs so normal builds use `master`.
+  - Keep `feature/root-ram` only for hotfix overlap, then retire.
+
 ## Current Active Build (2026-05-24)
 
 - Session: `br-build-repro-245`
