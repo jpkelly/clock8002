@@ -244,91 +244,7 @@ EOF
 echo "Written: docs/manifests/${MANIFEST_NAME}"
 echo ""
 
-# --- Step 4: arm post-build watcher on cm5 ---
-# Pipe the watcher script content to cm5; no nested heredoc needed.
-START_EPOCH="$(date +%s)"
-MANIFEST_REMOTE="${SOURCE_DIR}/docs/manifests/${MANIFEST_NAME}"
-OUTPUT_DIR="${BUILDROOT_DIR}/output"
-
-WATCHER_SCRIPT="/home/pi/kernel-dev-snapshots/postbuild-${SESSION}.sh"
-WATCHER_LOG="/home/pi/kernel-dev-snapshots/postbuild-${SESSION}.run.log"
-
-python3 - "$SESSION" "$OUTPUT_DIR" "$BUNDLE_REAL" "$START_EPOCH" "$MANIFEST_REMOTE" <<'PYEOF'
-import sys, base64
-session, output_dir, bundle, start_epoch, manifest = sys.argv[1:]
-script = """\
-#!/bin/sh
-set -u
-EXIT_FILE="/tmp/{session}.exit"
-OUTPUT_DIR="{output_dir}"
-BUNDLE="{bundle}"
-BUILD_START_EPOCH={start_epoch}
-MANIFEST="{manifest}"
-
-mkdir -p "$(dirname "$MANIFEST")"
-while [ ! -f "$EXIT_FILE" ]; do sleep 20; done
-
-ts=$(date +%Y%m%d-%H%M%S)
-END_EPOCH=$(date +%s)
-END_HUMAN=$(date '+%Y-%m-%d %H:%M:%S %Z')
-ELAPSED=$((END_EPOCH - BUILD_START_EPOCH))
-EH=$((ELAPSED/3600)); EM=$(((ELAPSED%3600)/60)); ES=$((ELAPSED%60))
-RC=$(cat "$EXIT_FILE" 2>/dev/null || echo unknown)
-
-SDCARD_SHA=MISSING; IMAGE_SHA=MISSING; ROOTFS_SHA=MISSING
-IMG_MATCH=SKIP; OV_MATCH=SKIP; MOD_MATCH=SKIP
-
-[ -f "$OUTPUT_DIR/images/sdcard.img" ] && SDCARD_SHA=$(sha256sum "$OUTPUT_DIR/images/sdcard.img" | awk '{{print $1}}')
-[ -f "$OUTPUT_DIR/images/Image" ] && IMAGE_SHA=$(sha256sum "$OUTPUT_DIR/images/Image" | awk '{{print $1}}')
-[ -f "$OUTPUT_DIR/images/rootfs.cpio" ] && ROOTFS_SHA=$(sha256sum "$OUTPUT_DIR/images/rootfs.cpio" | awk '{{print $1}}')
-
-if [ -f "$BUNDLE/Image" ] && [ -f "$OUTPUT_DIR/images/Image" ]; then
-  B=$(sha256sum "$BUNDLE/Image" | awk '{{print $1}}')
-  O=$(sha256sum "$OUTPUT_DIR/images/Image" | awk '{{print $1}}')
-  [ "$B" = "$O" ] && IMG_MATCH=PASS || IMG_MATCH=FAIL
-fi
-
-if [ -d "$BUNDLE/overlays" ] && [ -d "$OUTPUT_DIR/images/rpi-firmware/overlays" ]; then
-  B=$(find "$BUNDLE/overlays" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{{print $1}}')
-  O=$(find "$OUTPUT_DIR/images/rpi-firmware/overlays" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{{print $1}}')
-  [ "$B" = "$O" ] && OV_MATCH=PASS || OV_MATCH=FAIL
-fi
-
-MODSRC=""
-[ -d "$BUNDLE/modules/lib/modules" ] && MODSRC="$BUNDLE/modules/lib/modules" || {{ [ -d "$BUNDLE/modules" ] && MODSRC="$BUNDLE/modules"; }}
-if [ -n "$MODSRC" ] && [ -d "$OUTPUT_DIR/target/lib/modules" ]; then
-  B=$(find "$MODSRC" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{{print $1}}')
-  O=$(find "$OUTPUT_DIR/target/lib/modules" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{{print $1}}')
-  [ "$B" = "$O" ] && MOD_MATCH=PASS || MOD_MATCH=FAIL
-fi
-
-if [ -f "$MANIFEST" ]; then
-  sed -i "s|^- sdcard.img sha256: PENDING|- sdcard.img sha256: $SDCARD_SHA|" "$MANIFEST"
-  sed -i "s|^- Image sha256 (output): PENDING|- Image sha256 (output): $IMAGE_SHA|" "$MANIFEST"
-  sed -i "s|^- rootfs.cpio sha256: PENDING|- rootfs.cpio sha256: $ROOTFS_SHA|" "$MANIFEST"
-  sed -i "s|^- verify_image_match: PENDING|- verify_image_match: $IMG_MATCH|" "$MANIFEST"
-  sed -i "s|^- verify_overlays_match: PENDING|- verify_overlays_match: $OV_MATCH|" "$MANIFEST"
-  sed -i "s|^- verify_modules_match: PENDING|- verify_modules_match: $MOD_MATCH|" "$MANIFEST"
-  sed -i "s|^- End: PENDING|- End: $END_HUMAN|" "$MANIFEST"
-  sed -i "s|^- Elapsed: PENDING|- Elapsed: ${{EH}}h ${{EM}}m ${{ES}}s|" "$MANIFEST"
-  sed -i "s|^- Status: in-progress|- Status: build-complete exit=$RC|" "$MANIFEST"
-fi
-
-echo "watcher-complete session={session} rc=$RC elapsed=${{EH}}h${{EM}}m${{ES}}s"
-""".format(
-    session=session,
-    output_dir=output_dir,
-    bundle=bundle,
-    start_epoch=start_epoch,
-    manifest=manifest,
-)
-print(script)
-PYEOF | ssh "$HOST" "mkdir -p /home/pi/kernel-dev-snapshots && cat > '${WATCHER_SCRIPT}' && chmod +x '${WATCHER_SCRIPT}'"
-
-ssh "$HOST" "nohup '${WATCHER_SCRIPT}' > '${WATCHER_LOG}' 2>&1 & echo watcher_pid=\$!"
-echo ""
-
-# --- Step 5: launch screen session ---
+# --- Step 4: launch screen session ---
 echo "Launching screen session: ${SESSION}"
 
 MAKE_CMD="cd ${BUILDROOT_DIR} || exit 2"
@@ -339,22 +255,19 @@ if [[ -n "$KEY_ARG" ]]; then
     MAKE_CMD="${MAKE_CMD}; export BR2_PICLOCKKEY='${KEY_ARG}'"
 fi
 MAKE_CMD="${MAKE_CMD}; make clock8002-dirclean && make"
-MAKE_CMD="${MAKE_CMD}; rc=\$?; printf '%s\n' \"\$rc\" > /tmp/${SESSION}.exit; exit \"\$rc\""
+MAKE_CMD="${MAKE_CMD}; rc=\$?; echo \$rc > /tmp/${SESSION}.exit; exit \$rc"
 
 ssh "$HOST" "screen -dmS '${SESSION}' sh -lc '${MAKE_CMD}'"
 echo ""
 
-# --- Step 6: print monitoring commands ---
+# --- Step 5: print monitoring commands ---
 cat <<EOF
 === Build launched ===
-
-Monitor:
-  tools/buildroot/cm5-build-status.sh --session ${SESSION}
 
 Check completion:
   ssh ${HOST} 'cat /tmp/${SESSION}.exit'
 
-Manifest (auto-updated on completion):
+Manifest (fill in sha256/timing after flash):
   docs/manifests/${MANIFEST_NAME}
 
 Changes are local only — not deployed yet. Push when ready.
