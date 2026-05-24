@@ -7,21 +7,61 @@
 3. **Verify branch and commit before building.** Run `git branch --show-current && git log --oneline -1` on cm5 before every build.
 4. **Always build inside a screen session.** Never run long builds directly in an SSH one-liner.
 
-## Build command (copy exactly)
+## Build Workflow Docs (Use These First)
 
+- Policy: `docs/build-policy.md`
+- Manifest template: `docs/build-manifest-template.md`
+
+### How to use
+1. Read `docs/build-policy.md` before starting a candidate build.
+2. Run the build using one source tree and one commit set only.
+3. Fill `docs/build-manifest-template.md` for the build before flashing.
+4. Only promote to known-good after hardware validation (boot, services, LTC).
+5. If build inputs or outputs are not recorded in a manifest, treat the image as non-reproducible.
+
+## Known-Good State (2026-05-23)
+
+### Verified working commit
+- **Commit:** `51703f6`
+- **Tag:** `working-2026-05-23-powerbutton-ltc`
+- **Branch:** `feature/root-ram`
+- **Status:** Clean boot, LTC decoding, OLED, SSH, power button — all confirmed working on live unit
+
+### Build from this tag (copy exactly)
 ```bash
-COMMIT=$(git -C ~/clock8002-root-ram rev-parse --short HEAD)
-O_DIR=/home/pi/output-root-ram-${COMMIT}-$(date +%Y%m%d-%H%M%S)
-SESSION=br-build-${COMMIT}
-
-screen -S ${SESSION} -dm bash -lc "
-  make O=${O_DIR} BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external -C /home/pi/buildroot clock8002_rpi5_defconfig &&
-  make O=${O_DIR} BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external -C /home/pi/buildroot > /tmp/${SESSION}.log 2>&1
-  echo BR_BUILD_EXIT:\$? > /tmp/${SESSION}.exit
-"
+ssh pi@cm5.local 'sh' <<'REMOTE'
+cd ~/clock8002 && git checkout working-2026-05-23-powerbutton-ltc && git log --oneline -1
+cd ~/buildroot
+OUTPUT="output-root-ram-51703f6-$(date +%Y%m%d-%H%M%S)"
+screen -S br-build-51703f6 -dm bash -lc "{
+  CLOCK8002_PREBUILT_KERNEL=1 make O=/home/pi/${OUTPUT} BR2_EXTERNAL=/home/pi/clock8002/buildroot-external clock8002_rpi5_defconfig &&
+  CLOCK8002_PREBUILT_KERNEL=1 make O=/home/pi/${OUTPUT} BR2_EXTERNAL=/home/pi/clock8002/buildroot-external clock8002-dirclean &&
+  CLOCK8002_PREBUILT_KERNEL=1 BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make O=/home/pi/${OUTPUT} BR2_EXTERNAL=/home/pi/clock8002/buildroot-external;
+} > /tmp/br-build-51703f6.log 2>&1; echo BR_BUILD_EXIT:\$? > /tmp/br-build-51703f6.exit"
+echo "Build started: ${OUTPUT}"
+REMOTE
 ```
 
-Last updated: 2026-05-23 - prebuilt kernel default enforced in post-build.sh and post-image.sh.
+### Why this specific command
+- Source dir `~/clock8002` has the defconfig pointing to `/home/pi/clock8002/v4` — this is what the working image was built from
+- `clock8002-dirclean` forces rebuild of Go binaries and oled-daemon
+- `CLOCK8002_PREBUILT_KERNEL=1` uses the approved kernel bundle (`bundle-245-6.12.41-v8-20260509-161234`)
+- Fresh output dir prevents stale-cache corruption
+
+### Monitor
+```bash
+ssh pi@cm5.local 'screen -ls; tail -f /tmp/br-build-51703f6.log'
+```
+
+### Check completion
+```bash
+ssh pi@cm5.local 'cat /tmp/br-build-51703f6.exit'
+```
+
+### Important notes
+- **Do NOT build from `ba7209b`** — it is broken (prebuilt kernel default change, untested)
+- **Do NOT use `~/clock8002-root-ram`** for Buildroot source dir — the defconfig still points to `~/clock8002/v4`
+- **Do NOT delete `output-root-ram-51703f6-retry-20260523-155431`** — this is the reference working build dir
 
 ## Current Checkpoint (2026-05-23 — commit 62266c9, build with CLOCK8002_PREBUILT_KERNEL=0)
 
@@ -1812,7 +1852,7 @@ network interface) before using it. Never assume it exists at S## script time.
 9. DRM mirror files: `drm_mirror_linux.go`, `drm_mirror_other.go` — new files, direct DRM/KMS mirror for second HDMI
 10. `second_display_probe.go` — updated mirror path: `isHDMI1Connected` → `isSpareHDMIConnected`, calls `findSpareHDMIConnector` instead of hardcoded HDMI-A-1
 11. DRM cue files: `drm_cue_linux.go`, `drm_cue_other.go` — `updateCueDRMBuffer()` writes icons directly into DRM dumb buffer (Option D)
-12. `second_display_probe.go` — cue mode now uses `initDRMMirror()` + `updateCueDRMBuffer()` instead of `fbi`+PNG; removes `bytes`, `image/png`, `os/exec` (fbi) dependency
+12. `second_display_probe.go` — cue mode now uses `initDRMMirror()` + `updateCueDRMBuffer(off)`. `syncSecondDisplayCueDisplay()` calls `updateCueDRMBuffer(desired)` — renders icon via `renderCueVisualImage()` and writes XRGB8888 directly into the dumb buffer. No `fbi` binary or `/dev/fb0` required. Web GUI toggle (PerfectCue section) switches modes live without restart. Verified working on piclockBR at `a5929ef`.
 
 ### Fixed this session (2026-04-01 — EEPROM provisioning)
 - **rpi-eeprom package** (`772f5b3`): Added Buildroot external package for Pi 5 EEPROM management (rpi-eeprom-config, rpi-eeprom-update, rpi-eeprom-digest + BCM2712 firmware blobs). Reads EEPROM via nvmem — no vcgencmd needed.
@@ -1826,7 +1866,7 @@ network interface) before using it. Never assume it exists at S## script time.
 - **Issue #26**: Closed — EEPROM provisioning documented as manual step; boot-partition approach removed.
 
 ### Fixed this session (2026-04-02 — DRM mirror + cue mode)
-- **DRM mirror working** (`2ee57fa`): Root cause found — `findHDMI1Connector()` was hardcoded to target HDMI-A-1, but SDL already renders there. Fix: `findSpareHDMIConnector()` scans all connected HDMI outputs, identifies SDL's CRTC (highest fb_id), picks the other. Both displays now show the clock on piclockBR. DRM state confirmed: plane-2→crtc-92 (SDL, fb=685) + plane-3→crtc-104 (mirror, fb=682).
+- **DRM mirror working** (`2ee57fa`): Root cause found — `findHDMI1Connector()` was hardcoded to target HDMI-A-1, but SDL already renders there. Fix: `findSpareHDMIConnector()` scans all connected HDMI outputs, identifies SDL's CRTC by highest fb_id, picks the spare. Both displays now show the clock on piclockBR. DRM state confirmed: plane-2→crtc-92 (SDL, fb=685) + plane-3→crtc-104 (mirror, fb=682).
 - **DRM cue mode working** (`a5929ef`): Replaced `fbi`+PNG disk cache path with direct DRM dumb buffer writes (Option D). `probeSecondDisplayOutput()` cue branch calls `initDRMMirror()` then `updateCueDRMBuffer(off)`. `syncSecondDisplayCueDisplay()` calls `updateCueDRMBuffer(desired)` — renders icon via `renderCueVisualImage()` and writes XRGB8888 directly into the dumb buffer. No `fbi` binary or `/dev/fb0` required. Web GUI toggle (PerfectCue section) switches modes live without restart. Verified working on piclockBR at `a5929ef`.
 
 ### Remaining work
@@ -1912,11 +1952,11 @@ network interface) before using it. Never assume it exists at S## script time.
 - Check local working tree:
   - `git status --short`
 - Build release artifacts on pi5start (fresh clone approach):
-  - `ssh pi@pi5start.local 'cd /tmp && rm -rf clock8002-build && git clone https://github.com/jpkelly/clock8002.git clock8002-build && cd clock8002-build/v4 && git checkout v1.x.y && make release-all GIT_TAG=v1.x.y'`
+  - `ssh pi@pi5start.local 'cd /tmp && rm -rf clock8002-build && git clone --depth 1 --branch BRANCH https://github.com/jpkelly/clock8002.git clock8002-build && cd clock8002-build/v4 && git checkout v1.x.y && make release-all GIT_TAG=v1.x.y'`
 - Deploy release tarball to piclock.local from local Mac relay:
-  - `scp pi@pi5start.local:/tmp/clock8002-build/v4/clock8002-v1.x.y-default-linux-arm64.tar.gz /tmp/`
-  - `scp /tmp/clock8002-v1.x.y-default-linux-arm64.tar.gz pi@piclock.local:/tmp/`
-  - `ssh pi@piclock.local 'set -e; sudo systemctl stop clock8002.service alsa-ltc.service oled_daemon.service || true; sudo systemctl kill clock8002.service alsa-ltc.service oled_daemon.service || true; mkdir -p /tmp/clock8002-install && rm -rf /tmp/clock8002-install/clock8002-v1.x.y-default-linux-arm64; tar xzf /tmp/clock8002-v1.x.y-default-linux-arm64.tar.gz -C /tmp/clock8002-install; cd /tmp/clock8002-install/clock8002-v1.x.y-default-linux-arm64; sudo bash install.sh > /tmp/clock8002-install-v1.x.y.log 2>&1; echo INSTALL_EXIT:$?; sudo systemctl start clock8002.service alsa-ltc.service oled_daemon.service'`
+  - `scp pi@pi5start.local:/tmp/clock8002-build/v4/clock8002-*-default-linux-arm64.tar.gz /tmp/`
+  - `scp /tmp/clock8002-*-default-linux-arm64.tar.gz pi@piclock.local:/tmp/`
+  - `ssh pi@piclock.local 'set -e; sudo systemctl stop clock8002.service alsa-ltc.service oled_daemon.service || true; sudo systemctl kill clock8002.service alsa-ltc.service oled_daemon.service || true; mkdir -p /tmp/clock8002-install && rm -rf /tmp/clock8002-install/clock8002-*-default-linux-arm64; tar xzf /tmp/clock8002-*-default-linux-arm64.tar.gz -C /tmp/clock8002-install; cd /tmp/clock8002-install/clock8002-*-default-linux-arm64; sudo bash install.sh > /tmp/clock8002-install-v1.x.y.log 2>&1; echo INSTALL_EXIT:$?; sudo systemctl start clock8002.service alsa-ltc.service oled_daemon.service'`
 - Verify services on piclock:
   - `ssh pi@piclock.local 'systemctl is-active clock8002 alsa-ltc oled_daemon'`
 - Force-apply gerry config pair on existing unit:
