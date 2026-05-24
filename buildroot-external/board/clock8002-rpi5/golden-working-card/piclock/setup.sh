@@ -114,7 +114,13 @@ if [ -f /boot/piclock/network.ini ]; then
 
 	ip addr flush dev eth0 2>/dev/null || true
 	ifup eth0 2>/dev/null || true
-	[ "$_net_mode" = "dual" ] && ifup eth0:1 2>/dev/null || true
+	# In dual mode, add the static alias directly via ip rather than ifup eth0:1.
+	# ifup eth0 spawns udhcpc in the background and returns before eth0 is marked
+	# "up" in the ifupdown state file, causing ifup eth0:1 to fail silently at boot.
+	if [ "$_net_mode" = "dual" ]; then
+		_raw_mask=$(_ini_get network netmask)
+		ip addr add "${_net_addr}/${_raw_mask}" dev eth0 2>/dev/null || true
+	fi
 
 	# NTP control
 	_ntp=$(_ini_get network ntp)
