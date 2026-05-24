@@ -615,7 +615,7 @@ Our Buildroot 2025.11 `mdev.conf` **does** have `$MODALIAS` auto-load rules. So:
 - Required payload set is matched and complete: `Image`, `dtbs/` (or `dtb/`) + `overlays/`, and `modules/` (or `modules/lib/modules/`).
 - Compile-kernel Buildroot image runs are non-compliant for this validation objective and must not be used for sign-off.
 - Exception policy: only bypass this rule if the user explicitly overrides it in that session.
-- Wrapper policy update: `buildroot-external/scripts/build-with-kernel-fallback.sh` is now payload-only (legacy filename retained for compatibility).
+- Wrapper policy update: wrapper script approach was retired; use direct payload-mode `make` with `CLOCK8002_PREBUILT_KERNEL=1` and `CLOCK8002_PREBUILT_KERNEL_BUNDLE=...`.
 - Historical Mode A / Mode B notes below are archival context and are superseded by this hard rule.
 
 ## Current Checkpoint (2026-05-09 - issue #44 authorized_keys field provisioning fix)
@@ -822,16 +822,15 @@ Our Buildroot 2025.11 `mdev.conf` **does** have `$MODALIAS` auto-load rules. So:
 - Fallback hooks are now implemented in:
   - `buildroot-external/board/clock8002-rpi5/post-build.sh`
   - `buildroot-external/board/clock8002-rpi5/post-image.sh`
-- Fallback wrapper is now implemented in:
-  - `buildroot-external/scripts/build-with-kernel-fallback.sh`
+- Fallback wrapper script was removed; use direct payload-mode Buildroot commands instead.
 - Bundle management scripts are now implemented in:
   - `buildroot-external/scripts/verify-prebuilt-kernel-bundle.sh`
   - `buildroot-external/scripts/promote-prebuilt-kernel-bundle.sh`
 - Canonical Plan B bundle store on cm5:
   - `/srv/clock8002/prebuilt-kernel-bundles/<bundle-id>/`
-  - `/srv/clock8002/prebuilt-kernel-bundles/current` symlink used by default wrapper invocation when no explicit bundle path is passed.
+  - `/srv/clock8002/prebuilt-kernel-bundles/current` symlink used as the default `CLOCK8002_PREBUILT_KERNEL_BUNDLE` path.
 - Current repo-staged Golden payload still includes runtime userspace assets only; a complete prebuilt kernel bundle (Image + dtbs/overlays + modules) must be supplied externally when Mode B is invoked.
-- Default behavior remains Mode A; Mode B activates only after kernel-path failure detection in the wrapper.
+- Default behavior remains payload-mode with prebuilt kernel bundle; kernel-from-source is opt-in only.
 - Build mode selection documentation now lives in:
   - `buildroot-external/README.buildroot.md` -> "Build Mode Selection (A vs B)"
 

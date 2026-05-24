@@ -1,17 +1,40 @@
 #!/bin/sh
 
+PIDFILE="/var/run/power-button.pid"
+CMD="/root/power-button.sh"
+
+start() {
+	echo "Starting power-button handler"
+	if [ ! -x "$CMD" ]; then
+		echo "power-button: missing $CMD"
+		return 1
+	fi
+	if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+		echo "power-button: already running"
+		return 0
+	fi
+	nohup "$CMD" </dev/null >/tmp/power-button.log 2>&1 &
+	echo $! > "$PIDFILE"
+}
+
+stop() {
+	echo "Stopping power-button handler"
+	if [ -f "$PIDFILE" ]; then
+		kill "$(cat "$PIDFILE")" 2>/dev/null || true
+		rm -f "$PIDFILE"
+	fi
+}
+
 case "$1" in
 	start)
-		echo "Starting power-button handler"
-		nohup /root/power-button.sh </dev/null >/dev/null 2>&1 &
+		start
 		;;
 	stop)
-		echo "Stopping power-button handler"
-		kill $(ps aux | grep '[p]ower-button.sh' | awk '{print $1}') 2>/dev/null || true
+		stop
 		;;
 	restart|reload)
-		"$0" stop
-		"$0" start
+		stop
+		start
 		;;
 	*)
 		echo "Usage: $0 {start|stop|restart}"

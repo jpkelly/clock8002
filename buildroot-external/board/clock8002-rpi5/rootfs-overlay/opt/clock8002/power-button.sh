@@ -1,38 +1,51 @@
 #!/bin/sh
 # Power button handler for BusyBox init (Pi 5).
-# Reads input events from /dev/input/event0 (pwr_button gpio-keys).
-# On KEY_POWER press, initiates clean shutdown via /sbin/poweroff.
-#
-# input_event on aarch64: 24 bytes
-#   bytes 0-15:  timestamp (sec + usec)
-#   bytes 16-17: type  (EV_KEY = 0x0001)
-#   bytes 18-19: code  (KEY_POWER = 0x0074 = 116)
-#   bytes 20-23: value (1 = press, 0 = release)
+# Detects KEY_POWER events and triggers clean shutdown by default.
 
+set -u
+
+LOG_TAG="power-button"
 DEV="/dev/input/by-path/platform-pwr_button-event"
+ACTION="${POWER_BUTTON_ACTION:-poweroff}"
 
-# Wait for input device to appear (eudev may not have created it yet).
-n=0
-while [ ! -e "$DEV" ] && [ "$n" -lt 30 ]; do
-    sleep 1
-    n=$((n + 1))
-done
+resolve_fallback_device() {
+    awk '
+        /^N: Name="pwr_button"/ { hit=1 }
+        hit && /^H: Handlers=/ {
+            for (i = 1; i <= NF; i++) {
+                if ($i ~ /^event[0-9]+$/) {
+                    sub(/^event/, "", $i)
+                    print "/dev/input/event" $i
+                    exit
+                }
+            }
+        }
+    ' /proc/bus/input/devices
+}
+
 if [ ! -e "$DEV" ]; then
-    echo "power-button: $DEV not found after 30s" >&2
+    FALLBACK_DEV="$(resolve_fallback_device)"
+    if [ -n "${FALLBACK_DEV:-}" ]; then
+        DEV="$FALLBACK_DEV"
+    fi
+fi
+
+if [ ! -e "$DEV" ]; then
+    echo "$LOG_TAG: no power button input device found" >&2
     exit 1
 fi
 
-echo "power-button: watching $DEV for KEY_POWER"
+echo "$LOG_TAG: watching $DEV for KEY_POWER"
 
 while true; do
-    # Read one 24-byte input event
-    raw=$(dd if="$DEV" bs=24 count=1 2>/dev/null | hexdump -C | head -2)
-
-    # Check for EV_KEY (01 00) + KEY_POWER (74 00) + press (01 00 00 00)
-    # At offset 0x10: 01 00 74 00 01 00 00 00
+    raw="$(dd if="$DEV" bs=24 count=1 2>/dev/null | hexdump -C | head -2)"
     if echo "$raw" | grep -q '01 00 74 00 01 00 00 00'; then
-        echo "power-button: KEY_POWER pressed — shutting down"
-        /sbin/poweroff
-        exit 0
+        echo "$LOG_TAG: KEY_POWER pressed"
+        if [ "$ACTION" = "poweroff" ]; then
+            echo "$LOG_TAG: shutting down"
+            /sbin/poweroff
+            exit 0
+        fi
+        echo "$LOG_TAG: ACTION=$ACTION, not powering off"
     fi
 done
