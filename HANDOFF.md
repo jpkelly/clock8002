@@ -1,6 +1,27 @@
 # Clock8002 Handoff
 
-Last updated: 2026-05-23 - post-image.sh fix committed; 62266c9-real build in progress.
+## Hard Rules (MUST follow)
+
+1. **Prebuilt kernel is the default.** `CLOCK8002_PREBUILT_KERNEL=1` is automatic. To compile a custom kernel, you MUST explicitly set `CLOCK8002_PREBUILT_KERNEL=0`. There is no other mode.
+2. **Never reuse an output directory across commits.** Each build gets a fresh `O=/home/pi/output-root-ram-<commit>-<timestamp>`.
+3. **Verify branch and commit before building.** Run `git branch --show-current && git log --oneline -1` on cm5 before every build.
+4. **Always build inside a screen session.** Never run long builds directly in an SSH one-liner.
+
+## Build command (copy exactly)
+
+```bash
+COMMIT=$(git -C ~/clock8002-root-ram rev-parse --short HEAD)
+O_DIR=/home/pi/output-root-ram-${COMMIT}-$(date +%Y%m%d-%H%M%S)
+SESSION=br-build-${COMMIT}
+
+screen -S ${SESSION} -dm bash -lc "
+  make O=${O_DIR} BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external -C /home/pi/buildroot clock8002_rpi5_defconfig &&
+  make O=${O_DIR} BR2_EXTERNAL=/home/pi/clock8002-root-ram/buildroot-external -C /home/pi/buildroot > /tmp/${SESSION}.log 2>&1
+  echo BR_BUILD_EXIT:\$? > /tmp/${SESSION}.exit
+"
+```
+
+Last updated: 2026-05-23 - prebuilt kernel default enforced in post-build.sh and post-image.sh.
 
 ## Current Checkpoint (2026-05-23 — commit 62266c9, build with CLOCK8002_PREBUILT_KERNEL=0)
 

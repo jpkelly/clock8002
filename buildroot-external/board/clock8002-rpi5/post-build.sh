@@ -137,9 +137,9 @@ if [ -n "${BR2_PICLOCKKEY:-}" ]; then
         chmod 600 "${TARGET_DIR}/root/.ssh/authorized_keys"
 fi
 
-# Default: use freshly built kernel modules. Prebuilt payload injection is
-# opt-in via CLOCK8002_PREBUILT_KERNEL=1.
-if [ "${CLOCK8002_PREBUILT_KERNEL:-0}" != "0" ]; then
+# Default: use prebuilt kernel payload. Custom kernel compile is
+# opt-out via CLOCK8002_PREBUILT_KERNEL=0.
+if [ "${CLOCK8002_PREBUILT_KERNEL:-1}" != "0" ]; then
         PREBUILT_STORE="${CLOCK8002_PREBUILT_KERNEL_STORE:-/srv/clock8002/prebuilt-kernel-bundles}"
         DEFAULT_BUNDLE="${PREBUILT_STORE}/current"
         BUNDLE_DIR="${CLOCK8002_PREBUILT_KERNEL_BUNDLE:-${DEFAULT_BUNDLE}}"
