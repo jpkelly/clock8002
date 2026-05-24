@@ -21,6 +21,10 @@ Critical guardrails:
 - Before editing files: verify local branch with `git branch --show-current`.
 - Before commit: verify local branch again.
 - If running tests, ask first.
+- For remote build orchestration, use SSH heredoc form (`ssh host 'sh' <<'REMOTE' ... REMOTE`) by default; avoid inline quoted SSH one-liners except trivial single-literal commands.
+- Do not use ad-hoc build wrapper scripts for launch orchestration. Use direct Buildroot commands in documented sequence.
+- Before starting any build, run a preflight check and print results: current branch, active screen sessions, bundle path existence, and exact make targets.
+- If preflight fails or runtime behavior is unexpected, stop immediately and ask before retrying.
 
 Build reproducibility docs:
 - Policy: docs/build-policy.md
