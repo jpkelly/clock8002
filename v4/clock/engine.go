@@ -195,25 +195,36 @@ func (engine *Engine) prepareInfo() {
 }
 
 func detectNetworkMode() string {
-	// Get the first active connection name
-	nameOut, err := exec.Command("nmcli", "-t", "-f", "NAME", "con", "show", "--active").Output()
-	if err != nil {
-		return "Unknown"
+	// Try network.ini first (written by setup.sh on piclock systems)
+	if data, err := os.ReadFile("/boot/piclock/network.ini"); err == nil {
+		for _, line := range strings.Split(string(data), "\n") {
+			line = strings.TrimSpace(line)
+			if strings.HasPrefix(line, "mode=") {
+				switch strings.TrimSpace(strings.TrimPrefix(line, "mode=")) {
+				case "static":
+					return "Static"
+				case "dual":
+					return "Dual"
+				case "dhcp":
+					return "DHCP"
+				}
+			}
+		}
 	}
-	conName := strings.TrimSpace(strings.Split(string(nameOut), "\n")[0])
-	if conName == "" {
-		return "Unknown"
+	// Fallback: parse /etc/network/interfaces
+	if data, err := os.ReadFile("/etc/network/interfaces"); err == nil {
+		s := string(data)
+		hasStatic := strings.Contains(s, "inet static")
+		hasDHCP := strings.Contains(s, "inet dhcp")
+		if hasStatic && hasDHCP {
+			return "Dual"
+		} else if hasStatic {
+			return "Static"
+		} else if hasDHCP {
+			return "DHCP"
+		}
 	}
-	// Query ipv4.method for that connection
-	out, err := exec.Command("nmcli", "-g", "ipv4.method", "con", "show", conName).Output()
-	if err != nil {
-		return "Unknown"
-	}
-	method := strings.TrimSpace(string(out))
-	if method == "manual" {
-		return "Static"
-	}
-	return "DHCP"
+	return "Unknown"
 }
 
 // interfaceAddresses returns labeled IP addresses for eth0 and wlan0
