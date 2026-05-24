@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime"
@@ -17,7 +16,6 @@ import (
 	_ "time/tzdata"
 
 	"github.com/Zyko0/go-sdl3/sdl"
-	"github.com/desertbit/timer"
 	"github.com/jessevdk/go-flags"
 	"gitlab.com/clock-8001/clock-8001/v4/clock"
 	"gitlab.com/clock-8001/clock-8001/v4/debug"
@@ -79,10 +77,8 @@ func main() {
 	defer window.Destroy()
 	defer renderer.Destroy()
 
-	isFullScreen := false
 	if options.FullScreen {
 		window.SetFullscreen(true)
-		isFullScreen = true
 	}
 
 	setupScaling()
@@ -124,9 +120,7 @@ func main() {
 
 	log.Printf("Entering main loop")
 
-	configStarted := false
-
-	configTimer := timer.NewTimer(time.Second * 5)
+	infoHidden := false
 
 	sdl.RunLoop(func() error {
 		var event sdl.Event
@@ -187,48 +181,18 @@ func main() {
 				os.Exit(0)
 			case sdl.EVENT_KEY_DOWN:
 				key := event.KeyboardEvent().Key
-				if key == sdl.K_F {
-					if !isFullScreen {
-						window.SetFullscreen(true)
-						window.Sync()
-						setupScaling()
-						// initTextures()
-						isFullScreen = true
-
+				if key == sdl.K_I {
+					if engine.InfoVisible() && !infoHidden {
+						infoHidden = true
+					} else {
+						infoHidden = false
+						engine.EnableInfo()
 					}
-				} else if key == sdl.K_ESCAPE {
-					if isFullScreen {
-						window.SetFullscreen(false)
-						// window.Sync()
-						setupScaling()
-						// initTextures()
-						isFullScreen = false
-					}
-				} else if key == sdl.K_C {
-					if !configStarted {
-						configStarted = true
-						url := fmt.Sprintf("http://localhost%s", options.HTTPPort)
-						var err error
-
-						switch runtime.GOOS {
-						case "linux":
-							err = exec.Command("xdg-open", url).Start()
-						case "windows":
-							err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-						case "darwin":
-							err = exec.Command("open", url).Start()
-						default:
-							err = fmt.Errorf("unsupported platform")
-						}
-						if err != nil {
-							log.Fatal(err)
-						}
-						configTimer.Reset(time.Second * 5)
-					}
+				} else if key == sdl.K_Q {
+					engine.Close()
+					os.Exit(0)
 				}
 			}
-		case <-configTimer.C:
-			configStarted = false
 		case <-updateTicker.C:
 			// Display update
 
@@ -259,8 +223,9 @@ func main() {
 				}
 			}
 
-			if state.Info != "" {
-				newInfo := fmt.Sprintf("%s\nKeyboard:\nF - Full screen\nEscape - Exit full screen\nC - Open web config", state.Info)
+			if state.Info != "" && !infoHidden {
+				hostname, _ := os.Hostname()
+				newInfo := fmt.Sprintf("%s\nWeb config: %s.local%s\n\nI - Toggle overlay  Q - Quit", state.Info, hostname, options.HTTPPort)
 				if newInfo != info {
 					info = newInfo
 
