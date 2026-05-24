@@ -19,6 +19,51 @@
 4. Only promote to known-good after hardware validation (boot, services, LTC).
 5. If build inputs or outputs are not recorded in a manifest, treat the image as non-reproducible.
 
+## CM5 Enforcement Gate
+
+Use this before any build on cm5.
+
+1. **One active working copy only**
+  - Use `/home/pi/clock8002-root-ram` as the canonical dev/RC checkout.
+  - Do not build from a second cm5 checkout path unless the workflow explicitly says so.
+
+2. **Pinned inputs only**
+  - Build from an explicit commit SHA or tag, not a moving branch tip.
+  - Record the exact source SHA(s) and kernel bundle path in the manifest.
+
+3. **Preflight must pass**
+  - `git -C /home/pi/clock8002-root-ram branch --show-current`
+  - `git -C /home/pi/clock8002-root-ram status --short`
+  - `git -C /home/pi/clock8002-root-ram worktree list`
+  - Fail if the working tree is dirty, the branch is wrong, or another worktree is attached to the target branch.
+
+4. **Manifest required for any candidate image**
+  - If the image might be flashed, tested, or promoted, create/update the manifest before sharing it.
+  - Manifest must be stored with the image basename and referenced in HANDOFF.
+
+5. **Reference unit rule**
+  - `/home/pi/clock8002-root-ram` is the active build tree.
+  - `root@192.168.8.245` is the primary validation target.
+  - `root@192.168.8.246` is reference/research only.
+
+## Commonly Missed Items
+
+1. **Filename labels are not provenance**
+  - Always trust manifest + hashes, not the commit string in an image filename.
+
+2. **Mixed source trees are invalid**
+  - Never combine app source from one checkout with buildroot-external from another.
+
+3. **Release vs dev are different flows**
+  - Dev/RC uses `feature/root-ram` and the canonical cm5 working copy.
+  - Release uses a ref-verified clean clone.
+
+4. **No branch switching during active build**
+  - Wait for the exit marker before any checkout or ref movement.
+
+5. **Every promoteable image needs a manifest**
+  - No manifest means no candidate / no known-good.
+
 ## Root-Ram To Master Cutover Checklist (Concise)
 
 Use this only after feature/root-ram is functionally complete.
