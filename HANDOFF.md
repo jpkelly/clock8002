@@ -115,6 +115,33 @@ Use this only after feature/root-ram is functionally complete.
 - Completion check: `ssh pi@cm5.local 'cat /tmp/br-build-repro-245.exit'`
 - Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-build-repro-245.log'`
 
+## Current Checkpoint (2026-05-24 late - rollback baseline confirmed)
+
+### TL;DR
+- Repro image from `output-repro-245-20260524-062711` booted but did not match expected runtime behavior (user-observed LTC regression and boot visual mismatch).
+- Trusted rollback card on `.245` and reference unit `.246` were used as baseline truth.
+- Baseline runtime hashes (working) are:
+  - `sdl-clock`: `3e1b789c80eae6c59f249856bb23cb6239681e656be54c1b3afe32182523621d`
+  - `alsa-ltc`: `c78c3fc8094dd701a9f63465641525998812db9c56be68f703173178eb830417`
+- Baseline LTC launcher command (working):
+  - `/root/alsa-ltc plughw:2,0 255.255.255.255 1245`
+- Baseline boot profile from rollback/reference:
+  - `cmdline.txt`: `logo.nologo consoleblank=0 console=tty1`
+  - golden `config.txt` uses commented `#initramfs rootfs.cpio.gz` form (no active external initramfs line).
+
+### Repo correction committed
+- Commit `004a1fc` (branch `feature/root-ram`, pushed to origin):
+  - `buildroot-external/board/clock8002-rpi5/golden-working-card/boot/config.txt`
+  - aligned to rollback baseline by restoring commented initramfs line.
+
+### Next build target
+1. Build a fresh image from `004a1fc` with standard payload mode (`CLOCK8002_PREBUILT_KERNEL=1`) and fresh output dir.
+2. Flash and validate on `.245` first.
+3. Validate parity checklist:
+  - single `sdl-clock` + single `alsa-ltc` process set
+  - LTC decode working end-to-end
+  - runtime hashes match expected baseline or known intended delta.
+
 ## Known-Good State (2026-05-23)
 
 ### Verified working commit
