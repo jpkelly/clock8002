@@ -180,7 +180,7 @@ func (engine *Engine) prepareInfo() {
 		info += fmt.Sprintf("Hostname: %s.local\n", hostname)
 	}
 
-	info += fmt.Sprintf("Network: %s\n", detectNetworkMode())
+	info += fmt.Sprintf("Network Mode: %s\n", detectNetworkMode())
 	info += interfaceAddresses()
 
 	if ap := detectWifiAP(); ap != "" {
