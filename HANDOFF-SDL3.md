@@ -196,6 +196,31 @@ The 3rd-party reference unit (`10.0.0.131`) runs the same hardware with zero USB
 
 **Note on Phase 5:** BusyBox init is better suited to a read-only rootfs than systemd was. The pokemon watchdog scripts write only to `/var/run` and `/var/log` (both tmpfs). The pivot to BusyBox init is a net positive for Phase 5.
 
+#### Phase 4c — Keyboard input fix (2026-05-24)
+
+**Root cause:** SDL3 3.4.0 without libudev never discovers `/dev/input` devices (see
+"libudev — re-enabled" section above). Keyboard shortcuts (I-toggle, Q-quit) were silently
+non-functional on the Pi despite being correctly implemented in Go.
+
+**Branch:** `feature/root-ram` (HEAD `6620f2f` at time of diagnosis)
+
+**Changes committed:**
+
+| File | Change |
+|---|---|
+| `buildroot-external/package/sdl3/sdl3.mk` | Added `eudev` to `SDL3_DEPENDENCIES`; removed `-DSDL_LIBUDEV=OFF` |
+| `golden-working-card/root/clock_cmd.sh` | Converted to script; adds `SDL_EVDEV_DEVICES` env var populated from `/dev/input/event*` scan as belt-and-suspenders workaround |
+
+**Next step:** Incremental SDL3 rebuild on cm5:
+```sh
+# In an active Buildroot output directory for the current source:
+make sdl3-dirclean && make sdl3
+```
+Then rebuild the clock8002 package and reflash to test keyboard input.
+
+**Keyboard event flow (confirmed working path):**
+`/dev/input/eventN` → `SDL_EVDEV_Poll()` → `SDL_SendKeyboardKey()` → Go `sdl.PollEvent()` loop → I-toggle / Q-quit handlers in `v4/cmd/sdl3-clock/main.go`
+
 ### ⬜ Phase 5 — Read-only rootfs (appliance hardening)
 - `BR2_TARGET_ROOTFS_SQUASHFS=y`
 - overlayfs + tmpfs init script
@@ -238,19 +263,45 @@ Everything that was painful to get working in Buildroot is retained:
 - `arm64` Linux not on go-sdl3's official supported list, but upstream CI builds it successfully
 - Hardware validation (Phase 4) needed to confirm KMSDRM works on Pi 5
 
-### libudev — intentionally disabled (`-DSDL_LIBUDEV=OFF`)
+### libudev — re-enabled after keyboard input bug discovery
 
-SDL3's KMSDRM backend optionally uses libudev to watch `/dev/input` for joystick/gamepad
-hotplug events. We explicitly disable it (`SDL3_CONF_OPTS += -DSDL_LIBUDEV=OFF`, no
-`eudev` in `SDL3_DEPENDENCIES`) because:
+**History:** libudev was disabled in commits `85d2a99` / `52c832c` when the image used
+systemd — adding `eudev` as a separate package caused a hard Buildroot conflict ("both
+systemd and eudev selected as udev providers"). The original rationale also incorrectly
+assumed the keyboard did not need evdev enumeration.
 
-- The clock appliance has no joysticks or HID input devices to enumerate.
-- The Buildroot image uses systemd (which provides udev); adding eudev as a separate
-  dependency causes a hard Buildroot error ("both systemd and eudev selected as udev
-  providers").
-- SDL3's ALSA audio backend (`-DSDL_ALSA=ON`) uses libasound directly — it does not go
-  through libudev. The LTC USB audio device is handled entirely by the separate `alsa-ltc`
-  binary via libasound and is unaffected by this setting.
+**Bug (2026-05-24):** SDL3 3.4.0 with `-DSDL_LIBUDEV=OFF` has a completely non-functional
+device scanner in `SDL_EVDEV_Init()`. The non-udev branch is literally:
+```c
+} else {
+    // TODO: Scan the devices manually, like a caveman
+}
+```
+No `/dev/input` devices are ever discovered. Keyboard shortcuts (I-toggle, Q-quit) were
+silently broken — SDL never received any keyboard events on the Pi because no event
+devices were ever opened.
+
+**Fix applied (2026-05-24):**
+
+1. **`sdl3.mk`** — added `eudev` to `SDL3_DEPENDENCIES`, removed `-DSDL_LIBUDEV=OFF`.
+   eudev is already in the image (`BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_EUDEV=y`, added
+   in Phase 4b commit `a1bab2f`). No defconfig changes needed. Requires a `sdl3-dirclean`
+   incremental rebuild.
+
+2. **`golden-working-card/root/clock_cmd.sh`** — converted from a bare one-liner to a
+   script that enumerates `/dev/input/event*` and sets `SDL_EVDEV_DEVICES` before launch.
+   This is a belt-and-suspenders workaround that works even on images built before the
+   `sdl3.mk` fix ships. Class `258` (0x0102) = `SDL_UDEV_DEVICE_KEYBOARD | SDL_UDEV_DEVICE_HAS_KEYS`.
+
+**Verification:** After reflash with libudev-enabled SDL3:
+```sh
+ls -la /proc/$(pidof sdl-clock)/fd/ | grep input
+```
+Should show open fds to `/dev/input/event*`.
+
+**SDL3's ALSA audio backend** uses libasound directly — it does not go through libudev.
+The LTC USB audio device is handled entirely by the separate `alsa-ltc` binary and is
+unaffected by this setting.
 
 ---
 
