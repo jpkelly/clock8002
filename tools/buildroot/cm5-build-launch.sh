@@ -254,8 +254,10 @@ MAKE_CMD="${MAKE_CMD}; export CLOCK8002_BUILD_SESSION=${SESSION}"
 if [[ -n "$KEY_ARG" ]]; then
     MAKE_CMD="${MAKE_CMD}; export BR2_PICLOCKKEY='${KEY_ARG}'"
 fi
-MAKE_CMD="${MAKE_CMD}; make clock8002-dirclean && make"
-MAKE_CMD="${MAKE_CMD}; rc=\$?; echo \$rc > /tmp/${SESSION}.exit; exit \$rc"
+MAKE_CMD="${MAKE_CMD}; _rc_file=/tmp/${SESSION}.rc"
+MAKE_CMD="${MAKE_CMD}; { make clock8002-dirclean && make; echo \$? > \"\$_rc_file\"; } 2>&1 | tee /tmp/${SESSION}.log"
+MAKE_CMD="${MAKE_CMD}; _rc=\$(cat \"\$_rc_file\" 2>/dev/null || echo 1)"
+MAKE_CMD="${MAKE_CMD}; echo \"\$_rc\" > /tmp/${SESSION}.exit; exit \"\$_rc\""
 
 ssh "$HOST" "screen -dmS '${SESSION}' sh -lc '${MAKE_CMD}'"
 echo ""
@@ -263,6 +265,9 @@ echo ""
 # --- Step 5: print monitoring commands ---
 cat <<EOF
 === Build launched ===
+
+Tail log:
+  ssh ${HOST} 'tail -f /tmp/${SESSION}.log'
 
 Check completion:
   ssh ${HOST} 'cat /tmp/${SESSION}.exit'
