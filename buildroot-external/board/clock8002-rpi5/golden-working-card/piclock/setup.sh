@@ -26,6 +26,17 @@ if [ -x /boot/oled-daemon ]; then
 	/boot/oled-daemon &
 fi
 
+# Restore or generate stable machine-id (persisted at /boot/.piclock-machine-id)
+mkdir -p /var/lib/dbus
+if [ -s /boot/.piclock-machine-id ]; then
+	cp -f /boot/.piclock-machine-id /var/lib/dbus/machine-id
+else
+	tr -d '-' < /proc/sys/kernel/random/uuid | tr 'A-Z' 'a-z' \
+		> /var/lib/dbus/machine-id
+	cp -f /var/lib/dbus/machine-id /boot/.piclock-machine-id 2>/dev/null || true
+fi
+chmod 0444 /var/lib/dbus/machine-id 2>/dev/null || true
+
 # Install and start power button handler
 if [ -f /boot/power-button.sh ]; then
 	cp /boot/power-button.sh /root/power-button.sh
