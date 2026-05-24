@@ -63,7 +63,12 @@ if [ -f /boot/piclock/network.ini ]; then
 	}
 
 	_net_hostname=$(_ini_get host hostname)
-	[ -n "$_net_hostname" ] && hostname "$_net_hostname"
+	if [ -n "$_net_hostname" ]; then
+		hostname "$_net_hostname"
+		# avahi-daemon starts at S50 before this script; restart it to pick up the new hostname
+		/etc/init.d/S50avahi-daemon stop 2>/dev/null || true
+		/etc/init.d/S50avahi-daemon start 2>/dev/null || true
+	fi
 
 	_net_mode=$(_ini_get network mode)
 	[ -z "$_net_mode" ] && _net_mode=dhcp
