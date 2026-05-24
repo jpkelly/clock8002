@@ -43,3 +43,79 @@ if [ -f /boot/power-button.sh ]; then
 	chmod +x /root/power-button.sh
 	/root/power-button.sh &
 fi
+
+# Apply network.ini configuration
+if [ -f /boot/piclock/network.ini ]; then
+	_ini_get() {
+		awk -F= -v s="$1" -v k="$2" \
+			'/^\[/{cur=substr($0,2,index($0,"]")-2)} cur==s&&$1==k{gsub(/[[:space:]]/,"",$2);print $2;exit}' \
+			/boot/piclock/network.ini
+	}
+	_to_mask() {
+		case "$1" in
+			*.*.*.*)  echo "$1" ;;
+			8)  echo "255.0.0.0" ;;
+			16) echo "255.255.0.0" ;;
+			24) echo "255.255.255.0" ;;
+			32) echo "255.255.255.255" ;;
+			*)  echo "255.255.255.0" ;;
+		esac
+	}
+
+	_net_hostname=$(_ini_get host hostname)
+	[ -n "$_net_hostname" ] && hostname "$_net_hostname"
+
+	_net_mode=$(_ini_get network mode)
+	[ -z "$_net_mode" ] && _net_mode=dhcp
+	_net_addr=$(_ini_get network address)
+	_net_mask=$(_to_mask "$(_ini_get network netmask)")
+	_net_gw=$(_ini_get network gateway)
+	_net_dns=$(_ini_get network dns)
+
+	if { [ "$_net_mode" = "static" ] || [ "$_net_mode" = "dual" ]; } && \
+	   { [ -z "$_net_addr" ] || [ -z "$_net_mask" ]; }; then
+		_net_mode=dhcp
+	fi
+
+	{
+		echo "# Generated from /boot/piclock/network.ini by setup.sh"
+		echo "auto lo"
+		echo "iface lo inet loopback"
+		echo ""
+		case "$_net_mode" in
+			static)
+				echo "auto eth0"
+				echo "iface eth0 inet static"
+				echo "    address $_net_addr"
+				echo "    netmask $_net_mask"
+				[ -n "$_net_gw" ] && echo "    gateway $_net_gw"
+				[ -n "$_net_dns" ] && echo "    dns-nameservers $_net_dns"
+				;;
+			dual)
+				echo "auto eth0"
+				echo "iface eth0 inet dhcp"
+				echo ""
+				echo "iface eth0:1 inet static"
+				echo "    address $_net_addr"
+				echo "    netmask $_net_mask"
+				[ -n "$_net_gw" ] && echo "    gateway $_net_gw"
+				;;
+			*)
+				echo "auto eth0"
+				echo "iface eth0 inet dhcp"
+				;;
+		esac
+	} > /etc/network/interfaces
+
+	ip addr flush dev eth0 2>/dev/null || true
+	ifup eth0 2>/dev/null || true
+	[ "$_net_mode" = "dual" ] && ifup eth0:1 2>/dev/null || true
+
+	# NTP control
+	_ntp=$(_ini_get network ntp)
+	if [ "$_ntp" = "false" ]; then
+		/etc/init.d/S49ntp stop 2>/dev/null || true
+	elif [ "$_ntp" = "true" ]; then
+		/etc/init.d/S49ntp restart 2>/dev/null || true
+	fi
+fi
