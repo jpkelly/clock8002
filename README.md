@@ -4,10 +4,22 @@ An HDMI clock display for Raspberry Pi 5, running as a minimal appliance on a cu
 
 > **Legacy Trixie/SDL2 path:** The Debian Trixie (Raspberry Pi OS) deployment path is preserved on the [`trixie` branch](../../tree/trixie). New deployments should use this branch.
 
+## Project Status (feature/root-ram)
+
+Last verified: **2026-05-24**
+
+- This README is the operator/user quick-start reference.
+- Build policy and reproducibility rules live in [`docs/build-policy.md`](docs/build-policy.md).
+- Current branch operational state and validation targets live in [`HANDOFF.md`](HANDOFF.md).
+- Build host workflow details live in [`buildroot-external/README.buildroot.md`](buildroot-external/README.buildroot.md).
+
+> Transitional note: this branch-specific status wording can be removed once `feature/root-ram` is promoted and `master` becomes the default workflow baseline.
+
 ## Table of Contents
 
 - [Acknowledgements](#acknowledgements)
 - [What changed from clock-8001](#what-changed-from-clock-8001)
+- [Project Status (feature/root-ram)](#project-status-featureroot-ram)
 - [Requirements](#requirements)
 - [Quick Start — Flash the Image](#quick-start--flash-the-image)
 - [First Boot](#first-boot)
@@ -44,7 +56,7 @@ Please consider supporting the original clock-8001 development: https://www.payp
 
 Built for the **piClock platform** on Raspberry Pi 5, arm64.
 
-- **Hardware**: Raspberry Pi 5 (1GB or 2GB)
+- **Hardware**: Raspberry Pi 5 (field units currently include 2GB and 8GB variants)
 - **Display**: HDMI via SDL3 KMSDRM (headless, no desktop required)
 - **OS**: Custom Buildroot image — pre-built images on the [Releases](https://github.com/jpkelly/clock8002/releases) page
 - **Network**: Required for OSC control and web configuration
@@ -138,11 +150,11 @@ Config files live on the FAT32 boot partition at `/boot/piclock/` (visible as `p
 
 ### network.ini
 
-Controls hostname, DHCP/static IP, NTP, and Wi-Fi AP mode. Changes take effect on reboot.
+Controls hostname, network mode, NTP, and Wi-Fi AP mode. Changes take effect on reboot.
 
 ```ini
 [network]
-mode=dhcp                          # dhcp or static
+mode=dhcp                          # dhcp or static (some branch builds also expose dual)
 ntp=false                          # disable if using OSC settime
 # address=192.168.8.245             # static IP only
 # netmask=24
@@ -255,7 +267,9 @@ UART overlays are pre-configured in the Buildroot image `config.txt`. No manual 
 
 ## OSC Control
 
-See the [original clock-8001 OSC documentation](https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md) for the full list of OSC commands.
+See the local OSC reference in [`v4/osc.md`](v4/osc.md) for the full command set used by this repository.
+
+Upstream reference is also available at [clock-8001/v4/osc.md](https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md).
 
 ## License
 

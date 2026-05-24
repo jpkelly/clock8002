@@ -2,6 +2,14 @@
 
 This document covers building, flashing, and maintaining the Buildroot-based SD card image for clock8002 on Raspberry Pi 5. For user-facing setup and configuration, see the [main README](../README.md).
 
+Current branch baseline (2026-05-24):
+
+- Active dev/RC branch: `feature/root-ram`
+- Active build tree on cm5: `~/clock8002-root-ram`
+- Primary validation target: `.245` (with `.246` as reference/research only)
+
+When this branch is promoted, replace branch-specific wording with `master` equivalents.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -60,14 +68,14 @@ buildroot-external/
     clock8002_rpi5_defconfig.sample  — pinned Buildroot 2025.02 defconfig
 ```
 
-`sdl-clock` and `alsa-ltc` are built directly from `~/clock8002/v4` on the build host — not from a tarball download.
+`sdl-clock` and `alsa-ltc` are built directly from `~/clock8002-root-ram/v4` on the build host — not from a tarball download.
 
 ## Build Host Setup
 
 **Build host:** `pi@cm5.local` (CM5, 8GB RAM, NVMe)  
 **Buildroot version:** 2025.02  
 **Buildroot path:** `~/buildroot`  
-**External tree:** `~/clock8002/buildroot-external` (via `BR2_EXTERNAL`)
+**External tree:** `~/clock8002-root-ram/buildroot-external` (via `BR2_EXTERNAL`)
 
 ### Manual Build-Host Patches
 
@@ -110,14 +118,14 @@ CXX="$(HOSTCXX_NOCCACHE)" acl_cv_wl="-Wl,"
 Before any build, always sync the clock8002 source on the build host:
 
 ```bash
-ssh pi@cm5.local 'cd ~/clock8002 && git pull --ff-only'
+ssh pi@cm5.local 'cd ~/clock8002-root-ram && git pull --ff-only'
 ```
 
 ### Kernel Build Policy
 
-**Default:** Buildroot compiles the kernel from source using the config fragment in `board/clock8002-rpi5/linux.config`. This is the default behavior — no extra variables are required.
+**Default:** Use prebuilt kernel payload mode (`CLOCK8002_PREBUILT_KERNEL=1`).
 
-**Opt-in prebuilt payload:** For faster incremental builds, you can skip kernel compilation and inject a prebuilt bundle instead. Use the payload wrapper or set `CLOCK8002_PREBUILT_KERNEL=1` explicitly.
+**Kernel-from-source is opt-in:** Only use `CLOCK8002_PREBUILT_KERNEL=0` when intentionally validating custom kernel changes.
 
 Prebuilt payload requirements (when opted in):
 
@@ -125,18 +133,18 @@ Prebuilt payload requirements (when opted in):
 2. DTBs (`dtbs/` or `dtb/`) plus `overlays/`
 3. Modules (`modules/` or `modules/lib/modules/`)
 
-`buildroot-external/scripts/build-with-kernel-fallback.sh` is a payload-only wrapper. It is **not** the default path — it is an optional fast-path for builds where the kernel has not changed.
+`buildroot-external/scripts/build-with-kernel-fallback.sh` is a payload-only wrapper (legacy name retained). It runs one payload-mode build and fails closed on invalid bundles.
 
 Payload build command (default `current` bundle):
 
 ```bash
-ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
+ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002-root-ram/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
 ```
 
 Payload build command (explicit bundle override):
 
 ```bash
-ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot /path/to/prebuilt-kernel-bundle'
+ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002-root-ram/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot /path/to/prebuilt-kernel-bundle'
 ```
 
 Wrapper behavior:
@@ -200,7 +208,7 @@ Operational requirements when using prebuilt payload:
 ### Full image build
 
 ```bash
-ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
+ssh pi@cm5.local 'cd ~/buildroot && ~/clock8002-root-ram/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
 ```
 
 Monitor progress:
@@ -232,7 +240,7 @@ This helper avoids fragile inline SSH quoting and reports state, elapsed time, a
 Release builds must use `make clean` — not `clock8002-dirclean` — to wipe `output/target/` completely. `clock8002-dirclean` only cleans the package build dir; stale files (including SSH keys from prior dev builds) persist in `output/target/` across partial rebuilds. `post-build.sh` also actively purges any stale key, but `make clean` ensures a provably clean rootfs.
 
 ```bash
-ssh pi@cm5.local 'cd ~/clock8002 && git fetch --tags origin && git checkout vX.X.X && cd ~/buildroot && make clean && ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
+ssh pi@cm5.local 'cd ~/clock8002-root-ram && git fetch --tags origin && git checkout vX.X.X && cd ~/buildroot && make clean && ~/clock8002-root-ram/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
 ```
 
 > Replace `vX.X.X` with the release tag. `make clean` is slower (full rebuild of all packages) but required for release integrity.
@@ -250,7 +258,7 @@ ssh pi@cm5.local 'echo "export BR2_PICLOCKKEY=\"ssh-ed25519 AAAA... you@host\"" 
 **Dev build command:**
 
 ```bash
-ssh pi@cm5.local 'source ~/buildroot-keys.env && cd ~/clock8002 && git pull --ff-only && cd ~/buildroot && CLOCK8002_PREBUILT_KERNEL=1 CLOCK8002_PREBUILT_KERNEL_BUNDLE=/srv/clock8002/prebuilt-kernel-bundles/current ~/clock8002/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
+ssh pi@cm5.local 'source ~/buildroot-keys.env && cd ~/clock8002-root-ram && git pull --ff-only && cd ~/buildroot && CLOCK8002_PREBUILT_KERNEL=1 CLOCK8002_PREBUILT_KERNEL_BUNDLE=/srv/clock8002/prebuilt-kernel-bundles/current ~/clock8002-root-ram/buildroot-external/scripts/build-with-kernel-fallback.sh ~/buildroot'
 ```
 
 > Dev builds can use `clock8002-dirclean` for speed. The SSH key is re-injected on every build by `post-build.sh` when `BR2_PICLOCKKEY` is set.
@@ -354,9 +362,9 @@ To test a single binary change on the running unit without rebuilding the full i
 # Cross-compile on Mac (from v4/)
 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 GOFLAGS=-mod=vendor go build -o /tmp/sdl3-clock-linux-arm64 ./cmd/sdl3-clock
 
-# Copy to unit and restart
-/etc/init.d/S99clock stop
-scp /tmp/sdl3-clock-linux-arm64 root@piClock.local:/opt/clock8002/sdl3-clock
+# Stop service on unit, copy binary, then restart
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@piClock.local '/etc/init.d/S99clock stop'
+scp -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 /tmp/sdl3-clock-linux-arm64 root@piClock.local:/opt/clock8002/sdl3-clock
 ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@piClock.local '/etc/init.d/S99clock start'
 ```
 
