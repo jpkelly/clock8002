@@ -1556,12 +1556,15 @@ Unit: `root@piClock.local` / `192.168.8.246`
 - ✅ 12h mode — **VERIFIED WORKING** (2026-04-30): was broken by build race (background `make &` + immediate branch switch); fixed with synchronous build. CRITICAL rule added to copilot-instructions.md.
 - ✅ AM/PM label rendering — working with `textR.W -= textR.H * 0.6` reservation (`aa09bb8`)
 - ⏳ draw4TextClocks size tweak — H 240→210, spacing unchanged at 265 (`f669f5b`) — flashed, awaiting visual check
-- ⏳ Pre-merge items (see below) — none are functional blockers
+- ⏳ Pending items (see below) — none are functional blockers
 
-### Pre-merge remaining items
+### To Do List
 1. ✅ **Confirmatory test** — `ToDHideSeconds=false` written via web UI, survived reboot in FAT clock.ini; in-memory state reset on reboot. Tmpfs reset works as designed.
 2. **Dev-deploy behaviour note** — `/opt/clock8002` is squashfs (ro); `cp sdl3-clock /opt/...` will fail on the live unit unlike ext4. Dev deploys require reflash. Document this change in Issue #41.
 3. **Issue #41 update** — record the per-path tmpfs approach as the resolved implementation (vs `S02overlayfs` full overlayfs originally planned), and close out the checklist.
+4. **tmpfs simplification follow-up** — evaluate removing the `/root` tmpfs + `S02setup-root` layer after the reproducible baseline is settled; the current conclusion is that it is redundant, but it stays as a cleanup task for later.
+5. **Issue #44 queued image validation** — run queued-change image build/flash on `.245`, then validate: power button shutdown path, machine-id persistence (`/boot/.piclock-machine-id`) across reboots, network.ini modes (`dhcp`/`static`/`dual`) + AP options, and UART1 (`/dev/ttyAMA1`) cue path.
+6. **Issue #44 closeout notes** — record validation outcomes in Issue #44 and summarize final state in HANDOFF.
 
 ### Next steps
 1. ✅ ~~Run confirmatory tmpfs-reset test~~ — DONE

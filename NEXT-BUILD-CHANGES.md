@@ -1,5 +1,9 @@
 # Next Build Change List
 
+Status: archival tracker for the 2026-05-22 Issue #44 queue.
+Active/live checklist now lives in `HANDOFF.md` under "To Do List".
+Use this file for historical implementation detail only.
+
 Date started: 2026-05-22
 Branch: feature/root-ram
 Target build session baseline: br-root-ram-20260522-090437
