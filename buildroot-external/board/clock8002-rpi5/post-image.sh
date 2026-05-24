@@ -313,6 +313,15 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
 			"${BINARIES_DIR}/${oled_asset}" ::
 	done
+
+	# Inject power-button handler to FAT root so setup.sh can copy and start it.
+	_PWRBTN_SRC="${BOARD_DIR}/rootfs-overlay/opt/clock8002/power-button.sh"
+	if [ -f "${_PWRBTN_SRC}" ]; then
+		cp -f "${_PWRBTN_SRC}" "${BINARIES_DIR}/power-button.sh"
+		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
+			"${BINARIES_DIR}/power-button.sh" ::
+	fi
+	unset _PWRBTN_SRC
 	if [ -n "${RPI_FW_BOOT_DIR}" ]; then
 		for staged in "${RPI_FW_BOOT_DIR}"/*; do
 			[ -f "${staged}" ] || continue

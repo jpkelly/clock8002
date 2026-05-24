@@ -25,3 +25,10 @@ if [ -x /boot/oled-daemon ]; then
 	modprobe i2c-dev 2>/dev/null || true
 	/boot/oled-daemon &
 fi
+
+# Install and start power button handler
+if [ -f /boot/power-button.sh ]; then
+	cp /boot/power-button.sh /root/power-button.sh
+	chmod +x /root/power-button.sh
+	/root/power-button.sh &
+fi
