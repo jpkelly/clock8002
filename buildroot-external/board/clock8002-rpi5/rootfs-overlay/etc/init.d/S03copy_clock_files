@@ -23,7 +23,7 @@ start() {
 	_splash=$(awk -F= '/^splash_enabled/ { gsub(/[[:space:]]/, "", $2); print $2 }' /boot/piclock/piclock.ini 2>/dev/null)
 	if [ "$_splash" = "true" ]; then
 		echo 0 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
-		[ -f /boot/piclock/bootsplash.raw ] && dd if=/boot/piclock/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
+		[ -f /boot/bootsplash.raw ] && dd if=/boot/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
 	else
 		echo 1 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
 	fi

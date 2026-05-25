@@ -18,9 +18,9 @@ start() {
 	# Early bootsplash: unbind framebuffer console and paint splash before any
 	# text output reaches fb0.
 	_splash=$(awk -F= '/^splash_enabled/ { gsub(/[[:space:]]/, "", $2); print $2 }' /boot/piclock/piclock.ini 2>/dev/null)
-	if [ "$_splash" = "true" ] && [ -f /boot/piclock/bootsplash.raw ]; then
+	if [ "$_splash" = "true" ] && [ -f /boot/bootsplash.raw ]; then
 		echo 0 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
-		dd if=/boot/piclock/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
+		dd if=/boot/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
 	fi
         if [ -e "$HOSTNAME_FILE" ]; then
                 echo "Setting hostname"

@@ -252,9 +252,9 @@ BUILDINFO
 	if [ -f "${SPLASH_PNG}" ] && command -v ffmpeg >/dev/null 2>&1; then
 		ffmpeg -y -i "${SPLASH_PNG}" \
 			-f rawvideo -pix_fmt rgb565le \
-			"${BINARIES_DIR}/piclock/bootsplash.raw" \
+			"${BINARIES_DIR}/bootsplash.raw" \
 			>/dev/null 2>&1 && \
-			echo "Staged bootsplash.raw ($(stat -c %s "${BINARIES_DIR}/piclock/bootsplash.raw") bytes)" >&2 || \
+			echo "Staged bootsplash.raw ($(stat -c %s "${BINARIES_DIR}/bootsplash.raw") bytes)" >&2 || \
 			echo "WARNING: bootsplash.raw conversion failed" >&2
 	fi
 	# Fix path comment in network.ini (v4 source references Trixie's
@@ -315,6 +315,12 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
 			"${BINARIES_DIR}/${oled_asset}" ::
 	done
+
+	# Inject bootsplash to FAT root (build artifact, not user config).
+	if [ -f "${BINARIES_DIR}/bootsplash.raw" ]; then
+		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
+			"${BINARIES_DIR}/bootsplash.raw" ::
+	fi
 
 	# Inject power-button handler to FAT root so setup.sh can copy and start it.
 	_PWRBTN_SRC="${BOARD_DIR}/rootfs-overlay/opt/clock8002/power-button.sh"

@@ -102,7 +102,7 @@ Use this only after feature/root-ram is functionally complete.
   - Update instructions/docs so normal builds use `master`.
   - Keep `feature/root-ram` only for hotfix overlap, then retire.
 
-## Current State (2026-05-24 — bootsplash text suppression in progress)
+## Current State (2026-05-25 — SSH key persistence fix + clean rebuild in progress)
 
 ### Active dev baseline
 - **Branch**: `feature/root-ram`
