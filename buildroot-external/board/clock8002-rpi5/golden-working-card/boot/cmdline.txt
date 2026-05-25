@@ -1,1 +1,1 @@
-logo.nologo consoleblank=0 console=tty1
+quiet loglevel=0 logo.nologo consoleblank=0
