@@ -8,8 +8,7 @@ kernel=Image
 boot_delay=0
 
 # To use an external initramfs file
-# Load external initramfs (our Buildroot rootfs) after the kernel's embedded one
-initramfs rootfs.cpio.gz followkernel
+#initramfs rootfs.cpio.gz
 
 # Disable overscan assuming the display supports displaying the full resolution
 # If the text shown on the screen disappears off the edge, comment this out
