@@ -102,43 +102,41 @@ Use this only after feature/root-ram is functionally complete.
   - Update instructions/docs so normal builds use `master`.
   - Keep `feature/root-ram` only for hotfix overlap, then retire.
 
-## Current State (2026-05-24 — Wi-Fi feature starting)
+## Current State (2026-05-24 — Wi-Fi overlay icon validated)
 
 ### Active dev baseline
 - **Branch**: `feature/root-ram`
-- **HEAD**: `71c2af6` (manifest complete) — pushed to GitHub
-- **Checkpoint tag**: `checkpoint/pre-wifi-71c2af6` — pushed to GitHub
-- **Recovery image**: `/Users/jp/Desktop/piClock-99fe990-sdcard.img` — keep until Wi-Fi validated
-- **Output dir (cm5)**: `/home/pi/output-repro-245-20260524-062711` — use for incremental Wi-Fi builds
+- **HEAD**: `3c45398` — pushed to GitHub
+- **Tag**: `working-2026-05-24-wifi-overlay-icon` — pushed to GitHub
+- **Validated image**: `/Users/jp/Desktop/sdcard-sdl-fix3-3c45398.img`
+- **cm5 output**: `/home/pi/buildroot/output/images/sdcard.img` (501M, May 24 19:39)
+- **Kernel bundle**: `bundle-245-6.12.41-v8-20260509-161234` (prebuilt, `CLOCK8002_PREBUILT_KERNEL=1`)
 
-### Known-good image (`99fe990`)
-- Booted and validated on `.245` (piClock.local / 192.168.8.245) 2026-05-24
-- sdl-clock I/Q keyboard shortcuts working
-- alsa-ltc, oled-daemon, LTC decode, web UI all confirmed
-- Manifest: `docs/manifests/build-manifest-repro-245-20260524-062711.md` — status: known-good
-- sdcard.img SHA256: `7e785383aff30a9e1f32bcdefee41e245f56c7630de47ca484c2a7396ded0e24`
+### Validated on .245 (2026-05-24)
+- Wi-Fi AP (hostapd 2.11) — `piClock-ap` SSID broadcasts ✅
+- DHCP via dnsmasq (192.168.50.10-100/24) ✅
+- OLED Wi-Fi icon (`is_ap_active` via `/boot/iw`) ✅
+- SDL overlay "AP SSID: piClock-ap" visible in info panel ✅
+- SSH, boot, power button all working ✅
 
-### Wi-Fi feature — next work
-**What's in the image:**
-- `wpa_supplicant` ✅
-- brcm firmware (`fmac43455-sdio.bin`) ✅
-- `wlan0` interface ✅ (hardware recognized, brcmfmac module loads)
+### Root cause fixed (3c45398) — post-image.sh binary deploy
+`post-image.sh` `BOOT_RUNTIME_FILES` loop was gated on `CLOCK8002_PREBUILT_KERNEL=0`, preventing
+fresh app binaries from landing on the FAT partition in default (prebuilt-kernel) mode.
+`S03copy_clock_files` copies `/boot/sdl-clock` → `/root/sdl-clock` at every boot, so the stale
+`BINARIES_DIR` binary was always winning. Fix: always copy from build dir regardless of the flag.
 
-**Missing from image (needs defconfig + rebuild):**
-- `dnsmasq` ❌ — required for client DHCP on the AP subnet
-- `iw` ❌ — diagnostics and some AP setup flows
+### Commits since last known-good (51703f6)
+- `b4a5ed5` — fix: Wi-Fi AP icon/SSID detection for hostapd boot model
+- `93d4d13` — fix: install sdl-clock to /root/ from package; remove stale overlay binary
+- `3c45398` — fix: always copy fresh app binaries to boot FAT in post-image.sh
 
-**Code already in place:**
-- `buildroot-external/board/clock8002-rpi5/rootfs-overlay/opt/clock8002/piclock-network.sh` — non-NM wpa_supplicant AP backend, waits for wlan0, starts dnsmasq when available
-- `S45piclock-network` init script wired in `post-build.sh`
-- `network.ini` `[wifi]` section: `ap_enabled`, `ap_ssid`, `ap_password`, `ap_channel`, `ap_country`
-- `network.ini.default` documents all fields
-
-**Next steps:**
-1. Add `BR2_PACKAGE_DNSMASQ=y` and `BR2_PACKAGE_IW=y` to `defconfig.sample`
-2. Add same to cm5 `.config` (sed) — avoids full defconfig re-init
-3. Run incremental build: `make clock8002-dirclean && make` with CLOCK8002_PREBUILT_KERNEL=1
-4. Flash and test AP mode: set `ap_enabled=true` in `/boot/piclock/network.ini`, reboot, verify SSID visible
+### Open items
+1. **LTC broadcast broken** — `setup.sh` generates `/etc/network/interfaces` without a `broadcast`
+   line → `eth0 Bcast:0.0.0.0` → alsa-ltc cannot resolve subnet broadcast correctly.
+   Fix: add broadcast calculation to the static interface block in `setup.sh`.
+2. **Manifest** — three commits above need a build manifest for this image.
+3. **network.ini default** — `gateway=192.168.8.1` set live on device; golden-working-card default
+   still has it commented out.
 
 ## Current Checkpoint (2026-05-24 late - rollback baseline confirmed)
 
