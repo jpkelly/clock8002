@@ -9,20 +9,25 @@ NTP_CONF="/boot/ntp.conf"
 
 start() {
 	echo "Setting up clock configuration"
-	sleep 5
 	mkdir -p /boot
+	# Mount early so we can read splash_enabled and control the framebuffer
+	# console before init text accumulates on the display.
 	if [ -e /dev/mmcblk0p1 ]; then
 		mount -r /dev/mmcblk0p1 /boot 2>/dev/null || true
 	else
 		mount -r /dev/mmcblk0 /boot 2>/dev/null || true
 	fi
-	# Early bootsplash: unbind framebuffer console and paint splash before any
-	# text output reaches fb0.
+	# Control framebuffer console immediately based on splash_enabled.
+	# splash=true:  unbind vtcon1 from fb0 and paint splash — no text on display.
+	# splash=false: ensure vtcon1 is bound — all console text visible on display.
 	_splash=$(awk -F= '/^splash_enabled/ { gsub(/[[:space:]]/, "", $2); print $2 }' /boot/piclock/piclock.ini 2>/dev/null)
-	if [ "$_splash" = "true" ] && [ -f /boot/piclock/bootsplash.raw ]; then
+	if [ "$_splash" = "true" ]; then
 		echo 0 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
-		dd if=/boot/piclock/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
+		[ -f /boot/piclock/bootsplash.raw ] && dd if=/boot/piclock/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
+	else
+		echo 1 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
 	fi
+	sleep 5
 	if [ -e "$INTERFACES_FILE" ]; then
 		echo "Copying network settings"
 		cp "$INTERFACES_FILE" /etc/network/interfaces

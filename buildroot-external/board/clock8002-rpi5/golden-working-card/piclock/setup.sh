@@ -21,6 +21,15 @@ if [ "$(_piclock_ini_get splash_enabled)" = "true" ] && [ -f /boot/piclock/boots
 	dd if=/boot/piclock/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
 fi
 
+# Update cmdline.txt for the next boot based on splash_enabled.
+# splash=true  -> quiet + loglevel=0: kernel produces no text output.
+# splash=false -> normal cmdline: all kernel and console text visible.
+if [ "$(_piclock_ini_get splash_enabled)" = "true" ]; then
+	echo 'quiet loglevel=0 logo.nologo consoleblank=0 console=tty1' > /boot/cmdline.txt
+else
+	echo 'logo.nologo consoleblank=0 console=tty1' > /boot/cmdline.txt
+fi
+
 # Start OLED daemon
 if [ -x /boot/oled-daemon ]; then
 	modprobe i2c-dev 2>/dev/null || true
