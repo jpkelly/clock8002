@@ -25,7 +25,7 @@ fi
 # splash=true  -> quiet + loglevel=0: kernel produces no text output.
 # splash=false -> normal cmdline: all kernel and console text visible.
 if [ "$(_piclock_ini_get splash_enabled)" = "true" ]; then
-	echo 'quiet loglevel=0 logo.nologo consoleblank=0 console=tty1' > /boot/cmdline.txt
+	echo 'quiet loglevel=0 logo.nologo consoleblank=0' > /boot/cmdline.txt
 else
 	echo 'logo.nologo consoleblank=0 console=tty1' > /boot/cmdline.txt
 fi
