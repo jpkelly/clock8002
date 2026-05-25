@@ -98,16 +98,10 @@ fi
 # The working card keeps /root persistent; remove any synthetic tmpfs mapping.
 sed -i '/[[:space:]]\/root[[:space:]]/d' "${TARGET_DIR}/etc/fstab"
 
-# Mount tmpfs over /var/lib so NM and seedrng can write runtime data.
+# Mount tmpfs over /var/lib so seedrng can write runtime data.
 # squashfs rootfs is read-only; these dirs are regenerated each boot.
 if ! grep -q 'tmpfs.*\s/var/lib\s' "${TARGET_DIR}/etc/fstab" 2>/dev/null; then
         echo 'tmpfs           /var/lib        tmpfs   mode=0755,noatime       0       0' >> "${TARGET_DIR}/etc/fstab"
-fi
-
-# Mount tmpfs over NM system-connections dir so S43piclock-network-prep can
-# write the wired connection file before NetworkManager starts.
-if ! grep -q '/etc/NetworkManager/system-connections' "${TARGET_DIR}/etc/fstab" 2>/dev/null; then
-        echo 'tmpfs           /etc/NetworkManager/system-connections tmpfs mode=0700,noatime 0 0' >> "${TARGET_DIR}/etc/fstab"
 fi
 
 # Pre-create /boot/piclock directory (will be on the mounted FAT partition).
