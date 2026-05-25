@@ -254,24 +254,34 @@ func interfaceAddresses() string {
 	return ret
 }
 
-// detectWifiAP returns AP SSID line if piclock-ap is active, empty string otherwise
+// detectWifiAP returns AP SSID line if wlan0 is in AP mode, empty string otherwise
 func detectWifiAP() string {
-	out, err := exec.Command("nmcli", "-t", "-f", "GENERAL.STATE", "con", "show", "piclock-ap").Output()
+	iwPaths := []string{"/usr/sbin/iw", "/sbin/iw", "/boot/iw"}
+	var iwPath string
+	for _, p := range iwPaths {
+		if _, err := os.Stat(p); err == nil {
+			iwPath = p
+			break
+		}
+	}
+	if iwPath == "" {
+		return ""
+	}
+	out, err := exec.Command(iwPath, "dev", "wlan0", "info").Output()
 	if err != nil {
 		return ""
 	}
-	if !strings.Contains(string(out), "activated") {
+	s := string(out)
+	if !strings.Contains(s, "type AP") {
 		return ""
 	}
-	ssidOut, err := exec.Command("nmcli", "-g", "802-11-wireless.ssid", "con", "show", "piclock-ap").Output()
-	if err != nil {
-		return ""
+	for _, line := range strings.Split(s, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "ssid ") {
+			return fmt.Sprintf("AP SSID: %s\n", strings.TrimPrefix(line, "ssid "))
+		}
 	}
-	ssid := strings.TrimSpace(string(ssidOut))
-	if ssid != "" {
-		return fmt.Sprintf("AP SSID: %s\n", ssid)
-	}
-	return ""
+	return "AP: active\n"
 }
 
 func (engine *Engine) infoTimeout() {

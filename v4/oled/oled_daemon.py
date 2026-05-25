@@ -84,7 +84,8 @@ except Exception:
     logo_font = ImageFont.load_default()
 
 _MATERIAL_FONT_CANDIDATES = [
-    "/opt/clock8002/MaterialIcons-Regular.ttf",  # Buildroot
+    "/opt/clock8002/MaterialIcons-Regular.ttf",  # Buildroot (opt)
+    "/root/MaterialIcons-Regular.ttf",            # Buildroot (golden-working-card/root)
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "../ttf_fonts/MaterialIcons-Regular.ttf"),  # dev
 ]
 _MATERIAL_FONT_PATH = next((p for p in _MATERIAL_FONT_CANDIDATES if os.path.exists(p)), None)
@@ -265,10 +266,15 @@ def get_stats():
 logo_buf = load_logo_buffer(LOGO_PATH)
 flush_logo_buffer(logo_buf)
 
+_IW_CANDIDATES = ['/usr/sbin/iw', '/sbin/iw', '/boot/iw']
+_IW_PATH = next((p for p in _IW_CANDIDATES if os.path.exists(p)), None)
+
 def is_ap_active():
+    if not _IW_PATH:
+        return False
     try:
         out = subprocess.check_output(
-            ['iw', 'dev', 'wlan0', 'info'],
+            [_IW_PATH, 'dev', 'wlan0', 'info'],
             stderr=subprocess.DEVNULL,
             timeout=1.0,
         ).decode(errors='ignore')
