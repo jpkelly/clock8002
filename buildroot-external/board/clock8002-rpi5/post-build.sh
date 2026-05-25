@@ -61,7 +61,7 @@ for script in \
         S43piclock-network-prep \
         S45piclock-network \
         S49sshd-keys \
-        S50sshd \
+        S50dropbear \
         S99alsa-ltc \
         S99clock \
         S99clock_bridge; do
