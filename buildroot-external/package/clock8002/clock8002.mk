@@ -12,8 +12,7 @@ CLOCK8002_DEPENDENCIES = host-go sdl3 sdl3-ttf sdl3-image libltc
 CLOCK8002_CONFIG_SUFFIX = default
 
 CLOCK8002_GIT_DIR = $(realpath $(CLOCK8002_SITE)/..)
-# The root-ram feature line is intentionally labeled as ram-root in runtime UI/config.
-CLOCK8002_GIT_TAG = $(shell cd $(CLOCK8002_GIT_DIR) && branch=$$(git branch --show-current 2>/dev/null || true); if [ "$$branch" = "feature/root-ram" ]; then echo "ram-root"; else git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0.1"; fi)
+CLOCK8002_GIT_TAG = $(shell cd $(CLOCK8002_GIT_DIR) && git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0.1")
 CLOCK8002_GIT_COMMIT = $(shell cd $(CLOCK8002_GIT_DIR) && git rev-list -1 HEAD 2>/dev/null || echo "unknown")
 CLOCK8002_BUILD_DATE = $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 CLOCK8002_VERSION_PKG = gitlab.com/clock-8001/clock-8001/v4/clock
