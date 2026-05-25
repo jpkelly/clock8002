@@ -23,10 +23,12 @@ start() {
 	while true
 	do
 		echo -e "\033[9;0]"
-		# Re-paint bootsplash just before the clock starts so that any console
-		# text printed after setup.sh (including the echo above) is overwritten.
-		# This is the definitive write; the one in setup.sh is an early placeholder.
+		# When bootsplash is enabled, detach the framebuffer console (vtcon1)
+		# from fb0 before painting so that no subsequent console output —
+		# from concurrent init scripts, module loading, or SDL startup —
+		# can overwrite the display.  Then paint the splash image.
 		if [ "$(_piclock_get splash_enabled)" = "true" ] && [ -f /boot/piclock/bootsplash.raw ]; then
+			echo 0 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
 			dd if=/boot/piclock/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
 		fi
 		/root/clock_cmd.sh
