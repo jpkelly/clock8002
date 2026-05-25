@@ -4,7 +4,7 @@ An HDMI clock display for Raspberry Pi 5, running as a minimal appliance on a cu
 
 > **Legacy Trixie/SDL2 path:** The Debian Trixie (Raspberry Pi OS) deployment path is preserved on the [`trixie` branch](../../tree/trixie). New deployments should use this branch.
 
-## Project Status (feature/root-ram)
+## Project Status
 
 Last verified: **2026-05-24**
 
@@ -13,13 +13,11 @@ Last verified: **2026-05-24**
 - Current branch operational state and validation targets live in [`HANDOFF.md`](HANDOFF.md).
 - Build host workflow details live in [`buildroot-external/README.buildroot.md`](buildroot-external/README.buildroot.md).
 
-> Transitional note: this branch-specific status wording can be removed once `feature/root-ram` is promoted and `master` becomes the default workflow baseline.
-
 ## Table of Contents
 
 - [Acknowledgements](#acknowledgements)
 - [What changed from clock-8001](#what-changed-from-clock-8001)
-- [Project Status (feature/root-ram)](#project-status-featureroot-ram)
+- [Project Status](#project-status)
 - [Requirements](#requirements)
 - [Quick Start — Flash the Image](#quick-start--flash-the-image)
 - [First Boot](#first-boot)
@@ -106,7 +104,7 @@ sync
 
 ### 4. Boot and access the web UI
 
-Insert the SD card and power on. After ~20 seconds, open a browser to:
+Insert the SD card and power on. After ~30 seconds, open a browser to:
 
 ```
 http://piClock.local
@@ -193,10 +191,9 @@ When the SD card is mounted on your computer, the FAT boot partition will appear
 |---|---|---|
 | `clock.ini` | `/boot/piclock/clock.ini` | Main clock config — face, colors, sources, timers, OSC, GPIO, web UI port |
 | `network.ini` | `/boot/piclock/network.ini` | Network config — DHCP/static IP, hostname, Wi-Fi AP mode |
-| `oled.ini` | `/boot/piclock/oled.ini` | OLED hardware config — enable/disable, I2C port, I2C address, rotation |
 | `authorized_keys` | `/boot/piclock/authorized_keys` | SSH public keys for passwordless root login |
 
-`/opt/clock8002/clock.ini` and `/opt/clock8002/oled/oled.ini` are symlinks into `/boot/piclock/`. Changes to `clock.ini` take effect on service restart or via the web UI. Changes to `network.ini` and `oled.ini` take effect on reboot.
+Changes to `clock.ini` take effect on service restart or via the web UI. Changes to `network.ini` take effect on reboot.
 
 ## Web UI
 
@@ -213,21 +210,16 @@ All clock settings — face type, colors, sources, timers, OSC, GPIO — can be 
 /etc/init.d/S99clock start
 /etc/init.d/S99clock stop
 /etc/init.d/S99clock restart
-ps | grep sdl3-clock        # status
+ps | grep sdl-clock          # status
 
 # LTC decoder
 /etc/init.d/S99alsa-ltc start
 /etc/init.d/S99alsa-ltc stop
 /etc/init.d/S99alsa-ltc restart
-ps | grep alsa-ltc          # status
-
-# OLED daemon
-/etc/init.d/S98oled start
-/etc/init.d/S98oled stop
-ps | grep oled_daemon       # status
+ps | grep alsa-ltc           # status
 ```
 
-Log file: `/root/.config/clock-8001/clock.log`
+Log file: `/var/log/messages` (syslog)
 
 ### LTC (alsa-ltc)
 
@@ -245,6 +237,22 @@ alsa-ltc [-v] <alsa-device> <OSC-destination-ip> <OSC-port> [sample-rate] [fps]
 | `<OSC-port>` | UDP port (default: 1245) |
 | `[sample-rate]` | Audio sample rate in Hz (default: 44100) |
 | `[fps]` | LTC frame rate: 24, 25, or 30 (default: 25) |
+
+#### Broadcast addressing and gateway
+
+`alsa-ltc` sends timecode to `255.255.255.255` (the IPv4 *limited broadcast* address), which all hosts on the local network receive. The Linux kernel requires a route for this address — without one it returns `ENETUNREACH` and alsa-ltc silently fails to send.
+
+piClock's `setup.sh` handles this automatically in static-IP mode:
+
+1. **Subnet broadcast** — BusyBox `ifup` leaves eth0 with `brd 0.0.0.0`. `setup.sh` re-adds the address with `broadcast +` so the kernel derives the correct subnet broadcast (e.g. `192.168.8.255` for a /24).
+2. **Limited broadcast route** — regardless of whether `gateway=` is configured in `network.ini`, `setup.sh` adds `ip route replace 255.255.255.255/32 dev eth0`. This makes LTC broadcast reliable with the gateway commented out (the default).
+
+Verify on a running unit:
+
+```sh
+ip addr show eth0   # brd should show subnet broadcast, e.g. 192.168.8.255
+ip route show       # should include: 255.255.255.255 dev eth0 scope link
+```
 
 ## GPIO/UART Serial Connections
 
