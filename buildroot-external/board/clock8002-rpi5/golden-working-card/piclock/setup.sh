@@ -74,6 +74,7 @@ if [ -f /boot/piclock/network.ini ]; then
 	[ -z "$_net_mode" ] && _net_mode=dhcp
 	_net_addr=$(_ini_get network address)
 	_net_mask=$(_to_mask "$(_ini_get network netmask)")
+	_raw_mask=$(_ini_get network netmask)
 	_net_gw=$(_ini_get network gateway)
 	_net_dns=$(_ini_get network dns)
 
@@ -114,11 +115,15 @@ if [ -f /boot/piclock/network.ini ]; then
 
 	ip addr flush dev eth0 2>/dev/null || true
 	ifup eth0 2>/dev/null || true
+	# BusyBox ifup does not derive the broadcast address from address/netmask.
+	# Set it explicitly so alsa-ltc and other subnet-broadcast users work correctly.
+	if [ "$_net_mode" = "static" ]; then
+		ip addr change "${_net_addr}/${_raw_mask}" broadcast + dev eth0 2>/dev/null || true
+	fi
 	# In dual mode, add the static alias directly via ip rather than ifup eth0:1.
 	# ifup eth0 spawns udhcpc in the background and returns before eth0 is marked
 	# "up" in the ifupdown state file, causing ifup eth0:1 to fail silently at boot.
 	if [ "$_net_mode" = "dual" ]; then
-		_raw_mask=$(_ini_get network netmask)
 		ip addr add "${_net_addr}/${_raw_mask}" dev eth0 2>/dev/null || true
 	fi
 
