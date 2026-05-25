@@ -41,6 +41,25 @@ func main() {
 
 	parseOptions()
 
+	// If --config was given on the command line, linuxLoadConfig/darwinLoadConfig
+	// were skipped and logFile was never opened. Set it up here using the config
+	// file's directory so the web UI log section is populated.
+	if logFile == nil && options.configFile != "" {
+		logDir := filepath.Dir(options.configFile)
+		f, err := os.OpenFile(filepath.Join(logDir, "clock.log"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			log.Printf("Warning: could not open log file in %s: %v", logDir, err)
+		} else {
+			log.SetOutput(f)
+			l, err := os.OpenFile(filepath.Join(logDir, "clock.log"), os.O_RDONLY, 0666)
+			if err != nil {
+				log.Printf("Warning: could not open log file for reading: %v", err)
+			} else {
+				logFile = l
+			}
+		}
+	}
+
 	// Channel to notify for config changes
 	confChan = make(chan bool, 1)
 
