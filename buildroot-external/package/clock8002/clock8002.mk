@@ -62,6 +62,7 @@ endef
 define CLOCK8002_INSTALL_TARGET_CMDS
 	$(INSTALL) -d $(TARGET_DIR)/opt/clock8002
 	$(INSTALL) -m 0755 $(@D)/sdl-clock $(TARGET_DIR)/opt/clock8002/sdl-clock
+	$(INSTALL) -m 0755 $(@D)/sdl-clock $(TARGET_DIR)/root/sdl-clock
 	$(INSTALL) -m 0755 $(@D)/sdl3-clock $(TARGET_DIR)/opt/clock8002/sdl3-clock
 	$(INSTALL) -m 0755 $(@D)/alsa-ltc $(TARGET_DIR)/opt/clock8002/alsa-ltc
 	$(INSTALL) -D -m 0644 $(@D)/clock.ini.$(CLOCK8002_CONFIG_SUFFIX) \
