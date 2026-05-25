@@ -116,9 +116,12 @@ if [ -f /boot/piclock/network.ini ]; then
 	ip addr flush dev eth0 2>/dev/null || true
 	ifup eth0 2>/dev/null || true
 	# BusyBox ifup does not derive the broadcast address from address/netmask.
-	# Set it explicitly so alsa-ltc and other subnet-broadcast users work correctly.
+	# Set it explicitly: delete then re-add with broadcast + so the kernel
+	# derives the correct subnet broadcast (e.g. 192.168.8.255 for /24).
+	# 'ip addr change ... broadcast +' silently does nothing on this build.
 	if [ "$_net_mode" = "static" ]; then
-		ip addr change "${_net_addr}/${_raw_mask}" broadcast + dev eth0 2>/dev/null || true
+		ip addr del "${_net_addr}/${_raw_mask}" dev eth0 2>/dev/null || true
+		ip addr add "${_net_addr}/${_raw_mask}" broadcast + dev eth0 2>/dev/null || true
 	fi
 	# In dual mode, add the static alias directly via ip rather than ifup eth0:1.
 	# ifup eth0 spawns udhcpc in the background and returns before eth0 is marked
