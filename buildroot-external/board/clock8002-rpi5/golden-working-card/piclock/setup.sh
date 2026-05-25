@@ -129,4 +129,55 @@ if [ -f /boot/piclock/network.ini ]; then
 	elif [ "$_ntp" = "true" ]; then
 		/etc/init.d/S49ntp restart 2>/dev/null || true
 	fi
+
+	# Wi-Fi AP mode
+	_wifi_ap=$(_ini_get wifi ap_enabled)
+	if [ "$_wifi_ap" = "true" ]; then
+		_wifi_ssid=$(_ini_get wifi ap_ssid)
+		_wifi_pass=$(_ini_get wifi ap_password)
+		_wifi_chan=$(_ini_get wifi ap_channel)
+		[ -z "$_wifi_ssid" ]    && _wifi_ssid="piClock-ap"
+		[ -z "$_wifi_chan" ]    && _wifi_chan="6"
+
+		# Ensure wireless module is loaded
+		modprobe brcmfmac 2>/dev/null || true
+		sleep 1
+
+		# Stop any client-mode wpa_supplicant / udhcpc started by S40wifi
+		kill "$(cat /var/run/udhcpc.wlan0.pid 2>/dev/null)" 2>/dev/null || true
+		killall wpa_supplicant 2>/dev/null || true
+		sleep 1
+
+		# Write hostapd config
+		cat > /tmp/hostapd.conf <<HAEOF
+interface=wlan0
+driver=nl80211
+ssid=$_wifi_ssid
+hw_mode=g
+channel=$_wifi_chan
+auth_algs=1
+wpa=2
+wpa_passphrase=$_wifi_pass
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+HAEOF
+
+		ifconfig wlan0 up 2>/dev/null || true
+		/boot/hostapd -B /tmp/hostapd.conf 2>/dev/null || true
+		sleep 2
+
+		# Assign static IP to AP interface
+		ifconfig wlan0 192.168.50.1 netmask 255.255.255.0 2>/dev/null || true
+
+		# Start dnsmasq for DHCP on AP subnet
+		if [ -x /boot/dnsmasq ]; then
+			/boot/dnsmasq \
+				--interface=wlan0 \
+				--bind-interfaces \
+				--dhcp-range=192.168.50.10,192.168.50.100,12h \
+				--no-resolv \
+				--pid-file=/var/run/dnsmasq-ap.pid \
+				2>/dev/null || true
+		fi
+	fi
 fi
