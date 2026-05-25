@@ -122,6 +122,9 @@ if [ -f /boot/piclock/network.ini ]; then
 	if [ "$_net_mode" = "static" ]; then
 		ip addr del "${_net_addr}/${_raw_mask}" dev eth0 2>/dev/null || true
 		ip addr add "${_net_addr}/${_raw_mask}" broadcast + dev eth0 2>/dev/null || true
+		# Add a host route for the limited broadcast address (255.255.255.255)
+		# so services like alsa-ltc can send to it without a default gateway.
+		ip route replace 255.255.255.255/32 dev eth0 2>/dev/null || true
 	fi
 	# In dual mode, add the static alias directly via ip rather than ifup eth0:1.
 	# ifup eth0 spawns udhcpc in the background and returns before eth0 is marked
