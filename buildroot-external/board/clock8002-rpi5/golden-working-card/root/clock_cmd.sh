@@ -16,14 +16,5 @@ done
 [ -n "$_evdev_list" ] && export SDL_EVDEV_DEVICES="$_evdev_list"
 unset _evdev_list _ev
 
-# Suppress the startup info overlay (version/IP, shown for 30 s by default)
-# when bootsplash is enabled so it does not immediately overwrite the splash.
-_info_timer_arg=""
-if [ -f /boot/piclock/piclock.ini ]; then
-	_splash=$(awk -F= '/^splash_enabled/ { gsub(/[[:space:]]/, "", $2); print $2 }' /boot/piclock/piclock.ini)
-	[ "$_splash" = "true" ] && _info_timer_arg="--info-timer 0"
-fi
-unset _splash
-
-exec /root/sdl-clock -C /boot/piclock/clock.ini ${_info_timer_arg}
+exec /root/sdl-clock -C /boot/piclock/clock.ini
 
