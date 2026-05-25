@@ -43,8 +43,11 @@ define CLOCK8002_BUILD_CMDS
 	# but source it from the SDL3 build rather than reviving the old SDL2 binary.
 	cp -f $(@D)/sdl3-clock $(@D)/sdl-clock
 	# Build oled-daemon frozen binary via PyInstaller (uses host venv on cm5).
+	# --clean forces a full rebuild so stale PYZ/PKG cache never silently bakes
+	# old bytecode into the binary after a clock8002-dirclean.
 	if [ -f $(@D)/oled/oled_daemon.py ] && [ -x /home/pi/oled-build-venv/bin/pyinstaller ]; then \
 		/home/pi/oled-build-venv/bin/pyinstaller \
+			--clean \
 			--onefile \
 			--name oled-daemon \
 			--hidden-import luma.core.interface.serial \
