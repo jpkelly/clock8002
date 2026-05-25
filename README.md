@@ -2,17 +2,6 @@
 
 An HDMI clock display for Raspberry Pi 5, running as a minimal appliance on a custom **Buildroot** image. Controllable via OSC and a built-in web UI.
 
-> **Legacy Trixie/SDL2 path:** The Debian Trixie (Raspberry Pi OS) deployment path is preserved on the [`trixie` branch](../../tree/trixie). New deployments should use this branch.
-
-## Project Status
-
-Last verified: **2026-05-24**
-
-- This README is the operator/user quick-start reference.
-- Build policy and reproducibility rules live in [`docs/build-policy.md`](docs/build-policy.md).
-- Current branch operational state and validation targets live in [`HANDOFF.md`](HANDOFF.md).
-- Build host workflow details live in [`buildroot-external/README.buildroot.md`](buildroot-external/README.buildroot.md).
-
 ## Table of Contents
 
 - [Acknowledgements](#acknowledgements)
@@ -152,12 +141,17 @@ Controls hostname, network mode, NTP, and Wi-Fi AP mode. Changes take effect on 
 
 ```ini
 [network]
-mode=dhcp                          # dhcp or static (some branch builds also expose dual)
-ntp=false                          # disable if using OSC settime
-# address=192.168.8.245             # static IP only
-# netmask=24
-# gateway=192.168.8.1
-# dns=1.1.1.1
+# mode: dhcp, static, or dual
+mode=static
+
+# NTP time synchronization (true or false)
+ntp=false
+
+# Static IP settings (only used when mode=static)
+address=192.168.8.245
+netmask=24
+#gateway=192.168.8.1
+#dns=1.1.1.1
 
 [host]
 hostname=piClock
@@ -167,6 +161,7 @@ ap_enabled=false
 ap_ssid=piClock-ap
 ap_password=clockwork
 ap_channel=6
+ap_country=US
 ```
 
 #### Wi-Fi Access Point
@@ -278,6 +273,15 @@ UART overlays are pre-configured in the Buildroot image `config.txt`. No manual 
 See the local OSC reference in [`v4/osc.md`](v4/osc.md) for the full command set used by this repository.
 
 Upstream reference is also available at [clock-8001/v4/osc.md](https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md).
+
+## Project Status
+
+Last verified: **2026-05-25**
+
+- This README is the operator/user quick-start reference.
+- Build policy and reproducibility rules live in [`docs/build-policy.md`](docs/build-policy.md).
+- Current branch operational state and validation targets live in [`HANDOFF.md`](HANDOFF.md).
+- Build host workflow details live in [`buildroot-external/README.buildroot.md`](buildroot-external/README.buildroot.md).
 
 ## License
 
