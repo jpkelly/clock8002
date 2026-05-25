@@ -45,6 +45,7 @@ fi
 # Remove the synthetic /opt -> /root init hooks that do not exist on the
 # working card and would overwrite the copied runtime payload.
 rm -f "${TARGET_DIR}/etc/init.d/S02setup-root" \
+                "${TARGET_DIR}/etc/init.d/S50sshd" \
                 "${TARGET_DIR}/etc/init.d/S98oled"
 
 # Splash assets and S05bootsplash are kept in the image; whether to display
