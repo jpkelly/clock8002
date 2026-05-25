@@ -6,7 +6,6 @@ An HDMI clock display for Raspberry Pi 5, running as a minimal appliance on a cu
 
 - [Acknowledgements](#acknowledgements)
 - [What changed from clock-8001](#what-changed-from-clock-8001)
-- [Project Status](#project-status)
 - [Requirements](#requirements)
 - [Quick Start — Flash the Image](#quick-start--flash-the-image)
 - [First Boot](#first-boot)
@@ -17,6 +16,7 @@ An HDMI clock display for Raspberry Pi 5, running as a minimal appliance on a cu
 - [Service Operations](#service-operations)
 - [GPIO/UART Serial Connections](#gpiouart-serial-connections)
 - [OSC Control](#osc-control)
+- [Project Status](#project-status)
 - [License](#license)
 
 ## Acknowledgements
@@ -52,7 +52,7 @@ Built for the **piClock platform** on Raspberry Pi 5, arm64.
 
 ### 1. Download the latest release image
 
-Get the pre-built SD card image from the [Releases](https://github.com/jpkelly/clock8002/releases) page. The image is named `piClock-<commit>-sdcard.img`.
+Get the pre-built SD card image from the [Releases](https://github.com/jpkelly/clock8002/releases) page. The image is named `piClock-<version>-<commit>-sdcard.img`.
 
 ### 2. (Optional) Pre-configure before first boot
 
