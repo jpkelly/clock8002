@@ -102,14 +102,12 @@ Use this only after feature/root-ram is functionally complete.
   - Update instructions/docs so normal builds use `master`.
   - Keep `feature/root-ram` only for hotfix overlap, then retire.
 
-## Current State (2026-05-24 — Wi-Fi overlay icon validated)
+## Current State (2026-05-24 — bootsplash text suppression in progress)
 
 ### Active dev baseline
 - **Branch**: `feature/root-ram`
-- **HEAD**: `3c45398` — pushed to GitHub
-- **Tag**: `working-2026-05-24-wifi-overlay-icon` — pushed to GitHub
-- **Validated image**: `/Users/jp/Desktop/sdcard-sdl-fix3-3c45398.img`
-- **cm5 output**: `/home/pi/buildroot/output/images/sdcard.img` (501M, May 24 19:39)
+- **HEAD**: `215b93a` — pushed to GitHub (`fix: unbind fbcon from fb0 before splash so console text cannot overwrite it`)
+- **Last tag**: `working-2026-05-24-ltc-broadcast` at `14a485b`
 - **Kernel bundle**: `bundle-245-6.12.41-v8-20260509-161234` (prebuilt, `CLOCK8002_PREBUILT_KERNEL=1`)
 
 ### Validated on .245 (2026-05-24)
@@ -117,26 +115,48 @@ Use this only after feature/root-ram is functionally complete.
 - DHCP via dnsmasq (192.168.50.10-100/24) ✅
 - OLED Wi-Fi icon (`is_ap_active` via `/boot/iw`) ✅
 - SDL overlay "AP SSID: piClock-ap" visible in info panel ✅
+- LTC broadcast via alsa-ltc confirmed working ✅ (fixed in `14a485b`)
 - SSH, boot, power button all working ✅
+- vtcon1 unbind + splash repaint in `clock_pokemon.sh` — live on device ✅ (from `215b93a`)
+- `--info-timer 0` suppressing startup overlay when splash enabled — live on device ✅ (from `f0cd63d`)
 
-### Root cause fixed (3c45398) — post-image.sh binary deploy
-`post-image.sh` `BOOT_RUNTIME_FILES` loop was gated on `CLOCK8002_PREBUILT_KERNEL=0`, preventing
-fresh app binaries from landing on the FAT partition in default (prebuilt-kernel) mode.
-`S03copy_clock_files` copies `/boot/sdl-clock` → `/root/sdl-clock` at every boot, so the stale
-`BINARIES_DIR` binary was always winning. Fix: always copy from build dir regardless of the flag.
+### Working tree — uncommitted changes (pending rebuild)
+These changes are in the repo source but NOT yet baked into any flashed image.
+They require a Buildroot rebuild to take effect — runtime root is fresh tmpfs each boot and `/etc/init.d/` changes on-device are lost on reboot.
+Note: `buildroot-external/board/clock8002-rpi5/config.txt` has `initramfs rootfs.cpio.gz followkernel` **active**, so rootfs-overlay changes DO reach the running system after a rebuild.
 
-### Commits since last known-good (51703f6)
-- `b4a5ed5` — fix: Wi-Fi AP icon/SSID detection for hostapd boot model
-- `93d4d13` — fix: install sdl-clock to /root/ from package; remove stale overlay binary
-- `3c45398` — fix: always copy fresh app binaries to boot FAT in post-image.sh
+| File | Change |
+|------|--------|
+| `buildroot-external/board/clock8002-rpi5/cmdline.txt` | Added `quiet loglevel=0` |
+| `golden-working-card/boot/cmdline.txt` | Added `quiet loglevel=0` |
+| `rootfs-overlay/etc/init.d/S03copy_clock_files` | Unbinds vtcon1 + paints splash right after /boot mount |
+| `golden-working-card/etc/init.d/S03copy_clock_files` | Same — golden copy |
+| `golden-working-card/piclock/setup.sh` | Unbinds vtcon1 before dd write of bootsplash.raw |
+| `rootfs-overlay/etc/init.d/S00splash` | **NEW** — unbinds vtcon1 at S00 time (very early, before any init text) |
+| `golden-working-card/etc/init.d/S00splash` | **NEW** — same, golden copy |
+
+### Firmware splash research result (2026-05-24)
+**RPi5 EEPROM bootloader has NO custom splash PNG support.** There is no `splash.png` or equivalent mechanism in the firmware. `disable_splash=1` in `config.txt` suppresses the rainbow only. The current dd-to-fb0 approach is the correct userspace solution for this platform.
+
+### Bootsplash architecture (how it works)
+- `bootsplash.raw` (RGB565, 1920×1080) generated at build time via ffmpeg, staged to `/boot/piclock/` on FAT
+- `splash_enabled=true` in `/boot/piclock/piclock.ini` enables the feature
+- **Currently**: vtcon1 unbind + dd write happens in `setup.sh` (late — at S99clock time via clock_pokemon.sh)
+- **With pending changes**: vtcon1 unbind at S00 time (very early) → splash painted at S03 time (as soon as /boot mounts)
+- **Alternative not yet implemented**: `console=ttyAMA0` in `cmdline.txt` would redirect all console output to UART, leaving the display completely clear until the clock app starts — cleanest option
 
 ### Open items
-1. **LTC broadcast broken** — `setup.sh` generates `/etc/network/interfaces` without a `broadcast`
-   line → `eth0 Bcast:0.0.0.0` → alsa-ltc cannot resolve subnet broadcast correctly.
-   Fix: add broadcast calculation to the static interface block in `setup.sh`.
-2. **Manifest** — three commits above need a build manifest for this image.
-3. **network.ini default** — `gateway=192.168.8.1` set live on device; golden-working-card default
-   still has it commented out.
+1. **Bootsplash text suppression** — uncommitted changes above need to be committed and built into an image.
+   - Option A (S00splash + S03 approach): commit the working tree, rebuild, flash
+   - Option B (console redirect): change `console=tty1` → `console=ttyAMA0,115200` in `cmdline.txt` — simpler, no init text at all on display
+   - Both options require a rebuild; no further device-side testing can validate them until then.
+2. **Manifest** — commits since `51703f6` need a build manifest.
+3. **network.ini default** — `gateway=192.168.8.1` set live on device; golden-working-card default still has it commented out.
+
+### Commits since last tag (working-2026-05-24-ltc-broadcast / 14a485b)
+- `a21212f` — docs: clean up README for master promotion
+- `f0cd63d` — fix: suppress boot text and startup overlay when bootsplash is enabled
+- `215b93a` — fix: unbind fbcon from fb0 before splash so console text cannot overwrite it (HEAD)
 
 ## Current Checkpoint (2026-05-24 late - rollback baseline confirmed)
 

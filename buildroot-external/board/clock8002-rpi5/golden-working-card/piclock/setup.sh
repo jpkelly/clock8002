@@ -17,6 +17,7 @@ _piclock_ini_get() {
 	echo "${val}"
 }
 if [ "$(_piclock_ini_get splash_enabled)" = "true" ] && [ -f /boot/piclock/bootsplash.raw ]; then
+	echo 0 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
 	dd if=/boot/piclock/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
 fi
 
