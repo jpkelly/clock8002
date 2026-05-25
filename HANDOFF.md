@@ -102,18 +102,43 @@ Use this only after feature/root-ram is functionally complete.
   - Update instructions/docs so normal builds use `master`.
   - Keep `feature/root-ram` only for hotfix overlap, then retire.
 
-## Current Active Build (2026-05-24)
+## Current State (2026-05-24 — Wi-Fi feature starting)
 
-- Session: `br-build-repro-245`
-- Output dir: `/home/pi/output-repro-245-20260524-062711`
-- Manifest: `docs/manifests/build-manifest-repro-245-20260524-062711.md`
-- Purpose: reproduce current `.245` behavior from a deterministic input set.
-- Inputs pinned:
-  - `/home/pi/clock8002` at `3d835b27fc5e4ca5de689a1d79ee4df4b2d89c9b`
-  - `/home/pi/clock8002-root-ram` at `51703f6198f2d872daa4f654f5ca34c31c5dd535`
-  - prebuilt kernel bundle `/srv/clock8002/prebuilt-kernel-bundles/bundle-245-6.12.41-v8-20260509-161234`
-- Completion check: `ssh pi@cm5.local 'cat /tmp/br-build-repro-245.exit'`
-- Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-build-repro-245.log'`
+### Active dev baseline
+- **Branch**: `feature/root-ram`
+- **HEAD**: `71c2af6` (manifest complete) — pushed to GitHub
+- **Checkpoint tag**: `checkpoint/pre-wifi-71c2af6` — pushed to GitHub
+- **Recovery image**: `/Users/jp/Desktop/piClock-99fe990-sdcard.img` — keep until Wi-Fi validated
+- **Output dir (cm5)**: `/home/pi/output-repro-245-20260524-062711` — use for incremental Wi-Fi builds
+
+### Known-good image (`99fe990`)
+- Booted and validated on `.245` (piClock.local / 192.168.8.245) 2026-05-24
+- sdl-clock I/Q keyboard shortcuts working
+- alsa-ltc, oled-daemon, LTC decode, web UI all confirmed
+- Manifest: `docs/manifests/build-manifest-repro-245-20260524-062711.md` — status: known-good
+- sdcard.img SHA256: `7e785383aff30a9e1f32bcdefee41e245f56c7630de47ca484c2a7396ded0e24`
+
+### Wi-Fi feature — next work
+**What's in the image:**
+- `wpa_supplicant` ✅
+- brcm firmware (`fmac43455-sdio.bin`) ✅
+- `wlan0` interface ✅ (hardware recognized, brcmfmac module loads)
+
+**Missing from image (needs defconfig + rebuild):**
+- `dnsmasq` ❌ — required for client DHCP on the AP subnet
+- `iw` ❌ — diagnostics and some AP setup flows
+
+**Code already in place:**
+- `buildroot-external/board/clock8002-rpi5/rootfs-overlay/opt/clock8002/piclock-network.sh` — non-NM wpa_supplicant AP backend, waits for wlan0, starts dnsmasq when available
+- `S45piclock-network` init script wired in `post-build.sh`
+- `network.ini` `[wifi]` section: `ap_enabled`, `ap_ssid`, `ap_password`, `ap_channel`, `ap_country`
+- `network.ini.default` documents all fields
+
+**Next steps:**
+1. Add `BR2_PACKAGE_DNSMASQ=y` and `BR2_PACKAGE_IW=y` to `defconfig.sample`
+2. Add same to cm5 `.config` (sed) — avoids full defconfig re-init
+3. Run incremental build: `make clock8002-dirclean && make` with CLOCK8002_PREBUILT_KERNEL=1
+4. Flash and test AP mode: set `ap_enabled=true` in `/boot/piclock/network.ini`, reboot, verify SSID visible
 
 ## Current Checkpoint (2026-05-24 late - rollback baseline confirmed)
 
