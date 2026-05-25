@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# Read a key from /boot/piclock/piclock.ini.
+_piclock_get() {
+	[ -f /boot/piclock/piclock.ini ] || return 1
+	awk -F= "/^$1/ { gsub(/[[:space:]]/, \"\", \$2); print \$2 }" /boot/piclock/piclock.ini
+}
+
 start() {
 	echo -"Enabling SPI support"
 	modprobe spidev
@@ -17,6 +23,12 @@ start() {
 	while true
 	do
 		echo -e "\033[9;0]"
+		# Re-paint bootsplash just before the clock starts so that any console
+		# text printed after setup.sh (including the echo above) is overwritten.
+		# This is the definitive write; the one in setup.sh is an early placeholder.
+		if [ "$(_piclock_get splash_enabled)" = "true" ] && [ -f /boot/piclock/bootsplash.raw ]; then
+			dd if=/boot/piclock/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
+		fi
 		/root/clock_cmd.sh
 		echo "CRASHED!"
 		echo 15 > /sys/class/gpio/unexport
