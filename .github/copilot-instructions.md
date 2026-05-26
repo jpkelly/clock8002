@@ -64,8 +64,8 @@ Release management note:
 Buildroot image workflow note:
 - Branch: `master` (NEVER use `buildroot-prototype` — it is historical only and permanently diverged).
 - Test unit: `root@piClock.local`. Build host: `pi@cm5.local` (~/buildroot).
-- Buildroot sources sdl3-clock/alsa-ltc directly from `~/clock8002/v4` on cm5 — always `git pull --ff-only` in `~/clock8002` before any `make`.
-- Before building, verify cm5 is on the **intended branch**: `ssh pi@cm5.local 'cd ~/clock8002 && git branch --show-current'` — expected output is `master` for release/production builds, or the feature branch name for feature-branch builds. Fail if the output does not match.
+- Buildroot sources sdl3-clock/alsa-ltc directly from `~/clock8002-root-ram/v4` on cm5 — always `git pull --ff-only` in `~/clock8002-root-ram` before any `make`. Do NOT pull `~/clock8002`; that directory is not used by Buildroot.
+- Before building, verify cm5 is on the **intended branch** and at the **intended commit**: `ssh pi@cm5.local 'cd ~/clock8002-root-ram && git branch --show-current && git log --oneline -1'` — expected branch is `master` for release/production builds, or the feature branch name for feature-branch builds. Fail if the output does not match. The commit hash shown here is what will be compiled into the image — confirm it matches the intended HEAD before proceeding.
 - Dual service file rule: service files that exist in both `v4/` (Trixie) and `buildroot-external/board/clock8002-rpi5/rootfs-overlay/` (Buildroot) must be kept in sync. When editing a service file in `v4/`, always check for a Buildroot overlay copy and update it with the same changes (adjusting for platform differences like `User=root`). The overlay overwrites the package-installed copy at image build time.
 - Dev builds (with SSH key): `ssh pi@cm5.local "cd ~/buildroot && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make clock8002-dirclean && BR2_PICLOCKKEY='$(cat ~/.ssh/id_rsa.pub)' make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:\$?"`
 - Release builds (no SSH key): `ssh pi@cm5.local 'cd ~/buildroot && make clean && make > /tmp/br-build.log 2>&1; echo BR_BUILD_EXIT:$?'`

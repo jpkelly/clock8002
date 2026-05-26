@@ -50,3 +50,103 @@ all preflight checks pass and a manifest is produced.
 2. `clock8002`, `alsa-ltc`, and `oled-daemon` are running.
 3. LTC decode verified.
 4. Required serial/network behavior verified for the target scenario.
+
+---
+
+## Output Directory State Tracking
+
+Each Buildroot output directory on cm5 carries a machine-readable manifest at
+`<output_dir>/.clock8002-build-state`. This file is the single source of truth
+for the build state of that directory. It is written by `manifest-snapshot.sh`
+and read by `manifest-preflight.sh`.
+
+### Workflow
+
+**Before every build:**
+
+```sh
+tools/buildroot/manifest-preflight.sh <output_dir>
+```
+
+The preflight script compares current source/overlay/config state against the
+manifest and prints one of four recommendations:
+
+| Recommendation | Trigger condition |
+|---|---|
+| **UP TO DATE** — no build needed | All inputs match |
+| **INCREMENTAL — clock8002-dirclean + make** | Only Go source changed |
+| **INCREMENTAL — forced rootfs rebuild** | Only overlay files changed |
+| **INCREMENTAL — dirclean + rootfs rebuild** | Both Go source and overlay changed |
+| **FULL CLEAN REBUILD** | .config changed, branch changed, or bad/missing manifest |
+
+The preflight is **advisory** — you can override. Exit code 0 = incremental safe,
+1 = full clean recommended, 2 = full clean required (interrupted/failed/missing),
+3 = usage error.
+
+**Starting a build:**
+
+```sh
+ssh pi@cm5.local 'sh' <<'REMOTE'
+tools/buildroot/manifest-snapshot.sh --start <output_dir> \
+    --src ~/clock8002-root-ram --br ~/buildroot \
+    --target "make clock8002-dirclean && make"
+REMOTE
+```
+
+**After the build completes:**
+
+```sh
+# On cm5 (substitute actual exit code):
+tools/buildroot/manifest-snapshot.sh --finish <output_dir> <exit_code>
+```
+
+**Before a dirclean step:**
+
+```sh
+tools/buildroot/manifest-record-dirclean.sh <output_dir> clock8002
+make O=<output_dir> clock8002-dirclean
+```
+
+### Decision Rules
+
+| Manifest state | Action |
+|---|---|
+| Missing | Full clean rebuild |
+| `BUILD_STATUS=in-progress` | Full clean rebuild (interrupted) |
+| `BUILD_STATUS=failed` | Full clean rebuild |
+| Branch mismatch | Full clean rebuild |
+| `.config` hash mismatch | Full clean rebuild |
+| Overlay fingerprint mismatch | Forced rootfs rebuild (delete fakeroot stamps) |
+| `SRC_GIT_HEAD` mismatch only | `clock8002-dirclean && make` |
+| All fields match | No-op |
+
+### Manifest Fields
+
+| Field | Description |
+|---|---|
+| `MANIFEST_VERSION` | Schema version (currently 1) |
+| `BUILD_STATUS` | `in-progress` / `success` / `failed` |
+| `BUILD_STARTED` / `BUILD_FINISHED` | ISO 8601 UTC timestamps |
+| `SRC_REPO_PATH` | Absolute path to clock8002-root-ram on the build host |
+| `SRC_GIT_HEAD` | Full SHA of the source commit |
+| `SRC_GIT_BRANCH` | Branch name |
+| `SRC_GIT_DIRTY` | `true` if uncommitted changes were present at build start |
+| `OVERLAY_DIR` | Path to the rootfs overlay |
+| `OVERLAY_FINGERPRINT` | SHA256 of sorted hashes of all overlay files |
+| `BR_CONFIG_HASH` | SHA256 of `~/buildroot/.config` |
+| `BR2_EXTERNAL_VERSION` | `BR2_EXTERNAL_CLOCK8002_VERSION` from `.config` |
+| `LAST_MAKE_TARGET` | Human-readable description of the make invocation |
+| `IMAGE_SHA256` | SHA256 of `images/sdcard.img` (set on success) |
+| `DIRCLEAN_HISTORY` | Comma-separated `timestamp:package` dirclean events |
+
+### Output Directory Naming
+
+When a clean build succeeds, optionally rename `~/buildroot/output` to a
+named archive directory:
+
+```sh
+mv ~/buildroot/output ~/output-<7-char-commit>-<timestamp>
+```
+
+Only rename if the manifest shows `BUILD_STATUS=success`. Drop directories with
+`in-progress` or `failed` status — they are not safe to use as incremental bases.
