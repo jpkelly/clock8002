@@ -132,8 +132,14 @@ func MakeEngine(options *EngineOptions) (*Engine, error) {
 func (engine *Engine) Close() {
 	log.Printf("Stopping the clock engine on request...")
 	engine.cancelFunc()
-	engine.wg.Wait()
-	log.Printf("Clock engine stopped")
+	done := make(chan struct{})
+	go func() { engine.wg.Wait(); close(done) }()
+	select {
+	case <-done:
+		log.Printf("Clock engine stopped cleanly")
+	case <-time.After(5 * time.Second):
+		log.Printf("engine.Close() timed out waiting for goroutines — proceeding anyway")
+	}
 }
 
 func (engine *Engine) listenUDPTime() {

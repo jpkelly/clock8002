@@ -1,10 +1,11 @@
 package clock
 
 import (
-	"github.com/desertbit/timer"
-	"gitlab.com/clock-8001/clock-8001/v4/hyperdeck"
 	"log"
 	"time"
+
+	"github.com/desertbit/timer"
+	"gitlab.com/clock-8001/clock-8001/v4/hyperdeck"
 )
 
 // HyperdeckOptions contains the options for go-flags for the hyperdeck module
@@ -62,7 +63,11 @@ func (engine *Engine) hyperdeckListen() {
 		if err != nil {
 			log.Printf("Hyperdeck: listen error: %v", err)
 			log.Printf("Hyperdeck: retrying...")
-			time.Sleep(10 * time.Second)
+			select {
+			case <-time.After(10 * time.Second):
+			case <-engine.ctx.Done():
+				return
+			}
 			continue
 		}
 
@@ -72,7 +77,6 @@ func (engine *Engine) hyperdeckListen() {
 			select {
 			case <-engine.ctx.Done():
 				log.Printf("Hyperdeck: terminating listener on request")
-				engine.wg.Done()
 				return
 			case s, ok := <-c:
 				if !ok {

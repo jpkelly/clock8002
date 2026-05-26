@@ -1,10 +1,11 @@
 package clock
 
 import (
-	"github.com/desertbit/timer"
-	"gitlab.com/clock-8001/clock-8001/v4/disguise"
 	"log"
 	"time"
+
+	"github.com/desertbit/timer"
+	"gitlab.com/clock-8001/clock-8001/v4/disguise"
 )
 
 // DisguiseOptions contains the common options
@@ -65,7 +66,11 @@ func (engine *Engine) disguiseListen(o *TimerOptions, i int) {
 			case m, ok := <-c:
 				if !ok {
 					log.Printf("Disguise: listener chan closed, retrying")
-					time.Sleep(5 * time.Second)
+					select {
+					case <-time.After(5 * time.Second):
+					case <-engine.ctx.Done():
+						return
+					}
 					break
 				}
 
