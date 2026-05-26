@@ -30,7 +30,7 @@ NET_HOSTNAME=$(parse_ini "$NETWORK_INI" host hostname)
 NTP_ENABLED=$(parse_ini "$NETWORK_INI" network ntp)
 if [ "$NTP_ENABLED" = "true" ]; then
     echo "Running one-shot NTP sync via BusyBox ntpd..."
-    ntpd -q 2>/dev/null || echo "NTP sync failed (not critical)"
+    ntpd -g -q 2>/dev/null || echo "NTP sync failed (not critical)"
 elif [ "$NTP_ENABLED" = "false" ]; then
     echo "NTP disabled (by network.ini)"
 fi
