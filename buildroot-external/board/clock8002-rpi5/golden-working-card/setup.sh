@@ -175,14 +175,6 @@ if [ -f /boot/piclock/network.ini ]; then
 		ip addr add "${_net_addr}/${_raw_mask}" dev eth0 2>/dev/null || true
 	fi
 
-	# NTP control
-	_ntp=$(_ini_get network ntp)
-	if [ "$_ntp" = "false" ]; then
-		/etc/init.d/S49ntp stop 2>/dev/null || true
-	elif [ "$_ntp" = "true" ]; then
-		/etc/init.d/S49ntp restart 2>/dev/null || true
-	fi
-
 	# Wi-Fi AP mode
 	_wifi_ap=$(_ini_get wifi ap_enabled)
 	if [ "$_wifi_ap" = "true" ]; then

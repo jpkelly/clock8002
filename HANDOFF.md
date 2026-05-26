@@ -102,67 +102,46 @@ Use this only after feature/root-ram is functionally complete.
   - Update instructions/docs so normal builds use `master`.
   - Keep `feature/root-ram` only for hotfix overlap, then retire.
 
-## Current State (2026-05-25 — clean rebuild in progress)
+## Current State (2026-05-25)
 
 ### Active dev baseline
 - **Branch**: `master`
-- **HEAD**: `bda4db9` — HANDOFF update
+- **HEAD**: `eec8e1f` — NTP: wire BusyBox ntpd for one-shot sync at boot
 - **Last tag**: `working-2026-05-24-ltc-broadcast` at `14a485b`
 - **Kernel bundle**: `bundle-245-6.12.41-v8-20260509-161234` (prebuilt, `CLOCK8002_PREBUILT_KERNEL=1`)
+- **Reuse output dir**: `output-clean-bda4db9-20260525-175132` (incremental builds OK against this dir)
 
-### Clean build in progress (2026-05-25 ~17:51 cm5 local)
-- **Output dir**: `output-clean-bda4db9-20260525-175132`
-- **Screen**: `642973..cm5`
-- **Log**: `/tmp/br-clean-bda4db9-175131.log`
-- **Config seeded from**: `output-known-good-6fdfeba/.config`
-- **ETA**: ~45-60 min from start
-- Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-clean-bda4db9-175131.log'`
-- Check done: `ssh pi@cm5.local 'grep -m1 "BR_EXIT:" /tmp/br-clean-bda4db9-175131.log'`
+### /boot layout (final)
+**FAT root (`/boot/`)**: `setup.sh`, `build-info.txt`, `bootsplash.raw`, `ssh/` (runtime-created)
+**`/boot/piclock/`**: `clock.ini`, `network.ini`, `oled.ini`, `piclock.ini`, `authorized_keys`, `clock.log`
+- `clock.log` stays in `piclock/` by design — hardwired to `filepath.Dir(clock.ini)` in Go
 
-### Why clean
-- Recompile binary so it stamps correct commit hash (`bda4db9`)
-- Eliminate stale `/boot/piclock/bootsplash.raw` artifact (was from old output dir — clean output resolves it)
+### NTP sync (new — commit eec8e1f)
+- BusyBox `CONFIG_NTPD=y` enabled in build config
+- `ntpd -q` runs one-shot at boot via `S45piclock-network` when `network.ini ntp=true`
+- Removed dead `S49ntp` calls from `setup.sh` (that service never existed in Buildroot)
 
-### Validated on piClock.local (2026-05-25 — image `6fdfeba`)
-- SSH host key persistence across reboots ✅ — key saved to `/boot/piclock/ssh/` on first boot, restored every subsequent boot; known_hosts stays valid
-- alsa-ltc running: `plughw:2,0 255.255.255.255 1245` ✅
-- sdl-clock running ✅
-- Dropbear SSH ✅
-- Kernel `6.12.41-v8` ✅
+### Validated on piClock.local (2026-05-25 — image `70679f8`)
+- /boot reorganization complete ✅
+- `setup.sh` at `/boot/setup.sh` (FAT root), absent from `/boot/piclock/` ✅
+- `build-info.txt` at `/boot/build-info.txt`, absent from `/boot/piclock/` ✅
+- SSH key stored at `/boot/ssh/` ✅
+- alsa-ltc running ✅, sdl-clock running ✅, Dropbear SSH ✅
 
-### SSH persistence architecture (how it works)
-- `setup.sh` runs at every boot via `S99clock` → `clock_pokemon.sh`
-- **First boot**: `dropbearkey` generates `/etc/dropbear/dropbear_ed25519_host_key` explicitly (Dropbear's `-R` flag is lazy — it only generates on first connection), saved to `/boot/piclock/ssh/` (FAT, survives reboots), listener restarted
-- **Subsequent boots**: FAT key copied back to `/etc/dropbear/`, listener killed and restarted with the stable key
-- Key store: `/boot/piclock/ssh/dropbear_ed25519_host_key`
+### SSH persistence architecture
+- `setup.sh` runs at every boot via `S99clock` → `clock_pokemon.sh` → `/boot/setup.sh`
+- **First boot**: `dropbearkey` generates host key explicitly, saved to `/boot/ssh/` (FAT, survives reboots)
+- **Subsequent boots**: FAT key copied back to `/etc/dropbear/`, listener restarted with stable key
+- Key store: `/boot/ssh/dropbear_ed25519_host_key`
 
 ### Recent commits (master)
-- `3ec9895` — setup.sh: persist Dropbear SSH host key across reboots
-- `6fdfeba` — setup.sh: fix first-boot SSH key generation timing
-- `73008fc` — HANDOFF: document SSH persistence
-- `bda4db9` — HANDOFF: update current state (HEAD)
+- `5a81d55` — /boot reorganization: setup.sh and build-info.txt moved to FAT root
+- `70679f8` — post-image.sh: evict stale piclock/setup.sh and piclock/build-info.txt
+- `8c5b710` — README: document oled.ini and piclock.ini config files
+- `eec8e1f` — NTP: wire BusyBox ntpd for one-shot sync at boot (fixes dead S49ntp ref in setup.sh)
 
 ### Open items
 See [Issue #44](https://github.com/jpkelly/clock8002/issues/44) for the active work list.
-
-### Planned cleanup — /boot reorganization (post-build)
-Move runtime customization files from `/boot/piclock/` to `/boot/` (FAT root) for clarity. Do after the current clean build validates successfully.
-
-**Files to move**
-- `setup.sh`: `golden-working-card/piclock/setup.sh` → `golden-working-card/setup.sh`
-- `ssh/`: `/boot/piclock/ssh/` → `/boot/ssh/` (update path in setup.sh: `_SSH_STORE="/boot/ssh"`)
-- `bootsplash.raw`: already staged to FAT root (`::`) in `post-image.sh` — no code change needed, was only in `/boot/piclock/` as a stale artifact from an old output dir (clean build resolves it)
-
-**Code changes required**
-1. `post-image.sh`: change `setup.sh` staging target from `::piclock/` to `::`
-2. `golden-working-card/root/clock_pokemon.sh` line 18–19: update path from `/boot/piclock/setup.sh` → `/boot/setup.sh`
-3. `setup.sh` itself: update `_SSH_STORE` from `/boot/piclock/ssh` → `/boot/ssh`
-
-**Files that stay in `/boot/piclock/`** (user-facing config — intentional)
-- `clock.ini`, `network.ini`, `oled.ini`, `piclock.ini`, `authorized_keys`
-
-**Guardrail**: do NOT move `clock.ini` or other user-facing config files — users expect them at `/boot/piclock/`.
-
 ## Current Checkpoint (2026-05-24 late - rollback baseline confirmed)
 
 ### TL;DR
