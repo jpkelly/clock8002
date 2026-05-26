@@ -128,9 +128,7 @@ Use this only after feature/root-ram is functionally complete.
 - `6fdfeba` — setup.sh: fix first-boot SSH key generation timing (HEAD)
 
 ### Open items
-1. **Bootsplash text suppression** — console text still visible during boot before clock starts. Options: S00splash init script approach, or `console=ttyAMA0,115200` redirect in cmdline.txt. Requires rebuild.
-2. **Manifest** — no build manifest filed for `6fdfeba` image.
-3. **network.ini default** — `gateway=192.168.8.1` was set live on device previously; golden-working-card default still has it commented out.
+See [Issue #44](https://github.com/jpkelly/clock8002/issues/44) for the active work list.
 
 ## Current Checkpoint (2026-05-24 late - rollback baseline confirmed)
 
