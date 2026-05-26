@@ -25,11 +25,21 @@ if [ -f "$_SSH_STORE/$_SSH_KEY" ]; then
 	[ -n "$_dbpid" ] && kill "$_dbpid" 2>/dev/null || true
 	sleep 1
 	dropbear -R
-elif [ -f "$_DB_KEYDIR/$_SSH_KEY" ]; then
-	# First boot — persist the auto-generated key to FAT for future boots
-	mkdir -p "$_SSH_STORE"
-	cp "$_DB_KEYDIR/$_SSH_KEY" "$_SSH_STORE/$_SSH_KEY"
-	chmod 600 "$_SSH_STORE/$_SSH_KEY"
+else
+	# First boot — Dropbear with -R generates its key lazily on first connection,
+	# so we generate it explicitly here, persist to FAT, and restart the listener.
+	mkdir -p "$_DB_KEYDIR"
+	[ -f "$_DB_KEYDIR/$_SSH_KEY" ] || dropbearkey -t ed25519 -f "$_DB_KEYDIR/$_SSH_KEY" 2>/dev/null || true
+	if [ -f "$_DB_KEYDIR/$_SSH_KEY" ]; then
+		chmod 600 "$_DB_KEYDIR/$_SSH_KEY"
+		mkdir -p "$_SSH_STORE"
+		cp "$_DB_KEYDIR/$_SSH_KEY" "$_SSH_STORE/$_SSH_KEY"
+		chmod 600 "$_SSH_STORE/$_SSH_KEY"
+	fi
+	_dbpid=$(pidof dropbear 2>/dev/null | tr ' ' '\n' | sort -n | head -1)
+	[ -n "$_dbpid" ] && kill "$_dbpid" 2>/dev/null || true
+	sleep 1
+	dropbear -R
 fi
 
 # Boot splash: write raw RGB565 image directly to framebuffer if enabled.
