@@ -200,18 +200,24 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 	if [ -d "${GOLDEN_DIR}/piclock" ]; then
 		for f in "${GOLDEN_DIR}/piclock"/*; do
 			[ -f "${f}" ] || continue
+			case "$(basename "${f}")" in
+				authorized_keys)
+					# Do not ship default SSH keys in images unless explicitly requested.
+					continue
+					;;
+			esac
 			cp -f "${f}" "${BINARIES_DIR}/piclock/$(basename "${f}")"
 		done
 	fi
+	# Incremental builds reuse BINARIES_DIR; remove stale authorized_keys unless opted in.
+	rm -f "${BINARIES_DIR}/piclock/authorized_keys"
 	# Stage FAT-root files (setup.sh lives at golden-working-card/, not in piclock/).
 	if [ -f "${GOLDEN_DIR}/setup.sh" ]; then
 		cp -f "${GOLDEN_DIR}/setup.sh" "${BINARIES_DIR}/setup.sh"
 	fi
 
-	# Append extra dev SSH key into piclock/ if BR2_PICLOCKKEY is set at build time.
-	# Leave unset for production/release builds. Appends so golden authorized_keys
-	# (containing jp@Sapporo.local) is preserved.
-	if [ -n "${BR2_PICLOCKKEY:-}" ]; then
+	# Optional dev override: include authorized_keys only when explicitly requested.
+	if [ "${BR2_INCLUDE_AUTHORIZED_KEYS:-0}" = "1" ] && [ -n "${BR2_PICLOCKKEY:-}" ]; then
 		echo "${BR2_PICLOCKKEY}" >> "${BINARIES_DIR}/piclock/authorized_keys"
 		chmod 600 "${BINARIES_DIR}/piclock/authorized_keys"
 	fi
