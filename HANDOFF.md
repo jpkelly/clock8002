@@ -102,15 +102,28 @@ Use this only after feature/root-ram is functionally complete.
   - Update instructions/docs so normal builds use `master`.
   - Keep `feature/root-ram` only for hotfix overlap, then retire.
 
-## Current State (2026-05-25 — SSH key persistence complete)
+## Current State (2026-05-25 — clean rebuild in progress)
 
 ### Active dev baseline
 - **Branch**: `master`
-- **HEAD**: `6fdfeba` — SSH key persistence first-boot timing fix
+- **HEAD**: `bda4db9` — HANDOFF update
 - **Last tag**: `working-2026-05-24-ltc-broadcast` at `14a485b`
 - **Kernel bundle**: `bundle-245-6.12.41-v8-20260509-161234` (prebuilt, `CLOCK8002_PREBUILT_KERNEL=1`)
 
-### Validated on piClock.local (2026-05-25 — image 6fdfeba)
+### Clean build in progress (2026-05-25 ~17:51 cm5 local)
+- **Output dir**: `output-clean-bda4db9-20260525-175132`
+- **Screen**: `642973..cm5`
+- **Log**: `/tmp/br-clean-bda4db9-175131.log`
+- **Config seeded from**: `output-known-good-6fdfeba/.config`
+- **ETA**: ~45-60 min from start
+- Monitor: `ssh pi@cm5.local 'tail -f /tmp/br-clean-bda4db9-175131.log'`
+- Check done: `ssh pi@cm5.local 'grep -m1 "BR_EXIT:" /tmp/br-clean-bda4db9-175131.log'`
+
+### Why clean
+- Recompile binary so it stamps correct commit hash (`bda4db9`)
+- Eliminate stale `/boot/piclock/bootsplash.raw` artifact (was from old output dir — clean output resolves it)
+
+### Validated on piClock.local (2026-05-25 — image `6fdfeba`)
 - SSH host key persistence across reboots ✅ — key saved to `/boot/piclock/ssh/` on first boot, restored every subsequent boot; known_hosts stays valid
 - alsa-ltc running: `plughw:2,0 255.255.255.255 1245` ✅
 - sdl-clock running ✅
@@ -125,7 +138,9 @@ Use this only after feature/root-ram is functionally complete.
 
 ### Recent commits (master)
 - `3ec9895` — setup.sh: persist Dropbear SSH host key across reboots
-- `6fdfeba` — setup.sh: fix first-boot SSH key generation timing (HEAD)
+- `6fdfeba` — setup.sh: fix first-boot SSH key generation timing
+- `73008fc` — HANDOFF: document SSH persistence
+- `bda4db9` — HANDOFF: update current state (HEAD)
 
 ### Open items
 See [Issue #44](https://github.com/jpkelly/clock8002/issues/44) for the active work list.
