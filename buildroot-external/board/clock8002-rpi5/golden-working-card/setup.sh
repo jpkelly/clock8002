@@ -182,8 +182,16 @@ if [ -f /boot/piclock/network.ini ]; then
 		/etc/init.d/S49ntp stop 2>/dev/null || killall ntpd 2>/dev/null || true
 	elif [ "$_ntp" = "true" ]; then
 		# ntpd daemon already running via S49ntp.
-		# Spawn background job: after sync settles (~60s), write to RTC.
-		(sleep 60 && hwclock -w 2>/dev/null && echo "setup.sh: RTC updated from NTP") &
+		# Spawn background job: wait 90s for iburst+first sync to settle,
+		# then write RTC only if ntpd is still alive (panic = exit = skip write).
+		(
+			sleep 90
+			if pidof ntpd > /dev/null 2>&1; then
+				hwclock -w 2>/dev/null && echo "setup.sh: RTC updated from NTP"
+			else
+				echo "setup.sh: ntpd not running, skipping RTC update"
+			fi
+		) &
 	fi
 
 	# Wi-Fi AP mode
