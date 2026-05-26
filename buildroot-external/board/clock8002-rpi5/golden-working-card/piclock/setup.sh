@@ -10,6 +10,28 @@ if [ -f /boot/piclock/authorized_keys ]; then
 	chmod 600 /root/.ssh/authorized_keys
 fi
 
+# SSH host key persistence — keep the same Dropbear host key across reboots.
+# /boot is already mounted rw. The embedded init generates a fresh random key
+# every boot; on first boot we save it to FAT and on subsequent boots we
+# restore it and restart the listener so known_hosts stays valid.
+_SSH_STORE="/boot/piclock/ssh"
+_SSH_KEY="dropbear_ed25519_host_key"
+_DB_KEYDIR="/etc/dropbear"
+if [ -f "$_SSH_STORE/$_SSH_KEY" ]; then
+	# Restore persisted key and restart the Dropbear listener with it
+	cp "$_SSH_STORE/$_SSH_KEY" "$_DB_KEYDIR/$_SSH_KEY"
+	chmod 600 "$_DB_KEYDIR/$_SSH_KEY"
+	_dbpid=$(pidof dropbear 2>/dev/null | tr ' ' '\n' | sort -n | head -1)
+	[ -n "$_dbpid" ] && kill "$_dbpid" 2>/dev/null || true
+	sleep 1
+	dropbear -R
+elif [ -f "$_DB_KEYDIR/$_SSH_KEY" ]; then
+	# First boot — persist the auto-generated key to FAT for future boots
+	mkdir -p "$_SSH_STORE"
+	cp "$_DB_KEYDIR/$_SSH_KEY" "$_SSH_STORE/$_SSH_KEY"
+	chmod 600 "$_SSH_STORE/$_SSH_KEY"
+fi
+
 # Boot splash: write raw RGB565 image directly to framebuffer if enabled.
 _piclock_ini_get() {
 	[ -f /boot/piclock/piclock.ini ] || return 1
