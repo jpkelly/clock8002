@@ -145,6 +145,24 @@ Use this only after feature/root-ram is functionally complete.
 ### Open items
 See [Issue #44](https://github.com/jpkelly/clock8002/issues/44) for the active work list.
 
+### Planned cleanup — /boot reorganization (post-build)
+Move runtime customization files from `/boot/piclock/` to `/boot/` (FAT root) for clarity. Do after the current clean build validates successfully.
+
+**Files to move**
+- `setup.sh`: `golden-working-card/piclock/setup.sh` → `golden-working-card/setup.sh`
+- `ssh/`: `/boot/piclock/ssh/` → `/boot/ssh/` (update path in setup.sh: `_SSH_STORE="/boot/ssh"`)
+- `bootsplash.raw`: already staged to FAT root (`::`) in `post-image.sh` — no code change needed, was only in `/boot/piclock/` as a stale artifact from an old output dir (clean build resolves it)
+
+**Code changes required**
+1. `post-image.sh`: change `setup.sh` staging target from `::piclock/` to `::`
+2. `golden-working-card/root/clock_pokemon.sh` line 18–19: update path from `/boot/piclock/setup.sh` → `/boot/setup.sh`
+3. `setup.sh` itself: update `_SSH_STORE` from `/boot/piclock/ssh` → `/boot/ssh`
+
+**Files that stay in `/boot/piclock/`** (user-facing config — intentional)
+- `clock.ini`, `network.ini`, `oled.ini`, `piclock.ini`, `authorized_keys`
+
+**Guardrail**: do NOT move `clock.ini` or other user-facing config files — users expect them at `/boot/piclock/`.
+
 ## Current Checkpoint (2026-05-24 late - rollback baseline confirmed)
 
 ### TL;DR
