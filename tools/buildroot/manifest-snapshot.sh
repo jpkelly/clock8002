@@ -14,6 +14,8 @@
 #   MANIFEST_VERSION, BUILD_STATUS=in-progress, BUILD_STARTED,
 #   SRC_REPO_PATH, SRC_GIT_HEAD, SRC_GIT_BRANCH, SRC_GIT_DIRTY,
 #   OVERLAY_DIR, OVERLAY_FINGERPRINT,
+#   GOLDEN_CARD_FINGERPRINT (golden-working-card/ tree hash),
+#   ALSA_LTC_SRC_HASH (v4/alsa-ltc.c file hash),
 #   BR_CONFIG_HASH, BR2_EXTERNAL_VERSION, LAST_MAKE_TARGET,
 #   SRC_GIT_LOG (last 20 commits, pipe-delimited one-liners)
 #
@@ -117,6 +119,9 @@ if [ "$MODE" = "start" ]; then
     GIT_LOG=$(git -C "$SRC_REPO" log --oneline -20 2>/dev/null | tr '\n' '|' | sed 's/|$//')
 
     OVERLAY_FP=$(overlay_fingerprint "$OVERLAY_DIR")
+    GOLDEN_CARD_DIR="${SRC_REPO}/buildroot-external/board/clock8002-rpi5/golden-working-card"
+    GOLDEN_CARD_FP=$(overlay_fingerprint "$GOLDEN_CARD_DIR")
+    ALSA_LTC_HASH=$(file_hash "${SRC_REPO}/v4/alsa-ltc.c")
     BR_CONFIG_HASH=$(file_hash "${BR_DIR}/.config")
     BR2_EXT_VER=$(grep "^BR2_EXTERNAL_CLOCK8002_VERSION=" "${BR_DIR}/.config" 2>/dev/null \
                   | cut -d= -f2- | tr -d '"' || echo "unknown")
@@ -145,6 +150,8 @@ SRC_GIT_BRANCH="${GIT_BRANCH}"
 SRC_GIT_DIRTY="${GIT_DIRTY_FLAG}"
 OVERLAY_DIR="${OVERLAY_DIR}"
 OVERLAY_FINGERPRINT="${OVERLAY_FP}"
+GOLDEN_CARD_FINGERPRINT="${GOLDEN_CARD_FP}"
+ALSA_LTC_SRC_HASH="${ALSA_LTC_HASH}"
 BR_CONFIG_HASH="${BR_CONFIG_HASH}"
 BR2_EXTERNAL_VERSION="${BR2_EXT_VER}"
 LAST_MAKE_TARGET="${MAKE_TARGET}"

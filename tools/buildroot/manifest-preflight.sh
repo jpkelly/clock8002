@@ -68,6 +68,8 @@ SRC_REPO="${SRC_REPO:-${HOME}/clock8002-root-ram}"
 BR_DIR="${BR_DIR:-${HOME}/buildroot}"
 MANIFEST="${OUTPUT_DIR}/.clock8002-build-state"
 OVERLAY_DIR="${SRC_REPO}/buildroot-external/board/clock8002-rpi5/rootfs-overlay"
+GOLDEN_CARD_DIR="${SRC_REPO}/buildroot-external/board/clock8002-rpi5/golden-working-card"
+ALSA_LTC_SRC="${SRC_REPO}/v4/alsa-ltc.c"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -110,6 +112,8 @@ CUR_BRANCH=$(git -C "$SRC_REPO" branch --show-current 2>/dev/null || echo "unkno
 CUR_DIRTY=$(git -C "$SRC_REPO" status --short 2>/dev/null | wc -l | tr -d ' ')
 [ "$CUR_DIRTY" -gt 0 ] && CUR_DIRTY_FLAG="true" || CUR_DIRTY_FLAG="false"
 CUR_OVERLAY_FP=$(overlay_fingerprint "$OVERLAY_DIR")
+CUR_GOLDEN_CARD_FP=$(overlay_fingerprint "$GOLDEN_CARD_DIR")
+CUR_ALSA_LTC_HASH=$(file_hash "$ALSA_LTC_SRC")
 CUR_BR_CONFIG_HASH=$(file_hash "${BR_DIR}/.config")
 CUR_BR2_EXT_VER=$(grep "^BR2_EXTERNAL_CLOCK8002_VERSION=" "${BR_DIR}/.config" 2>/dev/null \
                   | cut -d= -f2- | tr -d '"' || echo "unknown")
@@ -119,6 +123,8 @@ echo "  branch:  ${CUR_BRANCH}"
 echo "  head:    ${CUR_SHORT} (${CUR_HEAD})"
 echo "  dirty:   ${CUR_DIRTY_FLAG}"
 echo "  overlay: ${CUR_OVERLAY_FP}"
+echo "  golden:  ${CUR_GOLDEN_CARD_FP}"
+echo "  alsa_ltc:${CUR_ALSA_LTC_HASH}"
 echo "  br_cfg:  ${CUR_BR_CONFIG_HASH}"
 echo "  ext_ver: ${CUR_BR2_EXT_VER}"
 echo ""
@@ -185,6 +191,7 @@ fi
 NEEDS_FULL_CLEAN=0
 NEEDS_ROOTFS_REBUILD=0
 NEEDS_DIRCLEAN=0
+NEEDS_ALSA_LTC_DIRCLEAN=0
 
 echo "Comparing state..."
 echo ""
@@ -225,6 +232,19 @@ else
     ok "Overlay fingerprint matches"
 fi
 
+# Golden-working-card changed → rootfs rebuild required
+# Skip if field absent from manifest (pre-gap1 manifest).
+if [ -z "${GOLDEN_CARD_FINGERPRINT:-}" ]; then
+    warn "golden-card fingerprint not in manifest (pre-gap1 manifest) — skipping"
+elif [ "${GOLDEN_CARD_FINGERPRINT}" != "$CUR_GOLDEN_CARD_FP" ]; then
+    diff_ "golden-working-card fingerprint changed"
+    diff_ "  was: ${GOLDEN_CARD_FINGERPRINT}"
+    diff_ "  now: ${CUR_GOLDEN_CARD_FP}"
+    NEEDS_ROOTFS_REBUILD=1
+else
+    ok "Golden-working-card fingerprint matches"
+fi
+
 # Source HEAD changed → at minimum clock8002-dirclean
 if [ "${SRC_GIT_HEAD:-}" != "$CUR_HEAD" ]; then
     diff_ "Source HEAD changed: ${SRC_GIT_HEAD:-unknown} → ${CUR_HEAD}"
@@ -233,9 +253,27 @@ else
     ok "Source HEAD matches: ${CUR_SHORT}"
 fi
 
-# Dirty tree warning
+# alsa-ltc source changed → alsa-ltc-dirclean required
+# Skip if field absent from manifest (pre-gap3 manifest).
+if [ -z "${ALSA_LTC_SRC_HASH:-}" ]; then
+    warn "alsa-ltc hash not in manifest (pre-gap3 manifest) — skipping"
+elif [ "${ALSA_LTC_SRC_HASH}" != "$CUR_ALSA_LTC_HASH" ]; then
+    diff_ "alsa-ltc.c source changed"
+    diff_ "  was: ${ALSA_LTC_SRC_HASH}"
+    diff_ "  now: ${CUR_ALSA_LTC_HASH}"
+    NEEDS_ALSA_LTC_DIRCLEAN=1
+else
+    ok "alsa-ltc.c hash matches"
+fi
+
+# Dirty tree → treat as source change to guarantee a clean package rebuild
 if [ "$CUR_DIRTY_FLAG" = "true" ]; then
-    warn "Working tree has ${CUR_DIRTY} uncommitted change(s) — provenance will be imprecise"
+    diff_ "Working tree has ${CUR_DIRTY} uncommitted change(s) — treating as source change"
+    NEEDS_DIRCLEAN=1
+    if git -C "$SRC_REPO" status --short 2>/dev/null | grep -q "v4/alsa-ltc.c"; then
+        diff_ "  alsa-ltc.c is among dirty files — also setting alsa-ltc-dirclean"
+        NEEDS_ALSA_LTC_DIRCLEAN=1
+    fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -258,40 +296,26 @@ if [ "$NEEDS_FULL_CLEAN" -eq 1 ]; then
     exit 1
 fi
 
-if [ "$NEEDS_ROOTFS_REBUILD" -eq 1 ] && [ "$NEEDS_DIRCLEAN" -eq 1 ]; then
-    echo "  INCREMENTAL — clock8002 rebuild + forced rootfs rebuild"
-    echo "  (Both Go source and overlay changed)"
+if [ "$NEEDS_DIRCLEAN" -eq 1 ] || [ "$NEEDS_ALSA_LTC_DIRCLEAN" -eq 1 ] || [ "$NEEDS_ROOTFS_REBUILD" -eq 1 ]; then
+    REASON=""
+    [ "$NEEDS_DIRCLEAN" -eq 1 ]          && REASON="${REASON}clock8002 source, "
+    [ "$NEEDS_ALSA_LTC_DIRCLEAN" -eq 1 ] && REASON="${REASON}alsa-ltc source, "
+    [ "$NEEDS_ROOTFS_REBUILD" -eq 1 ]    && REASON="${REASON}overlay/rootfs, "
+    REASON=$(echo "$REASON" | sed 's/, $//')
+    echo "  INCREMENTAL — ${REASON}"
     echo ""
     echo "  Run:"
     echo "    cd ~/buildroot \\"
-    echo "      && make O=${OUTDIR_VAR} clock8002-dirclean \\"
-    echo "      && rm -f ${OUTDIR_VAR}/build/buildroot-fs/*/fakeroot.stamp \\"
-    echo "      && rm -f ${OUTDIR_VAR}/target/.stamp_target_install_source_check \\"
-    echo "      && make O=${OUTDIR_VAR}"
-    echo ""
-    exit 0
-fi
-
-if [ "$NEEDS_ROOTFS_REBUILD" -eq 1 ]; then
-    echo "  INCREMENTAL — forced rootfs rebuild only"
-    echo "  (Overlay changed; Go source unchanged)"
-    echo ""
-    echo "  Run:"
-    echo "    cd ~/buildroot \\"
-    echo "      && rm -f ${OUTDIR_VAR}/build/buildroot-fs/*/fakeroot.stamp \\"
-    echo "      && rm -f ${OUTDIR_VAR}/target/.stamp_target_install_source_check \\"
-    echo "      && make O=${OUTDIR_VAR}"
-    echo ""
-    exit 0
-fi
-
-if [ "$NEEDS_DIRCLEAN" -eq 1 ]; then
-    echo "  INCREMENTAL — clock8002-dirclean + make"
-    echo "  (Go source changed; overlay and config unchanged)"
-    echo ""
-    echo "  Run:"
-    echo "    cd ~/buildroot \\"
-    echo "      && make O=${OUTDIR_VAR} clock8002-dirclean \\"
+    if [ "$NEEDS_DIRCLEAN" -eq 1 ]; then
+        echo "      && make O=${OUTDIR_VAR} clock8002-dirclean \\"
+    fi
+    if [ "$NEEDS_ALSA_LTC_DIRCLEAN" -eq 1 ]; then
+        echo "      && make O=${OUTDIR_VAR} alsa-ltc-dirclean \\"
+    fi
+    if [ "$NEEDS_ROOTFS_REBUILD" -eq 1 ]; then
+        echo "      && rm -f ${OUTDIR_VAR}/build/buildroot-fs/*/fakeroot.stamp \\"
+        echo "      && rm -f ${OUTDIR_VAR}/target/.stamp_target_install_source_check \\"
+    fi
     echo "      && make O=${OUTDIR_VAR}"
     echo ""
     exit 0
