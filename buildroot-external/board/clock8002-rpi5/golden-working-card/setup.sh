@@ -1,6 +1,6 @@
 #!/bin/sh
-# /boot/piclock/setup.sh — runs at boot as root, /boot already mounted rw.
-# Place this file on the FAT boot partition at piclock/setup.sh.
+# /boot/setup.sh — runs at boot as root, /boot already mounted rw.
+# Place this file on the FAT boot partition at setup.sh (FAT root).
 
 # Install SSH authorized_keys
 if [ -f /boot/piclock/authorized_keys ]; then
@@ -14,7 +14,7 @@ fi
 # /boot is already mounted rw. The embedded init generates a fresh random key
 # every boot; on first boot we save it to FAT and on subsequent boots we
 # restore it and restart the listener so known_hosts stays valid.
-_SSH_STORE="/boot/piclock/ssh"
+_SSH_STORE="/boot/ssh"
 _SSH_KEY="dropbear_ed25519_host_key"
 _DB_KEYDIR="/etc/dropbear"
 if [ -f "$_SSH_STORE/$_SSH_KEY" ]; then

@@ -15,8 +15,8 @@ start() {
 	mount -o remount,rw /boot
 
 	# Run user setup script if present (authorized_keys, OLED, etc.)
-	if [ -f /boot/piclock/setup.sh ]; then
-		sh /boot/piclock/setup.sh
+	if [ -f /boot/setup.sh ]; then
+		sh /boot/setup.sh
 	fi
 
 	cd /root

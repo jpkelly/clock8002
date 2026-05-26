@@ -196,12 +196,16 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		DST="${pair##*:}"
 		[ -f "${SRC}" ] && cp -f "${SRC}" "${BINARIES_DIR}/piclock/${DST}"
 	done
-	# Stage board-provided piclock files (setup.sh, authorized_keys, etc.).
+	# Stage board-provided piclock files (authorized_keys, etc.).
 	if [ -d "${GOLDEN_DIR}/piclock" ]; then
 		for f in "${GOLDEN_DIR}/piclock"/*; do
 			[ -f "${f}" ] || continue
 			cp -f "${f}" "${BINARIES_DIR}/piclock/$(basename "${f}")"
 		done
+	fi
+	# Stage FAT-root files (setup.sh lives at golden-working-card/, not in piclock/).
+	if [ -f "${GOLDEN_DIR}/setup.sh" ]; then
+		cp -f "${GOLDEN_DIR}/setup.sh" "${BINARIES_DIR}/setup.sh"
 	fi
 
 	# Append extra dev SSH key into piclock/ if BR2_PICLOCKKEY is set at build time.
@@ -212,8 +216,8 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		chmod 600 "${BINARIES_DIR}/piclock/authorized_keys"
 	fi
 
-	# Write build-info.txt into the piclock directory so every image carries its
-	# own provenance.  Lands at /boot/piclock/build-info.txt on the device.
+	# Write build-info.txt to FAT root so every image carries its own provenance.
+	# Lands at /boot/build-info.txt on the device.
 	# Use this to identify any SD card and find its matching manifest in git.
 	_SOURCE_REPO="$(dirname "${BR2_EXTERNAL_CLOCK8002_PATH}")"
 	_COMMIT=$(git -C "${_SOURCE_REPO}" rev-parse HEAD 2>/dev/null || echo "unknown")
@@ -225,7 +229,7 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		# Derive manifest name from session: br-<label>-<ts> -> build-manifest-<label>-<ts>.md
 		_MANIFEST="build-manifest-${_SESSION#br-}.md"
 	fi
-	cat > "${BINARIES_DIR}/piclock/build-info.txt" <<BUILDINFO
+	cat > "${BINARIES_DIR}/build-info.txt" <<BUILDINFO
 manifest=${_MANIFEST}
 session=${_SESSION}
 commit=${_COMMIT}
@@ -292,6 +296,12 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 	for f in "${BINARIES_DIR}"/piclock/*; do
 		[ -f "${f}" ] || continue
 		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${f}" ::piclock/
+	done
+	# Inject FAT-root files (setup.sh, build-info.txt).
+	for fat_root_file in setup.sh build-info.txt; do
+		[ -f "${BINARIES_DIR}/${fat_root_file}" ] || continue
+		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" \
+			"${BINARIES_DIR}/${fat_root_file}" ::
 	done
 	for staged in "${BOOT_SOURCE_DIR}"/*; do
 		[ -f "${staged}" ] || continue
