@@ -25,14 +25,18 @@ Critical guardrails:
 - Do not use ad-hoc build wrapper scripts for launch orchestration. Use direct Buildroot commands in documented sequence.
 - Before starting any build, run a preflight check and print results: current branch, active screen sessions, bundle path existence, and exact make targets.
 - If preflight fails or runtime behavior is unexpected, stop immediately and ask before retrying.
+- Before every build, run `tools/buildroot/manifest-preflight.sh <output_dir>` (on cm5) to determine the correct build action. Follow its recommendation unless explicitly overridden. See docs/build-policy.md § Output Directory State Tracking.
+- Before launching any build (after preflight and make clean/prep), run `tools/buildroot/manifest-snapshot.sh --start <output_dir> --src ~/clock8002-root-ram --br ~/buildroot --target "<make_target>"` to record the build start state.
+- After a build completes (success or failure), run `tools/buildroot/manifest-snapshot.sh --finish <output_dir> <exit_code>` to record the final state.
+- Before any `make <pkg>-dirclean`, run `tools/buildroot/manifest-record-dirclean.sh <output_dir> <pkg>` to append the event to the manifest.
 
 Build reproducibility docs:
 - Policy: docs/build-policy.md
 - Manifest template: docs/build-manifest-template.md
 
-Operational defaults:
+- Operational defaults:
 - Prebuilt kernel is default unless explicitly overridden.
-- Always use fresh output directory for each build.
+- Always use fresh output directory for release builds; use manifest-preflight.sh to determine if an incremental build is safe for dev/RC builds.
 - Always provide monitor and exit-check commands after starting a build.
 - Keep terminal wrappers no-crash: avoid top-level `set -e`, use explicit `cmd_status`/`rc`, unique `/tmp/<session>.log` + `/tmp/<session>.exit`.
 
