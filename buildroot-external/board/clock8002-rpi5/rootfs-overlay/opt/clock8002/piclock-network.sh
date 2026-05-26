@@ -31,6 +31,7 @@ NTP_ENABLED=$(parse_ini "$NETWORK_INI" network ntp)
 if [ "$NTP_ENABLED" = "true" ]; then
     echo "Running one-shot NTP sync via BusyBox ntpd..."
     ntpd -g -q 2>/dev/null || echo "NTP sync failed (not critical)"
+    hwclock -w 2>/dev/null && echo "RTC updated from NTP" || echo "RTC update failed (not critical)"
 elif [ "$NTP_ENABLED" = "false" ]; then
     echo "NTP disabled (by network.ini)"
 fi
