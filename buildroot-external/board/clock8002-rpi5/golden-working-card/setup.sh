@@ -175,17 +175,41 @@ if [ -f /boot/piclock/network.ini ]; then
 		ip addr add "${_net_addr}/${_raw_mask}" dev eth0 2>/dev/null || true
 	fi
 
+	# NTP control — S49ntp always starts ntpd; honour network.ini ntp flag here.
+	_ntp=$(_ini_get network ntp)
+	if [ "$_ntp" = "false" ]; then
+		# Stop ntpd — clock runs from RTC only.
+		/etc/init.d/S49ntp stop 2>/dev/null || killall ntpd 2>/dev/null || true
+	elif [ "$_ntp" = "true" ]; then
+		# ntpd daemon already running via S49ntp.
+		# Spawn background job: after sync settles (~60s), write to RTC.
+		(sleep 60 && hwclock -w 2>/dev/null && echo "setup.sh: RTC updated from NTP") &
+	fi
+
 	# Wi-Fi AP mode
 	_wifi_ap=$(_ini_get wifi ap_enabled)
 	if [ "$_wifi_ap" = "true" ]; then
 		_wifi_ssid=$(_ini_get wifi ap_ssid)
 		_wifi_pass=$(_ini_get wifi ap_password)
 		_wifi_chan=$(_ini_get wifi ap_channel)
+		_wifi_country=$(_ini_get wifi ap_country)
 		[ -z "$_wifi_ssid" ]    && _wifi_ssid="piClock-ap"
 		[ -z "$_wifi_chan" ]    && _wifi_chan="6"
+		[ -z "$_wifi_country" ] && _wifi_country="US"
 
 		# Ensure wireless module is loaded
 		modprobe brcmfmac 2>/dev/null || true
+
+		# Wait up to 30s for wlan0 to appear
+		_wi=0
+		while [ "$_wi" -lt 30 ]; do
+			ip link show wlan0 >/dev/null 2>&1 && break
+			_wi=$((_wi + 1))
+			sleep 1
+		done
+
+		# Set regulatory domain so AP mode is permitted
+		command -v iw >/dev/null 2>&1 && iw reg set "$_wifi_country" 2>/dev/null || true
 		sleep 1
 
 		# Stop any client-mode wpa_supplicant / udhcpc started by S40wifi
@@ -200,6 +224,7 @@ driver=nl80211
 ssid=$_wifi_ssid
 hw_mode=g
 channel=$_wifi_chan
+country_code=$_wifi_country
 auth_algs=1
 wpa=2
 wpa_passphrase=$_wifi_pass

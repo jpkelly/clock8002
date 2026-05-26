@@ -116,10 +116,13 @@ Use this only after feature/root-ram is functionally complete.
 **`/boot/piclock/`**: `clock.ini`, `network.ini`, `oled.ini`, `piclock.ini`, `authorized_keys`, `clock.log`
 - `clock.log` stays in `piclock/` by design — hardwired to `filepath.Dir(clock.ini)` in Go
 
-### NTP sync (new — commit eec8e1f)
-- BusyBox `CONFIG_NTPD=y` enabled in build config
-- `ntpd -q` runs one-shot at boot via `S45piclock-network` when `network.ini ntp=true`
-- Removed dead `S49ntp` calls from `setup.sh` (that service never existed in Buildroot)
+### NTP sync / startup architecture
+- `S49ntp` starts `ntpd -g` (daemon) unconditionally at boot — this is the Buildroot default
+- `setup.sh` (running later, via `S99clock` → `clock_pokemon.sh`) honours the `ntp` flag:
+  - `ntp=false` → stops ntpd; clock runs from RTC only
+  - `ntp=true` → lets ntpd daemon run; spawns background job to `hwclock -w` after ~60s
+- `S45piclock-network` and `piclock-network.sh` have been **removed** (issue #45 — superseded by `setup.sh`)
+- Authoritative startup path: `setup.sh` only (golden-working-card → FAT partition)
 
 ### Validated on piClock.local (2026-05-25 — image `70679f8`)
 - /boot reorganization complete ✅
