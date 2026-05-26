@@ -180,12 +180,41 @@ Place SSH public key(s) in `/boot/piclock/authorized_keys` for passwordless root
 
 When the SD card is mounted on your computer, the FAT boot partition will appear as a drive named `piClock`. Add your public key(s) to the file `piclock/authorized_keys` on that partition (create the file if it does not exist).
 
+### oled.ini
+
+Controls the OLED status display. Changes take effect on service restart.
+
+```ini
+[oled]
+enabled=true
+i2c_port=1
+i2c_address=0x3c
+rotation=2
+```
+
+- **enabled** — set to `false` to disable the OLED display entirely.
+- **i2c_port**, **i2c_address** — OLED hardware bus configuration. Match your connected display module.
+- **rotation** — display rotation: `0`, `1`, `2`, or `3` (each 90°).
+
+### piclock.ini
+
+Board-level behavior flags. Changes take effect on reboot.
+
+```ini
+[piclock]
+splash_enabled=true
+```
+
+- **splash_enabled** — when `true`, displays the piClock logo on boot (via `/boot/bootsplash.raw`). Set to `false` to suppress the splash.
+
 ## Config Files Overview
 
 | File | Location | Purpose |
 |---|---|---|
 | `clock.ini` | `/boot/piclock/clock.ini` | Main clock config — face, colors, sources, timers, OSC, GPIO, web UI port |
 | `network.ini` | `/boot/piclock/network.ini` | Network config — DHCP/static IP, hostname, Wi-Fi AP mode |
+| `oled.ini` | `/boot/piclock/oled.ini` | OLED display — enable, I²C bus, rotation |
+| `piclock.ini` | `/boot/piclock/piclock.ini` | Board-level flags — boot splash on/off |
 | `authorized_keys` | `/boot/piclock/authorized_keys` | SSH public keys for passwordless root login |
 
 Changes to `clock.ini` take effect on service restart or via the web UI. Changes to `network.ini` take effect on reboot.
