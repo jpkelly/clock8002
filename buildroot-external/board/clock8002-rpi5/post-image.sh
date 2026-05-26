@@ -292,6 +292,9 @@ genimage \
 # boot.vfat from scratch.  Partition starts at LBA 1 (byte 512).
 BOOT_IMG="${BINARIES_DIR}/boot.vfat"
 if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
+	# Remove files relocated from piclock/ to FAT root (migration cleanup).
+	# Incremental builds reuse BINARIES_DIR, so stale copies can linger.
+	rm -f "${BINARIES_DIR}/piclock/setup.sh" "${BINARIES_DIR}/piclock/build-info.txt"
 	MTOOLS_SKIP_CHECK=1 mmd -i "${BOOT_IMG}" ::piclock 2>/dev/null || true
 	for f in "${BINARIES_DIR}"/piclock/*; do
 		[ -f "${f}" ] || continue
