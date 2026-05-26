@@ -14,7 +14,8 @@
 #   MANIFEST_VERSION, BUILD_STATUS=in-progress, BUILD_STARTED,
 #   SRC_REPO_PATH, SRC_GIT_HEAD, SRC_GIT_BRANCH, SRC_GIT_DIRTY,
 #   OVERLAY_DIR, OVERLAY_FINGERPRINT,
-#   BR_CONFIG_HASH, BR2_EXTERNAL_VERSION, LAST_MAKE_TARGET
+#   BR_CONFIG_HASH, BR2_EXTERNAL_VERSION, LAST_MAKE_TARGET,
+#   SRC_GIT_LOG (last 20 commits, pipe-delimited one-liners)
 #
 # Fields added/updated on --finish:
 #   BUILD_STATUS=success|failed, BUILD_FINISHED, IMAGE_SHA256
@@ -113,6 +114,7 @@ if [ "$MODE" = "start" ]; then
     GIT_BRANCH=$(git -C "$SRC_REPO" branch --show-current 2>/dev/null || echo "unknown")
     GIT_DIRTY=$(git -C "$SRC_REPO" status --short 2>/dev/null | wc -l | tr -d ' ')
     [ "$GIT_DIRTY" -gt 0 ] && GIT_DIRTY_FLAG="true" || GIT_DIRTY_FLAG="false"
+    GIT_LOG=$(git -C "$SRC_REPO" log --oneline -20 2>/dev/null | tr '\n' '|' | sed 's/|$//')
 
     OVERLAY_FP=$(overlay_fingerprint "$OVERLAY_DIR")
     BR_CONFIG_HASH=$(file_hash "${BR_DIR}/.config")
@@ -146,6 +148,7 @@ OVERLAY_FINGERPRINT="${OVERLAY_FP}"
 BR_CONFIG_HASH="${BR_CONFIG_HASH}"
 BR2_EXTERNAL_VERSION="${BR2_EXT_VER}"
 LAST_MAKE_TARGET="${MAKE_TARGET}"
+SRC_GIT_LOG="${GIT_LOG}"
 IMAGE_SHA256=""
 DIRCLEAN_HISTORY="${PREV_HISTORY}"
 EOF
