@@ -102,61 +102,35 @@ Use this only after feature/root-ram is functionally complete.
   - Update instructions/docs so normal builds use `master`.
   - Keep `feature/root-ram` only for hotfix overlap, then retire.
 
-## Current State (2026-05-25 — SSH key persistence fix + clean rebuild in progress)
+## Current State (2026-05-25 — SSH key persistence complete)
 
 ### Active dev baseline
-- **Branch**: `feature/root-ram`
-- **HEAD**: `215b93a` — pushed to GitHub (`fix: unbind fbcon from fb0 before splash so console text cannot overwrite it`)
+- **Branch**: `master`
+- **HEAD**: `6fdfeba` — SSH key persistence first-boot timing fix
 - **Last tag**: `working-2026-05-24-ltc-broadcast` at `14a485b`
 - **Kernel bundle**: `bundle-245-6.12.41-v8-20260509-161234` (prebuilt, `CLOCK8002_PREBUILT_KERNEL=1`)
 
-### Validated on .245 (2026-05-24)
-- Wi-Fi AP (hostapd 2.11) — `piClock-ap` SSID broadcasts ✅
-- DHCP via dnsmasq (192.168.50.10-100/24) ✅
-- OLED Wi-Fi icon (`is_ap_active` via `/boot/iw`) ✅
-- SDL overlay "AP SSID: piClock-ap" visible in info panel ✅
-- LTC broadcast via alsa-ltc confirmed working ✅ (fixed in `14a485b`)
-- SSH, boot, power button all working ✅
-- vtcon1 unbind + splash repaint in `clock_pokemon.sh` — live on device ✅ (from `215b93a`)
-- `--info-timer 0` suppressing startup overlay when splash enabled — live on device ✅ (from `f0cd63d`)
+### Validated on piClock.local (2026-05-25 — image 6fdfeba)
+- SSH host key persistence across reboots ✅ — key saved to `/boot/piclock/ssh/` on first boot, restored every subsequent boot; known_hosts stays valid
+- alsa-ltc running: `plughw:2,0 255.255.255.255 1245` ✅
+- sdl-clock running ✅
+- Dropbear SSH ✅
+- Kernel `6.12.41-v8` ✅
 
-### Working tree — uncommitted changes (pending rebuild)
-These changes are in the repo source but NOT yet baked into any flashed image.
-They require a Buildroot rebuild to take effect — runtime root is fresh tmpfs each boot and `/etc/init.d/` changes on-device are lost on reboot.
-Note: `buildroot-external/board/clock8002-rpi5/config.txt` has `initramfs rootfs.cpio.gz followkernel` **active**, so rootfs-overlay changes DO reach the running system after a rebuild.
+### SSH persistence architecture (how it works)
+- `setup.sh` runs at every boot via `S99clock` → `clock_pokemon.sh`
+- **First boot**: `dropbearkey` generates `/etc/dropbear/dropbear_ed25519_host_key` explicitly (Dropbear's `-R` flag is lazy — it only generates on first connection), saved to `/boot/piclock/ssh/` (FAT, survives reboots), listener restarted
+- **Subsequent boots**: FAT key copied back to `/etc/dropbear/`, listener killed and restarted with the stable key
+- Key store: `/boot/piclock/ssh/dropbear_ed25519_host_key`
 
-| File | Change |
-|------|--------|
-| `buildroot-external/board/clock8002-rpi5/cmdline.txt` | Added `quiet loglevel=0` |
-| `golden-working-card/boot/cmdline.txt` | Added `quiet loglevel=0` |
-| `rootfs-overlay/etc/init.d/S03copy_clock_files` | Unbinds vtcon1 + paints splash right after /boot mount |
-| `golden-working-card/etc/init.d/S03copy_clock_files` | Same — golden copy |
-| `golden-working-card/piclock/setup.sh` | Unbinds vtcon1 before dd write of bootsplash.raw |
-| `rootfs-overlay/etc/init.d/S00splash` | **NEW** — unbinds vtcon1 at S00 time (very early, before any init text) |
-| `golden-working-card/etc/init.d/S00splash` | **NEW** — same, golden copy |
-
-### Firmware splash research result (2026-05-24)
-**RPi5 EEPROM bootloader has NO custom splash PNG support.** There is no `splash.png` or equivalent mechanism in the firmware. `disable_splash=1` in `config.txt` suppresses the rainbow only. The current dd-to-fb0 approach is the correct userspace solution for this platform.
-
-### Bootsplash architecture (how it works)
-- `bootsplash.raw` (RGB565, 1920×1080) generated at build time via ffmpeg, staged to `/boot/piclock/` on FAT
-- `splash_enabled=true` in `/boot/piclock/piclock.ini` enables the feature
-- **Currently**: vtcon1 unbind + dd write happens in `setup.sh` (late — at S99clock time via clock_pokemon.sh)
-- **With pending changes**: vtcon1 unbind at S00 time (very early) → splash painted at S03 time (as soon as /boot mounts)
-- **Alternative not yet implemented**: `console=ttyAMA0` in `cmdline.txt` would redirect all console output to UART, leaving the display completely clear until the clock app starts — cleanest option
+### Recent commits (master)
+- `3ec9895` — setup.sh: persist Dropbear SSH host key across reboots
+- `6fdfeba` — setup.sh: fix first-boot SSH key generation timing (HEAD)
 
 ### Open items
-1. **Bootsplash text suppression** — uncommitted changes above need to be committed and built into an image.
-   - Option A (S00splash + S03 approach): commit the working tree, rebuild, flash
-   - Option B (console redirect): change `console=tty1` → `console=ttyAMA0,115200` in `cmdline.txt` — simpler, no init text at all on display
-   - Both options require a rebuild; no further device-side testing can validate them until then.
-2. **Manifest** — commits since `51703f6` need a build manifest.
-3. **network.ini default** — `gateway=192.168.8.1` set live on device; golden-working-card default still has it commented out.
-
-### Commits since last tag (working-2026-05-24-ltc-broadcast / 14a485b)
-- `a21212f` — docs: clean up README for master promotion
-- `f0cd63d` — fix: suppress boot text and startup overlay when bootsplash is enabled
-- `215b93a` — fix: unbind fbcon from fb0 before splash so console text cannot overwrite it (HEAD)
+1. **Bootsplash text suppression** — console text still visible during boot before clock starts. Options: S00splash init script approach, or `console=ttyAMA0,115200` redirect in cmdline.txt. Requires rebuild.
+2. **Manifest** — no build manifest filed for `6fdfeba` image.
+3. **network.ini default** — `gateway=192.168.8.1` was set live on device previously; golden-working-card default still has it commented out.
 
 ## Current Checkpoint (2026-05-24 late - rollback baseline confirmed)
 
