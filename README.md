@@ -164,7 +164,7 @@ ap_channel=6
 ap_country=US
 ```
 
-#### Wi-Fi Access Point
+> **NTP on piClock:** Runs a one-shot sync at boot via BusyBox `ntpd`. If your network requires a specific NTP server, place an `ntp.conf` file on the `piClock` volume and it will be used instead of the public pool. The clock also synchronises via LTC when available — NTP is only needed for initial time accuracy at boot.
 
 piClock can run a Wi-Fi AP alongside its wired or wireless client connection. When active, it creates a hotspot you can join directly from a laptop or phone — useful to wirelessly access the piClock without relying on an existing network.
 

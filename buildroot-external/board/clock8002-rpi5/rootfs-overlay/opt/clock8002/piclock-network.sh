@@ -28,16 +28,11 @@ NET_HOSTNAME=$(parse_ini "$NETWORK_INI" host hostname)
 
 # Apply NTP setting
 NTP_ENABLED=$(parse_ini "$NETWORK_INI" network ntp)
-if [ "$NTP_ENABLED" = "false" ]; then
-    echo "Disabling NTP (best effort)..."
-    if command -v timedatectl >/dev/null 2>&1; then
-        timedatectl set-ntp false || true
-    fi
-elif [ "$NTP_ENABLED" = "true" ]; then
-    echo "Enabling NTP (best effort)..."
-    if command -v timedatectl >/dev/null 2>&1; then
-        timedatectl set-ntp true || true
-    fi
+if [ "$NTP_ENABLED" = "true" ]; then
+    echo "Running one-shot NTP sync via BusyBox ntpd..."
+    ntpd -q 2>/dev/null || echo "NTP sync failed (not critical)"
+elif [ "$NTP_ENABLED" = "false" ]; then
+    echo "NTP disabled (by network.ini)"
 fi
 
 mkdir -p "$RUN_DIR"
