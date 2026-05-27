@@ -8,50 +8,43 @@ NTP_CONF="/boot/ntp.conf"
 
 start() {
 	echo "Setting up clock bridge configuration"
-        sleep 5
-	mkdir /boot
-        if [ -e  /dev/mmcblk0p1 ]; then
-		mount -r /dev/mmcblk0p1 /boot
-        else
-		mount -r /dev/mmcblk0 /boot
-        fi
-        if [ -e "$HOSTNAME_FILE" ]; then
-                echo "Setting hostname"
-		cat $HOSTNAME_FILE
-		hostname `cat $HOSTNAME_FILE`
-                cp $HOSTNAME_FILE /etc/hostname
-        fi
+	mkdir -p /boot
+	if [ -e /dev/mmcblk0p1 ]; then
+		mount -r /dev/mmcblk0p1 /boot 2>/dev/null || true
+	else
+		mount -r /dev/mmcblk0 /boot 2>/dev/null || true
+	fi
+	if [ -e "$HOSTNAME_FILE" ]; then
+		echo "Setting hostname"
+		hostname "$(cat "$HOSTNAME_FILE")"
+		cp "$HOSTNAME_FILE" /etc/hostname
+	fi
 	if [ -e "$CLOCK_FILE" ]; then
-                echo "Copying clock bridge binary"
-                mkdir -p /root
-                cp $CLOCK_FILE /root/clock-bridge
+		echo "Copying clock bridge binary"
+		mkdir -p /root
+		cp "$CLOCK_FILE" /root/clock-bridge
 		chmod a+x /root/clock-bridge
-        fi
+	fi
 	if [ -e "$CLOCK_CMD" ]; then
 		echo "Copying clock configuration"
 		mkdir -p /root
-		cp $CLOCK_CMD /root/clock_bridge_cmd.sh
-		chmod a+x /root//clock_bridge_cmd.sh
+		cp "$CLOCK_CMD" /root/clock_bridge_cmd.sh
+		chmod a+x /root/clock_bridge_cmd.sh
 	fi
-        if [ -e "$CLOCK_POKEMON" ]; then
-                echo "Copying clock bridge pokemon configuration"
-                mkdir -p /root
-                cp $CLOCK_POKEMON /root/clock_bridge_pokemon.sh
-                chmod a+x /root/clock_bridge_pokemon.sh
-        fi
+	if [ -e "$CLOCK_POKEMON" ]; then
+		echo "Copying clock bridge pokemon configuration"
+		mkdir -p /root
+		cp "$CLOCK_POKEMON" /root/clock_bridge_pokemon.sh
+		chmod a+x /root/clock_bridge_pokemon.sh
+	fi
 	if [ -e "$NTP_CONF" ]; then
 		echo "Copying ntp configuration"
-		cp $NTP_CONF /etc/ntp.conf
+		cp "$NTP_CONF" /etc/ntp.conf
 	fi
 }
 
 stop() {
 	true
-}
-
-restart() {
-	stop
-	start
 }
 
 case "$1" in
@@ -60,13 +53,14 @@ case "$1" in
 		;;
 	stop)
 		stop
-	;;
+		;;
 	restart|reload)
-		restart
+		stop
+		start
 		;;
 	*)
 		echo "Usage: $0 {start|stop|restart}"
 		exit 1
 esac
 
-exit $?
+exit 0
