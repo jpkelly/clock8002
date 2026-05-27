@@ -114,7 +114,9 @@ CUR_DIRTY=$(git -C "$SRC_REPO" status --short 2>/dev/null | wc -l | tr -d ' ')
 CUR_OVERLAY_FP=$(overlay_fingerprint "$OVERLAY_DIR")
 CUR_GOLDEN_CARD_FP=$(overlay_fingerprint "$GOLDEN_CARD_DIR")
 CUR_ALSA_LTC_HASH=$(file_hash "$ALSA_LTC_SRC")
-CUR_BR_CONFIG_HASH=$(file_hash "${BR_DIR}/.config")
+# Exclude BR2_EXTERNAL_CLOCK8002_VERSION from .config hash — it bumps with every
+# commit and would otherwise force a full clean on every incremental build.
+CUR_BR_CONFIG_HASH=$(grep -v '^BR2_EXTERNAL_CLOCK8002_VERSION=' "${BR_DIR}/.config" 2>/dev/null | sha256sum | awk '{print $1}' || echo "missing")
 CUR_BR2_EXT_VER=$(grep "^BR2_EXTERNAL_CLOCK8002_VERSION=" "${BR_DIR}/.config" 2>/dev/null \
                   | cut -d= -f2- | tr -d '"' || echo "unknown")
 
@@ -214,10 +216,10 @@ else
     ok ".config hash matches"
 fi
 
-# BR2_EXTERNAL version changed → full clean
+# BR2_EXTERNAL version changed — this bumps on every commit; it is not a reason
+# for a full clean.  Source HEAD change (below) already gates dirclean.
 if [ "${BR2_EXTERNAL_VERSION:-}" != "$CUR_BR2_EXT_VER" ]; then
-    diff_ "BR2_EXTERNAL version changed: '${BR2_EXTERNAL_VERSION:-unknown}' → '${CUR_BR2_EXT_VER}'"
-    NEEDS_FULL_CLEAN=1
+    warn "BR2_EXTERNAL version changed: '${BR2_EXTERNAL_VERSION:-unknown}' → '${CUR_BR2_EXT_VER}' (informational only)"
 else
     ok "BR2_EXTERNAL version matches: ${CUR_BR2_EXT_VER}"
 fi

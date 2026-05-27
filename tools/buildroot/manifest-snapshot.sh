@@ -127,7 +127,9 @@ if [ "$MODE" = "start" ]; then
     GOLDEN_CARD_DIR="${SRC_REPO}/buildroot-external/board/clock8002-rpi5/golden-working-card"
     GOLDEN_CARD_FP=$(overlay_fingerprint "$GOLDEN_CARD_DIR")
     ALSA_LTC_HASH=$(file_hash "${SRC_REPO}/v4/alsa-ltc.c")
-    BR_CONFIG_HASH=$(file_hash "${BR_DIR}/.config")
+    # Exclude BR2_EXTERNAL_CLOCK8002_VERSION from .config hash — it bumps with
+    # every commit and would force a false full-clean on every incremental build.
+    BR_CONFIG_HASH=$(grep -v '^BR2_EXTERNAL_CLOCK8002_VERSION=' "${BR_DIR}/.config" 2>/dev/null | sha256sum | awk '{print $1}' || echo "missing")
     BR2_EXT_VER=$(grep "^BR2_EXTERNAL_CLOCK8002_VERSION=" "${BR_DIR}/.config" 2>/dev/null \
                   | cut -d= -f2- | tr -d '"' || echo "unknown")
 
