@@ -154,7 +154,6 @@ if [ -f /boot/piclock/network.ini ]; then
 				echo "    address $_net_addr"
 				echo "    netmask $_net_mask"
 				[ -n "$_net_gw" ] && echo "    gateway $_net_gw"
-				[ -n "$_net_dns" ] && echo "    dns-nameservers $_net_dns"
 				;;
 			dual)
 				echo "auto eth0"
@@ -171,6 +170,14 @@ if [ -f /boot/piclock/network.ini ]; then
 				;;
 		esac
 	} > /etc/network/interfaces
+
+	# Write resolv.conf directly — openresolv is present but unconfigured in
+	# this Buildroot environment so dns-nameservers in interfaces has no effect.
+	if [ -n "$_net_dns" ]; then
+		echo "nameserver $_net_dns" > /etc/resolv.conf
+	else
+		rm -f /etc/resolv.conf
+	fi
 
 	ip addr flush dev eth0 2>/dev/null || true
 	ifup eth0 2>/dev/null || true
