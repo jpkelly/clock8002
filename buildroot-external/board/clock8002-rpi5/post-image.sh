@@ -62,6 +62,12 @@ for staged in ${BOOT_RUNTIME_FILES}; do
 	fi
 done
 
+# nano is provided by the Buildroot nano package in TARGET_DIR, not by
+# clock8002-prototype. Stage it explicitly so setup.sh can install it at boot.
+if [ -f "${TARGET_DIR}/usr/bin/nano" ]; then
+	cp -f "${TARGET_DIR}/usr/bin/nano" "${BINARIES_DIR}/nano"
+fi
+
 # Default: use prebuilt kernel payload. Custom kernel compile is
 # opt-out via CLOCK8002_PREBUILT_KERNEL=0.
 if [ "${CLOCK8002_PREBUILT_KERNEL:-1}" != "0" ]; then

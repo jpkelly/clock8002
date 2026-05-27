@@ -14,8 +14,6 @@ fi
 if [ -f /boot/nano ]; then
 	cp /boot/nano /usr/bin/nano
 	chmod 755 /usr/bin/nano
-	cp /boot/nano /root/nano
-	chmod 755 /root/nano
 fi
 
 # SSH host key persistence — keep the same Dropbear host key across reboots.
