@@ -64,7 +64,7 @@ fi
 #                 goes to serial UART so nothing prints on HDMI before splash.
 # splash=false -> normal cmdline: all kernel and console text visible on HDMI.
 if [ "$(_piclock_ini_get splash_enabled)" = "true" ]; then
-	echo 'quiet loglevel=0 logo.nologo consoleblank=0 console=ttyAMA0,115200' > /boot/cmdline.txt
+	echo 'quiet loglevel=0 logo.nologo consoleblank=0 console=ttyAMA0,115200 fbcon=map:99' > /boot/cmdline.txt
 else
 	echo 'logo.nologo consoleblank=0 console=tty1' > /boot/cmdline.txt
 fi
