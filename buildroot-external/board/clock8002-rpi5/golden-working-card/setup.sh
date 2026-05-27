@@ -10,6 +10,14 @@ if [ -f /boot/piclock/authorized_keys ]; then
 	chmod 600 /root/.ssh/authorized_keys
 fi
 
+# Install nano into the live root if it is staged on /boot.
+if [ -f /boot/nano ]; then
+	cp /boot/nano /usr/bin/nano
+	chmod 755 /usr/bin/nano
+	cp /boot/nano /root/nano
+	chmod 755 /root/nano
+fi
+
 # SSH host key persistence — keep the same Dropbear host key across reboots.
 # /boot is already mounted rw. The embedded init generates a fresh random key
 # every boot; on first boot we save it to FAT and on subsequent boots we
