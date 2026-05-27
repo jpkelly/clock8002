@@ -165,6 +165,24 @@ echo ""
 # ---------------------------------------------------------------------------
 # Case: interrupted or failed build
 # ---------------------------------------------------------------------------
+# Auto-reconcile "in-progress" when a fresh image exists. The build wrapper
+# is supposed to call --finish on exit, but if it died (terminal closed,
+# screen killed, etc.) the manifest can be left dangling even when the
+# build actually produced a good image. Detect that case by comparing
+# image mtime against BUILD_STARTED.
+if [ "${BUILD_STATUS:-}" = "in-progress" ] && [ -f "${OUTPUT_DIR}/images/sdcard.img" ]; then
+    _img="${OUTPUT_DIR}/images/sdcard.img"
+    _img_mtime=$(stat -c %Y "$_img" 2>/dev/null || stat -f %m "$_img" 2>/dev/null || echo 0)
+    _start_epoch=$(date -d "${BUILD_STARTED:-1970-01-01T00:00:00Z}" +%s 2>/dev/null || echo 0)
+    if [ "$_img_mtime" -gt "$_start_epoch" ] && [ "$_start_epoch" -gt 0 ]; then
+        warn "Manifest left 'in-progress' but sdcard.img is newer than build start — auto-reconciling to success."
+        sh "$(dirname "$0")/manifest-snapshot.sh" --finish "$OUTPUT_DIR" 0 >/dev/null 2>&1 || true
+        # Re-source manifest to pick up updated status
+        # shellcheck disable=SC1090
+        . "$MANIFEST"
+    fi
+fi
+
 if [ "${BUILD_STATUS:-}" = "in-progress" ]; then
     fail "Previous build status is 'in-progress' — build was interrupted."
     echo ""
