@@ -17,6 +17,13 @@ else
         echo 'piClock' > "${TARGET_DIR}/etc/hostname"
 fi
 
+# Move console getty off HDMI tty1 at image build time so the very first boot
+# does not print the login banner before setup.sh can patch inittab.
+if [ -f "${TARGET_DIR}/etc/inittab" ]; then
+        sed -i 's|^tty1::respawn:/sbin/getty -L  tty1 0 vt100.*$|tty3::respawn:/sbin/getty -L  tty3 0 vt100 # HDMI moved to tty3|' \
+                "${TARGET_DIR}/etc/inittab" || true
+fi
+
 # Copy the working-card runtime files directly into the target rootfs.
 if [ -f "${GOLDEN_DIR}/etc/hosts" ]; then
         cp -f "${GOLDEN_DIR}/etc/hosts" "${TARGET_DIR}/etc/hosts"
@@ -24,6 +31,7 @@ fi
 if [ -d "${GOLDEN_DIR}/etc/init.d" ]; then
         mkdir -p "${TARGET_DIR}/etc/init.d"
         for script in \
+                                                                S00splash \
                                 S04power-button \
                 S03copy_alsa-ltc_files \
                 S03copy_clock_bridge_files \
@@ -53,6 +61,7 @@ rm -f "${TARGET_DIR}/etc/init.d/S02setup-root" \
 
 # Make init.d scripts executable.
 for script in \
+                S00splash \
                 S04power-button \
         S03copy_alsa-ltc_files \
         S03copy_clock_bridge_files \

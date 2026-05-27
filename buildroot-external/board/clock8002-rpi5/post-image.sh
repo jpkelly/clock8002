@@ -215,6 +215,15 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 			cp -f "${f}" "${BINARIES_DIR}/piclock/$(basename "${f}")"
 		done
 	fi
+	mkdir -p "${BINARIES_DIR}/piclock/init.d"
+	for init_override in \
+		S03copy_clock_files \
+		S03copy_clock_bridge_files; do
+		if [ -f "${GOLDEN_DIR}/etc/init.d/${init_override}" ]; then
+			cp -f "${GOLDEN_DIR}/etc/init.d/${init_override}" \
+				"${BINARIES_DIR}/piclock/init.d/${init_override}"
+		fi
+	done
 	# Incremental builds reuse BINARIES_DIR; remove stale authorized_keys unless opted in.
 	rm -f "${BINARIES_DIR}/piclock/authorized_keys"
 	# Stage FAT-root files (setup.sh lives at golden-working-card/, not in piclock/).
@@ -312,6 +321,13 @@ if [ -d "${BINARIES_DIR}/piclock" ] && [ -f "${BOOT_IMG}" ]; then
 		[ -f "${f}" ] || continue
 		MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${f}" ::piclock/
 	done
+	if [ -d "${BINARIES_DIR}/piclock/init.d" ]; then
+		MTOOLS_SKIP_CHECK=1 mmd -i "${BOOT_IMG}" ::piclock/init.d 2>/dev/null || true
+		for f in "${BINARIES_DIR}"/piclock/init.d/*; do
+			[ -f "${f}" ] || continue
+			MTOOLS_SKIP_CHECK=1 mcopy -o -i "${BOOT_IMG}" "${f}" ::piclock/init.d/
+		done
+	fi
 	# Inject FAT-root files (setup.sh, build-info.txt).
 	for fat_root_file in setup.sh build-info.txt; do
 		[ -f "${BINARIES_DIR}/${fat_root_file}" ] || continue

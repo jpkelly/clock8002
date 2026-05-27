@@ -1,12 +1,16 @@
 #!/bin/sh
 # Detach the framebuffer console and paint the bootsplash as early as possible.
-# bootsplash.raw is baked into the initramfs (rootfs.cpio.gz) so it is available
-# in RAM before any FAT partition is mounted.
+# Prefer the image payload on /boot (updated every build), fallback to the
+# initramfs copy when present.
 
 case "$1" in
 	start)
 		echo 0 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
-		dd if=/usr/share/piclock/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
+		if [ -f /boot/bootsplash.raw ]; then
+			dd if=/boot/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
+		elif [ -f /usr/share/piclock/bootsplash.raw ]; then
+			dd if=/usr/share/piclock/bootsplash.raw of=/dev/fb0 bs=4096 2>/dev/null || true
+		fi
 		;;
 esac
 
