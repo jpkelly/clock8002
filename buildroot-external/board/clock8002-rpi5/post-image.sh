@@ -188,14 +188,6 @@ if [ ! -e "${GENIMAGE_CFG}" ]; then
 		gzip -c "${BINARIES_DIR}/rootfs.cpio" > "${BINARIES_DIR}/rootfs.cpio.gz"
 		CPIO_GZ_SIZE=$(stat -c %s "${BINARIES_DIR}/rootfs.cpio.gz" 2>/dev/null || stat -f %z "${BINARIES_DIR}/rootfs.cpio.gz")
 		echo "Staged rootfs.cpio.gz (${CPIO_GZ_SIZE} bytes)" >&2
-		# Ensure firmware actually loads the external initramfs. Without this,
-		# the prebuilt kernel's embedded initramfs wins and TARGET_DIR updates
-		# (e.g. /etc/issue, /etc/hostname) are not visible at boot.
-		for cfg in "${BINARIES_DIR}/config.txt" "${BINARIES_DIR}/rpi-firmware/config.txt"; do
-			[ -f "${cfg}" ] || continue
-			sed -i '/^initramfs[[:space:]]\+/d' "${cfg}"
-			echo "initramfs rootfs.cpio.gz followkernel" >> "${cfg}"
-		done
 		FILES="${FILES}\t\t\t\"rootfs.cpio.gz\",\n"
 	fi
 
