@@ -60,10 +60,11 @@ if [ "$(_piclock_ini_get splash_enabled)" = "true" ] && [ -f /boot/bootsplash.ra
 fi
 
 # Update cmdline.txt for the next boot based on splash_enabled.
-# splash=true  -> quiet + loglevel=0: kernel produces no text output.
-# splash=false -> normal cmdline: all kernel and console text visible.
+# splash=true  -> quiet + loglevel=0 + console=ttyAMA0: kernel/init output
+#                 goes to serial UART so nothing prints on HDMI before splash.
+# splash=false -> normal cmdline: all kernel and console text visible on HDMI.
 if [ "$(_piclock_ini_get splash_enabled)" = "true" ]; then
-	echo 'quiet loglevel=0 logo.nologo consoleblank=0' > /boot/cmdline.txt
+	echo 'quiet loglevel=0 logo.nologo consoleblank=0 console=ttyAMA0,115200' > /boot/cmdline.txt
 else
 	echo 'logo.nologo consoleblank=0 console=tty1' > /boot/cmdline.txt
 fi
