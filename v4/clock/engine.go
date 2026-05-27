@@ -201,21 +201,14 @@ func (engine *Engine) prepareInfo() {
 }
 
 func detectNetworkMode() string {
-	// Try network.ini first (written by setup.sh on piclock systems)
-	if data, err := os.ReadFile("/boot/piclock/network.ini"); err == nil {
-		for _, line := range strings.Split(string(data), "\n") {
-			line = strings.TrimSpace(line)
-			if strings.HasPrefix(line, "mode=") {
-				switch strings.TrimSpace(strings.TrimPrefix(line, "mode=")) {
-				case "static":
-					return "Static"
-				case "dual":
-					return "Dual"
-				case "dhcp":
-					return "DHCP"
-				}
-			}
-		}
+	mode, _ := networkINIConfig()
+	switch mode {
+	case "static":
+		return "Static"
+	case "dual":
+		return "Dual"
+	case "dhcp":
+		return "DHCP"
 	}
 	// Fallback: parse /etc/network/interfaces
 	if data, err := os.ReadFile("/etc/network/interfaces"); err == nil {
@@ -233,9 +226,28 @@ func detectNetworkMode() string {
 	return "Unknown"
 }
 
+func networkINIConfig() (mode string, staticIP string) {
+	data, err := os.ReadFile("/boot/piclock/network.ini")
+	if err != nil {
+		return "", ""
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(line, "mode="):
+			mode = strings.ToLower(strings.TrimSpace(strings.TrimPrefix(line, "mode=")))
+		case strings.HasPrefix(line, "address="):
+			staticIP = strings.TrimSpace(strings.TrimPrefix(line, "address="))
+		}
+	}
+	return mode, staticIP
+}
+
 // interfaceAddresses returns labeled IP addresses for eth0 and wlan0
 func interfaceAddresses() string {
 	var ret string
+	mode, staticIP := networkINIConfig()
+	dualMode := mode == "dual"
 	for _, name := range []string{"eth0", "end0", "wlan0"} {
 		iface, err := net.InterfaceByName(name)
 		if err != nil {
@@ -245,16 +257,31 @@ func interfaceAddresses() string {
 		if err != nil {
 			continue
 		}
+		ethAddrIndex := 0
 		for _, addr := range addrs {
 			ip, _, err := net.ParseCIDR(addr.String())
 			if err != nil || ip.To4() == nil {
 				continue
 			}
 			label := "Ethernet"
+			suffix := ""
 			if name == "wlan0" {
 				label = "Wi-Fi"
+			} else if dualMode {
+				if staticIP != "" {
+					if ip.String() == staticIP {
+						suffix = " (static)"
+					} else {
+						suffix = " (DHCP)"
+					}
+				} else if ethAddrIndex == 0 {
+					suffix = " (DHCP)"
+				} else {
+					suffix = " (static)"
+				}
+				ethAddrIndex++
 			}
-			ret += fmt.Sprintf("%s: %v\n", label, ip)
+			ret += fmt.Sprintf("%s: %v%s\n", label, ip, suffix)
 		}
 	}
 	return ret
