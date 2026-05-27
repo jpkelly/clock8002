@@ -20,7 +20,9 @@ fi
 # Move console getty off HDMI tty1 at image build time so the very first boot
 # does not print the login banner before setup.sh can patch inittab.
 if [ -f "${TARGET_DIR}/etc/inittab" ]; then
-        sed -i 's|^tty1::respawn:/sbin/getty -L  tty1 0 vt100.*$|tty3::respawn:/sbin/getty -L  tty3 0 vt100 # HDMI moved to tty3|' \
+        sed -i -E \
+                -e 's|^console::respawn:/sbin/getty -L[[:space:]]+console[[:space:]]+0[[:space:]]+vt100.*$|tty3::respawn:/sbin/getty -L tty3 0 vt100 # HDMI moved to tty3|' \
+                -e 's|^tty1::respawn:/sbin/getty -L[[:space:]]+tty1[[:space:]]+0[[:space:]]+vt100.*$|tty3::respawn:/sbin/getty -L tty3 0 vt100 # HDMI moved to tty3|' \
                 "${TARGET_DIR}/etc/inittab" || true
 fi
 

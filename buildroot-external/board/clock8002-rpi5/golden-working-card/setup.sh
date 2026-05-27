@@ -94,7 +94,7 @@ fi
 
 # Install and run boot-staged init script overrides.
 for _name in S03copy_clock_files S03copy_clock_bridge_files; do
-	_src="/boot/piclock/init.d/${_name}"
+	_src="/boot/init.d/${_name}"
 	_dst="/etc/init.d/${_name}"
 	[ -f "${_src}" ] || continue
 	cp "${_src}" "${_dst}"
