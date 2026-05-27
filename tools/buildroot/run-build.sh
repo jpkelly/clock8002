@@ -50,8 +50,14 @@ cd "${BR_DIR}" || { echo "Cannot cd to ${BR_DIR}" | tee -a "${LOG}"; exit 1; }
 # Run each make target in sequence; bail on first failure
 RC=0
 for target in "$@"; do
-    echo "=== make ${target} ===" | tee -a "${LOG}"
-    make "${target}" 2>&1 | tee -a "${LOG}"
+    if [ "$target" = "make" ]; then
+        # bare "make" means default build — no explicit target
+        echo "=== make (default) ===" | tee -a "${LOG}"
+        make 2>&1 | tee -a "${LOG}"
+    else
+        echo "=== make ${target} ===" | tee -a "${LOG}"
+        make "${target}" 2>&1 | tee -a "${LOG}"
+    fi
     RC=$?
     if [ "$RC" -ne 0 ]; then
         echo "make ${target} FAILED with exit ${RC}" | tee -a "${LOG}"
