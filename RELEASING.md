@@ -16,7 +16,7 @@ Run the piClock test unit with `shakemon.sh` or manual monitoring for at least 2
 **12h checkpoint** — record `VmRSS`, `VmSwap`, system swap, service PIDs, temp/throttle. If clean, continue soak.
 
 **24h checkpoint** — repeat. Approve release only if:
-- `VmSwap` for `sdl3-clock` is 0 or flat
+- `VmSwap` for `sdl-clock` is 0 or flat
 - All service PIDs stable (no restarts)
 - No throttle events
 
@@ -79,5 +79,5 @@ gh release create vX.X.X \
 ## Notes
 
 - **Release builds must use `make clean`**, not `clock8002-dirclean`. `output/target/` is not wiped by partial cleans — stale files from prior dev builds (including SSH keys) can persist.
-- Do not use `pkill -f /opt/clock8002/sdl3-clock` in SSH commands — pattern matches can terminate the SSH session. Use `/etc/init.d/S99clock stop` instead.
+- Do not use `pkill -f sdl-clock` in SSH commands — pattern matches can terminate the SSH session. Use `/etc/init.d/S99clock stop` instead.
 - The Gerry deployment is only valid when both `clock.ini` and `network.ini` match Gerry settings.
