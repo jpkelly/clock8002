@@ -52,7 +52,7 @@ Built for the **piClock platform** on Raspberry Pi 5, arm64.
 
 ### 1. Download the latest release image
 
-Get the pre-built SD card image from the [Releases](https://github.com/jpkelly/clock8002/releases) page. The image is named `piClock-<version>-<commit>-sdcard.img`.
+Get the pre-built SD card image from the [Releases](https://github.com/jpkelly/clock8002/releases) page. The image is named `piClock-<version>-sdcard.img`.
 
 ### 2. (Optional) Pre-configure before first boot
 
@@ -147,7 +147,7 @@ mode=static
 # NTP time synchronization (true or false)
 ntp=false
 
-# Static IP settings (only used when mode=static)
+# Static IP settings (only used when mode=static or dual)
 address=192.168.8.245
 netmask=24
 #gateway=192.168.8.1
@@ -163,6 +163,18 @@ ap_password=clockwork
 ap_channel=6
 ap_country=US
 ```
+
+**Network modes:**
+
+| Mode | Behaviour |
+|------|-----------|
+| `static` | Fixed IP/netmask on eth0. Set `address=`, `netmask=`, and optionally `gateway=` and `dns=`. |
+| `dhcp` | DHCP on eth0. IP, gateway, and DNS are provided by the router. |
+| `dual` | DHCP on eth0 for the default route, plus a static alias on `eth0:1`. Useful when the unit needs a predictable IP for OSC while still getting internet via DHCP. |
+
+**`gateway=`** — sets the default route. Required if you need internet access (e.g. for NTP or DNS) in `static` mode. Comment it out if piClock is on an isolated network.
+
+**`dns=`** — writes a nameserver to `/etc/resolv.conf` at boot. Only needed in `static` mode; DHCP provides DNS automatically. Example: `dns=1.1.1.1`.
 
 > **NTP on piClock:** Runs a one-shot sync at boot via BusyBox `ntpd`. If your network requires a specific NTP server, place an `ntp.conf` file on the `piClock` volume and it will be used instead of the public pool. The clock also synchronises via LTC when available — NTP is only needed for initial time accuracy at boot.
 
@@ -205,7 +217,7 @@ Board-level behavior flags. Changes take effect on reboot.
 splash_enabled=true
 ```
 
-- **splash_enabled** — when `true`, displays the piClock logo on boot (via `/boot/bootsplash.raw`). Set to `false` to suppress the splash.
+- **splash_enabled** — when `true`, displays the piClock logo on boot (via `/boot/bootsplash.raw`). Set to `false` to suppress the splash. **Requires two reboots to take effect** — the first boot writes the new kernel command line, the second boot uses it.
 
 ## Config Files Overview
 
@@ -305,7 +317,7 @@ Upstream reference is also available at [clock-8001/v4/osc.md](https://gitlab.co
 
 ## Project Status
 
-Last verified: **2026-05-25**
+Last verified: **2026-05-27**
 
 - This README is the operator/user quick-start reference.
 - Build policy and reproducibility rules live in [`docs/build-policy.md`](docs/build-policy.md).
