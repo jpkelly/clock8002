@@ -13,7 +13,9 @@ mode=static
 # Disable if using OSC settime to manually control the clock
 ntp=false
 
-# Static IP settings (only used when mode=static)
+# Static IP settings (only used when mode=static or dual)
+# Note: gateway is only applied in static mode; 
+# In dual mode DHCP provides the default route.
 address=192.168.8.245
 netmask=24
 #gateway=192.168.8.1
