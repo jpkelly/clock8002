@@ -102,14 +102,15 @@ Use this only after feature/root-ram is functionally complete.
   - Update instructions/docs so normal builds use `master`.
   - Keep `feature/root-ram` only for hotfix overlap, then retire.
 
-## Current State (2026-05-25)
+## Current State (2026-05-27)
 
 ### Active dev baseline
 - **Branch**: `master`
-- **HEAD**: `eec8e1f` — NTP: wire BusyBox ntpd for one-shot sync at boot
-- **Last tag**: `working-2026-05-24-ltc-broadcast` at `14a485b`
+- **HEAD**: `36eed87` — run-build.sh: treat 'make' argument as bare default build target
+- **Latest release tag**: `v1.3.7` at `36eed87`
+- **Image SHA256**: `d7d9b786f4d79cc5c5f69461041dbe55d92efbfee949af45383f7e865f1c856c` (no SSH key)
 - **Kernel bundle**: `bundle-245-6.12.41-v8-20260509-161234` (prebuilt, `CLOCK8002_PREBUILT_KERNEL=1`)
-- **Reuse output dir**: `output-clean-bda4db9-20260525-175132` (incremental builds OK against this dir)
+- **Output dir**: `~/buildroot/output` (incremental builds OK)
 
 ### /boot layout (final)
 **FAT root (`/boot/`)**: `setup.sh`, `build-info.txt`, `bootsplash.raw`, `ssh/` (runtime-created)

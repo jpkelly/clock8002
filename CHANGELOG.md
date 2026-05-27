@@ -1,3 +1,13 @@
+## Version 1.3.7 (2026-05-27) — Buildroot
+
+* Buildroot image
+  * DNS: `setup.sh` now writes `/etc/resolv.conf` directly from `dns=` in `network.ini` — `dns-nameservers` had no effect in Buildroot (openresolv unconfigured)
+  * Console: add `fbcon=map:99` to `cmdline.txt` to suppress boot text on HDMI output
+  * NTP: preserve `console=ttyAMA0,115200` in `cmdline.txt` when splash is enabled
+* Tools
+  * `run-build.sh`: fix bare `make` invocation — passing `"make"` as an argument now runs the default build target instead of `make make`
+  * `manifest-preflight.sh`: auto-reconcile `in-progress` build state when `sdcard.img` is newer than `BUILD_STARTED`, preventing false full-clean requirements on completed incremental builds
+
 ## Version 1.3.3 (2026-04-26) — Buildroot RC
 * Second display (Buildroot)
   * Add mirror mode — second HDMI output mirrors the clock display in real time using a DRM dumb buffer; enabled by default when a second display is connected
