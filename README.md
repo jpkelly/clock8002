@@ -1,13 +1,16 @@
 # Clock 8002
 
-An HDMI clock display for Raspberry Pi 5, running as a minimal appliance on a custom **Buildroot** image. Controllable via OSC and a built-in web UI.
+An HDMI clock display for Raspberry Pi 5, controllable via OSC and a built-in web UI.
+
+> **This branch (`trixie`) installs Clock 8002 on Raspberry Pi OS / Debian Trixie.**  
+> For the ready-to-flash Buildroot appliance image, see the [`master`](https://github.com/jpkelly/clock8002/tree/master) branch.
 
 ## Table of Contents
 
 - [Acknowledgements](#acknowledgements)
 - [What changed from clock-8001](#what-changed-from-clock-8001)
 - [Requirements](#requirements)
-- [Quick Start — Flash the Image](#quick-start--flash-the-image)
+- [Quick Start — Install on Raspberry Pi OS Trixie](#quick-start--install-on-raspberry-pi-os-trixie)
 - [First Boot](#first-boot)
 - [EEPROM Provisioning (Pi 5)](#eeprom-provisioning-pi-5)
 - [Pre-boot Configuration](#pre-boot-configuration)
@@ -28,7 +31,7 @@ Please consider supporting the original clock-8001 development: https://www.payp
 ## What changed from clock-8001
 
 - Runtime: SDL3, runs headless via KMSDRM (no X11/Wayland)
-- Deployment: minimal Buildroot appliance image — flash to SD card, boot, done
+- Deployment: installer tarball for Raspberry Pi OS / Debian Trixie on arm64
 - Features: added `text4`, `text2`, and 3-line text clock faces
 - Features: added configurable PerfectCue overlay placement/size in the web UI
 - Features: added 2nd HDMI output support — PerfectCue full-screen icons or main clock mirror
@@ -36,7 +39,7 @@ Please consider supporting the original clock-8001 development: https://www.payp
 - Features: OLED display daemon (SSD1306 I2C) with version overlay
 - Features: refactored `alsa-ltc` binary for 64-bit arm64
 - Features: retained GPIO pulse output support (`periph.io`)
-- Platform: targets Raspberry Pi 5 with custom Buildroot image (musl libc, BusyBox init, SDL3)
+- Platform: targets Raspberry Pi 5 running Raspberry Pi OS Lite (64-bit) / Debian Trixie
 - Removed hardware: HUB75 LED matrix, Arduino LED ring, Pimoroni Unicorn HD, Futaba VFD
 
 ## Requirements
@@ -45,55 +48,56 @@ Built for the **piClock platform** on Raspberry Pi 5, arm64.
 
 - **Hardware**: Raspberry Pi 5 (field units currently include 2GB and 8GB variants)
 - **Display**: HDMI via SDL3 KMSDRM (headless, no desktop required)
-- **OS**: Custom Buildroot image — pre-built images on the [Releases](https://github.com/jpkelly/clock8002/releases) page
+- **OS**: Raspberry Pi OS Lite (64-bit) / Debian Trixie (arm64), with internet access for the installer
 - **Network**: Required for OSC control and web configuration
 
-## Quick Start — Flash the Image
+## Quick Start — Install on Raspberry Pi OS Trixie
 
-### 1. Download the latest release image
+### 1. Prepare the SD card
 
-Get the pre-built SD card image from the [Releases](https://github.com/jpkelly/clock8002/releases) page. The image is named `piClock-<version>-sdcard.img`.
+Flash **Raspberry Pi OS Lite (64-bit)** (Debian Trixie) to an SD card using [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
 
-### 2. (Optional) Pre-configure before first boot
+During imager customisation:
 
-Mount the SD card's FAT32 boot partition (appears as `piClock` on Mac/PC) and edit:
+- Set hostname (e.g. `piclock`)
+- Set username `pi` and password
+- Enable SSH
+- Configure Wi-Fi or wired networking so the Pi has internet access
 
-- `piclock/network.ini` — set hostname, static IP, Wi-Fi AP settings (applied on first boot)
-- `piclock/authorized_keys` — add SSH public key(s) for passwordless root login
-
-### 3. Flash to SD card
-
-**Option A — Raspberry Pi Imager (recommended):** Use **[Raspberry Pi Imager](https://www.raspberrypi.com/software/)** — choose "Use custom image" and select the `.img` file. This works on macOS, Windows, and Linux.
-
-**Option B — `dd` (macOS):**
+Boot the Pi and SSH in:
 
 ```bash
-# Identify your SD card disk number (look for the correct size)
-diskutil list external physical
-
-# Flash (replace diskN with your disk number)
-diskutil unmountDisk /dev/diskN
-sudo dd if=/path/to/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress
-diskutil eject /dev/diskN
+ssh pi@piclock.local
 ```
 
-**Option C — `dd` (Linux):**
+### 2. Download and install Clock 8002
+
+Download the latest Trixie release tarball from the [Releases](https://github.com/jpkelly/clock8002/releases) page. Look for assets named `clock8002-trixie-vX.X.X-default-linux-arm64.tar.gz`.
 
 ```bash
-# Identify your SD card device (look for the correct size)
-lsblk
-
-# Flash (replace sdX or mmcblkX with your device)
-sudo umount /dev/sdX*
-sudo dd if=/path/to/piClock-<COMMIT>-sdcard.img of=/dev/sdX bs=4M status=progress
-sync
+wget https://github.com/jpkelly/clock8002/releases/download/trixie-v1.3.8/clock8002-trixie-v1.3.8-default-linux-arm64.tar.gz
+tar xzf clock8002-trixie-v1.3.8-default-linux-arm64.tar.gz
+cd clock8002-trixie-v1.3.8-default-linux-arm64
+sudo bash install.sh
 ```
 
-> **Warning:** Flashing overwrites all data on the SD card. Verify you have selected the correct device before proceeding.
+The installer will:
 
-### 4. Boot and access the web UI
+- Install SDL3 and other runtime dependencies
+- Copy `sdl-clock`, `alsa-ltc`, fonts, voices, and assets to `/opt/clock8002`
+- Install default configs to `/boot/firmware/piclock/`
+- Install and enable systemd services
+- Add the `pi` user to the `video` and `render` groups
 
-Insert the SD card and power on. After ~30 seconds, open a browser to:
+Reboot when the installer finishes:
+
+```bash
+sudo reboot
+```
+
+### 3. Access the web UI
+
+After reboot, open a browser to:
 
 ```
 http://piClock.local
@@ -101,19 +105,13 @@ http://piClock.local
 
 Default credentials: **admin** / **clockwork**
 
-Default SSH access:
-
-```bash
-ssh root@piClock.local   # password: clockworkadmin
-```
-
 ---
 
 ## First Boot
 
 On first boot the clock starts automatically. A startup overlay displays the version and IP address for ~30 seconds.
 
-If you pre-configured `network.ini` before flashing, network settings are applied on first boot. To change settings after booting, edit `/boot/piclock/network.ini` via SSH and reboot.
+Network settings are read from `/boot/firmware/piclock/network.ini` at boot. To change settings after booting, edit that file via SSH and reboot, or use the web UI.
 
 ## EEPROM Provisioning (Pi 5)
 
@@ -133,7 +131,7 @@ After reboot, verify with `rpi-eeprom-config` — expect `BOOT_ORDER=0xf1`.
 
 ## Pre-boot Configuration
 
-Config files live on the FAT32 boot partition at `/boot/piclock/` (visible as `piClock` when the SD card is mounted on Mac/PC). Edit them before first boot, or via SSH at the same path after booting.
+Config files live on the FAT32 boot partition at `/boot/firmware/piclock/` (visible as `piClock` when the SD card is mounted on Mac/PC). Edit them before first boot, or via SSH at the same path after booting.
 
 ### network.ini
 
@@ -188,7 +186,7 @@ Once connected to the AP, open `http://piClock.local` (or the unit's AP-side IP)
 
 ### authorized_keys
 
-Place SSH public key(s) in `/boot/piclock/authorized_keys` for passwordless root login. Applied at every boot — no reflash required.
+Place SSH public key(s) in `/boot/firmware/piclock/authorized_keys` for passwordless root login. Applied at every boot — no reflash required.
 
 When the SD card is mounted on your computer, the FAT boot partition will appear as a drive named `piClock`. Add your public key(s) to the file `piclock/authorized_keys` on that partition (create the file if it does not exist).
 
@@ -223,11 +221,11 @@ splash_enabled=true
 
 | File | Location | Purpose |
 |---|---|---|
-| `clock.ini` | `/boot/piclock/clock.ini` | Main clock config — face, colors, sources, timers, OSC, GPIO, web UI port |
-| `network.ini` | `/boot/piclock/network.ini` | Network config — DHCP/static IP, hostname, Wi-Fi AP mode |
-| `oled.ini` | `/boot/piclock/oled.ini` | OLED display — enable, I²C bus, rotation |
-| `piclock.ini` | `/boot/piclock/piclock.ini` | Board-level flags — boot splash on/off |
-| `authorized_keys` | `/boot/piclock/authorized_keys` | SSH public keys for passwordless root login |
+| `clock.ini` | `/boot/firmware/piclock/clock.ini` | Main clock config — face, colors, sources, timers, OSC, GPIO, web UI port |
+| `network.ini` | `/boot/firmware/piclock/network.ini` | Network config — DHCP/static IP, hostname, Wi-Fi AP mode |
+| `oled.ini` | `/boot/firmware/piclock/oled.ini` | OLED display — enable, I²C bus, rotation |
+| `piclock.ini` | `/boot/firmware/piclock/piclock.ini` | Board-level flags — boot splash on/off |
+| `authorized_keys` | `/boot/firmware/piclock/authorized_keys` | SSH public keys for passwordless root login |
 
 Changes to `clock.ini` take effect on service restart or via the web UI. Changes to `network.ini` take effect on reboot.
 
@@ -243,19 +241,23 @@ All clock settings — face type, colors, sources, timers, OSC, GPIO — can be 
 
 ```sh
 # Clock
-/etc/init.d/S99clock start
-/etc/init.d/S99clock stop
-/etc/init.d/S99clock restart
-ps | grep sdl-clock          # status
+sudo systemctl start clock8002
+sudo systemctl stop clock8002
+sudo systemctl restart clock8002
+sudo systemctl status clock8002
 
 # LTC decoder
-/etc/init.d/S99alsa-ltc start
-/etc/init.d/S99alsa-ltc stop
-/etc/init.d/S99alsa-ltc restart
-ps | grep alsa-ltc           # status
+sudo systemctl start alsa-ltc
+sudo systemctl stop alsa-ltc
+sudo systemctl restart alsa-ltc
+sudo systemctl status alsa-ltc
+
+# Network configuration
+sudo systemctl start piclock-network
+sudo systemctl status piclock-network
 ```
 
-Log file: `/var/log/messages` (syslog)
+Log file: `journalctl -u clock8002`
 
 ### LTC (alsa-ltc)
 
@@ -278,10 +280,10 @@ alsa-ltc [-v] <alsa-device> <OSC-destination-ip> <OSC-port> [sample-rate] [fps]
 
 `alsa-ltc` sends timecode to `255.255.255.255` (the IPv4 *limited broadcast* address), which all hosts on the local network receive. The Linux kernel requires a route for this address — without one it returns `ENETUNREACH` and alsa-ltc silently fails to send.
 
-piClock's `setup.sh` handles this automatically in static-IP mode:
+The Trixie `piclock-network.service` handles this automatically in static-IP mode:
 
-1. **Subnet broadcast** — BusyBox `ifup` leaves eth0 with `brd 0.0.0.0`. `setup.sh` re-adds the address with `broadcast +` so the kernel derives the correct subnet broadcast (e.g. `192.168.8.255` for a /24).
-2. **Limited broadcast route** — regardless of whether `gateway=` is configured in `network.ini`, `setup.sh` adds `ip route replace 255.255.255.255/32 dev eth0`. This makes LTC broadcast reliable with the gateway commented out (the default).
+1. **Subnet broadcast** — NetworkManager leaves eth0 with `brd 0.0.0.0`. The network script re-adds the address with `broadcast +` so the kernel derives the correct subnet broadcast (e.g. `192.168.8.255` for a /24).
+2. **Limited broadcast route** — regardless of whether `gateway=` is configured in `network.ini`, the script adds `ip route replace 255.255.255.255/32 dev eth0`. This makes LTC broadcast reliable with the gateway commented out (the default).
 
 Verify on a running unit:
 
@@ -294,7 +296,7 @@ ip route show       # should include: 255.255.255.255 dev eth0 scope link
 
 See the [piClock wiring diagram (PDF)](docs/piClockWiring.pdf) for a visual overview of UART, RS-485, LTC, and HDMI connections.
 
-UART overlays are pre-configured in the Buildroot image `config.txt`. No manual overlay installation required.
+The installer enables the required UART overlays in `/boot/firmware/config.txt`. Reboot after installation for the overlays to take effect.
 
 #### UART Pin Mapping (Pi 5, 3.3V logic, current piclock wiring)
 
@@ -317,12 +319,12 @@ Upstream reference is also available at [clock-8001/v4/osc.md](https://gitlab.co
 
 ## Project Status
 
-Last verified: **2026-05-27**
+Last verified: **2026-07-19**
 
-- This README is the operator/user quick-start reference.
+- This branch (`trixie`) provides the Raspberry Pi OS / Debian Trixie installer path.
+- The ready-to-flash Buildroot image remains on the [`master`](https://github.com/jpkelly/clock8002/tree/master) branch.
 - Build policy and reproducibility rules live in [`docs/build-policy.md`](docs/build-policy.md).
 - Current branch operational state and validation targets live in [`HANDOFF.md`](HANDOFF.md).
-- Build host workflow details live in [`buildroot-external/README.buildroot.md`](buildroot-external/README.buildroot.md).
 
 ## License
 
