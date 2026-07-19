@@ -12,7 +12,7 @@ BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 ALSA_LTC_CFLAGS := -O2 -DALSA_LTC_GIT_TAG=\"$(GIT_TAG)\" -DALSA_LTC_GIT_COMMIT=\"$(GIT_COMMIT)\" -DALSA_LTC_BUILD_DATE=\"$(BUILD_DATE)\"
 NETWORK_CONFIG ?= default
 RELEASE_DIR := clock8002-$(GIT_TAG)-$(NETWORK_CONFIG)-linux-arm64
-TRIXIE_RELEASE_DIR := clock8002-trixie-$(GIT_TAG)-$(NETWORK_CONFIG)-linux-arm64
+TRIXIE_RELEASE_DIR := clock8002-$(GIT_TAG)-$(NETWORK_CONFIG)-linux-arm64
 WIN_VERSION := $(GIT_TAG:v%=%)
 
 .PHONY: all dep build clean test release release-all trixie-release trixie-release-all linux sdl-clock sdl3-clock sdl3-clock_linux_amd64 sdl3-clock_linux_arm64

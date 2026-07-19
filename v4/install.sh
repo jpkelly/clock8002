@@ -62,9 +62,10 @@ if ! sudo apt install -y "${REQUIRED_SDL3_PACKAGES[@]}"; then
 fi
 
 # Verify SDL3 libraries are loadable before continuing.
+SDL3_LIB_DIR="/usr/lib/aarch64-linux-gnu"
 for lib in libSDL3.so libSDL3_image.so libSDL3_ttf.so; do
-    if ! ldconfig -p 2>/dev/null | grep -qF "$lib"; then
-        echo "ERROR: $lib not found in ldconfig cache after package installation." >&2
+    if [ ! -e "${SDL3_LIB_DIR}/${lib}" ]; then
+        echo "ERROR: ${SDL3_LIB_DIR}/${lib} not found after package installation." >&2
         exit 1
     fi
 done
