@@ -112,6 +112,15 @@ Use this only after feature/root-ram is functionally complete.
 - **Kernel bundle**: `bundle-245-6.12.41-v8-20260509-161234` (prebuilt, `CLOCK8002_PREBUILT_KERNEL=1`)
 - **Output dir**: `~/buildroot/output` (incremental builds OK)
 
+### Trixie release baseline
+- **Branch**: `trixie`
+- **HEAD**: `c62f658` — trixie: fix release tarball naming and SDL3 library check
+- **Release tag**: `trixie-v1.3.8` at `c62f658`
+- **Release asset**: `clock8002-trixie-v1.3.8-default-linux-arm64.tar.gz`
+- **Asset SHA256**: `c2965742d5d5fec58d2ab565c15b310c00bdd91e669e8972f7431c1b0771e6f5`
+- **Build host**: `pi@pi5start.local` (Raspberry Pi 5, Debian 13 Trixie ARM64)
+- **Status**: Built and published; fresh-install validation pending
+
 ### /boot layout (final)
 **FAT root (`/boot/`)**: `setup.sh`, `build-info.txt`, `bootsplash.raw`, `ssh/` (runtime-created)
 **`/boot/piclock/`**: `clock.ini`, `network.ini`, `oled.ini`, `piclock.ini`, `authorized_keys`, `clock.log`
