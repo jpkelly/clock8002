@@ -39,7 +39,7 @@ Countup=false
 # Time sources
 
 source1.text=Limitimer
-source1.ltc=false
+source1.ltc=true
 source1.ltc-channel=0
 source1.timer=true
 source1.timer-target=false
