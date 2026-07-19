@@ -1,103 +1,193 @@
-# Clock-8002 default configuration
-# Place at /boot/piclock/clock.ini (editable on the FAT boot partition or via SSH)
+# Example configuration file for clock-8001
+# Lines starting with '#' are comments and
+# are ignored by clock-8001
 
-Face=text
+# Clock face to use. (countdown, round, dual-round, text, single or small)
+Face=round
 
+# Username and password for the web configuration interface
 HTTPUser=admin
 HTTPPassword=clockwork
 
+# Only show minutes and seconds on the countdowns on the text clock
 hide-hours=false
+
+# Do not show icons on the text clocks
 disable-icons=false
-Format12h=true
+
+# Set to true to use 12 hour format for time-of-day display.
+Format12h=false
+
+# Set to true to hide seconds from time-of-day displays.
 ToDHideSeconds=false
+
+# Set true to have 1/100th second resolution timers
 HighResolution=false
+
+# Set to true to disable detection of official raspberry pi display for aspect ratio correction
 NoARCorrection=false
-FullScreen=true
+
+# Start in full screen mode (excluding raspberry pi images)
+FullScreen=false
+
+# Background image support. You need to provide the background in
+# the correct resolution as a png or jpeg image.
 Background=
-BackgroundPath=/boot
+
+# Background image path for OSC background selection
+BackgroundPath=/boot/firmware/piclock
+
+# Background color, used if no image is provided
 BackgroundColor=#000000
+
+# Dynamic backgrounds per active timers
 DynamicBG=false
 
-NumberFont=RobotoMono-VariableFont_wght.ttf
+# Truetype fonts for the text clock face
+
+# Font for numbers
+NumberFont=Copse-Regular.ttf
+
+# Font for label texts
 LabelFont=RobotoMono-VariableFont_wght.ttf
+
+# Font for icons
 IconFont=MaterialIcons-Regular.ttf
 
+# Enable beeps for countdowns, currently produces the BBC bips on 5 last seconds of a countdown
 AudioEnabled=false
+
+# Enable voice sample triggereing for countdowns and media durations.
 VoiceEnabled=false
-VoiceDir=voices/us
+
+# Directory to load voice samples from. Samples should be named 1234.wav where the numbers are the trigger time in seconds
+VoiceDir=/opt/clock8002/voices/us
+
+# Enable audio beeps on each full hour
 TODBeep=false
 
+# Show clock info for X seconds at startup
 info-timer=30
 
+# InterSpace Industries Countdown2 UDP timer protocol
+# (also supported by Stagetimer2 and Irisdown):
+# set to off, send or receive
 udp-time=receive
+
+# Timer to send / receive as UDP timer 1 (port 36700)
 udp-timer-1=1
+
+# Timer to send / receive as UDP timer 1 (port 36700)
 udp-timer-2=2
 
-CountdownTarget=2020-12-24 00:00:00
+# Target for the countdown clock face (YYYY-MM-DD HH:MM:SS)
+CountdownTarget=2025-12-24 00:00:00
+
+# Countdown face counts up instead if set to true
 Countup=false
 
 # Time sources
+#
+# The single round clock uses source 1 as the main display and source 2 as a secondary timer
+# The dual round clock mode uses all four sources, with 1 and 2 in the left clock and 3 and 4 in the right
+#
+# The round clocks only support timers as the secondary display source, as others can't be compacted to 4 characters
+#
+# The sources choose their displayed time in the following priority if enabled:
+# 1. LTC
+# 2. Associated timer if running
+# 3. Time of day
+# 4. Blank display
 
-source1.text=Limitimer
+# Text label for time source
+source1.text=
+# Set to true to enable LTC input on this source
 source1.ltc=true
 source1.ltc-channel=0
+# Set to true for countdown / count up timer input on this source
 source1.timer=true
+# Set to true to show counter end time instead of time remaining (if available)
 source1.timer-target=false
-source1.counter=5
+# Counter number for timer support (0-9)
+source1.counter=1
+# Set to true to enable time of day input on this source
 source1.tod=true
-source1.timezone=America/Los_Angeles
+# Time zone for the time of day input
+source1.timezone=Europe/Helsinki
+# Initially hide this source, can be toggled via OSC
 source1.hidden=false
-source1.overtime-color=#ff0000
+# Background color for overtime countdown timers
+source1.overtime-color=#FF0000
 
-source2.text=TOD/LTC
+source2.text=
 source2.ltc=true
 source2.ltc-channel=0
-source2.timer=false
+source2.timer=true
 source2.timer-target=false
-source2.counter=0
+source2.counter=2
 source2.tod=true
-source2.timezone=America/Los_Angeles
+source2.timezone=Europe/Helsinki
 source2.hidden=false
-source2.overtime-color=#ff0000
+source2.overtime-color=#FF0000
 
-source3.text=Playback
-source3.ltc=false
+source3.text=
+source3.ltc=true
 source3.ltc-channel=0
 source3.timer=true
 source3.timer-target=false
-source3.counter=8
-source3.tod=false
-source3.timezone=America/New_York
+source3.counter=3
+source3.tod=true
+source3.timezone=Europe/Helsinki
 source3.hidden=false
-source3.overtime-color=#ff0000
+source3.overtime-color=#FF0000
 
-source4.text=ORD
-source4.ltc=false
+source4.text=
+source4.ltc=true
 source4.ltc-channel=0
-source4.timer=false
+source4.timer=true
 source4.timer-target=false
-source4.counter=0
+source4.counter=4
 source4.tod=true
-source4.timezone=America/Chicago
+source4.timezone=Europe/Helsinki
 source4.hidden=false
-source4.overtime-color=#ff0000
+source4.overtime-color=#FF0000
 
-# Timers (0-9)
+# Timer Options
 
+# Timer 0
+
+# Stop the timer when it ends
 timer0.stop-at-end=false
+
+# Mute audio cues for this timer
 timer0.mute=false
+
+# End actions
 timer0.end-restart=false
 timer0.end-osc=false
+
+# End timer restart target timer number
 timer0.restart-target=0
+
+# OSC message to send
 timer0.osc-ip=
 timer0.osc-port=
 timer0.osc-command=
 timer0.osc-params=
+
+# Defaults for restarts, will be overriden by last started timer
 timer0.duration=600
 timer0.countup=false
+
+# Mitti and Millumin OSC port
 timer0.port=0
+
+# Rebroadcast received Mitti & millumin state
 timer0.mitti-broadcast=false
 timer0.millumin-broadcast=false
+
+
+# vMix
 timer0.vmix-enabled=false
 timer0.vmix-address=
 timer0.vmix-port=8088
@@ -106,6 +196,8 @@ timer0.vmix-pgm-only=false
 timer0.vmix-show-pvm=false
 timer0.vmix-ignore-overlays=
 timer0.vmix-media-name=false
+
+# Picturall
 timer0.picturall-enabled=false
 timer0.picturall-address=
 timer0.picturall-port=11000
@@ -113,29 +205,53 @@ timer0.picturall-loops=false
 timer0.picturall-streams=false
 timer0.picturall-media-name=false
 timer0.picturall-ignore-layers=
+
+# Disguise
 timer0.disguise-enabled=false
-timer0.disguise-port=0
+timer0.disguise-port=7400
 timer0.disguise-loops=false
 timer0.disguise-paused=false
 timer0.disguise-next-name=false
 timer0.disguise-media-name=false
-timer0.media-color=#ff8000
+
+# Common
+timer0.media-color=#FF8000
 timer0.media-bg=#101010
 
+# Timer 1
+
+# Stop the timer when it ends
 timer1.stop-at-end=false
+
+# Mute audio cues for this timer
 timer1.mute=false
+
+# End actions
 timer1.end-restart=false
 timer1.end-osc=false
+
+# End timer restart target timer number
 timer1.restart-target=0
+
+# OSC message to send
 timer1.osc-ip=
 timer1.osc-port=
 timer1.osc-command=
 timer1.osc-params=
+
+# Defaults for restarts, will be overriden by last started timer
 timer1.duration=600
 timer1.countup=false
+
+# Mitti and Millumin OSC port
 timer1.port=0
+
+# Rebroadcast received Mitti & millumin state
 timer1.mitti-broadcast=false
 timer1.millumin-broadcast=false
+
+
+# vMix
 timer1.vmix-enabled=false
 timer1.vmix-address=
 timer1.vmix-port=8088
@@ -144,6 +260,8 @@ timer1.vmix-pgm-only=false
 timer1.vmix-show-pvm=false
 timer1.vmix-ignore-overlays=
 timer1.vmix-media-name=false
+
+# Picturall
 timer1.picturall-enabled=false
 timer1.picturall-address=
 timer1.picturall-port=11000
@@ -151,29 +269,53 @@ timer1.picturall-loops=false
 timer1.picturall-streams=false
 timer1.picturall-media-name=false
 timer1.picturall-ignore-layers=
+
+# Disguise
 timer1.disguise-enabled=false
-timer1.disguise-port=0
+timer1.disguise-port=7401
 timer1.disguise-loops=false
 timer1.disguise-paused=false
 timer1.disguise-next-name=false
 timer1.disguise-media-name=false
-timer1.media-color=#ff8000
+
+# Common
+timer1.media-color=#FF8000
 timer1.media-bg=#101010
 
+# Timer 2
+
+# Stop the timer when it ends
 timer2.stop-at-end=false
+
+# Mute audio cues for this timer
 timer2.mute=false
+
+# End actions
 timer2.end-restart=false
 timer2.end-osc=false
+
+# End timer restart target timer number
 timer2.restart-target=0
+
+# OSC message to send
 timer2.osc-ip=
 timer2.osc-port=
 timer2.osc-command=
 timer2.osc-params=
+
+# Defaults for restarts, will be overriden by last started timer
 timer2.duration=600
 timer2.countup=false
+
+# Mitti and Millumin OSC port
 timer2.port=0
+
+# Rebroadcast received Mitti & millumin state
 timer2.mitti-broadcast=false
 timer2.millumin-broadcast=false
+
+
+# vMix
 timer2.vmix-enabled=false
 timer2.vmix-address=
 timer2.vmix-port=8088
@@ -182,6 +324,8 @@ timer2.vmix-pgm-only=false
 timer2.vmix-show-pvm=false
 timer2.vmix-ignore-overlays=
 timer2.vmix-media-name=false
+
+# Picturall
 timer2.picturall-enabled=false
 timer2.picturall-address=
 timer2.picturall-port=11000
@@ -189,29 +333,53 @@ timer2.picturall-loops=false
 timer2.picturall-streams=false
 timer2.picturall-media-name=false
 timer2.picturall-ignore-layers=
+
+# Disguise
 timer2.disguise-enabled=false
-timer2.disguise-port=0
+timer2.disguise-port=7402
 timer2.disguise-loops=false
 timer2.disguise-paused=false
 timer2.disguise-next-name=false
 timer2.disguise-media-name=false
-timer2.media-color=#ff8000
+
+# Common
+timer2.media-color=#FF8000
 timer2.media-bg=#101010
 
+# Timer 3
+
+# Stop the timer when it ends
 timer3.stop-at-end=false
+
+# Mute audio cues for this timer
 timer3.mute=false
+
+# End actions
 timer3.end-restart=false
 timer3.end-osc=false
+
+# End timer restart target timer number
 timer3.restart-target=0
+
+# OSC message to send
 timer3.osc-ip=
 timer3.osc-port=
 timer3.osc-command=
 timer3.osc-params=
+
+# Defaults for restarts, will be overriden by last started timer
 timer3.duration=600
 timer3.countup=false
+
+# Mitti and Millumin OSC port
 timer3.port=0
+
+# Rebroadcast received Mitti & millumin state
 timer3.mitti-broadcast=false
 timer3.millumin-broadcast=false
+
+
+# vMix
 timer3.vmix-enabled=false
 timer3.vmix-address=
 timer3.vmix-port=8088
@@ -220,6 +388,8 @@ timer3.vmix-pgm-only=false
 timer3.vmix-show-pvm=false
 timer3.vmix-ignore-overlays=
 timer3.vmix-media-name=false
+
+# Picturall
 timer3.picturall-enabled=false
 timer3.picturall-address=
 timer3.picturall-port=11000
@@ -227,29 +397,53 @@ timer3.picturall-loops=false
 timer3.picturall-streams=false
 timer3.picturall-media-name=false
 timer3.picturall-ignore-layers=
+
+# Disguise
 timer3.disguise-enabled=false
-timer3.disguise-port=0
+timer3.disguise-port=7403
 timer3.disguise-loops=false
 timer3.disguise-paused=false
 timer3.disguise-next-name=false
 timer3.disguise-media-name=false
-timer3.media-color=#ff8000
+
+# Common
+timer3.media-color=#FF8000
 timer3.media-bg=#101010
 
+# Timer 4
+
+# Stop the timer when it ends
 timer4.stop-at-end=false
+
+# Mute audio cues for this timer
 timer4.mute=false
+
+# End actions
 timer4.end-restart=false
 timer4.end-osc=false
+
+# End timer restart target timer number
 timer4.restart-target=0
+
+# OSC message to send
 timer4.osc-ip=
 timer4.osc-port=
 timer4.osc-command=
 timer4.osc-params=
+
+# Defaults for restarts, will be overriden by last started timer
 timer4.duration=600
 timer4.countup=false
+
+# Mitti and Millumin OSC port
 timer4.port=0
+
+# Rebroadcast received Mitti & millumin state
 timer4.mitti-broadcast=false
 timer4.millumin-broadcast=false
+
+
+# vMix
 timer4.vmix-enabled=false
 timer4.vmix-address=
 timer4.vmix-port=8088
@@ -258,6 +452,8 @@ timer4.vmix-pgm-only=false
 timer4.vmix-show-pvm=false
 timer4.vmix-ignore-overlays=
 timer4.vmix-media-name=false
+
+# Picturall
 timer4.picturall-enabled=false
 timer4.picturall-address=
 timer4.picturall-port=11000
@@ -265,29 +461,53 @@ timer4.picturall-loops=false
 timer4.picturall-streams=false
 timer4.picturall-media-name=false
 timer4.picturall-ignore-layers=
+
+# Disguise
 timer4.disguise-enabled=false
-timer4.disguise-port=0
+timer4.disguise-port=7404
 timer4.disguise-loops=false
 timer4.disguise-paused=false
 timer4.disguise-next-name=false
 timer4.disguise-media-name=false
-timer4.media-color=#ff8000
+
+# Common
+timer4.media-color=#FF8000
 timer4.media-bg=#101010
 
+# Timer 5
+
+# Stop the timer when it ends
 timer5.stop-at-end=false
+
+# Mute audio cues for this timer
 timer5.mute=false
+
+# End actions
 timer5.end-restart=false
 timer5.end-osc=false
+
+# End timer restart target timer number
 timer5.restart-target=0
+
+# OSC message to send
 timer5.osc-ip=
 timer5.osc-port=
 timer5.osc-command=
 timer5.osc-params=
+
+# Defaults for restarts, will be overriden by last started timer
 timer5.duration=600
 timer5.countup=false
+
+# Mitti and Millumin OSC port
 timer5.port=0
+
+# Rebroadcast received Mitti & millumin state
 timer5.mitti-broadcast=false
 timer5.millumin-broadcast=false
+
+
+# vMix
 timer5.vmix-enabled=false
 timer5.vmix-address=
 timer5.vmix-port=8088
@@ -296,6 +516,8 @@ timer5.vmix-pgm-only=false
 timer5.vmix-show-pvm=false
 timer5.vmix-ignore-overlays=
 timer5.vmix-media-name=false
+
+# Picturall
 timer5.picturall-enabled=false
 timer5.picturall-address=
 timer5.picturall-port=11000
@@ -303,29 +525,53 @@ timer5.picturall-loops=false
 timer5.picturall-streams=false
 timer5.picturall-media-name=false
 timer5.picturall-ignore-layers=
+
+# Disguise
 timer5.disguise-enabled=false
-timer5.disguise-port=0
+timer5.disguise-port=7405
 timer5.disguise-loops=false
 timer5.disguise-paused=false
 timer5.disguise-next-name=false
 timer5.disguise-media-name=false
-timer5.media-color=#ff8000
+
+# Common
+timer5.media-color=#FF8000
 timer5.media-bg=#101010
 
+# Timer 6
+
+# Stop the timer when it ends
 timer6.stop-at-end=false
+
+# Mute audio cues for this timer
 timer6.mute=false
+
+# End actions
 timer6.end-restart=false
 timer6.end-osc=false
+
+# End timer restart target timer number
 timer6.restart-target=0
+
+# OSC message to send
 timer6.osc-ip=
 timer6.osc-port=
 timer6.osc-command=
 timer6.osc-params=
+
+# Defaults for restarts, will be overriden by last started timer
 timer6.duration=600
 timer6.countup=false
+
+# Mitti and Millumin OSC port
 timer6.port=0
+
+# Rebroadcast received Mitti & millumin state
 timer6.mitti-broadcast=false
 timer6.millumin-broadcast=false
+
+
+# vMix
 timer6.vmix-enabled=false
 timer6.vmix-address=
 timer6.vmix-port=8088
@@ -334,6 +580,8 @@ timer6.vmix-pgm-only=false
 timer6.vmix-show-pvm=false
 timer6.vmix-ignore-overlays=
 timer6.vmix-media-name=false
+
+# Picturall
 timer6.picturall-enabled=false
 timer6.picturall-address=
 timer6.picturall-port=11000
@@ -341,29 +589,53 @@ timer6.picturall-loops=false
 timer6.picturall-streams=false
 timer6.picturall-media-name=false
 timer6.picturall-ignore-layers=
+
+# Disguise
 timer6.disguise-enabled=false
-timer6.disguise-port=0
+timer6.disguise-port=7406
 timer6.disguise-loops=false
 timer6.disguise-paused=false
 timer6.disguise-next-name=false
 timer6.disguise-media-name=false
-timer6.media-color=#ff8000
+
+# Common
+timer6.media-color=#FF8000
 timer6.media-bg=#101010
 
+# Timer 7
+
+# Stop the timer when it ends
 timer7.stop-at-end=false
+
+# Mute audio cues for this timer
 timer7.mute=false
+
+# End actions
 timer7.end-restart=false
 timer7.end-osc=false
+
+# End timer restart target timer number
 timer7.restart-target=0
+
+# OSC message to send
 timer7.osc-ip=
 timer7.osc-port=
 timer7.osc-command=
 timer7.osc-params=
+
+# Defaults for restarts, will be overriden by last started timer
 timer7.duration=600
 timer7.countup=false
+
+# Mitti and Millumin OSC port
 timer7.port=0
+
+# Rebroadcast received Mitti & millumin state
 timer7.mitti-broadcast=false
 timer7.millumin-broadcast=false
+
+
+# vMix
 timer7.vmix-enabled=false
 timer7.vmix-address=
 timer7.vmix-port=8088
@@ -372,6 +644,8 @@ timer7.vmix-pgm-only=false
 timer7.vmix-show-pvm=false
 timer7.vmix-ignore-overlays=
 timer7.vmix-media-name=false
+
+# Picturall
 timer7.picturall-enabled=false
 timer7.picturall-address=
 timer7.picturall-port=11000
@@ -379,29 +653,53 @@ timer7.picturall-loops=false
 timer7.picturall-streams=false
 timer7.picturall-media-name=false
 timer7.picturall-ignore-layers=
+
+# Disguise
 timer7.disguise-enabled=false
-timer7.disguise-port=0
+timer7.disguise-port=7407
 timer7.disguise-loops=false
 timer7.disguise-paused=false
 timer7.disguise-next-name=false
 timer7.disguise-media-name=false
-timer7.media-color=#ff8000
+
+# Common
+timer7.media-color=#FF8000
 timer7.media-bg=#101010
 
+# Timer 8
+
+# Stop the timer when it ends
 timer8.stop-at-end=false
+
+# Mute audio cues for this timer
 timer8.mute=false
+
+# End actions
 timer8.end-restart=false
 timer8.end-osc=false
+
+# End timer restart target timer number
 timer8.restart-target=0
+
+# OSC message to send
 timer8.osc-ip=
 timer8.osc-port=
 timer8.osc-command=
 timer8.osc-params=
+
+# Defaults for restarts, will be overriden by last started timer
 timer8.duration=600
 timer8.countup=false
+
+# Mitti and Millumin OSC port
 timer8.port=0
+
+# Rebroadcast received Mitti & millumin state
 timer8.mitti-broadcast=false
 timer8.millumin-broadcast=false
+
+
+# vMix
 timer8.vmix-enabled=false
 timer8.vmix-address=
 timer8.vmix-port=8088
@@ -410,6 +708,8 @@ timer8.vmix-pgm-only=false
 timer8.vmix-show-pvm=false
 timer8.vmix-ignore-overlays=
 timer8.vmix-media-name=false
+
+# Picturall
 timer8.picturall-enabled=false
 timer8.picturall-address=
 timer8.picturall-port=11000
@@ -417,29 +717,53 @@ timer8.picturall-loops=false
 timer8.picturall-streams=false
 timer8.picturall-media-name=false
 timer8.picturall-ignore-layers=
+
+# Disguise
 timer8.disguise-enabled=false
-timer8.disguise-port=0
+timer8.disguise-port=7408
 timer8.disguise-loops=false
 timer8.disguise-paused=false
 timer8.disguise-next-name=false
 timer8.disguise-media-name=false
-timer8.media-color=#ff8000
+
+# Common
+timer8.media-color=#FF8000
 timer8.media-bg=#101010
 
+# Timer 9
+
+# Stop the timer when it ends
 timer9.stop-at-end=false
+
+# Mute audio cues for this timer
 timer9.mute=false
+
+# End actions
 timer9.end-restart=false
 timer9.end-osc=false
+
+# End timer restart target timer number
 timer9.restart-target=0
+
+# OSC message to send
 timer9.osc-ip=
 timer9.osc-port=
 timer9.osc-command=
 timer9.osc-params=
+
+# Defaults for restarts, will be overriden by last started timer
 timer9.duration=600
 timer9.countup=false
+
+# Mitti and Millumin OSC port
 timer9.port=0
+
+# Rebroadcast received Mitti & millumin state
 timer9.mitti-broadcast=false
 timer9.millumin-broadcast=false
+
+
+# vMix
 timer9.vmix-enabled=false
 timer9.vmix-address=
 timer9.vmix-port=8088
@@ -448,6 +772,8 @@ timer9.vmix-pgm-only=false
 timer9.vmix-show-pvm=false
 timer9.vmix-ignore-overlays=
 timer9.vmix-media-name=false
+
+# Picturall
 timer9.picturall-enabled=false
 timer9.picturall-address=
 timer9.picturall-port=11000
@@ -455,76 +781,160 @@ timer9.picturall-loops=false
 timer9.picturall-streams=false
 timer9.picturall-media-name=false
 timer9.picturall-ignore-layers=
+
+# Disguise
 timer9.disguise-enabled=false
-timer9.disguise-port=0
+timer9.disguise-port=7409
 timer9.disguise-loops=false
 timer9.disguise-paused=false
 timer9.disguise-next-name=false
 timer9.disguise-media-name=false
-timer9.media-color=#ff8000
+
+# Common
+timer9.media-color=#FF8000
 timer9.media-bg=#101010
 
-# Overtime
+
+# Overtime behaviour
+
+# Countdown readout for overtime timers
+# zero - show 00:00:00
+# blank - show nothing
+# continue - continue counting up
 overtime-count-mode=zero
+
+# Extra visibility for overtime timers
+# none - no extra visibility
+# blink - blink the timer readout
+# background - change the background color to the overtime color
+# both - change background and blink
 overtime-visibility=blink
 
 # Timer color signals
+
+# Automatically set the signal color based on time remaining
 auto-signals=false
+
+# In automation mode, set a color on timer start
 signal-start=false
-signal-color-start=#00ff00
+
+# Start signal color (in HTML color format #FFFFFF)
+signal-color-start=#00FF00
+
+# Time threshold for warning color, in seconds. Set to 0 to disable
 signal-threshold-warning=180
-signal-color-warning=#ffff00
+
+# Warning signal color (in HTML color format #FFFFFF)
+signal-color-warning=#FFFF00
+
+# Time threshold for end color, in seconds.
 signal-threshold-end=60
-signal-color-end=#ff0000
+
+# End signal color (in HTML color format #FFFFFF)
+signal-color-end=#FF0000
+
+# Signal hardware type: supported: none, unicorn-hd
 signal-hw-type=unicorn-hd
+
+# Signal hardware group number
 signal-hw-group=1
+
+# Signal hardware brighness adjustment 0-255, 0 == disabled, 255 == full brightness
 signal-hw-brightness=128
+
+# Hardware signal follows source 1 signal color
 signal-hw-follow=false
+
+# Use hardware signal color as clock background
 SignalToBG=false
 
 # Mitti and Millumin
+
+# Counter number for Mitti OSC feedback
 mitti=8
+
+# Counter number for Millumin OSC feedback
 millumin=9
+
+# Millumin layer ignore regexp
 millumin-ignore-layer=ignore
+
+# Picturall message timeout, in milliseconds
 picturall-timeout=1000
+
+# vMix timers, in milliseconds:
+
+# Polling interval, adjust if there is excessive load on the vMix machine.
 vmix-interval=200
+# Communication timeout
 vmix-timeout=1000
 
 # Tricaster
+
+# Set to true to enable tricaster integration
 tricaster-enabled=false
+# Tricaster address
 tricaster-address=
+# Tricaster username and password for the API, defaults are admin/admin
 tricaster-username=admin
 tricaster-password=admin
+# Tricaster timer number for the feedback
 tricaster-timer=5
+# Set to true to also show content playing in preview
 tricaster-show-pvm=false
+# Set to true to show time until next tricaster event on a timer
 tricaster-event-enabled=false
+# Timer number to use
 tricaster-event-timer=5
+# Show playing media name as clock tally message
 tricaster-media-name=false
-tricaster-media-color=#ff8000
+# Tricaster media name color and background, html colors
+tricaster-media-color=#FF8000
 tricaster-media-bg=#101010
+# Tricaster timers, in milliseconds:
+# Polling interval, adjust if there is excessive load on the tricaster.
 tricaster-interval=100
+# Communication timeout
 tricaster-timeout=1000
 
+
 # Limitimer
-limitimer-mode=receive
-limitimer-serial=/dev/ttyAMA3
-limitimer-receive-timer1=true
-limitimer-receive-timer2=true
-limitimer-receive-timer3=true
-limitimer-receive-timer4=true
-limitimer-receive-timer5=true
+# see https://gitlab.com/clock-8001/clock-8001/-/blob/master/limitimer.md
+
+# Mode, off, send or receive
+limitimer-mode=off
+# Serial device to use for limitimer communications
+limitimer-serial=/dev/ttyAMA0
+
+# Receive and broadcast flags per limitimer program:
+
+# Limitimer program 1 as timer 1
+limitimer-receive-timer1=false
+# Limitimer program 2 as timer 2
+limitimer-receive-timer2=false
+# Limitimer program 3 as timer 3
+limitimer-receive-timer3=false
+# Limitimer session (program 4) as timer 4
+limitimer-receive-timer4=false
+# Limitimer program selected on controller as timer 5
+limitimer-receive-timer5=false
+
+# Send program 1 as timer 1 to other clocks via OSC
 limitimer-broadcast-timer1=false
+# Send program 2 as timer 2 to other clocks via OSC
 limitimer-broadcast-timer2=false
+# Send program 3 as timer 3 to other clocks via OSC
 limitimer-broadcast-timer3=false
+# Send session (program 4) as timer 4 to other clocks via OSC
 limitimer-broadcast-timer4=false
+# Send program selected on controller as timer 5 to other clocks via OSC
 limitimer-broadcast-timer5=false
 
 # Perfect Cue
-cue-enabled=true
-cue-serial=/dev/ttyAMA1
+cue-enabled=false
+cue-serial=/dev/ttyAMA0
 cue-duration=2
-cue-fullscreen=true
-cue-second-display=false
+cue-fullscreen=false
 
 # Hyperdeck
 hyperdeck-enabled=false
@@ -534,51 +944,106 @@ hyperdeck-timer=8
 hyperdeck-media-name=false
 hyperdeck-timeout=1000
 
-# Disguise
+# Disguise common options
 disguise-timeout=1000
 
-# Font
+# Font to use
 Font=fonts/7x13.bdf
 
-# Colors
+# Colors, in hex format, #XXX or #XXXXXX
 
 # Round clocks
-text-color=#ff8000
+
+# Color for text
+text-color=#FF8000
+
+# Color for the 12 static "hour" markers
 static-color=#505000
-second-color=#c80000
-countdown-color=#ff0000
+
+# Color for the second ring dots
+second-color=#C80000
+
+# Color for the secondary countdown display
+countdown-color=#FF0000
 
 # Text clock
-label-color=#ff8000
+
+# Color for labels
+label-color=#FF8000
+# Alpha for labels
 label-alpha=255
-row1-color=#ffffff
+
+# Timer row 1 color
+row1-color=#FF8000
+# Timer row 1 alpha
 row1-alpha=255
-row2-color=#ff8000
+
+# Timer row 2 color
+row2-color=#FF8000
+# Timer row 2 alpha
 row2-alpha=255
-row3-color=#94e3fe
+
+# Timer row 3 color
+row3-color=#FF8000
+# Timer row 3 alpha
 row3-alpha=255
+
+# Draw background boxes for timers and labels
 draw-boxes=false
+
+# Timer background color
 timer-bg-color=#202020
+# Timer background alpha
 timer-bg-alpha=255
+
+# Label background color
 label-bg-color=#202020
+# Label background alpa
 label-bg-alpha=255
+
+# Numbers font size
 numbers-size=250
 
-# Engine
+# Engine internals
+
+# Set to true to output verbose debug information
 Debug=false
+
+# Flashing interval for ellapsed countdowns, in milliseconds
 Flash=500
+
+# Set to true to disable remote osc commands
 DisableOSC=false
+
+# Address to listen for osc commands. 0.0.0.0 defaults to all network interfaces
 ListenAddr=0.0.0.0:1245
+
+# Timeout for clearing OSC text display messages
 Timeout=1000
+
+# Set to true to disable sending of the OSC feedback messages
 DisableFeedback=false
+
+# Address to send OSC feedback to. 255.255.255.255 broadcasts to all network interfaces
 Connect=255.255.255.255:1245
+
+# Set to true to disable the web configuration interface
 DisableHTTP=false
+
+# Port to listen for the web configuration. Needs to be in format of ":1234".
 HTTPPort=:80
+
+# Set to true to disable LTC timecode display mode
 DisableLTC=false
+
+# Controls what is displayed on the clock ring in LTC mode, false = frames, true = seconds
 LTCSeconds=false
+
+# Continue on internal clock if LTC signal is lost. If unset display will blank when signal is gone.
 LTCFollow=false
 
-# GPIO
+# GPIO Pulser, raspberry pi only
+# Sends out pulses on pins each second, minute and hour.
 gpio-enabled=false
 gpio-seconds-a-pin=5
 gpio-seconds-pulse-pin=6
@@ -592,4 +1057,5 @@ gpio-hours-trigger=22
 gpio-pulse-duration=300
 gpio-invert-polarity=false
 
+# Enable GP9002A VFD output
 VFD=false
