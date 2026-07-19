@@ -2,7 +2,7 @@ PROJECT_NAME := "clock-8002"
 PKG := "gitlab.com/clock-8001/clock-8001/v4"
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
-BINARIES := sdl3-clock
+BINARIES := sdl-clock
 GOLINT := "$(GOPATH)/bin/golint"
 GIT_TAG ?= $(shell git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "v0.0.1")
 GIT_COMMIT ?= $(shell git rev-list -1 HEAD)
@@ -12,9 +12,10 @@ BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 ALSA_LTC_CFLAGS := -O2 -DALSA_LTC_GIT_TAG=\"$(GIT_TAG)\" -DALSA_LTC_GIT_COMMIT=\"$(GIT_COMMIT)\" -DALSA_LTC_BUILD_DATE=\"$(BUILD_DATE)\"
 NETWORK_CONFIG ?= default
 RELEASE_DIR := clock8002-$(GIT_TAG)-$(NETWORK_CONFIG)-linux-arm64
+TRIXIE_RELEASE_DIR := clock8002-trixie-$(GIT_TAG)-$(NETWORK_CONFIG)-linux-arm64
 WIN_VERSION := $(GIT_TAG:v%=%)
 
-.PHONY: all dep build clean test release release-all linux sdl3-clock sdl3-clock_linux_amd64 sdl3-clock_linux_arm64
+.PHONY: all dep build clean test release release-all trixie-release trixie-release-all linux sdl-clock sdl3-clock sdl3-clock_linux_amd64 sdl3-clock_linux_arm64
 
 all: build
 
@@ -25,10 +26,13 @@ dep: ## Get the dependencies
 	@go get -v -d ./...
 
 clean:
-	@rm -f sdl3-clock alsa-ltc
+	@rm -f sdl-clock sdl3-clock alsa-ltc
 	@rm -fr clock8002-*-linux-arm64 clock8002-*-linux-arm64.tar.gz clock8002-*-*-linux-arm64 clock8002-*-*-linux-arm64.tar.gz
 
-build: sdl3-clock ## Build the binary file
+build: sdl-clock ## Build the binary file
+
+sdl-clock: sdl3-clock
+	@cp sdl3-clock sdl-clock
 
 sdl3-clock:
 	@echo Building sdl3-clock tag $(GIT_TAG) commit $(GIT_COMMIT)
@@ -38,10 +42,10 @@ alsa-ltc: alsa-ltc.c ## Build the LTC decoder
 	@echo Building alsa-ltc tag $(GIT_TAG) commit $(GIT_COMMIT) built $(BUILD_DATE)
 	gcc $(ALSA_LTC_CFLAGS) -o alsa-ltc alsa-ltc.c -lasound -lltc
 
-release: sdl3-clock alsa-ltc ## Package a release tarball for NETWORK_CONFIG variant
+release: sdl-clock alsa-ltc ## Package a release tarball for NETWORK_CONFIG variant
 	@echo Packaging release $(GIT_TAG) variant=$(NETWORK_CONFIG)
 	@mkdir -p $(RELEASE_DIR)
-	@cp sdl3-clock $(RELEASE_DIR)/
+	@cp sdl-clock $(RELEASE_DIR)/
 	@cp alsa-ltc $(RELEASE_DIR)/
 	@cp clock.ini.$(NETWORK_CONFIG) $(RELEASE_DIR)/clock.ini
 	@cp ttf_fonts/*.ttf $(RELEASE_DIR)/
@@ -61,9 +65,36 @@ release: sdl3-clock alsa-ltc ## Package a release tarball for NETWORK_CONFIG var
 	@rm -rf $(RELEASE_DIR)
 	@echo Release tarball: $(RELEASE_DIR).tar.gz
 
-release-all: sdl3-clock alsa-ltc ## Package release tarballs for all variants
+release-all: sdl-clock alsa-ltc ## Package release tarballs for all variants
 	$(MAKE) release NETWORK_CONFIG=default
 	$(MAKE) release NETWORK_CONFIG=gerry
+
+trixie-release: sdl-clock alsa-ltc ## Package a Trixie installer tarball
+	@echo Packaging Trixie release $(GIT_TAG) variant=$(NETWORK_CONFIG)
+	@mkdir -p $(TRIXIE_RELEASE_DIR)
+	@cp sdl-clock $(TRIXIE_RELEASE_DIR)/
+	@cp alsa-ltc $(TRIXIE_RELEASE_DIR)/
+	@cp clock.ini.$(NETWORK_CONFIG) $(TRIXIE_RELEASE_DIR)/clock.ini
+	@cp ttf_fonts/*.ttf $(TRIXIE_RELEASE_DIR)/
+	@cp -r fonts $(TRIXIE_RELEASE_DIR)/
+	@cp -r voices $(TRIXIE_RELEASE_DIR)/
+	@cp -r oled $(TRIXIE_RELEASE_DIR)/
+	@cp -r splash $(TRIXIE_RELEASE_DIR)/
+	@cp clock8002.service $(TRIXIE_RELEASE_DIR)/
+	@cp alsa-ltc.service $(TRIXIE_RELEASE_DIR)/
+	@cp piclock-network.sh $(TRIXIE_RELEASE_DIR)/
+	@cp piclock-network.service $(TRIXIE_RELEASE_DIR)/
+	@cp install.sh $(TRIXIE_RELEASE_DIR)/
+	@cp network.ini.$(NETWORK_CONFIG) $(TRIXIE_RELEASE_DIR)/network.ini
+	@chmod +x $(TRIXIE_RELEASE_DIR)/install.sh
+	@(cd $(TRIXIE_RELEASE_DIR) && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+	@tar czf $(TRIXIE_RELEASE_DIR).tar.gz $(TRIXIE_RELEASE_DIR)
+	@rm -rf $(TRIXIE_RELEASE_DIR)
+	@echo Trixie release tarball: $(TRIXIE_RELEASE_DIR).tar.gz
+
+trixie-release-all: sdl-clock alsa-ltc ## Package Trixie release tarballs for all variants
+	$(MAKE) trixie-release NETWORK_CONFIG=default
+	$(MAKE) trixie-release NETWORK_CONFIG=gerry
 
 linux: sdl3-clock_linux_amd64 sdl3-clock_linux_arm64
 

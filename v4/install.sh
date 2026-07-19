@@ -37,10 +37,37 @@ if [ -f SHA256SUMS ]; then
     sha256sum -c --ignore-missing SHA256SUMS
 fi
 
-# Install SDL2 runtime libraries and LTC dependencies
+# Install SDL3 runtime libraries and LTC dependencies
 echo "Installing runtime libraries..."
 sudo apt update
-sudo apt install -y libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libgles2 libgl1 libegl1 libltc11 i2c-tools python3-luma.oled fbi util-linux-extra
+
+REQUIRED_SDL3_PACKAGES=(
+    libsdl3-0
+    libsdl3-image0
+    libsdl3-ttf0
+    libgles2
+    libgl1
+    libegl1
+    libltc11
+    i2c-tools
+    python3-luma.oled
+    fbi
+    util-linux-extra
+)
+
+if ! sudo apt install -y "${REQUIRED_SDL3_PACKAGES[@]}"; then
+    echo "ERROR: Required SDL3/runtime packages could not be installed." >&2
+    echo "This release requires Debian Trixie SDL3 packages." >&2
+    exit 1
+fi
+
+# Verify SDL3 libraries are loadable before continuing.
+for lib in libSDL3.so libSDL3_image.so libSDL3_ttf.so; do
+    if ! ldconfig -p 2>/dev/null | grep -qF "$lib"; then
+        echo "ERROR: $lib not found in ldconfig cache after package installation." >&2
+        exit 1
+    fi
+done
 
 # Disable ModemManager on clock units unless a cellular modem is intentionally used.
 if systemctl list-unit-files | grep -q '^ModemManager\.service'; then
@@ -58,11 +85,17 @@ fi
 # Create install directory
 echo "Installing to ${INSTALL_DIR}..."
 sudo mkdir -p "${INSTALL_DIR}"
-sudo cp sdl3-clock "${INSTALL_DIR}/"
+
+# The release binary is named sdl-clock; source was built from cmd/sdl3-clock.
+if [ ! -f sdl-clock ]; then
+    echo "ERROR: sdl-clock binary not found in release payload." >&2
+    exit 1
+fi
+sudo cp sdl-clock "${INSTALL_DIR}/"
+sudo chmod +x "${INSTALL_DIR}/sdl-clock"
 sudo cp *.ttf "${INSTALL_DIR}/"
 sudo cp -r fonts "${INSTALL_DIR}/"
 sudo cp -r voices "${INSTALL_DIR}/"
-sudo chmod +x "${INSTALL_DIR}/sdl3-clock"
 
 # Install alsa-ltc if present
 if [ -f alsa-ltc ]; then
@@ -212,10 +245,10 @@ if [ -f "${CONFIG_FILE}" ]; then
     done
 fi
 
-sed "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" "${SERVICE_FILE}" | \
-    sed "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl3-clock --fullscreen --font-path=${INSTALL_DIR}|" | \
-    sed "s|User=.*|User=$INSTALL_USER|" | \
-    sudo tee /etc/systemd/system/clock8002.service > /dev/null
+sed -e "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" \
+    -e "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl-clock --fullscreen --font-path=${INSTALL_DIR}|" \
+    -e "s|^User=.*|User=$INSTALL_USER|" \
+    "${SERVICE_FILE}" | sudo tee /etc/systemd/system/clock8002.service > /dev/null
 
 echo "Installing restricted hwclock sudoers rule..."
 printf '%s\n' \
@@ -338,22 +371,22 @@ sudo systemctl start oled_daemon 2>/dev/null || true
 echo ""
 echo "Consistency report"
 echo "------------------"
-if [ -x "${INSTALL_DIR}/sdl3-clock" ]; then
-    echo "sdl3-clock version:"
-    SDL_CLOCK_VERSION="$("${INSTALL_DIR}/sdl3-clock" --version 2>/dev/null || true)"
+if [ -x "${INSTALL_DIR}/sdl-clock" ]; then
+    echo "sdl-clock version:"
+    SDL_CLOCK_VERSION=$("${INSTALL_DIR}/sdl-clock" --version 2>/dev/null || true)
     if [ -n "${SDL_CLOCK_VERSION}" ]; then
         echo "${SDL_CLOCK_VERSION}"
     else
-        SDL_GIT_TAG="$(strings "${INSTALL_DIR}/sdl3-clock" 2>/dev/null | grep -m1 -oE 'clock\.gitTag=v[0-9]+\.[0-9]+\.[0-9]+' | sed 's/^clock\.gitTag=//')"
-        SDL_GIT_COMMIT="$(strings "${INSTALL_DIR}/sdl3-clock" 2>/dev/null | grep -m1 -oE 'clock\.gitCommit=[0-9a-f]+' | sed 's/^clock\.gitCommit=//')"
+        SDL_GIT_TAG=$(strings "${INSTALL_DIR}/sdl-clock" 2>/dev/null | grep -m1 -oE 'clock\.gitTag=v[0-9]+\.[0-9]+\.[0-9]+' | sed 's/^clock\.gitTag=//')
+        SDL_GIT_COMMIT=$(strings "${INSTALL_DIR}/sdl-clock" 2>/dev/null | grep -m1 -oE 'clock\.gitCommit=[0-9a-f]+' | sed 's/^clock\.gitCommit=//')
         if [ -n "${SDL_GIT_TAG}" ] || [ -n "${SDL_GIT_COMMIT}" ]; then
-            echo "${INSTALL_DIR}/sdl3-clock version ${SDL_GIT_TAG:-unknown} commit ${SDL_GIT_COMMIT:-unknown}"
+            echo "${INSTALL_DIR}/sdl-clock version ${SDL_GIT_TAG:-unknown} commit ${SDL_GIT_COMMIT:-unknown}"
         else
             echo "(version info not found)"
         fi
     fi
-    echo "sdl3-clock sha256:"
-    sha256sum "${INSTALL_DIR}/sdl3-clock"
+    echo "sdl-clock sha256:"
+    sha256sum "${INSTALL_DIR}/sdl-clock"
 fi
 if [ -x "${INSTALL_DIR}/alsa-ltc" ]; then
     echo "alsa-ltc version:"
