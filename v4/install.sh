@@ -39,6 +39,23 @@ fi
 
 # Install SDL3 runtime libraries and LTC dependencies
 echo "Installing runtime libraries..."
+
+# Wait for any first-boot apt process (unattended-upgrades, initial setup) to release its lock.
+# Fresh images often have apt-get running in the background, which causes immediate failure.
+APT_WAIT_MAX=60
+APT_WAIT_COUNT=0
+echo "Waiting for package manager lock..."
+while fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+    APT_WAIT_COUNT=$((APT_WAIT_COUNT + 1))
+    if [ "$APT_WAIT_COUNT" -gt "$APT_WAIT_MAX" ]; then
+        echo "ERROR: Package manager lock still held after ${APT_WAIT_MAX}0 seconds." >&2
+        echo "Wait for first-boot setup to finish, then re-run install.sh." >&2
+        exit 1
+    fi
+    echo "  package manager is busy, waiting... (${APT_WAIT_COUNT}/${APT_WAIT_MAX})"
+    sleep 10
+done
+
 sudo apt update
 
 REQUIRED_SDL3_PACKAGES=(
