@@ -98,6 +98,16 @@ if [ ! -f sdl-clock ]; then
 fi
 sudo cp sdl-clock "${INSTALL_DIR}/"
 sudo chmod +x "${INSTALL_DIR}/sdl-clock"
+
+# Bundle private SDL3 3.4.0 libraries so go-sdl3 matches the runtime ABI.
+# Debian Trixie ships SDL3 3.2.10, which is missing symbols required by go-sdl3.
+if [ -d lib ]; then
+    echo "Installing bundled SDL3 libraries..."
+    sudo cp -r lib "${INSTALL_DIR}/"
+    sudo chmod 755 "${INSTALL_DIR}/lib"
+    sudo chmod 644 "${INSTALL_DIR}/lib"/*.so* 2>/dev/null || true
+fi
+
 sudo cp *.ttf "${INSTALL_DIR}/"
 sudo cp -r fonts "${INSTALL_DIR}/"
 sudo cp -r voices "${INSTALL_DIR}/"

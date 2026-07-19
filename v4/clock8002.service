@@ -9,6 +9,7 @@ WorkingDirectory=/opt/clock8002
 Environment=SDL_VIDEODRIVER=kmsdrm
 Environment=XDG_RUNTIME_DIR=/run/user/%U
 Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=LD_LIBRARY_PATH=/opt/clock8002/lib
 ExecStart=/opt/clock8002/sdl-clock --fullscreen --font-path=/opt/clock8002
 Restart=on-failure
 RestartSec=5
