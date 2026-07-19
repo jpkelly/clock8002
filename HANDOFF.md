@@ -114,12 +114,12 @@ Use this only after feature/root-ram is functionally complete.
 
 ### Trixie release baseline
 - **Branch**: `trixie`
-- **HEAD**: `de141a0` — trixie: use Buildroot clock.ini as default and fix lib packaging
-- **Release tag**: `trixie-v1.3.9` at `de141a0`
-- **Release asset**: `clock8002-trixie-v1.3.9-default-linux-arm64.tar.gz`
-- **Asset SHA256**: `1d950d82782ebd0e3c114ea074a0e322d831bc24b5d8193c068304b438000c02`
+- **HEAD**: `bc7a182` — trixie: wait for apt lock in install.sh
+- **Release tag**: `trixie-v1.3.10` at `bc7a182`
+- **Release asset**: `clock8002-trixie-v1.3.10-default-linux-arm64.tar.gz`
+- **Asset SHA256**: `f4d6e608b30ee6d6dbdfd9d139851dc9ef927b56ccad961362e6d747f6e7c508`
 - **Build host**: `pi@pi5start.local` (Raspberry Pi 5, Debian 13 Trixie ARM64)
-- **Status**: Built and published; fresh-install validated on `pi@piclock.local` (2026-07-19). `sdl-clock` displays via KMSDRM; `alsa-ltc` decodes LTC; source1 LTC enabled by default; bundled SDL3 3.4.0 libraries used via `LD_LIBRARY_PATH`.
+- **Status**: Built and published; fresh-install validated on `pi@piclock.local` (2026-07-19). `sdl-clock` displays via KMSDRM; `alsa-ltc` decodes LTC; source1 LTC enabled by default; bundled SDL3 3.4.0 libraries used via `LD_LIBRARY_PATH`; installer waits for first-boot apt lock.
 
 ### /boot layout (final)
 **FAT root (`/boot/`)**: `setup.sh`, `build-info.txt`, `bootsplash.raw`, `ssh/` (runtime-created)
