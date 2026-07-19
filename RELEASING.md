@@ -92,12 +92,18 @@ The `trixie` branch produces an installer tarball for Raspberry Pi OS / Debian T
 2. On the ARM64 Trixie builder (`pi@pi5start.local`):
    ```bash
    cd ~/clock8002 && git fetch origin && git checkout trixie && git reset --hard origin/trixie
+   rm -rf v4/lib && cp -r ~/sdl3-build/sdl3-trixie-lib v4/lib
    cd v4
    make clean
-   make trixie-release
+   make trixie-release GIT_TAG=trixie-vX.X.X
    ```
 3. Transfer the tarball locally and verify checksums match.
-4. Create a non-Latest release:
+4. Tag and push:
+   ```bash
+   git tag -a trixie-vX.X.X -m "Clock 8002 Trixie release vX.X.X"
+   git push origin trixie-vX.X.X
+   ```
+5. Create a non-Latest release:
    ```bash
    gh release create trixie-vX.X.X \
        --title "Clock 8002 Trixie vX.X.X" \
