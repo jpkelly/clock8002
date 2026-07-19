@@ -76,7 +76,37 @@ gh release create vX.X.X \
 
 ---
 
-## Notes
+## Trixie Installer Release
+
+The `trixie` branch produces an installer tarball for Raspberry Pi OS / Debian Trixie (arm64). This is published separately from the Buildroot image and does **not** replace the `v1.x` Buildroot release line.
+
+### Versioning
+
+- Tag format: `trixie-v1.x.y`
+- Example: `trixie-v1.3.8`
+- These tags are published as **non-Latest** GitHub releases.
+
+### Build and publish
+
+1. Ensure the `trixie` branch contains the desired code and HANDOFF.md is updated.
+2. On the ARM64 Trixie builder (`pi@pi5start.local`):
+   ```bash
+   cd ~/clock8002 && git fetch origin && git checkout trixie && git reset --hard origin/trixie
+   cd v4
+   make clean
+   make trixie-release
+   ```
+3. Transfer the tarball locally and verify checksums match.
+4. Create a non-Latest release:
+   ```bash
+   gh release create trixie-vX.X.X \
+       --title "Clock 8002 Trixie vX.X.X" \
+       --notes-file /tmp/trixie-vX.X.X-release-notes.md \
+       --latest=false \
+       /Users/jp/Desktop/clock8002-trixie-vX.X.X-default-linux-arm64.tar.gz
+   ```
+
+### Notes
 
 - **Release builds must use `make clean`**, not `clock8002-dirclean`. `output/target/` is not wiped by partial cleans — stale files from prior dev builds (including SSH keys) can persist.
 - Do not use `pkill -f sdl-clock` in SSH commands — pattern matches can terminate the SSH session. Use `/etc/init.d/S99clock stop` instead.
