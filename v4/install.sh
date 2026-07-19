@@ -62,10 +62,14 @@ if ! sudo apt install -y "${REQUIRED_SDL3_PACKAGES[@]}"; then
 fi
 
 # Verify SDL3 libraries are loadable before continuing.
+# Debian/Raspberry Pi OS packages ship versioned SONAMEs (e.g. libSDL3.so.0);
+# the unversioned .so symlinks are only in the -dev packages. go-sdl3 loads
+# the SONAMEs at runtime, so that is what we check for here.
 SDL3_LIB_DIR="/usr/lib/aarch64-linux-gnu"
-for lib in libSDL3.so libSDL3_image.so libSDL3_ttf.so; do
+for lib in libSDL3.so.0 libSDL3_image.so.0 libSDL3_ttf.so.0; do
     if [ ! -e "${SDL3_LIB_DIR}/${lib}" ]; then
         echo "ERROR: ${SDL3_LIB_DIR}/${lib} not found after package installation." >&2
+        echo "Install the libsdl3-0, libsdl3-image0, and libsdl3-ttf0 packages." >&2
         exit 1
     fi
 done
