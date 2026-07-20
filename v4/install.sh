@@ -277,6 +277,21 @@ if [ -f "${CONFIG_FILE}" ]; then
     done
 fi
 
+# Force HDMI output to 1920x1080 (16:9) on both connectors (issue #46).
+# Pi 5 (vc4-kms-v3d/KMS) otherwise follows the display EDID native mode (up to 4K)
+# and upscales the 1080p canvas. A kernel video= param is the only reliable
+# override under KMS; legacy hdmi_group/hdmi_mode config.txt keys are ignored.
+# cmdline.txt is a single line; append video= params idempotently.
+CMDLINE_HDMI="/boot/firmware/cmdline.txt"
+if [ -f "${CMDLINE_HDMI}" ]; then
+    for vopt in "video=HDMI-A-1:1920x1080@60" "video=HDMI-A-2:1920x1080@60"; do
+        if ! grep -Fq "${vopt}" "${CMDLINE_HDMI}"; then
+            echo "Forcing 1080p: adding ${vopt} to cmdline.txt..."
+            sudo sed -i "s/$/ ${vopt}/" "${CMDLINE_HDMI}"
+        fi
+    done
+fi
+
 sed -e "s|WorkingDirectory=.*|WorkingDirectory=${INSTALL_DIR}|" \
     -e "s|ExecStart=.*|ExecStart=${INSTALL_DIR}/sdl-clock --fullscreen --font-path=${INSTALL_DIR}|" \
     -e "s|^User=.*|User=$INSTALL_USER|" \

@@ -1,3 +1,13 @@
+## Version 1.3.12 (2026-07-20) — Trixie
+
+* Install / HDMI
+  * Force HDMI output to 1920x1080 (16:9) on both connectors — `install.sh` now
+    appends `video=HDMI-A-1:1920x1080@60` and `video=HDMI-A-2:1920x1080@60` to
+    `/boot/firmware/cmdline.txt` (idempotent). Under the Pi 5 KMS driver
+    (`vc4-kms-v3d`) the display otherwise followed its EDID native mode (up to 4K)
+    and upscaled the 1080p canvas; legacy `hdmi_group`/`hdmi_mode` keys are ignored
+    on KMS. (issue #46, Trixie only)
+
 ## Version 1.3.7 (2026-05-27) — Buildroot
 
 * Buildroot image
