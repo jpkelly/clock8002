@@ -1,3 +1,12 @@
+## Version 1.3.14 (2026-07-20) — Trixie
+
+* OLED
+  * Fix missing version number on the boot logo screen. The daemon's binary
+    search paths were Buildroot-only (`/opt/clock8002/sdl3-clock`,
+    `/root/sdl-clock`); on Trixie the binary is `/opt/clock8002/sdl-clock`, so
+    `get_build_version()` found nothing and drew no version. Added the Trixie
+    path to `_SDL_CLOCK_CANDIDATES`.
+
 ## Version 1.3.13 (2026-07-20) — Trixie
 
 * sdl3-clock / HDMI

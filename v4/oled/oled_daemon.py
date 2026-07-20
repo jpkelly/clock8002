@@ -31,6 +31,7 @@ _LOGO_CANDIDATES = [
 LOGO_PATH = next((p for p in _LOGO_CANDIDATES if os.path.exists(p)), _LOGO_CANDIDATES[0])
 _SDL_CLOCK_CANDIDATES = [
     '/opt/clock8002/sdl3-clock',  # Buildroot squashfs
+    '/opt/clock8002/sdl-clock',   # Trixie (installed by install.sh)
     '/root/sdl-clock',            # Buildroot embedded-initramfs (FAT)
 ]
 SDL_CLOCK_PATH = next((p for p in _SDL_CLOCK_CANDIDATES if os.path.exists(p)), _SDL_CLOCK_CANDIDATES[0])
