@@ -231,6 +231,16 @@ if [ -f piclock-network.service ]; then
     sudo systemctl enable piclock-network
 fi
 
+# Speed up boot: mask NetworkManager-wait-online. The clock does not need the
+# network to be "online" before starting, and on a static-only wired network
+# eth0's DHCP probe times out (~45s), stalling boot and delaying both the static
+# IP and the address shown on the OLED. piclock-network.sh applies the network
+# configuration directly, with its own device-wait retry loop.
+if systemctl list-unit-files NetworkManager-wait-online.service >/dev/null 2>&1; then
+    echo "Masking NetworkManager-wait-online.service to speed up boot..."
+    sudo systemctl mask NetworkManager-wait-online.service 2>/dev/null || true
+fi
+
 # Copy sample network.ini to boot partition if not present
 if [ ! -f "${BOOT_CONFIG_DIR}/network.ini" ] && [ -f network.ini ]; then
     echo "Installing sample network.ini to ${BOOT_CONFIG_DIR}/..."

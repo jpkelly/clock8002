@@ -1,3 +1,20 @@
+## Version 1.3.15 (2026-07-20) — Trixie
+
+* Boot / network
+  * Fix ~60s boot delay before the network config applies. `eth0` attempted DHCP
+    at boot (45s timeout) on the static-only wired network, and
+    `NetworkManager-wait-online` blocked boot until it failed — delaying
+    `piclock-network.service` (which was gated on `network-online.target`) and
+    the correct IP on the OLED. `install.sh` now masks
+    `NetworkManager-wait-online.service`, and `piclock-network.service` no longer
+    waits on `network-online.target`, so the static IP is applied within seconds
+    of boot.
+* OLED
+  * Show the wired IP, not Wi-Fi. `get_ip()` now prefers the wired interface
+    (`eth*`/`end*`/`enp*`/`enx*`) and only falls back to another global address
+    (e.g. Wi-Fi) if no wired address is present. Previously it showed the first
+    global address, which during the slow boot window was the Wi-Fi DHCP IP.
+
 ## Version 1.3.14 (2026-07-20) — Trixie
 
 * OLED

@@ -243,14 +243,29 @@ def parse_ini_settings():
     return settings
 
 def get_ip():
+    # Prefer the wired interface so a connected Wi-Fi (secondary) address is
+    # never shown in its place. Fall back to any global-scope IPv4 address.
     try:
         out = subprocess.check_output(
             ['ip', '-4', '-o', 'addr', 'show', 'scope', 'global'],
             stderr=subprocess.DEVNULL).decode()
-        ip = out.split('inet ')[1].split('/')[0]
     except Exception:
-        ip = 'No IP'
-    return ip
+        return 'No IP'
+    wired = other = None
+    for line in out.splitlines():
+        fields = line.split()
+        if len(fields) < 4:
+            continue
+        iface = fields[1]
+        try:
+            addr = line.split('inet ')[1].split('/')[0]
+        except IndexError:
+            continue
+        if iface.startswith(('eth', 'end', 'enp', 'enx')):
+            wired = wired or addr
+        else:
+            other = other or addr
+    return wired or other or 'No IP'
 
 def get_stats():
     settings = parse_ini_settings()
