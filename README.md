@@ -75,9 +75,9 @@ ssh pi@piclock.local
 Download the latest Trixie release tarball from the [Releases](https://github.com/jpkelly/clock8002/releases) page. Look for assets named `clock8002-trixie-vX.X.X-default-linux-arm64.tar.gz`.
 
 ```bash
-wget https://github.com/jpkelly/clock8002/releases/download/trixie-v1.3.8/clock8002-trixie-v1.3.8-default-linux-arm64.tar.gz
-tar xzf clock8002-trixie-v1.3.8-default-linux-arm64.tar.gz
-cd clock8002-trixie-v1.3.8-default-linux-arm64
+wget https://github.com/jpkelly/clock8002/releases/download/trixie-v1.3.11/clock8002-trixie-v1.3.11-default-linux-arm64.tar.gz
+tar xzf clock8002-trixie-v1.3.11-default-linux-arm64.tar.gz
+cd clock8002-trixie-v1.3.11-default-linux-arm64
 sudo bash install.sh
 ```
 

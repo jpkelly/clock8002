@@ -83,7 +83,7 @@ The `trixie` branch produces an installer tarball for Raspberry Pi OS / Debian T
 ### Versioning
 
 - Tag format: `trixie-v1.x.y`
-- Example: `trixie-v1.3.8`
+- Example: `trixie-v1.3.11`
 - These tags are published as **non-Latest** GitHub releases.
 
 ### Build and publish

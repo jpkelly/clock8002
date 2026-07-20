@@ -114,12 +114,12 @@ Use this only after feature/root-ram is functionally complete.
 
 ### Trixie release baseline
 - **Branch**: `trixie`
-- **HEAD**: `bc7a182` — trixie: wait for apt lock in install.sh
-- **Release tag**: `trixie-v1.3.10` at `bc7a182`
-- **Release asset**: `clock8002-trixie-v1.3.10-default-linux-arm64.tar.gz`
-- **Asset SHA256**: `f4d6e608b30ee6d6dbdfd9d139851dc9ef927b56ccad961362e6d747f6e7c508`
+- **HEAD**: `05b30a1` — trixie: restore authoritative Buildroot clock defaults
+- **Release tag**: `trixie-v1.3.11` at `05b30a1`
+- **Release asset**: `clock8002-trixie-v1.3.11-default-linux-arm64.tar.gz`
+- **Asset SHA256**: `e3b7700a5a4c414a04b636ee5578232838a7af533aba9beaa412d5635dc0d4f7`
 - **Build host**: `pi@pi5start.local` (Raspberry Pi 5, Debian 13 Trixie ARM64)
-- **Status**: Built and published; fresh-install validated on `pi@piclock.local` (2026-07-19). `sdl-clock` displays via KMSDRM; `alsa-ltc` decodes LTC; source1 LTC enabled by default; bundled SDL3 3.4.0 libraries used via `LD_LIBRARY_PATH`; installer waits for first-boot apt lock.
+- **Status**: Built; fresh-install validation pending. Bundled SDL3 3.4.0 libraries are used via `LD_LIBRARY_PATH`; installer waits for the first-boot apt lock. Default `clock.ini` is byte-identical to the Buildroot release source (`v4/clock.ini.default`): text face, fullscreen, and LTC enabled on source 2.
 
 ### /boot layout (final)
 **FAT root (`/boot/`)**: `setup.sh`, `build-info.txt`, `bootsplash.raw`, `ssh/` (runtime-created)
