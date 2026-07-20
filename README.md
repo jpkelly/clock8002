@@ -2,6 +2,11 @@
 
 An HDMI clock display for Raspberry Pi 5, running as a minimal appliance on a custom **Buildroot** image. Controllable via OSC and a built-in web UI.
 
+> **Two ways to run Clock 8002 — pick based on whether you want to customize it:**
+>
+> - **Buildroot image (this `master` branch)** — a minimal, locked-down appliance: flash the SD card and boot. Fast and robust, but **not intended for end-user customization** (custom Buildroot toolchain, read-only appliance root — changing behavior means rebuilding the whole image).
+> - **Raspberry Pi OS / Trixie install ([`trixie`](https://github.com/jpkelly/clock8002/tree/trixie) branch)** — installs onto a standard Raspberry Pi OS Lite (Debian Trixie) system via a tarball and `install.sh`. **Easily modifiable by users** — it's an ordinary Debian userland, so you can edit configs, scripts, and services directly on the Pi and rebuild the Go app in place. **This is the recommended option if you want to customize or extend the clock.**
+
 ## Table of Contents
 
 - [Acknowledgements](#acknowledgements)
