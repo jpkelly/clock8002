@@ -29,6 +29,11 @@ var colors struct {
 
 var window *sdl.Window
 
+// fullscreenMode, when set, pins the exclusive fullscreen video mode used under
+// the kmsdrm backend so the output is a real 1080p signal rather than the
+// panel's native (possibly 4K) mode. nil on desktop backends.
+var fullscreenMode *sdl.DisplayMode
+
 var renderer *sdl.Renderer
 
 var textureSource sdl.FRect
@@ -60,9 +65,25 @@ func initSDL() {
 
 	if sdl.GetCurrentVideoDriver() == "kmsdrm" {
 		display := sdl.GetPrimaryDisplay()
-		modes, _ := display.FullscreenDisplayModes()
-		winWidth = int(modes[0].W)
-		winHeight = int(modes[0].H)
+
+		// Force 1080p output. The clock canvas is authored at 1920x1080 (see
+		// setupScaling); the hardware must never drive a larger CRTC mode. On a
+		// 4K display SDL would otherwise select the largest advertised mode and
+		// emit an upscaled 4K signal. Pick the closest 1920x1080@60 mode the
+		// display advertises and pin it as the exclusive fullscreen mode below.
+		mode, modeErr := display.ClosestFullscreenDisplayMode(1920, 1080, 60, false)
+		if modeErr != nil || mode == nil {
+			// Fall back to the display's largest advertised mode.
+			modes, listErr := display.FullscreenDisplayModes()
+			if listErr == nil && len(modes) > 0 {
+				mode = modes[0]
+			}
+		}
+		if mode != nil {
+			winWidth = int(mode.W)
+			winHeight = int(mode.H)
+			fullscreenMode = mode
+		}
 		log.Printf("-> kmsdrm detected, using %d x %d for screen resolution", winWidth, winHeight)
 	}
 
@@ -70,6 +91,16 @@ func initSDL() {
 	if err != nil {
 		log.Fatalf("Failed to create window and renderer: %v", err)
 	}
+
+	// Pin the exclusive fullscreen mode so SetFullscreen(true) performs a real
+	// modeset to 1080p instead of a fullscreen-desktop pass at the panel's
+	// native (possibly 4K) resolution.
+	if fullscreenMode != nil {
+		if err = window.SetFullscreenMode(fullscreenMode); err != nil {
+			log.Printf("Warning: failed to pin %d x %d fullscreen mode: %v", winWidth, winHeight, err)
+		}
+	}
+
 	renderer.SetVSync(1)
 	window.SetSurfaceVSync(1)
 

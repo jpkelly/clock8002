@@ -1,3 +1,17 @@
+## Version 1.3.13 (2026-07-20) — Trixie
+
+* sdl3-clock / HDMI
+  * Force 1080p output signal on a 4K display. Under the `kmsdrm` backend the app
+    now selects the closest `1920x1080@60` mode via
+    `ClosestFullscreenDisplayMode` and pins it with `SetFullscreenMode`, so
+    `SetFullscreen(true)` performs a real 1080p CRTC modeset instead of a
+    fullscreen-desktop pass at the panel's native (up to 4K) mode. Previously
+    `initSDL()` selected the largest advertised mode (`modes[0]`), driving a 4K
+    signal with the 1080p canvas upscaled. (issue #46)
+  * NOTE: the v1.3.12 `cmdline.txt` `video=` change only constrained the kernel
+    console framebuffer — the SDL app drives its own modeset and was unaffected.
+    The `cmdline.txt` change is retained (it keeps the boot/console at 1080p).
+
 ## Version 1.3.12 (2026-07-20) — Trixie
 
 * Install / HDMI
