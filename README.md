@@ -117,15 +117,20 @@ Network settings are read from `/boot/firmware/piclock/network.ini` at boot. To 
 
 Factory Pi 5 units ship with `BOOT_ORDER=0xf461` (SD → USB → network → restart loop). For piClock, change this to `BOOT_ORDER=0xf1` (SD-only). This is a one-time operation per unit.
 
-SSH into the running unit and run:
+SSH into the running unit (as the `pi` user) and run:
 
 ```bash
 printf '[all]\nBOOT_UART=1\nBOOT_ORDER=0xf1\n' > /tmp/eeprom.cfg
 BLOB=$(ls /usr/lib/firmware/raspberrypi/bootloader-2712/default/pieeprom-*.bin | sort | tail -1)
 rpi-eeprom-config --config /tmp/eeprom.cfg --out /tmp/custom.bin "$BLOB"
-rpi-eeprom-update -d -f /tmp/custom.bin
-reboot
+sudo rpi-eeprom-update -d -f /tmp/custom.bin
+sudo reboot
 ```
+
+> **Note:** `rpi-eeprom-update` and `reboot` require root — on Trixie you're logged
+> in as the non-root `pi` user, so both need `sudo`. (The master/Buildroot branch's
+> equivalent instructions omit `sudo` because that image's default SSH login is
+> `root` directly — don't drop the `sudo` here.)
 
 After reboot, verify with `rpi-eeprom-config` — expect `BOOT_ORDER=0xf1`.
 
