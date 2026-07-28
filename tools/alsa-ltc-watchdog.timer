@@ -1,0 +1,10 @@
+[Unit]
+Description=Run alsa-ltc USB wedge detection periodically
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=20s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

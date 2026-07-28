@@ -1,0 +1,19 @@
+[Unit]
+Description=piClock LTC + 5V rail soak logger (unattended diagnostics)
+Documentation=file:///opt/clock8002/piclock-ltc-soak.sh
+After=alsa-ltc.service
+Wants=alsa-ltc.service
+
+[Service]
+Type=simple
+ExecStart=/bin/sh /opt/clock8002/piclock-ltc-soak.sh 30
+Restart=always
+RestartSec=10
+User=root
+# The script already appends to /var/log/piclock-ltc-soak.log; don't duplicate
+# every sample into the journal as well.
+StandardOutput=null
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

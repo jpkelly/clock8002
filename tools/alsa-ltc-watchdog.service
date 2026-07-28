@@ -1,0 +1,7 @@
+[Unit]
+Description=alsa-ltc USB wedge detection (one-shot, invoked by alsa-ltc-watchdog.timer)
+After=alsa-ltc.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/clock8002/alsa-ltc-usb-wedge-watchdog.sh
