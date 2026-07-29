@@ -305,10 +305,13 @@ echo "$CYCLE" > "$COUNTER"
 THR=$(vcgencmd get_throttled 2>/dev/null | cut -d= -f2)
 UV=$(dmesg 2>/dev/null | grep -ci 'Undervoltage detected')
 E5=$(vcgencmd pmic_read_adc EXT5V_V 2>/dev/null | sed 's/.*=//')
+# Diagnostic tuning param for the P2 URB-count campaign (patched
+# snd-usb-audio.ko). Absent/stock module reads as "?".
+CAPTURE_URBS=$(cat /sys/module/snd_usb_audio/parameters/capture_urbs 2>/dev/null)
 
-printf '%s cycle=%s reason=%s survived_s=%s rate=%s ltc_decoded=%s peak=%s setif_fails=%s restarts=%s throttled=%s uv_events=%s ext5v=%s\n' \
+printf '%s cycle=%s reason=%s survived_s=%s rate=%s ltc_decoded=%s peak=%s setif_fails=%s restarts=%s throttled=%s uv_events=%s ext5v=%s capture_urbs=%s\n' \
     "$(ts)" "$CYCLE" "$REASON" "$SURVIVED" "${RATE:-?}" "${DECODED:-?}" "${PEAK:-?}" \
-    "$fails" "${restarts:-?}" "$THR" "$UV" "$E5" >> "$INTERVALS"
+    "$fails" "${restarts:-?}" "$THR" "$UV" "$E5" "${CAPTURE_URBS:-?}" >> "$INTERVALS"
 
 {
     echo "===== $(ts) WEDGE DETECTED reason=$REASON (cycle $CYCLE/$MAX_RECOVER_CYCLES) ====="
