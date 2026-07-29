@@ -73,7 +73,8 @@ LOG=/var/log/alsa-ltc-watchdog.log
 INTERVALS=/var/log/piclock-ltc-intervals.log
 ARCHIVE=/var/log/piclock-forensics
 LIVELOG=/var/log/piclock-ltc-live-stall.log  # captured while the HC is STILL ALIVE
-LIVESTATE=/run/alsa-ltc-watchdog.live-stall  # per-boot: capture live stall once
+LIVESTATE=/run/alsa-ltc-watchdog.live-stall  # per-boot COUNT of live-stall captures
+LIVEMAX=3                                    # max live-stall captures per boot
 
 # Read-only xHCI MMIO register dump (USBCMD/USBSTS/IMAN/CRCR/PORTSC). Prefer a
 # copy sitting next to this script so the tool works when run straight from a
@@ -163,13 +164,23 @@ fi
 # If URBs are queued but the IRQ count is FROZEN, the controller has stopped
 # generating completion events altogether — that distinguishes "controller went
 # silent" from "device stopped sending data".
-if [ "$DRY_RUN" != "1" ] && [ "$REASON" != "hc_dead" ] && [ ! -f "$LIVESTATE" ] \
+if [ "$DRY_RUN" != "1" ] && [ "$REASON" != "hc_dead" ] \
    && grep -q 'USB-Audio' /proc/asound/cards 2>/dev/null; then
+    # $LIVESTATE now holds a COUNT, not just a flag, so a benign early event can no
+    # longer consume the single per-boot capture. Bounded by $LIVEMAX so the log
+    # cannot grow without limit.
+    _livecount=$(cat "$LIVESTATE" 2>/dev/null || echo 0)
+    case "$_livecount" in ''|*[!0-9]*) _livecount=0 ;; esac
+  if [ "$_livecount" -lt "$LIVEMAX" ]; then
     _recent=$(journalctl -u alsa-ltc.service --since '-90s' --no-pager 2>/dev/null)
     _eio=$(printf '%s\n' "$_recent" | grep -c 'read from audio interface failed')
     _gap=$(printf '%s\n' "$_recent" | grep -c 'no LTC decoded for')
-    if [ "${_eio:-0}" -ge 1 ] || [ "${_gap:-0}" -ge 1 ]; then
-        touch "$LIVESTATE"
+    # Require an actual -EIO. Do NOT trigger on $_gap alone: a decode gap can occur
+    # with a completely healthy controller (clipped input -> LTC decode failure),
+    # and on cycle 7 exactly that wasted the one capture we had. $_gap is still
+    # recorded in the header for context.
+    if [ "${_eio:-0}" -ge 1 ]; then
+        echo $((_livecount + 1)) > "$LIVESTATE"
         {
             echo "===== $(ts) LIVE STALL — controller still alive (eio=$_eio gap=$_gap) ====="
             echo "uptime=${uptime_s}s alsa-ltc=$active restarts=$restarts"
@@ -214,8 +225,9 @@ if [ "$DRY_RUN" != "1" ] && [ "$REASON" != "hc_dead" ] && [ ! -f "$LIVESTATE" ] 
             printf '%s\n' "$_recent" | tail -30
             echo "==================================================================="
         } >> "$LIVELOG" 2>&1
-        logger -t alsa-ltc-watchdog "LIVE STALL captured (eio=$_eio gap=$_gap) — HC still alive" 2>/dev/null
+        logger -t alsa-ltc-watchdog "LIVE STALL captured (eio=$_eio gap=$_gap, #$((_livecount + 1))/$LIVEMAX) — HC still alive" 2>/dev/null
     fi
+  fi
 fi
 
 if [ -z "$REASON" ]; then
@@ -246,9 +258,16 @@ FIRST_EIO=$(journalctl -b -u alsa-ltc.service --no-pager -o short-unix 2>/dev/nu
             | grep -m1 'read from audio interface failed' | cut -d. -f1)
 # Fallback 1: the decode gap precedes the first -EIO by ~5 s and is the true
 # onset of the URB stall, so prefer it when present.
+#
+# 2026-07-28: THIS OVERRIDE IS REMOVED. A decode gap is NOT reliably the onset of
+# a URB stall. Proven on cycle 7: a 2.1 s `no LTC decoded` gap fired while the HC
+# was perfectly healthy (MSI IRQ climbing ~1000/s, hw_ptr advancing) — it was an
+# LTC *decode* failure caused by a clipped/railed input (peak=32767), and the
+# stream then ran fine for another hour. Preferring the gap made that run report
+# survived_s=2350 when it actually failed at 6214 s. Measure to first -EIO only.
 FIRST_GAP=$(journalctl -b -u alsa-ltc.service --no-pager -o short-unix 2>/dev/null \
             | grep -m1 'no LTC decoded for' | cut -d. -f1)
-[ -n "$FIRST_GAP" ] && FIRST_EIO=$FIRST_GAP
+# Recorded for reference/diagnostics only — deliberately NOT used for SURVIVED.
 # Fallback 2: if userspace logged nothing usable, fall back to the kernel's own
 # first sign of trouble (stranded URBs / HC death).
 if [ -z "$FIRST_EIO" ]; then
@@ -259,6 +278,15 @@ if [ -n "$BOOT_EPOCH" ] && [ -n "$FIRST_EIO" ]; then
     SURVIVED=$((FIRST_EIO - BOOT_EPOCH))
 else
     SURVIVED=unknown
+fi
+
+# When the first decode gap happened, purely for diagnostics. If this is much
+# earlier than SURVIVED, a benign clipping-induced decode gap preceded the real
+# stall — useful for telling the two failure modes apart after the fact.
+if [ -n "$BOOT_EPOCH" ] && [ -n "$FIRST_GAP" ]; then
+    GAP_AT=$((FIRST_GAP - BOOT_EPOCH))
+else
+    GAP_AT=none
 fi
 
 RATE=$(journalctl -b -u alsa-ltc.service --no-pager 2>/dev/null \
@@ -284,7 +312,7 @@ printf '%s cycle=%s reason=%s survived_s=%s rate=%s ltc_decoded=%s peak=%s setif
 
 {
     echo "===== $(ts) WEDGE DETECTED reason=$REASON (cycle $CYCLE/$MAX_RECOVER_CYCLES) ====="
-    echo "survived_s=$SURVIVED rate=$RATE ltc_decoded=$DECODED peak=$PEAK"
+    echo "survived_s=$SURVIVED (to first -EIO) first_decode_gap_s=$GAP_AT rate=$RATE ltc_decoded=$DECODED peak=$PEAK"
     echo "setif_fails(last $DMESG_LINES dmesg lines)=$fails NRestarts=$restarts SubState=$substate"
     echo "power: throttled=$THR ext5v=$E5 uv_events=$UV"
     echo "--- dmesg tail (40) ---";              dmesg -T 2>/dev/null | tail -40
