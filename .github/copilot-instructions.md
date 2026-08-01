@@ -1,8 +1,16 @@
 Repository workflow note:
 - Build machine: pi@cm5.local (CM5, 8GB RAM, NVMe)
-- Primary test machine: root@piClock.local (192.168.8.245)
-- Reference/research unit only: root@192.168.8.246
+- Primary test machine: piClock.local (192.168.8.245) — login user depends on the flashed image, see "Test unit login model" below
+- Reference/research unit only: 192.168.8.246 — same dual-image login model, believed Trixie (`pi` login)
 - Do not use .246 as a fallback target for normal build validation or deployment.
+
+Test unit login model (applies to both piClock.local / 192.168.8.245 and the .246 reference unit):
+- These units are reflashed between Buildroot and Trixie images. Confirm which image is running before using any host-specific command; do not assume a login user.
+- Detect: `ssh pi@<host> 'cat /etc/os-release'`. Succeeds and reports Debian trixie => Trixie image. If the `pi` login is refused, treat it as a Buildroot image.
+- Trixie image: login `pi@<host>`, passwordless sudo. App in `/opt/clock8002`, systemd units `clock8002.service` and `alsa-ltc.service`.
+- Buildroot image: login `root@<host>` with `-o IdentitiesOnly=yes -i ~/.ssh/id_rsa`. App at `/root/sdl-clock`, init script `/etc/init.d/S99clock`.
+- A reflash changes the unit's SSH host key — expect a known_hosts mismatch after reimaging.
+- As of 2026-07-31: .245 confirmed Trixie (Debian 13), login `pi`. .246 believed Trixie.
 
 Active build modes:
 - Dev/RC mode:
@@ -67,7 +75,7 @@ Release management note:
 
 Buildroot image workflow note:
 - Branch: `master` (NEVER use `buildroot-prototype` — it is historical only and permanently diverged).
-- Test unit: `root@piClock.local`. Build host: `pi@cm5.local` (~/buildroot).
+- Test unit: `piClock.local`, root login — valid only while that unit is running a Buildroot image, see "Test unit login model". Build host: `pi@cm5.local` (~/buildroot).
 - Buildroot sources sdl3-clock/alsa-ltc directly from `~/clock8002-root-ram/v4` on cm5 — always `git pull --ff-only` in `~/clock8002-root-ram` before any `make`. Do NOT pull `~/clock8002`; that directory is not used by Buildroot.
 - Before building, verify cm5 is on the **intended branch** and at the **intended commit**: `ssh pi@cm5.local 'cd ~/clock8002-root-ram && git branch --show-current && git log --oneline -1'` — expected branch is `master` for release/production builds, or the feature branch name for feature-branch builds. Fail if the output does not match. The commit hash shown here is what will be compiled into the image — confirm it matches the intended HEAD before proceeding.
 - Dual service file rule: service files that exist in both `v4/` (Trixie) and `buildroot-external/board/clock8002-rpi5/rootfs-overlay/` (Buildroot) must be kept in sync. When editing a service file in `v4/`, always check for a Buildroot overlay copy and update it with the same changes (adjusting for platform differences like `User=root`). The overlay overwrites the package-installed copy at image build time.
@@ -80,6 +88,7 @@ Buildroot image workflow note:
 - Flash command format (user runs manually — never run dd from agent): `diskutil unmountDisk /dev/diskN && sudo dd if=/Users/jp/Desktop/piClock-<COMMIT>-sdcard.img of=/dev/rdiskN bs=4m status=progress && diskutil eject /dev/diskN`
 - Always verify disk number with `diskutil list external physical` before giving flash commands.
 - BusyBox on target: no bash (use `sh`), no `tar -z` (use `gzip -d -c | tar x`), no `--ignore-missing` on sha256sum.
-- SSH to Buildroot target: `root@piClock.local` with `-o IdentitiesOnly=yes -i ~/.ssh/id_rsa`.
-- Deploy binary directly (no install.sh on BR): `/etc/init.d/S99clock stop && cp <binary> /root/sdl-clock && /etc/init.d/S99clock start`. (The running process is `sdl-clock`; `sdl3-clock` is the build-target name but `clock_cmd.sh` exec's `/root/sdl-clock`.)
+- SSH to Buildroot target: `root@piClock.local` with `-o IdentitiesOnly=yes -i ~/.ssh/id_rsa`. Buildroot images only — if the unit is running Trixie, use `pi@piClock.local`.
+- Deploy binary on a Buildroot image (no install.sh on BR): `/etc/init.d/S99clock stop && cp <binary> /root/sdl-clock && /etc/init.d/S99clock start`. (The running process is `sdl-clock`; `sdl3-clock` is the build-target name but `clock_cmd.sh` exec's `/root/sdl-clock`.)
+- Deploy binary on a Trixie image instead: `sudo systemctl stop clock8002 && sudo cp <binary> /opt/clock8002/sdl-clock && sudo systemctl start clock8002`.
 - After a fresh Buildroot checkout, always run `buildroot-external/scripts/apply-build-host-patches.sh ~/buildroot` before building — this applies the Mesa 25.0.7 upgrade and host-xz libtool workaround (see issue #29).
