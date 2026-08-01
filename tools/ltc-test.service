@@ -1,0 +1,41 @@
+[Unit]
+# LTC capture soak-test harness — TRIXIE TARGET ONLY, manual testing only.
+# Deliberately separate from the production alsa-ltc.service so the two can
+# never both hold the device, and so this can be enabled/disabled per test
+# without touching production config.
+#
+# Purpose: start capture a few seconds into boot, inside the ~20s window in
+# which the CM108 dongle still answers SET_INTERFACE. Launching by hand cannot
+# reliably hit that window and was generating usb_set_interface -110 failures
+# unrelated to the fault being investigated.
+Description=LTC capture soak-test harness (manual testing only)
+Documentation=file:/opt/clock8002/ltc-test-run.sh
+# No network dependency on purpose: capture does not need the network, and
+# waiting for it would push the launch outside the SET_INTERFACE window. The
+# binary re-resolves the OSC broadcast address later if it changes.
+After=local-fs.target
+Conflicts=alsa-ltc.service
+
+[Service]
+Type=simple
+User=pi
+Group=audio
+# Read-only kernel-log access so the launcher can record when the dongle
+# enumerated (kernel.dmesg_restrict=1 blocks this for pi otherwise, and
+# journalctl -k is likewise privileged). Needed to compute how far inside the
+# ~20s SET_INTERFACE window each run actually started. Grants nothing else.
+AmbientCapabilities=CAP_SYSLOG
+# Wait for the USB audio card to finish probing, polling fast so we launch as
+# early as possible. Hard-fail after ~10s rather than launching into a window
+# we have already missed.
+ExecStartPre=/bin/sh -c 'modprobe snd_usb_audio 2>/dev/null || true; n=0; until grep -q "USB-Audio" /proc/asound/cards 2>/dev/null; do n=$((n+1)); [ "$n" -ge 100 ] && exit 1; sleep 0.1; done'
+ExecStart=/opt/clock8002/ltc-test-run.sh
+# Restart=no is deliberate: each boot must produce exactly ONE clean data point.
+# A restart loop would both muddy survival timing and re-trigger the startup
+# window failure on every retry.
+Restart=no
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

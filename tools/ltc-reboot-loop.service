@@ -1,0 +1,15 @@
+[Unit]
+Description=Reboot loop until LTC capture wedges (test harness)
+After=ltc-test.service xhci-wedge-watch.service
+Wants=ltc-test.service
+
+[Service]
+Type=simple
+ExecStart=/opt/clock8002/ltc-reboot-loop.sh
+# Runs once per boot then exits; it reboots the machine itself to advance a cycle.
+Restart=no
+StandardOutput=append:/opt/clock8002/logs/reboot-loop.log
+StandardError=append:/opt/clock8002/logs/reboot-loop.log
+
+[Install]
+WantedBy=multi-user.target

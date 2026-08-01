@@ -1,0 +1,16 @@
+[Unit]
+Description=xHCI wedge watcher (USB audio stall forensics)
+After=local-fs.target
+Wants=ltc-test.service
+
+[Service]
+Type=simple
+ExecStart=/opt/clock8002/xhci-wedge-watch.py --logdir /opt/clock8002/logs
+# Retries until the USB audio card enumerates, so start order does not matter.
+Restart=always
+RestartSec=5
+StandardOutput=append:/opt/clock8002/logs/wedge-watch-console.log
+StandardError=append:/opt/clock8002/logs/wedge-watch-console.log
+
+[Install]
+WantedBy=multi-user.target
