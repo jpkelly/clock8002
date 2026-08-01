@@ -7,9 +7,10 @@ makes to the unit in a manifest (written BEFORE each change is applied) so
 `revert` can restore the unit to its pre-test state, and `verify` can prove
 the revert actually worked rather than trusting exit codes.
 
-Only ONE test mode is fully implemented right now: `soak`. `cycle`,
-`accumulate`, and `ab` are stubbed (see NotImplementedError) - see
-/memories/session/plan.md for the full spec and remaining phases.
+Two test modes are implemented: `soak` and `cycle`. `accumulate` and `ab` are
+stubbed (see NotImplementedError) - see /memories/session/plan.md for the full
+spec and remaining phases (that file was session-scoped and no longer exists;
+see tools/cm5-harness/salvage-reference/ for reference implementations).
 
 Usage (run on cm5):
     ./harness.py run soak --host piclock.local --duration 3600 --label "my test"
@@ -36,10 +37,12 @@ SOAK_SAMPLE_SH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 SOAK_SERVICE = """[Unit]
 Description=LTC soak sample (harness-managed)
+After=alsa-ltc.service clock8002.service
+Wants=alsa-ltc.service
 
 [Service]
 Type=oneshot
-EnvironmentFile=/etc/default/ltc-soak
+EnvironmentFile=-/etc/default/ltc-soak
 ExecStart=/opt/clock8002/ltc-soak-sample.sh
 """
 
@@ -53,6 +56,28 @@ Persistent=true
 
 [Install]
 WantedBy=timers.target
+"""
+
+CYCLE_SAMPLE_SH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "salvage-reference", "ltc-cycle4.sh")
+
+CYCLE_SERVICE = """[Unit]
+Description=Multi-boot LTC stability cycle test (production conditions)
+# Type=simple, and NOT After=clock8002.service. Both matter:
+#   - oneshot would block multi-user.target, and clock8002 is After=multi-user.target,
+#     so the display could never start during a cycle.
+#   - After=clock8002.service creates an ordering cycle and the job gets deleted.
+After=alsa-ltc.service
+Wants=alsa-ltc.service
+
+[Service]
+Type=simple
+ExecStart=/opt/clock8002/ltc-cycle.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
 """
 
 
@@ -127,6 +152,13 @@ class Manifest:
         self._append("enable_service", unit_name, "",
                       f"was_enabled={was_enabled} was_active={was_active}")
 
+    def record_always_delete(self, remote_path):
+        """For generated files (e.g. results logs) that should be removed on
+        revert regardless of whether they pre-existed - no backup is kept, since
+        the point is a clean target rather than restoring old accumulated data.
+        The harness's own local copy (pulled during polling) is the archive."""
+        self._append("always_delete", remote_path, "")
+
     def read_entries(self):
         entries = []
         with open(self.path) as f:
@@ -189,6 +221,13 @@ def deploy_soak(host, run_dir, manifest, label):
     with open(SOAK_SAMPLE_SH) as f:
         script = f.read()
 
+    # Manifest-track the results log itself too, not just the deploy control
+    # files - so revert can fully restore pre-test state. Always deleted on
+    # revert (not restored) so the target never accumulates test history across
+    # runs; the harness's own local copy on cm5 (pulled during polling) is the
+    # archive - see cm5_harness_notes.md for how to view results after a run.
+    manifest.record_always_delete("/opt/clock8002/logs/ltc-soak.csv")
+
     targets = [
         ("/opt/clock8002/ltc-soak-sample.sh", script),
         ("/etc/systemd/system/ltc-soak.service", SOAK_SERVICE),
@@ -205,7 +244,88 @@ def deploy_soak(host, run_dir, manifest, label):
     was_active = ssh(host, "systemctl is-active ltc-soak.timer 2>&1")[1].strip()
     manifest.record_enable_service(host, "ltc-soak.timer", was_enabled, was_active)
 
+    # Persistent=true timers keep a last-fired stamp in /var/lib/systemd/timers/
+    # keyed by unit NAME, independent of the unit files. A stamp left over from a
+    # prior deploy of this same unit name corrupts OnUnitActiveSec's schedule
+    # calculation on the next deploy (observed 2026-08-01: timer enabled but
+    # `systemctl list-timers` showed NEXT=- and the service never fired again).
+    # Not manifest-tracked as a file since it's systemd-internal bookkeeping, not
+    # unit config - reverting the enable_service state doesn't touch it either.
+    ssh(host, "sudo rm -f /var/lib/systemd/timers/stamp-ltc-soak.timer")
+
     ssh_ok(host, "sudo systemctl daemon-reload && sudo systemctl enable --now ltc-soak.timer")
+
+
+def deploy_cycle(host, run_dir, manifest, label, max_cycles, monitor_s):
+    """Install the multi-boot cycle script + service on the unit, manifest-tracked.
+    Also clears any leftover cycle.count/.stop from a prior run (manifest-tracked,
+    so revert restores whatever was there before) so this run starts at cycle 1
+    instead of silently resuming a previous run's count."""
+    with open(CYCLE_SAMPLE_SH) as f:
+        script = f.read()
+
+    # Same rationale as deploy_soak(): the results log is always deleted on
+    # revert, not restored - the harness's own local copy is the archive.
+    manifest.record_always_delete("/opt/clock8002/logs/ltc-cycle-results.csv")
+
+    targets = [
+        ("/opt/clock8002/ltc-cycle.sh", script),
+        ("/etc/systemd/system/ltc-cycle.service", CYCLE_SERVICE),
+        ("/etc/default/ltc-cycle",
+         f"MAX_CYCLES={max_cycles}\nMONITOR_S={monitor_s}\nLABEL={label}\n"),
+    ]
+    for path, content in targets:
+        manifest.record_write_file(host, path, run_dir)
+        scp_content_to(host, path, content)
+    ssh_ok(host, "sudo chmod +x /opt/clock8002/ltc-cycle.sh")
+
+    for stale in ("/opt/clock8002/ltc-cycle.count", "/opt/clock8002/ltc-cycle.stop"):
+        manifest.record_write_file(host, stale, run_dir)
+        ssh(host, f"sudo rm -f '{stale}'")
+
+    was_enabled = ssh(host, "systemctl is-enabled ltc-cycle.service 2>&1")[1].strip()
+    was_active = ssh(host, "systemctl is-active ltc-cycle.service 2>&1")[1].strip()
+    manifest.record_enable_service(host, "ltc-cycle.service", was_enabled, was_active)
+
+    ssh_ok(host, "sudo systemctl daemon-reload && sudo systemctl enable --now ltc-cycle.service")
+
+
+def pull_cycle_results(host, run_dir):
+    """Copy the current cycle results CSV from the unit into the run dir on cm5."""
+    rc, out, _ = ssh(host, "cat /opt/clock8002/logs/ltc-cycle-results.csv 2>/dev/null", timeout=20)
+    if rc == 0 and out:
+        with open(os.path.join(run_dir, "ltc-cycle-results.csv"), "w") as f:
+            f.write(out)
+    return out
+
+
+def pull_cycle_count(host):
+    """Return the current on-unit cycle count, or -1 if unreachable (expected
+    while the unit is mid-reboot - not itself a failure)."""
+    rc, out, _ = ssh(host, "cat /opt/clock8002/ltc-cycle.count 2>/dev/null", timeout=15)
+    if rc == 0 and out.strip().isdigit():
+        return int(out.strip())
+    return -1
+
+
+def check_cycle_failure(csv_text):
+    """Look for any non-clean outcome in the cycle results CSV. Returns a
+    description string if found, else None."""
+    if not csv_text:
+        return None
+    lines = csv_text.strip().splitlines()
+    if len(lines) < 2:
+        return None
+    header = lines[0].split(",")
+    try:
+        outcome_idx = header.index("outcome")
+    except ValueError:
+        return None
+    for line in lines[1:]:
+        fields = line.split(",")
+        if len(fields) > outcome_idx and fields[outcome_idx] not in ("clean", ""):
+            return f"cycle failure: {line}"
+    return None
 
 
 def pull_csv(host, run_dir):
@@ -271,6 +391,81 @@ def cmd_run_soak(args):
         print(f"[{run_id}] collecting forensic dumps (auto-collect on failure)...")
         cmd_collect(argparse.Namespace(run=run_id))
 
+    print(f"[{run_id}] reverting all changes made to {host} (auto-revert on completion)...")
+    cmd_revert(argparse.Namespace(run=run_id))
+    try:
+        cmd_verify(argparse.Namespace(run=run_id))
+    except SystemExit:
+        print(f"[{run_id}] WARNING: unit does not match pre-test fingerprint after "
+              f"revert - see fingerprint-before/after.json in {run_dir}")
+
+    print(f"[{run_id}] {outcome}. Results: {run_dir}")
+
+
+def cmd_run_cycle(args):
+    host = args.host
+    run_id, run_dir = new_run_dir("cycle", host, args.label)
+    manifest = Manifest(run_dir)
+
+    print(f"[{run_id}] capturing pre-test fingerprint...")
+    fp_before = fingerprint(host)
+    with open(os.path.join(run_dir, "fingerprint-before.json"), "w") as f:
+        json.dump(fp_before, f, indent=2)
+
+    print(f"[{run_id}] deploying cycle harness to {host} "
+          f"(max_cycles={args.max_cycles}, monitor_s={args.monitor_s})...")
+    deploy_cycle(host, run_dir, manifest, args.label, args.max_cycles, args.monitor_s)
+
+    print(f"[{run_id}] running up to {args.max_cycles} reboot cycles "
+          f"(poll every {args.poll}s). The unit WILL reboot repeatedly - SSH "
+          f"drops during this are expected, not harness errors.")
+    failure = None
+    unreachable_s = 0
+    while True:
+        time.sleep(args.poll)
+        count = pull_cycle_count(host)
+        if count < 0:
+            unreachable_s += args.poll
+            print(f"[{run_id}] unit unreachable (likely mid-reboot), "
+                  f"{unreachable_s}s so far...")
+            if unreachable_s > args.stall_timeout:
+                failure = (f"unit unreachable for over {args.stall_timeout}s - "
+                           f"treating as wedged, not a normal reboot window")
+                break
+            continue
+        unreachable_s = 0
+
+        csv_text = pull_cycle_results(host, run_dir)
+        failure = check_cycle_failure(csv_text)
+        if failure:
+            print(f"[{run_id}] FAILURE DETECTED: {failure}")
+            if args.on_failure == "halt":
+                break
+        # ltc-cycle.count is bumped to n at the START of cycle n (before it
+        # runs), so it hits max_cycles the instant the FINAL cycle begins, not
+        # when it finishes. Use completed rows in the results CSV instead.
+        completed = max(0, len(csv_text.strip().splitlines()) - 1) if csv_text else 0
+        if completed >= args.max_cycles:
+            print(f"[{run_id}] all {args.max_cycles} cycles complete")
+            break
+
+    outcome = "FAILED" if failure else "PASSED"
+    update_meta(run_dir, status="complete", outcome=outcome,
+                finished=datetime.datetime.now().isoformat(),
+                failure_detail=failure or "")
+
+    if failure:
+        print(f"[{run_id}] collecting forensic dumps (auto-collect on failure)...")
+        cmd_collect(argparse.Namespace(run=run_id))
+
+    print(f"[{run_id}] reverting all changes made to {host} (auto-revert on completion)...")
+    cmd_revert(argparse.Namespace(run=run_id))
+    try:
+        cmd_verify(argparse.Namespace(run=run_id))
+    except SystemExit:
+        print(f"[{run_id}] WARNING: unit does not match pre-test fingerprint after "
+              f"revert - see fingerprint-before/after.json in {run_dir}")
+
     print(f"[{run_id}] {outcome}. Results: {run_dir}")
 
 
@@ -286,6 +481,13 @@ def cmd_status(args):
         print(f"samples so far: {max(0, len(lines) - 1)}")
         if len(lines) > 1:
             print("last sample:", lines[-1].strip())
+    cycle_csv_path = os.path.join(run_dir, "ltc-cycle-results.csv")
+    if os.path.exists(cycle_csv_path):
+        with open(cycle_csv_path) as f:
+            lines = f.readlines()
+        print(f"cycles so far: {max(0, len(lines) - 1)}")
+        if len(lines) > 1:
+            print("last cycle:", lines[-1].strip())
 
 
 def cmd_collect(args):
@@ -294,6 +496,7 @@ def cmd_collect(args):
         meta = json.load(f)
     host = meta["host"]
     pull_csv(host, run_dir)
+    pull_cycle_results(host, run_dir)
     # Pull any wedge forensic dumps present on the unit.
     rc, out, _ = ssh(host, "ls /opt/clock8002/logs/xhci-wedge-*.log 2>/dev/null")
     dumps = [l for l in out.splitlines() if l.strip()]
@@ -323,19 +526,39 @@ def cmd_revert(args):
         if e["action"] == "write_file_new":
             print(f"  removing {e['target']} (was new)")
             ssh(host, f"sudo rm -f '{e['target']}'")
+        elif e["action"] == "always_delete":
+            print(f"  removing {e['target']} (generated file, not restored)")
+            ssh(host, f"sudo rm -f '{e['target']}'")
         elif e["action"] == "write_file_existed":
             print(f"  restoring {e['target']} from backup")
             with open(e["backup_file"]) as f:
                 content = f.read()
             scp_content_to(host, e["target"], content)
         elif e["action"] == "enable_service":
-            was_enabled = "enabled" in e["detail"]
-            was_active = "was_active=active" in e["detail"]
+            # detail is "was_enabled=<enabled|disabled> was_active=<active|inactive>".
+            # Parse key=value properly - a naive "enabled" in e["detail"] substring
+            # check is ALWAYS true because the key name "was_enabled" itself
+            # contains "enabled", regardless of the actual value. That bug meant
+            # revert never disabled a previously-disabled service, leaving a
+            # dangling timers.target.wants/ symlink after the unit file was
+            # removed (observed 2026-08-01, corrupted the next deploy's timer
+            # scheduling).
+            detail = dict(kv.split("=", 1) for kv in e["detail"].split() if "=" in kv)
+            was_enabled = detail.get("was_enabled") == "enabled"
+            was_active = detail.get("was_active") == "active"
             unit = e["target"]
             if not was_enabled:
                 ssh(host, f"sudo systemctl disable {unit} 2>/dev/null")
             if not was_active:
                 ssh(host, f"sudo systemctl stop {unit} 2>/dev/null")
+            # Persistent=true timers leave a last-fired stamp in
+            # /var/lib/systemd/timers/ keyed by unit name - this is systemd's own
+            # bookkeeping, not unit config, so it was never manifest-tracked as a
+            # file, but it's still an artifact of this run and should not survive
+            # cleanup (see cm5_harness_notes.md for why a stale stamp corrupts the
+            # next deploy's OnUnitActiveSec scheduling).
+            if unit.endswith(".timer"):
+                ssh(host, f"sudo rm -f '/var/lib/systemd/timers/stamp-{unit}'")
 
     ssh(host, "sudo systemctl daemon-reload")
     update_meta(run_dir, reverted=datetime.datetime.now().isoformat())
@@ -401,11 +624,28 @@ def main():
     soak_p.add_argument("--on-failure", choices=["halt", "continue"], default="halt")
     soak_p.set_defaults(func=cmd_run_soak)
 
-    for stub_mode in ("cycle", "accumulate", "ab"):
+    cycle_p = run_sub.add_parser("cycle", help="multi-boot reboot-cycle stability test")
+    cycle_p.add_argument("--host", required=True)
+    cycle_p.add_argument("--max-cycles", type=int, default=20,
+                          help="number of reboot cycles to run (default 20)")
+    cycle_p.add_argument("--monitor-s", type=int, default=240,
+                          help="seconds to monitor for stalls after each boot "
+                               "settles, per cycle (default 240)")
+    cycle_p.add_argument("--poll", type=int, default=30,
+                          help="seconds between progress checks (default 30)")
+    cycle_p.add_argument("--stall-timeout", type=int, default=900,
+                          help="seconds the unit may stay unreachable before "
+                               "it's treated as wedged rather than mid-reboot "
+                               "(default 900)")
+    cycle_p.add_argument("--label", default="cycle")
+    cycle_p.add_argument("--on-failure", choices=["halt", "continue"], default="halt")
+    cycle_p.set_defaults(func=cmd_run_cycle)
+
+    for stub_mode in ("accumulate", "ab"):
         stub_p = run_sub.add_parser(stub_mode, help=f"[NOT YET IMPLEMENTED] {stub_mode} mode")
-        stub_p.set_defaults(func=lambda a: (_ for _ in ()).throw(
+        stub_p.set_defaults(func=lambda a, m=stub_mode: (_ for _ in ()).throw(
             NotImplementedError(
-                f"'{stub_mode}' mode is not implemented yet - see "
+                f"'{m}' mode is not implemented yet - see "
                 f"/memories/session/plan.md phase 5. Reference implementations "
                 f"exist in tools/cm5-harness/salvage-reference/.")))
 

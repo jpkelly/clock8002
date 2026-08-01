@@ -1,5 +1,7 @@
 [Unit]
 Description=LTC soak sampler (one sample per run, triggered by ltc-soak.timer)
+After=alsa-ltc.service clock8002.service
+Wants=alsa-ltc.service
 
 [Service]
 Type=oneshot
