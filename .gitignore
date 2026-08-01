@@ -15,3 +15,4 @@
 /v4/clock-8001*.deb
 /pi345build/
 tools/__pycache__/
+__pycache__/
