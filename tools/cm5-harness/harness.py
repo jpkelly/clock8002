@@ -117,6 +117,54 @@ def read_remote_file(host, remote_path):
     return content
 
 
+def harness_ram():
+    """Return (rss_kb, swap_kb) for this harness.py control process itself, on
+    cm5 - not the target. This is the only place the harness's own footprint
+    can be captured, so per-poll samples get tagged with it at pull time (see
+    pull_csv/pull_cycle_results) and start/end snapshots go in meta.json."""
+    try:
+        with open("/proc/self/status") as f:
+            status = f.read()
+    except OSError:
+        return (None, None)
+    rss = swap = None
+    for line in status.splitlines():
+        if line.startswith("VmRSS:"):
+            rss = int(line.split()[1])
+        elif line.startswith("VmSwap:"):
+            swap = int(line.split()[1])
+    return (rss, swap)
+
+
+def check_no_active_run(host, force=False):
+    """Refuse to deploy against a host that already has a run marked 'running'
+    against it - two concurrent deploys of the same manifest-tracked unit names
+    corrupt each other's backup/revert chain (observed 2026-08-01: a non-screen
+    launch was left running when the same test was relaunched in screen against
+    the same host, and the second run's manifest backed up the first run's
+    already-deployed files as if they were the pre-existing originals)."""
+    if not os.path.isdir(RESULTS_ROOT):
+        return
+    for run_id in sorted(os.listdir(RESULTS_ROOT)):
+        meta_path = os.path.join(RESULTS_ROOT, run_id, "meta.json")
+        if not os.path.exists(meta_path):
+            continue
+        with open(meta_path) as f:
+            meta = json.load(f)
+        if meta.get("host") == host and meta.get("status") == "running":
+            if force:
+                print(f"WARNING: --force override: ignoring active run {run_id} "
+                      f"against {host} (status=running). Only do this if you've "
+                      f"confirmed that run's process is dead and the target is clean.")
+                continue
+            sys.exit(
+                f"ERROR: run {run_id} is already marked 'running' against {host}. "
+                f"Deploying now would corrupt both runs' revert manifests. Either "
+                f"wait for it to finish, run 'revert --run {run_id}' first, or pass "
+                f"--force if you've confirmed its process is dead and the target "
+                f"is already clean.")
+
+
 class Manifest:
     """Append-only TSV log of every change made to the unit for this run.
     Written BEFORE each change is applied, so a crash mid-deploy still leaves
@@ -291,11 +339,10 @@ def deploy_cycle(host, run_dir, manifest, label, max_cycles, monitor_s):
 
 
 def pull_cycle_results(host, run_dir):
-    """Copy the current cycle results CSV from the unit into the run dir on cm5."""
+    """Copy new rows from the unit's cycle results CSV into the run dir on cm5."""
     rc, out, _ = ssh(host, "cat /opt/clock8002/logs/ltc-cycle-results.csv 2>/dev/null", timeout=20)
     if rc == 0 and out:
-        with open(os.path.join(run_dir, "ltc-cycle-results.csv"), "w") as f:
-            f.write(out)
+        _merge_csv_with_harness_ram(os.path.join(run_dir, "ltc-cycle-results.csv"), out)
     return out
 
 
@@ -328,12 +375,40 @@ def check_cycle_failure(csv_text):
     return None
 
 
+def _merge_csv_with_harness_ram(local_path, remote_text):
+    """Append only the NEW rows of remote_text (vs. what's already in
+    local_path) to local_path, tagging each with the harness control process's
+    own current RSS/Swap - same treatment as the clock8002/alsa-ltc RSS/Swap
+    columns already sampled per-row on the target, but the harness itself runs
+    on cm5, so this is the only point its footprint can be attached to a row.
+    The raw remote_text is returned unchanged for failure-detection callers,
+    which index columns by the target's own header (unaffected by the two
+    extra trailing columns added only to the local merged copy)."""
+    remote_lines = remote_text.strip("\n").splitlines()
+    if not remote_lines:
+        return
+    local_lines = []
+    if os.path.exists(local_path):
+        with open(local_path) as f:
+            local_lines = f.read().strip("\n").splitlines()
+    already = max(0, len(local_lines) - 1) if local_lines else 0
+    rss, swap = harness_ram()
+    new_rows = remote_lines[1 + already:]
+    if not local_lines:
+        with open(local_path, "w") as f:
+            f.write(remote_lines[0] + ",harness_rss_kb,harness_swap_kb\n")
+    if new_rows:
+        with open(local_path, "a") as f:
+            for row in new_rows:
+                f.write(f"{row},{rss if rss is not None else ''},"
+                        f"{swap if swap is not None else ''}\n")
+
+
 def pull_csv(host, run_dir):
-    """Copy the current soak CSV from the unit into the run dir on cm5."""
+    """Copy new rows from the unit's soak CSV into the run dir on cm5."""
     rc, out, _ = ssh(host, "cat /opt/clock8002/logs/ltc-soak.csv 2>/dev/null")
     if rc == 0 and out:
-        with open(os.path.join(run_dir, "ltc-soak.csv"), "w") as f:
-            f.write(out)
+        _merge_csv_with_harness_ram(os.path.join(run_dir, "ltc-soak.csv"), out)
     return out
 
 
@@ -359,8 +434,12 @@ def check_failure(csv_text):
 
 def cmd_run_soak(args):
     host = args.host
+    check_no_active_run(host, args.force)
     run_id, run_dir = new_run_dir("soak", host, args.label)
     manifest = Manifest(run_dir)
+
+    rss0, swap0 = harness_ram()
+    update_meta(run_dir, harness_rss_kb_start=rss0, harness_swap_kb_start=swap0)
 
     print(f"[{run_id}] capturing pre-test fingerprint...")
     fp_before = fingerprint(host)
@@ -381,6 +460,9 @@ def cmd_run_soak(args):
             print(f"[{run_id}] FAILURE DETECTED: {failure}")
             if args.on_failure == "halt":
                 break
+
+    rss1, swap1 = harness_ram()
+    update_meta(run_dir, harness_rss_kb_end=rss1, harness_swap_kb_end=swap1)
 
     outcome = "FAILED" if failure else "PASSED"
     update_meta(run_dir, status="complete", outcome=outcome,
@@ -404,8 +486,12 @@ def cmd_run_soak(args):
 
 def cmd_run_cycle(args):
     host = args.host
+    check_no_active_run(host, args.force)
     run_id, run_dir = new_run_dir("cycle", host, args.label)
     manifest = Manifest(run_dir)
+
+    rss0, swap0 = harness_ram()
+    update_meta(run_dir, harness_rss_kb_start=rss0, harness_swap_kb_start=swap0)
 
     print(f"[{run_id}] capturing pre-test fingerprint...")
     fp_before = fingerprint(host)
@@ -448,6 +534,9 @@ def cmd_run_cycle(args):
         if completed >= args.max_cycles:
             print(f"[{run_id}] all {args.max_cycles} cycles complete")
             break
+
+    rss1, swap1 = harness_ram()
+    update_meta(run_dir, harness_rss_kb_end=rss1, harness_swap_kb_end=swap1)
 
     outcome = "FAILED" if failure else "PASSED"
     update_meta(run_dir, status="complete", outcome=outcome,
@@ -622,6 +711,9 @@ def main():
                          help="seconds between checks (default 60)")
     soak_p.add_argument("--label", default="soak")
     soak_p.add_argument("--on-failure", choices=["halt", "continue"], default="halt")
+    soak_p.add_argument("--force", action="store_true",
+                         help="deploy even if another run is marked 'running' "
+                              "against this host (see check_no_active_run)")
     soak_p.set_defaults(func=cmd_run_soak)
 
     cycle_p = run_sub.add_parser("cycle", help="multi-boot reboot-cycle stability test")
@@ -639,6 +731,9 @@ def main():
                                "(default 900)")
     cycle_p.add_argument("--label", default="cycle")
     cycle_p.add_argument("--on-failure", choices=["halt", "continue"], default="halt")
+    cycle_p.add_argument("--force", action="store_true",
+                          help="deploy even if another run is marked 'running' "
+                               "against this host (see check_no_active_run)")
     cycle_p.set_defaults(func=cmd_run_cycle)
 
     for stub_mode in ("accumulate", "ab"):
