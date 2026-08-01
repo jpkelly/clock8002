@@ -1738,9 +1738,9 @@ the existing full fstab.
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- **Latest release: v1.3.5** (2026-04-26) — `master` branch (Buildroot/SDL3). Commit: `5477158`
-- Latest Trixie release: **v1.3.1** — archived on `trixie` branch
-- **Active branch: `master`** (Buildroot) — branch rename complete 2026-04-26
+- **Latest release: `trixie-v1.3.15`** (2026-07-20) — `master` branch (Trixie, primary platform). Commit: `1d5a174`
+- Latest Buildroot release: **v1.3.7** — `buildroot` branch (parked platform)
+- **Active branch: `master`** (Trixie) — platform reversal and branch rename complete 2026-07-31
 - **feature/squashfs-readonly**: HEAD `1fe6357` — Phase 9 clean-boot test **COMPLETE** (all 14 checks passed, 2026-04-29). Image `piClock-1fe6357-sdcard.img` live at `192.168.8.246`. Remaining: Issue #41 phases 3–8/10.
 - **Active monitoring**: ltcmon + alsa-ltc logging live on piClock (192.168.8.245). alsa-ltc stable; watching for USB/LTC dropout recurrence.
 - **piClock test unit** (192.168.8.245): flashed `piClock-f4679e0-sdcard.img`. OLED logo confirmed working. Network (static) working. All services up.
@@ -2230,6 +2230,10 @@ Committed changes in `v4/alsa-ltc.c`, `v4/alsa-ltc.service`, and Buildroot overl
 
 ## Branch Promotion Decision (2026-04-26)
 
+> **SUPERSEDED 2026-07-31 — see [Platform Reversal](#platform-reversal-2026-07-31) below.**
+> This decision was reversed. Trixie is now the primary platform and Buildroot is parked.
+> Retained as a historical record of the 2026-04-26 reasoning.
+
 **Decision:** Promote `buildroot` → `master`. SDL3/Buildroot is the primary deployment path going forward. SDL2/Trixie is archived as `trixie`.
 
 **Rationale:**
@@ -2252,9 +2256,31 @@ Committed changes in `v4/alsa-ltc.c`, `v4/alsa-ltc.service`, and Buildroot overl
 - `buildroot-external/README.buildroot.md` — stale `pi5start.local` → `cm5.local`; reframed as developer/builder reference
 - `README.md` on `master` (commit `a991419`) — legacy notice added pointing to new primary branch
 
+## Platform Reversal (2026-07-31)
+
+**Decision:** Reverses the 2026-04-26 promotion. **Trixie is the primary platform; Buildroot is parked.**
+
+**Evidence:**
+- All releases since `trixie-v1.3.8` (2026-07-19 onward) shipped from the `trixie` branch, built entirely from `v4/`.
+- Buildroot's last release was `v1.3.7`, two months prior.
+- The old `master` received exactly one commit after the 2026-05-27 divergence — a doc note pointing users to `trixie`. The `trixie` branch received 21 commits of product work over the same period.
+
+**Branch operations completed (2026-07-31):**
+1. ✅ Renamed `master` → `buildroot` (parked platform)
+2. ✅ Renamed `trixie` → `master` (active platform)
+3. ✅ Set `master` as the default branch
+4. ✅ Deleted `feature/root-ram` and `build/pre-squashfs` — zero unique commits, tips preserved by tags
+5. ✅ Local branch names and upstreams repointed
+6. ✅ `.github/copilot-instructions.md`, `RELEASING.md` updated for the reversal
+
+Branches reduced from 9 to 8. No history rewritten — renames only, all 212 tags unaffected.
+
+**Still unresolved:** `archive/trixie-sdl2`, `trixie-sdl3`, `buildroot-prototype`, `feature/root-ram-build-a`, `feature/squashfs-readonly` all remain; each needs a tag-then-delete decision.
+
 ## Next Suggested Release
 
-- Next planned release: **v1.4.0** — next Buildroot release cycle.
+- Next planned release: **trixie-v1.3.16** — next Trixie installer release.
+- Buildroot **v1.4.0** remains planned but parked; build only on explicit request.
 
 
 ## Update (2026-05-09, LTC recovered + .245 provenance snapshot + payload build status)

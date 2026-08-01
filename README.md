@@ -2,8 +2,8 @@
 
 An HDMI clock display for Raspberry Pi 5, controllable via OSC and a built-in web UI.
 
-> **This branch (`trixie`) installs Clock 8002 on Raspberry Pi OS / Debian Trixie.**  
-> For the ready-to-flash Buildroot appliance image, see the [`master`](https://github.com/jpkelly/clock8002/tree/master) branch.
+> **This branch (`master`) installs Clock 8002 on Raspberry Pi OS / Debian Trixie.** This is the primary, actively developed path.  
+> For the ready-to-flash Buildroot appliance image, see the [`buildroot`](https://github.com/jpkelly/clock8002/tree/buildroot) branch. That platform is maintained but parked.
 
 ## Table of Contents
 
@@ -128,7 +128,7 @@ sudo reboot
 ```
 
 > **Note:** `rpi-eeprom-update` and `reboot` require root — on Trixie you're logged
-> in as the non-root `pi` user, so both need `sudo`. (The master/Buildroot branch's
+> in as the non-root `pi` user, so both need `sudo`. (The `buildroot` branch's
 > equivalent instructions omit `sudo` because that image's default SSH login is
 > `root` directly — don't drop the `sudo` here.)
 
@@ -326,8 +326,8 @@ Upstream reference is also available at [clock-8001/v4/osc.md](https://gitlab.co
 
 Last verified: **2026-07-19**
 
-- This branch (`trixie`) provides the Raspberry Pi OS / Debian Trixie installer path.
-- The ready-to-flash Buildroot image remains on the [`master`](https://github.com/jpkelly/clock8002/tree/master) branch.
+- This branch (`master`) provides the Raspberry Pi OS / Debian Trixie installer path, and is the primary platform.
+- The ready-to-flash Buildroot image is on the [`buildroot`](https://github.com/jpkelly/clock8002/tree/buildroot) branch, maintained but parked.
 - Build policy and reproducibility rules live in [`docs/build-policy.md`](docs/build-policy.md).
 - Current branch operational state and validation targets live in [`HANDOFF.md`](HANDOFF.md).
 

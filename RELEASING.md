@@ -1,11 +1,18 @@
 # Release Process
 
-This document covers cutting a new clock8002 release. The primary release artifact is the **Buildroot SD card image**. The legacy Trixie/SDL2 install.sh path is archived on the `trixie` branch.
+This document covers cutting a new clock8002 release.
+
+The primary release artifact is the **Trixie installer tarball**, built from `v4/` on the `master` branch. See [Trixie Installer Release](#trixie-installer-release) below.
+
+The Buildroot SD card image is a **parked platform**. It is still maintained, but no new units are deployed on it and it is only built on explicit request. Its code lives on the `buildroot` branch.
+
+> Branch note (2026-07-31): what was previously the `trixie` branch is now `master`, and what was previously `master` is now `buildroot`.
 
 ## Versioning
 
 - Active release line: `v1.x` — do not use inherited upstream `v4.x` tags
-- Tag format: `v1.x.y`
+- Trixie tag format: `trixie-v1.x.y` (current line)
+- Buildroot tag format: `v1.x.y` (parked; last release `v1.3.7`)
 
 ---
 
@@ -24,9 +31,11 @@ If any metric is rising or unstable, hold release and investigate.
 
 ---
 
-## Buildroot Image Release
+## Buildroot Image Release (PARKED — only on explicit request)
 
 See [buildroot-external/README.buildroot.md](buildroot-external/README.buildroot.md) for the full build and flash workflow.
+
+This platform is dormant. Unless you have specifically been asked for a Buildroot image, use the Trixie process below instead.
 
 ### 1. Update CHANGELOG.md and HANDOFF.md
 
@@ -38,13 +47,13 @@ Add a CHANGELOG entry. Update HANDOFF.md Current State section with the new tag 
 git add CHANGELOG.md HANDOFF.md
 git commit -m "release: vX.X.X"
 git tag vX.X.X
-git push origin master vX.X.X
+git push origin buildroot vX.X.X
 ```
 
-### 3. Verify cm5 is on master at the new tag
+### 3. Verify cm5 is on the buildroot branch at the new tag
 
 ```bash
-ssh pi@cm5.local 'cd ~/clock8002 && git fetch --tags origin && git reset --hard origin/master && git branch --show-current && git describe --tags HEAD'
+ssh pi@cm5.local 'cd ~/clock8002 && git fetch --tags origin && git reset --hard origin/buildroot && git branch --show-current && git describe --tags HEAD'
 ```
 
 ### 4. Build on cm5
@@ -78,20 +87,20 @@ gh release create vX.X.X \
 
 ## Trixie Installer Release
 
-The `trixie` branch produces an installer tarball for Raspberry Pi OS / Debian Trixie (arm64). This is published separately from the Buildroot image and does **not** replace the `v1.x` Buildroot release line.
+**This is the primary release path.** The `master` branch produces an installer tarball for Raspberry Pi OS / Debian Trixie (arm64).
 
 ### Versioning
 
 - Tag format: `trixie-v1.x.y`
-- Example: `trixie-v1.3.11`
-- These tags are published as **non-Latest** GitHub releases.
+- Example: `trixie-v1.3.15`
+- These are published as normal (Latest) GitHub releases.
 
 ### Build and publish
 
-1. Ensure the `trixie` branch contains the desired code and HANDOFF.md is updated.
-2. On the ARM64 Trixie builder (`pi@pi5start.local`):
+1. Ensure the `master` branch contains the desired code and HANDOFF.md is updated.
+2. On an ARM64 Trixie builder — `pi@cm5.local` preferred, `pi@pi5start.local` as fallback when cm5 is unavailable:
    ```bash
-   cd ~/clock8002 && git fetch origin && git checkout trixie && git reset --hard origin/trixie
+   cd ~/clock8002 && git fetch origin && git checkout master && git reset --hard origin/master
    rm -rf v4/lib && cp -r ~/sdl3-build/sdl3-trixie-lib v4/lib
    cd v4
    make clean
@@ -103,12 +112,11 @@ The `trixie` branch produces an installer tarball for Raspberry Pi OS / Debian T
    git tag -a trixie-vX.X.X -m "Clock 8002 Trixie release vX.X.X"
    git push origin trixie-vX.X.X
    ```
-5. Create a non-Latest release:
+5. Create the release:
    ```bash
    gh release create trixie-vX.X.X \
        --title "Clock 8002 Trixie vX.X.X" \
        --notes-file /tmp/trixie-vX.X.X-release-notes.md \
-       --latest=false \
        /Users/jp/Desktop/clock8002-trixie-vX.X.X-default-linux-arm64.tar.gz
    ```
 
