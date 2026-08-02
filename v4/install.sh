@@ -258,14 +258,15 @@ fi
 # user-data carries "ssh_pwauth: false", which is what writes
 # /etc/ssh/sshd_config.d/50-cloud-init.conf with PasswordAuthentication no.
 # cloud-guest-utils is deliberately left installed; it ships no services or state,
-# only helpers such as growpart.
+# only helpers such as growpart. No autoremove either — on 2026-08-02 it took 28
+# packages including gdisk and cloud-guest-utils itself. Orphaned python deps are
+# only wasted disk; silently removing partition tooling is a worse trade.
 echo "Removing cloud-init..."
 for unit in cloud-init-main cloud-init-local cloud-init-network cloud-config \
             cloud-final cloud-init-hotplugd.socket cloud-init-hotplugd; do
     sudo systemctl disable --now "${unit}" 2>/dev/null || true
 done
 sudo DEBIAN_FRONTEND=noninteractive apt-get purge -y cloud-init rpi-cloud-init-mods 2>/dev/null || true
-sudo DEBIAN_FRONTEND=noninteractive apt-get autoremove -y 2>/dev/null || true
 sudo rm -rf /etc/cloud /var/lib/cloud /run/cloud-init
 sudo rm -f /etc/ssh/sshd_config.d/50-cloud-init.conf
 sudo rm -f /boot/firmware/user-data /boot/firmware/meta-data /boot/firmware/network-config
