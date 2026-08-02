@@ -418,6 +418,8 @@ Log file location (root user): `/root/.config/clock-8001/clock.log`
 
 ## Config Files
 
+Buildroot uses the boot-partition config path `/boot/piclock/`. This differs from the Trixie installer layout, which uses `/boot/firmware/piclock/`. The current Buildroot behavior is intentionally unchanged: Buildroot images continue to read and write their persistent config files from `/boot/piclock/` on the FAT boot partition.
+
 Config files live on the boot partition under `/boot/piclock/`:
 
 | File | Purpose |
