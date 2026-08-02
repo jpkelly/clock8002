@@ -1738,7 +1738,7 @@ the existing full fstab.
 
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
-- **Latest release: `trixie-v1.3.15`** (2026-07-20) — `master` branch (Trixie, primary platform). Commit: `1d5a174`
+- **Latest release: `v1.3.16`** (2026-08-02) — `master` branch (Trixie, primary platform). Commit: `d15f825`. First release to drop the `trixie-` tag prefix.
 - Latest Buildroot release: **v1.3.7** — `buildroot` branch (parked platform)
 - **Active branch: `master`** (Trixie) — platform reversal and branch rename complete 2026-07-31
 - **feature/squashfs-readonly**: HEAD `1fe6357` — Phase 9 clean-boot test **COMPLETE** (all 14 checks passed, 2026-04-29). Image `piClock-1fe6357-sdcard.img` live at `192.168.8.246`. Remaining: Issue #41 phases 3–8/10.

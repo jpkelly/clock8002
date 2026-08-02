@@ -1,3 +1,27 @@
+## Version 1.3.16 (2026-08-02) — Trixie
+
+* USB / PCIe
+  * Fix VL805 USB xHCI controller wedge under LTC capture. The PCIe link
+    between the SoC and the VL805 (5GT/s Gen2) was producing correctable
+    errors that triggered hardware-initiated link retrains; the controller
+    could not always recover cleanly from its own retrain, leaving the LTC
+    capture device's isoc endpoints unserviced (`-EIO`, USB interface reset
+    failures). `install.sh` now sets `dtparam=pciex1_gen=1` in
+    `/boot/firmware/config.txt`, dropping the link to Gen1 (2.5GT/s) and
+    roughly doubling the signal timing margin. Validated with a 12h soak
+    (661 samples, zero errors) on a unit that previously wedged in as little
+    as 10-11 seconds at Gen2.
+* Boot config
+  * Package `v4/boot-README.txt` in the release tarball and install it as
+    `README.txt` in the boot config folder (`/boot/firmware/piclock/`),
+    documenting `network.ini`/`clock.ini`/`oled.ini` for users editing the
+    boot partition directly from a Mac/PC.
+* Release process
+  * Drop the `trixie-` tag/Makefile-target prefix now that Buildroot is a
+    parked platform and Trixie is the only actively developed line. Tag
+    format going forward is `v1.x.y`; `trixie-v1.3.15` and earlier remain
+    unchanged as historical tags.
+
 ## Version 1.3.15 (2026-07-20) — Trixie
 
 * Boot / network
