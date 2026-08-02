@@ -1,0 +1,13 @@
+[Unit]
+Description=Install SSH keys from the piClock boot partition
+After=local-fs.target
+Requires=local-fs.target
+ConditionPathExists=/boot/firmware/piclock/authorized_keys
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/clock8002/piclock-authorized-keys.sh pi
+
+[Install]
+WantedBy=multi-user.target

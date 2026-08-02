@@ -58,6 +58,8 @@ release: sdl-clock alsa-ltc ## Package an installer tarball for NETWORK_CONFIG v
 	@cp alsa-ltc.service $(RELEASE_DIR)/
 	@cp piclock-network.sh $(RELEASE_DIR)/
 	@cp piclock-network.service $(RELEASE_DIR)/
+	@cp piclock-authorized-keys.sh $(RELEASE_DIR)/
+	@cp piclock-authorized-keys.service $(RELEASE_DIR)/
 	@cp install.sh $(RELEASE_DIR)/
 	@cp network.ini.$(NETWORK_CONFIG) $(RELEASE_DIR)/network.ini
 	@chmod +x $(RELEASE_DIR)/install.sh

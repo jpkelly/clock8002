@@ -236,6 +236,60 @@ if [ -f piclock-network.service ]; then
     sudo systemctl enable piclock-network
 fi
 
+# Install the boot-partition SSH key importer. Without this the documented
+# /boot/firmware/piclock/authorized_keys drop does nothing on Trixie.
+if [ -f piclock-authorized-keys.sh ]; then
+    sudo cp piclock-authorized-keys.sh "${INSTALL_DIR}/"
+    sudo chmod +x "${INSTALL_DIR}/piclock-authorized-keys.sh"
+fi
+if [ -f piclock-authorized-keys.service ]; then
+    sed "s|piclock-authorized-keys.sh .*|piclock-authorized-keys.sh ${INSTALL_USER}|" \
+        piclock-authorized-keys.service | \
+        sudo tee /etc/systemd/system/piclock-authorized-keys.service >/dev/null
+    sudo systemctl enable piclock-authorized-keys
+    # Apply now so a key already on the boot partition works without a reboot.
+    sudo "${INSTALL_DIR}/piclock-authorized-keys.sh" "${INSTALL_USER}" || true
+fi
+
+# Remove cloud-init. Raspberry Pi Imager provisions the first boot via
+# cloud-config (/boot/firmware/user-data), which has already run by the time this
+# installer executes, and everything it manages afterwards — hostname, network,
+# SSH — the piClock manages itself. It is also the source of the key-only lockout:
+# user-data carries "ssh_pwauth: false", which is what writes
+# /etc/ssh/sshd_config.d/50-cloud-init.conf with PasswordAuthentication no.
+# cloud-guest-utils is deliberately left installed; it ships no services or state,
+# only helpers such as growpart.
+echo "Removing cloud-init..."
+for unit in cloud-init-main cloud-init-local cloud-init-network cloud-config \
+            cloud-final cloud-init-hotplugd.socket cloud-init-hotplugd; do
+    sudo systemctl disable --now "${unit}" 2>/dev/null || true
+done
+sudo DEBIAN_FRONTEND=noninteractive apt-get purge -y cloud-init rpi-cloud-init-mods 2>/dev/null || true
+sudo DEBIAN_FRONTEND=noninteractive apt-get autoremove -y 2>/dev/null || true
+sudo rm -rf /etc/cloud /var/lib/cloud /run/cloud-init
+sudo rm -f /etc/ssh/sshd_config.d/50-cloud-init.conf
+sudo rm -f /boot/firmware/user-data /boot/firmware/meta-data /boot/firmware/network-config
+
+# Keep password login available. A unit whose only route in is a public key
+# becomes unrecoverable the moment that key is missing or removed — no console,
+# no way back (observed 2026-08-02). Raspberry Pi Imager sets
+# PasswordAuthentication no when provisioned with a key and no password.
+echo "Ensuring SSH password authentication is enabled..."
+if grep -qE '^[[:space:]]*Include[[:space:]]+/etc/ssh/sshd_config\.d/' /etc/ssh/sshd_config; then
+    sudo mkdir -p /etc/ssh/sshd_config.d
+    printf 'PasswordAuthentication yes\nKbdInteractiveAuthentication yes\n' | \
+        sudo tee /etc/ssh/sshd_config.d/10-piclock-password-auth.conf >/dev/null
+else
+    # No drop-in support; edit the main config in place.
+    sudo sed -i \
+        -e 's|^[[:space:]]*#\?[[:space:]]*PasswordAuthentication .*|PasswordAuthentication yes|' \
+        -e 's|^[[:space:]]*#\?[[:space:]]*KbdInteractiveAuthentication .*|KbdInteractiveAuthentication yes|' \
+        /etc/ssh/sshd_config
+    grep -q '^PasswordAuthentication yes' /etc/ssh/sshd_config || \
+        printf '\nPasswordAuthentication yes\n' | sudo tee -a /etc/ssh/sshd_config >/dev/null
+fi
+sudo systemctl restart ssh 2>/dev/null || sudo systemctl restart sshd 2>/dev/null || true
+
 # Speed up boot: mask NetworkManager-wait-online. The clock does not need the
 # network to be "online" before starting, and on a static-only wired network
 # eth0's DHCP probe times out (~45s), stalling boot and delaying both the static
@@ -480,4 +534,14 @@ if [ -f /etc/systemd/system/alsa-ltc.service ]; then
 fi
 
 echo ""
-echo "Reboot to finish installation: sudo reboot"
+# Guard on a terminal: piping the installer (curl | bash) leaves stdin consumed,
+# and an unguarded read would take the reboot decision without asking.
+if [ -t 0 ]; then
+    read -rp "Reboot now to finish installation? [Y/n] " reply
+    case "$reply" in
+        [Nn]*) echo "Skipped. Reboot later with: sudo reboot" ;;
+        *)     echo "Rebooting..."; sudo reboot ;;
+    esac
+else
+    echo "Reboot to finish installation: sudo reboot"
+fi
