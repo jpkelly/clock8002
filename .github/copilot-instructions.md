@@ -1,7 +1,7 @@
-Platform status (updated 2026-07-31):
+Platform status (updated 2026-08-02):
 - **Raspberry Pi OS Trixie is the primary platform.** All current releases ship from it.
 - **Buildroot is maintained but parked.** No new units are deployed on it and it receives no active development. Only build it on explicit request.
-- Latest release: `trixie-v1.3.15`, built from `v4/` on `master`.
+- Latest release: `trixie-v1.3.15`, built from `v4/` on `master`. The next release drops the `trixie-` prefix (tag `v1.3.16`) since Trixie is now the only actively developed platform — see Release management note below.
 - Buildroot's last release was `v1.3.7`.
 
 Branch layout (renamed 2026-07-31):
@@ -70,11 +70,11 @@ Branch safety note:
 - For a Buildroot feature-branch build on cm5: (1) switch cm5 to the feature branch, (2) build, (3) switch cm5 back to `buildroot` immediately after. Leaving cm5 on a feature branch will corrupt the next build.
 
 Release management note:
-- The primary release artifact is the **Trixie installer tarball** (`clock8002-trixie-v1.x.y-<variant>-linux-arm64.tar.gz`), produced by `make trixie-release` in `v4/`. This is what gets attached to GitHub releases.
-- Tag format for Trixie releases: `trixie-v1.x.y`.
+- The primary release artifact is the **installer tarball** (`clock8002-v1.x.y-<variant>-linux-arm64.tar.gz`), produced by `make release` in `v4/`. This is what gets attached to GitHub releases.
+- Tag format: `v1.x.y`, starting with `v1.3.16`. Releases before that used `trixie-v1.x.y` (e.g. `trixie-v1.3.15`) — those existing tags are historical and are not renamed.
 - Trixie builder: `pi@cm5.local` is preferred; fall back to `pi@pi5start.local` when cm5 is unavailable. Record which host was used in the release notes.
-- Builder prerequisite: the release step copies `~/sdl3-build/sdl3-trixie-lib` into `v4/lib`. As of 2026-07-31 that bundle exists on pi5start but NOT on cm5 — provision it before using cm5 for a release. Verify the path exists before starting a build on either host.
-- `make trixie-release-all` builds both NETWORK_CONFIG variants (`default` and `gerry`).
+- Builder prerequisite: the release step copies `~/sdl3-build/sdl3-trixie-lib` into `v4/lib`. As of 2026-08-02 that bundle exists on both cm5 and pi5start. Verify the path exists before starting a build on either host.
+- `make release-all` builds both NETWORK_CONFIG variants (`default` and `gerry`).
 - Full procedure: see RELEASING.md § Trixie Installer Release.
 - The Buildroot SD card image (`piClock-<commit>-sdcard.img`) is the parked platform's artifact. Only build or attach it on explicit request.
 - Versioning must follow this repository's own tag line (`v1.x` and onward); ignore inherited upstream `v4.x` tags from the fork source.

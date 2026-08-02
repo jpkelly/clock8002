@@ -11,8 +11,11 @@ The Buildroot SD card image is a **parked platform**. It is still maintained, bu
 ## Versioning
 
 - Active release line: `v1.x` — do not use inherited upstream `v4.x` tags
-- Trixie tag format: `trixie-v1.x.y` (current line)
-- Buildroot tag format: `v1.x.y` (parked; last release `v1.3.7`)
+- Tag format: `v1.x.y` (dropped the `trixie-` prefix starting with `v1.3.16`, since Trixie is
+  now the only actively developed platform). Releases before that used `trixie-v1.x.y` —
+  those existing tags are historical and are not renamed.
+- Buildroot tag format: `v1.x.y` (parked; last release `v1.3.7`) — same tag namespace,
+  disambiguated by branch (`buildroot`) rather than a prefix.
 
 ---
 
@@ -91,8 +94,8 @@ gh release create vX.X.X \
 
 ### Versioning
 
-- Tag format: `trixie-v1.x.y`
-- Example: `trixie-v1.3.15`
+- Tag format: `v1.x.y` (starting with `v1.3.16`; earlier releases used `trixie-v1.x.y`)
+- Example: `v1.3.16`
 - These are published as normal (Latest) GitHub releases.
 
 ### Build and publish
@@ -104,20 +107,20 @@ gh release create vX.X.X \
    rm -rf v4/lib && cp -r ~/sdl3-build/sdl3-trixie-lib v4/lib
    cd v4
    make clean
-   make trixie-release GIT_TAG=trixie-vX.X.X
+   make release GIT_TAG=vX.X.X
    ```
 3. Transfer the tarball locally and verify checksums match.
 4. Tag and push:
    ```bash
-   git tag -a trixie-vX.X.X -m "Clock 8002 Trixie release vX.X.X"
-   git push origin trixie-vX.X.X
+   git tag -a vX.X.X -m "Clock 8002 release vX.X.X"
+   git push origin vX.X.X
    ```
 5. Create the release:
    ```bash
-   gh release create trixie-vX.X.X \
-       --title "Clock 8002 Trixie vX.X.X" \
-       --notes-file /tmp/trixie-vX.X.X-release-notes.md \
-       /Users/jp/Desktop/clock8002-trixie-vX.X.X-default-linux-arm64.tar.gz
+   gh release create vX.X.X \
+       --title "Clock 8002 vX.X.X" \
+       --notes-file /tmp/vX.X.X-release-notes.md \
+       /Users/jp/Desktop/clock8002-vX.X.X-default-linux-arm64.tar.gz
    ```
 
 ### Notes

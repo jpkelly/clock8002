@@ -2279,7 +2279,7 @@ Branches reduced from 9 to 8. No history rewritten — renames only, all 212 tag
 
 ## Next Suggested Release
 
-- Next planned release: **trixie-v1.3.16** — next Trixie installer release.
+- Next planned release: **v1.3.16** — next Trixie installer release (first tag to drop the `trixie-` prefix; see RELEASING.md § Versioning).
 - Buildroot **v1.4.0** remains planned but parked; build only on explicit request.
 
 
