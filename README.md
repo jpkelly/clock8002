@@ -191,7 +191,7 @@ Once connected to the AP, open `http://piClock.local` (or the unit's AP-side IP)
 
 ### authorized_keys
 
-Place SSH public key(s) in `/boot/firmware/piclock/authorized_keys` for passwordless root login. Applied at every boot — no reflash required.
+Place SSH public key(s) in `/boot/firmware/piclock/authorized_keys` for passwordless login as the `pi` user. Applied at every boot — no reflash required.
 
 When the SD card is mounted on your computer, the FAT boot partition will appear as a drive named `piClock`. Add your public key(s) to the file `piclock/authorized_keys` on that partition (create the file if it does not exist).
 
