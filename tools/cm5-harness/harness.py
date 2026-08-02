@@ -650,7 +650,17 @@ def cmd_revert(args):
                 ssh(host, f"sudo rm -f '/var/lib/systemd/timers/stamp-{unit}'")
 
     ssh(host, "sudo systemctl daemon-reload")
-    update_meta(run_dir, reverted=datetime.datetime.now().isoformat())
+    fields = {"reverted": datetime.datetime.now().isoformat()}
+    # A run killed before cmd_run_* could set status=complete stays "running"
+    # forever, and check_no_active_run then blocks every future run against that
+    # host (observed 2026-08-02: a cancelled soak blocked the next deploy even
+    # after a clean revert). Reverting a run is the point at which it is
+    # provably no longer active, so settle the status here. Only touch it while
+    # it still reads "running" - never downgrade a completed run.
+    if meta.get("status") == "running":
+        fields["status"] = "cancelled"
+        fields["outcome"] = "cancelled"
+    update_meta(run_dir, **fields)
     print("revert complete. Run 'verify' to confirm.")
 
 
