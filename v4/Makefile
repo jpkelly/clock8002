@@ -74,6 +74,7 @@ trixie-release: sdl-clock alsa-ltc ## Package a Trixie installer tarball
 	@mkdir -p $(TRIXIE_RELEASE_DIR)
 	@cp sdl-clock $(TRIXIE_RELEASE_DIR)/
 	@cp alsa-ltc $(TRIXIE_RELEASE_DIR)/
+	@cp boot-README.txt $(TRIXIE_RELEASE_DIR)/
 	@if [ -d lib ]; then mkdir -p $(TRIXIE_RELEASE_DIR)/lib && cp -P lib/*.so* $(TRIXIE_RELEASE_DIR)/lib/; fi
 	@cp clock.ini.$(NETWORK_CONFIG) $(TRIXIE_RELEASE_DIR)/clock.ini
 	@cp ttf_fonts/*.ttf $(TRIXIE_RELEASE_DIR)/

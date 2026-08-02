@@ -148,6 +148,11 @@ sudo mkdir -p "${BOOT_CONFIG_DIR}"
 mkdir -p "${CONFIG_DIR}"
 chown "${INSTALL_USER}:${INSTALL_USER}" "${CONFIG_DIR}"
 
+# Install the boot config folder README so it's readable from Mac/PC/SSH.
+if [ -f boot-README.txt ]; then
+    sudo cp boot-README.txt "${BOOT_CONFIG_DIR}/README.txt"
+fi
+
 # Allow the current user to write to the FAT32 boot partition (enables web UI config saves).
 # vfat does not support per-file ownership; uid/gid mount options control effective ownership.
 if grep -qE '[[:space:]]/boot/firmware[[:space:]]' /etc/fstab; then
@@ -265,6 +270,21 @@ if [ -f "${RTC_CFG}" ]; then
     else
         echo "Enabling RTC battery charging in ${RTC_CFG}..."
         echo "${RTC_PARAM}" | sudo tee -a "${RTC_CFG}" > /dev/null
+    fi
+fi
+
+# Drop the VL805 PCIe link to Gen1 (2.5GT/s). Mitigates correctable-error-driven
+# link retrains that leave the USB xHCI controller unable to recover, wedging
+# the LTC capture device. See VL805/LTC wedge investigation.
+PCIE_CFG="/boot/firmware/config.txt"
+PCIE_PARAM="dtparam=pciex1_gen=1"
+if [ -f "${PCIE_CFG}" ]; then
+    if grep -q "^dtparam=pciex1_gen=" "${PCIE_CFG}"; then
+        echo "Updating PCIe link speed setting in ${PCIE_CFG}..."
+        sudo sed -i "s|^dtparam=pciex1_gen=.*|${PCIE_PARAM}|" "${PCIE_CFG}"
+    else
+        echo "Setting PCIe link speed to Gen1 in ${PCIE_CFG}..."
+        echo "${PCIE_PARAM}" | sudo tee -a "${PCIE_CFG}" > /dev/null
     fi
 fi
 
