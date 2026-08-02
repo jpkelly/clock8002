@@ -1,0 +1,17 @@
+[Unit]
+Description=PCIe link retrain trigger tracer (kprobes on config-space writes)
+Documentation=file:/opt/clock8002/retrain-trigger.sh
+# Must be armed before the USB stack settles: the retrain has been observed
+# within 10s of boot, and kprobes cannot capture what happened before them.
+DefaultDependencies=no
+After=sysinit.target
+Before=alsa-ltc.service ltc-forensics.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/clock8002/retrain-trigger.sh start
+ExecStop=/opt/clock8002/retrain-trigger.sh stop
+
+[Install]
+WantedBy=sysinit.target

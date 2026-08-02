@@ -1,0 +1,16 @@
+# Installed to /etc/default/ltc-forensics — read by ltc-forensics.service.
+OUTDIR=/var/log/ltc-forensics
+# Fast sample rate. Measured cost is ~0.1 ms/sample, so 10 Hz is ~0.1% of one core.
+HZ=10
+# Seconds of pre-trigger history held in RAM and flushed when a trigger fires.
+# 600 s at 10 Hz is 6000 rows, a few MB.
+PRE_SECONDS=600
+# Seconds of full-rate sampling to continue after a trigger.
+POST_SECONDS=120
+# 0 = capture every trigger. At ~1.5 MB/event against 25 GB free, rate-limiting
+# risked masking a wedge capture behind a trivial one, which is the worse failure.
+COOLDOWN=0
+MAX_EVENTS=2000
+# Kernel-level capture. Measured on this unit: usbmon ~200 KB/s, xHCI ftrace
+# ~840 KB/s all landing on cpu0, so only cpu0 gets a deep ring (~14 s of history).
+EXTRA_ARGS=--usbmon --usbmon-seconds 30 --ftrace --ftrace-cpu0-kb 12288

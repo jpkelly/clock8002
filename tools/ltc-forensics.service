@@ -1,0 +1,22 @@
+[Unit]
+Description=LTC/USB/xHCI high-resolution forensic recorder
+Documentation=file:/opt/clock8002/ltc-forensics.py
+After=alsa-ltc.service
+Wants=alsa-ltc.service
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/ltc-forensics
+ExecStartPre=-/sbin/modprobe usbmon
+# Needs root for xHCI debugfs; reads only, never writes to hardware.
+ExecStart=/opt/clock8002/ltc-forensics.py --outdir ${OUTDIR} --hz ${HZ} \
+          --pre-seconds ${PRE_SECONDS} --post-seconds ${POST_SECONDS} \
+          --cooldown ${COOLDOWN} --max-events ${MAX_EVENTS} $EXTRA_ARGS
+Restart=always
+RestartSec=5
+Nice=-5
+# The recorder must never be the reason the box runs out of memory.
+MemoryMax=192M
+
+[Install]
+WantedBy=multi-user.target
