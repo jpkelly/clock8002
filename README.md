@@ -218,7 +218,7 @@ rotation=2
 | `clock.ini` | `/boot/firmware/piclock/clock.ini` | Main clock config — face, colors, sources, timers, OSC, GPIO, web UI port |
 | `network.ini` | `/boot/firmware/piclock/network.ini` | Network config — DHCP/static IP, hostname, Wi-Fi AP mode |
 | `oled.ini` | `/boot/firmware/piclock/oled.ini` | OLED display — enable, I²C bus, rotation |
-| `authorized_keys` | `/boot/firmware/piclock/authorized_keys` | SSH public keys for passwordless root login |
+| `authorized_keys` | `/boot/firmware/piclock/authorized_keys` | SSH public keys for passwordless login as the `pi` user |
 
 Changes to `clock.ini` take effect on service restart or via the web UI. Changes to `network.ini` take effect on reboot.
 
