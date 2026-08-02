@@ -287,7 +287,7 @@ ip route show       # should include: 255.255.255.255 dev eth0 scope link
 
 ## GPIO/UART Serial Connections
 
-See the [piClock wiring diagram (PDF)](docs/piClockWiring.pdf) for a visual overview of UART, RS-485, LTC, and HDMI connections.
+See the [piClock wiring diagram (PDF)](https://github.com/jpkelly/clock8002/raw/master/docs/piClockWiring.pdf) for a visual overview of UART, RS-485, LTC, and HDMI connections.
 
 The installer enables the required UART overlays in `/boot/firmware/config.txt`. Reboot after installation for the overlays to take effect.
 
