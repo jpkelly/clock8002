@@ -72,12 +72,12 @@ ssh pi@piclock.local
 
 ### 2. Download and install Clock 8002
 
-Download the latest Trixie release tarball from the [Releases](https://github.com/jpkelly/clock8002/releases) page. Look for assets named `clock8002-trixie-vX.X.X-default-linux-arm64.tar.gz`.
+Download the latest Trixie release tarball from the [Releases](https://github.com/jpkelly/clock8002/releases) page. Look for assets named `clock8002-vX.X.Y-default-linux-arm64.tar.gz`.
 
 ```bash
-wget https://github.com/jpkelly/clock8002/releases/download/trixie-v1.3.15/clock8002-trixie-v1.3.15-default-linux-arm64.tar.gz
-tar xzf clock8002-trixie-v1.3.15-default-linux-arm64.tar.gz
-cd clock8002-trixie-v1.3.15-default-linux-arm64
+wget https://github.com/jpkelly/clock8002/releases/download/v1.3.16/clock8002-v1.3.16-default-linux-arm64.tar.gz
+tar xzf clock8002-v1.3.16-default-linux-arm64.tar.gz
+cd clock8002-v1.3.16-default-linux-arm64
 sudo bash install.sh
 ```
 
