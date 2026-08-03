@@ -74,10 +74,12 @@ ssh pi@piclock.local
 
 Download the latest Trixie release tarball from the [Releases](https://github.com/jpkelly/clock8002/releases) page. Look for assets named `clock8002-vX.X.Y-default-linux-arm64.tar.gz`.
 
+> **Current recommended version: `v1.4.0-rc2`.** It is a release candidate in burn-in, but it is the version to install — it fixes SSH key provisioning from the boot partition and prevents a key-only lockout. It will be promoted to `v1.4.0` unchanged once burn-in completes.
+
 ```bash
-wget https://github.com/jpkelly/clock8002/releases/download/v1.3.16/clock8002-v1.3.16-default-linux-arm64.tar.gz
-tar xzf clock8002-v1.3.16-default-linux-arm64.tar.gz
-cd clock8002-v1.3.16-default-linux-arm64
+wget https://github.com/jpkelly/clock8002/releases/download/v1.4.0-rc2/clock8002-v1.4.0-rc2-default-linux-arm64.tar.gz
+tar xzf clock8002-v1.4.0-rc2-default-linux-arm64.tar.gz
+cd clock8002-v1.4.0-rc2-default-linux-arm64
 sudo bash install.sh
 ```
 
