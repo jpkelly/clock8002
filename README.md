@@ -129,11 +129,6 @@ sudo rpi-eeprom-update -d -f /tmp/custom.bin
 sudo reboot
 ```
 
-> **Note:** `rpi-eeprom-update` and `reboot` require root — on Trixie you're logged
-> in as the non-root `pi` user, so both need `sudo`. (The `buildroot` branch's
-> equivalent instructions omit `sudo` because that image's default SSH login is
-> `root` directly — don't drop the `sudo` here.)
-
 After reboot, verify with `rpi-eeprom-config` — expect `BOOT_ORDER=0xf1`.
 
 ## Pre-boot Configuration
