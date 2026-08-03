@@ -261,9 +261,9 @@ fi
 # user-data carries "ssh_pwauth: false", which is what writes
 # /etc/ssh/sshd_config.d/50-cloud-init.conf with PasswordAuthentication no.
 # cloud-guest-utils is deliberately left installed; it ships no services or state,
-# only helpers such as growpart. No autoremove either — on 2026-08-02 it took 28
-# packages including gdisk and cloud-guest-utils itself. Orphaned python deps are
-# only wasted disk; silently removing partition tooling is a worse trade.
+# only helpers such as growpart. No autoremove either — on 2026-08-02 it took 30
+# packages including gdisk and netcat-openbsd. Orphaned python deps are only
+# wasted disk; silently removing a unit's network debugging tools is a worse trade.
 echo "Removing cloud-init..."
 for unit in cloud-init-main cloud-init-local cloud-init-network cloud-config \
             cloud-final cloud-init-hotplugd.socket cloud-init-hotplugd; do
