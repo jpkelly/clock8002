@@ -70,7 +70,6 @@ release: sdl-clock alsa-ltc ## Package an installer tarball for NETWORK_CONFIG v
 
 release-all: sdl-clock alsa-ltc ## Package release tarballs for all variants
 	$(MAKE) release NETWORK_CONFIG=default
-	$(MAKE) release NETWORK_CONFIG=gerry
 
 linux: sdl3-clock_linux_amd64 sdl3-clock_linux_arm64
 
