@@ -101,26 +101,44 @@ gh release create vX.X.X \
 ### Build and publish
 
 1. Ensure the `master` branch contains the desired code and HANDOFF.md is updated.
-2. On an ARM64 Trixie builder — `pi@cm5.local` preferred, `pi@pi5start.local` as fallback when cm5 is unavailable:
+2. **Tag before building.** The Makefile falls back to `git describe --tags --abbrev=0 HEAD`
+   when `GIT_TAG` isn't passed, which resolves to the nearest ancestor tag (e.g. a leftover
+   `-rc1`/`-rc2`) if HEAD itself isn't tagged yet. Tagging first closes that trap:
    ```bash
-   cd ~/clock8002 && git fetch origin && git checkout master && git reset --hard origin/master
+   git tag -a vX.X.X -m "Clock 8002 release vX.X.X"
+   git push origin vX.X.X
+   ```
+3. On an ARM64 Trixie builder — `pi@cm5.local` preferred, `pi@pi5start.local` as fallback when cm5 is unavailable:
+   ```bash
+   cd ~/clock8002 && git fetch --tags origin && git checkout vX.X.X
    rm -rf v4/lib && cp -r ~/sdl3-build/sdl3-trixie-lib v4/lib
    cd v4
    make clean
    make release GIT_TAG=vX.X.X
    ```
-3. Transfer the tarball locally and verify checksums match.
-4. Tag and push:
+   Pass `GIT_TAG` explicitly even though HEAD is now tagged — belt and braces.
+4. Verify the built binary reports the tag you expect before publishing, not just that the
+   build succeeded:
    ```bash
-   git tag -a vX.X.X -m "Clock 8002 release vX.X.X"
-   git push origin vX.X.X
+   tar xzOf clock8002-vX.X.X-default-linux-arm64.tar.gz clock8002-vX.X.X-default-linux-arm64/alsa-ltc > /tmp/a && chmod +x /tmp/a && /tmp/a --version
    ```
-5. Create the release:
+5. **Publish directly from the builder (default).** `cm5.local` has `gh` installed and
+   authenticated — publish the release from there rather than round-tripping the ~30 MB
+   tarball through a laptop:
    ```bash
    gh release create vX.X.X \
        --title "Clock 8002 vX.X.X" \
        --notes-file /tmp/vX.X.X-release-notes.md \
-       /Users/jp/Desktop/clock8002-vX.X.X-default-linux-arm64.tar.gz
+       --latest \
+       clock8002-vX.X.X-default-linux-arm64.tar.gz
+   ```
+   **Fallback (builder has no `gh`, or `gh auth status` fails there):** `scp` the tarball to
+   the Mac and run `gh release create` locally instead. If you do this, verify the checksum
+   on both ends before publishing — a truncated `scp` produces a corrupt but plausible-sized
+   file, and only the checksum catches it:
+   ```bash
+   scp pi@cm5.local:~/clock8002/v4/clock8002-vX.X.X-default-linux-arm64.tar.gz /Users/jp/Desktop/
+   shasum -a 256 /Users/jp/Desktop/clock8002-vX.X.X-default-linux-arm64.tar.gz   # compare against sha256sum on the builder
    ```
 
 ### Notes
