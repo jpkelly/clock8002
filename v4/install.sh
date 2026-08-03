@@ -70,6 +70,9 @@ REQUIRED_SDL3_PACKAGES=(
     python3-luma.oled
     fbi
     util-linux-extra
+    # nc arrives as a cloud-init dependency on stock images and disappears with it;
+    # request it explicitly so removing cloud-init cannot take it.
+    netcat-openbsd
 )
 
 if ! sudo apt install -y "${REQUIRED_SDL3_PACKAGES[@]}"; then
