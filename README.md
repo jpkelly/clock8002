@@ -181,7 +181,7 @@ ap_country=US
 
 **`dns=`** — writes a nameserver to `/etc/resolv.conf` at boot. Only needed in `static` mode; DHCP provides DNS automatically. Example: `dns=1.1.1.1`.
 
-> **NTP on piClock:** Runs a one-shot sync at boot via BusyBox `ntpd`. If your network requires a specific NTP server, place an `ntp.conf` file on the `piClock` volume and it will be used instead of the public pool. The clock also synchronises via LTC when available — NTP is only needed for initial time accuracy at boot.
+> **NTP on piClock:** Controlled by `ntp=true|false` in `network.ini`, applied via `timedatectl set-ntp` (systemd-timesyncd) at boot. NTP is only needed for initial time accuracy at boot.
 
 piClock can run a Wi-Fi AP alongside its wired or wireless client connection. When active, it creates a hotspot you can join directly from a laptop or phone — useful to wirelessly access the piClock without relying on an existing network.
 
@@ -189,7 +189,7 @@ Set `ap_enabled=true` in `network.ini` to enable it. Set to `false` (the default
 
 Once connected to the AP, open `http://piClock.local` (or the unit's AP-side IP) in a browser.
 
-> **OLED indicator:** The small dot in the top-right corner of the OLED display is lit when the Wi-Fi AP is active, and dark when it is off.
+> **OLED indicator:** A Wi-Fi icon appears in the top-right corner of the OLED display when the Wi-Fi AP is active, and is absent when it is off.
 
 ### authorized_keys
 
@@ -252,7 +252,7 @@ sudo systemctl start piclock-network
 sudo systemctl status piclock-network
 ```
 
-Log file: `journalctl -u clock8002`
+Log file: `~/.config/clock-8001/clock.log` (also viewable in the web UI). `journalctl -u clock8002` only shows startup output before logging redirects to this file.
 
 ### LTC (alsa-ltc)
 
@@ -314,9 +314,10 @@ Upstream reference is also available at [clock-8001/v4/osc.md](https://gitlab.co
 
 ## Project Status
 
-Last verified: **2026-07-19**
+Last verified: **2026-08-02**
 
 - This branch (`master`) provides the Raspberry Pi OS / Debian Trixie installer path, and is the primary platform.
+- Current recommended install is `v1.4.0-rc2` (see Quick Start above) — in burn-in ahead of a stable `v1.4.0` tag.
 - The ready-to-flash Buildroot image is on the [`buildroot`](https://github.com/jpkelly/clock8002/tree/buildroot) branch, maintained but parked.
 - Build policy and reproducibility rules live in [`docs/build-policy.md`](docs/build-policy.md).
 - Current branch operational state and validation targets live in [`HANDOFF.md`](HANDOFF.md).
