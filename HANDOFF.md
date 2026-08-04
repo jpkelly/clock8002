@@ -2080,14 +2080,15 @@ network interface) before using it. Never assume it exists at S## script time.
 
 ## Release Process (Current)
 
+> See RELEASING.md § Trixie Installer Release — the authoritative, current procedure.
 1. Update `CHANGELOG.md`.
 2. Ensure `README.md` quick-install commands point to the new version.
 3. Commit, tag, and push:
    - `git tag v1.x.y`
    - `git push origin v1.x.y`
-4. Build on pi5start from a fresh clone at the tag:
-   - `make release-all GIT_TAG=v1.x.y` (produces default + gerry tarballs)
-5. Publish GitHub release with both tarballs.
+4. Build on an ARM64 Trixie builder (`pi@cm5.local` preferred) at the tag:
+   - `make release GIT_TAG=v1.x.y` (single `default` variant; the `gerry` variant was dropped in `v1.4.0`)
+5. Publish GitHub release with the `default` tarball.
 6. Deploy to piclock.local and run installer.
 7. Start and verify `clock8002`, `alsa-ltc`, and `oled_daemon`.
 8. Report deployed short commit hash.
@@ -2097,7 +2098,7 @@ network interface) before using it. Never assume it exists at S## script time.
 - Build machine: `pi@pi5start.local`
 - Test machine: `pi@piclock.local`
 - Ask before running tests.
-- Include both default and gerry artifacts for each release.
+- Single `default` release variant for each release (the `gerry` variant was dropped in `v1.4.0`).
 - Use repository version line (`v1.x` and onward), ignore inherited upstream `v4.x` tags.
 - Update README quick-install URL/version during release cuts.
 - Avoid `pkill -f /opt/clock8002/sdl-clock` and `pkill -f /opt/clock8002/alsa-ltc` in one-shot SSH deploy commands (can trigger SSH exit 255).
@@ -2108,7 +2109,6 @@ network interface) before using it. Never assume it exists at S## script time.
 
 - Build host rule: build/release artifacts for clock8002 are authoritative only when built on `pi@pi5start.local` from a fresh clone at target ref.
 - Do not use Mac local build results for release/deploy validation.
-- Gerry variant rule: deployment is only valid when both `/boot/firmware/piclock/clock.ini` and `/boot/firmware/piclock/network.ini` match Gerry settings.
 - Installer behavior note: `install.sh` preserves existing `/boot/firmware/piclock/clock.ini` and only installs packaged clock.ini on fresh install; existing units may require explicit config copy.
 
 ## Useful Commands
@@ -2116,15 +2116,13 @@ network interface) before using it. Never assume it exists at S## script time.
 - Check local working tree:
   - `git status --short`
 - Build release artifacts on pi5start (fresh clone approach):
-  - `ssh pi@pi5start.local 'cd /tmp && rm -rf clock8002-build && git clone --depth 1 --branch BRANCH https://github.com/jpkelly/clock8002.git clock8002-build && cd clock8002-build/v4 && git checkout v1.x.y && make release-all GIT_TAG=v1.x.y'`
+  - `ssh pi@pi5start.local 'cd /tmp && rm -rf clock8002-build && git clone --depth 1 --branch BRANCH https://github.com/jpkelly/clock8002.git clock8002-build && cd clock8002-build/v4 && git checkout v1.x.y && make release GIT_TAG=v1.x.y'`
 - Deploy release tarball to piclock.local from local Mac relay:
   - `scp pi@pi5start.local:/tmp/clock8002-build/v4/clock8002-*-default-linux-arm64.tar.gz /tmp/`
   - `scp /tmp/clock8002-*-default-linux-arm64.tar.gz pi@piclock.local:/tmp/`
   - `ssh pi@piclock.local 'set -e; sudo systemctl stop clock8002.service alsa-ltc.service oled_daemon.service || true; sudo systemctl kill clock8002.service alsa-ltc.service oled_daemon.service || true; mkdir -p /tmp/clock8002-install && rm -rf /tmp/clock8002-install/clock8002-*-default-linux-arm64; tar xzf /tmp/clock8002-*-default-linux-arm64.tar.gz -C /tmp/clock8002-install; cd /tmp/clock8002-install/clock8002-*-default-linux-arm64; sudo bash install.sh > /tmp/clock8002-install-v1.x.y.log 2>&1; echo INSTALL_EXIT:$?; sudo systemctl start clock8002.service alsa-ltc.service oled_daemon.service'`
 - Verify services on piclock:
   - `ssh pi@piclock.local 'systemctl is-active clock8002 alsa-ltc oled_daemon'`
-- Force-apply gerry config pair on existing unit:
-  - `ssh pi@piclock.local 'sudo cp /tmp/clock8002-v1.x.y-gerry-linux-arm64/clock.ini /boot/firmware/piclock/clock.ini && sudo cp /tmp/clock8002-v1.x.y-gerry-linux-arm64/network.ini /boot/firmware/piclock/network.ini && sudo reboot'`
 
 ## Release Notes Template Workflow
 
@@ -2133,7 +2131,7 @@ network interface) before using it. Never assume it exists at S## script time.
 - Generate release notes file:
   - `VERSION=v1.x.y; sed "s/__VERSION__/${VERSION}/g" .github/release-notes-template.md > /tmp/release-notes-${VERSION}.md`
 - Publish release with templated notes:
-  - `gh release create "${VERSION}" "clock8002-${VERSION}-default-linux-arm64.tar.gz" "clock8002-${VERSION}-gerry-linux-arm64.tar.gz" --title "${VERSION}" --notes-file "/tmp/release-notes-${VERSION}.md"`
+  - `gh release create "${VERSION}" "clock8002-${VERSION}-default-linux-arm64.tar.gz" --title "${VERSION}" --notes-file "/tmp/release-notes-${VERSION}.md"`
 
 ## Dev-Deploy Workflow (Feature Branch Testing)
 
@@ -2280,7 +2278,7 @@ Branches reduced from 9 to 8. No history rewritten — renames only, all 212 tag
 
 ## Next Suggested Release
 
-- Next planned release: **v1.3.16** — next Trixie installer release (first tag to drop the `trixie-` prefix; see RELEASING.md § Versioning).
+- **Latest release: v1.4.0** (2026-08-03, Trixie, `master`, commit `44a7e3c`) — single `default` variant; the `gerry` variant was dropped. Next Trixie installer release will be **v1.4.x**; see RELEASING.md § Versioning.
 - Buildroot **v1.4.0** remains planned but parked; build only on explicit request.
 
 

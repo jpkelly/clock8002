@@ -145,4 +145,4 @@ gh release create vX.X.X \
 
 - **Release builds must use `make clean`**, not `clock8002-dirclean`. `output/target/` is not wiped by partial cleans — stale files from prior dev builds (including SSH keys) can persist.
 - Do not use `pkill -f sdl-clock` in SSH commands — pattern matches can terminate the SSH session. Use `/etc/init.d/S99clock stop` instead.
-- The Gerry deployment is only valid when both `clock.ini` and `network.ini` match Gerry settings.
+- There is a single release variant (`default`). The `gerry` variant was removed in `v1.4.0` — do not build or publish a `-gerry-` tarball.

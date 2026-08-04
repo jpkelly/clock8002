@@ -1,3 +1,31 @@
+## Version 1.4.0 (2026-08-03) — Trixie
+
+* Installer
+  * Fix lockout risk from boot-partition SSH keys. README has long documented
+    dropping keys at `/boot/firmware/piclock/authorized_keys`, but no Trixie
+    mechanism ever read them (every prior implementation was Buildroot-only).
+    Adds `piclock-authorized-keys.{sh,service}`, a boot oneshot that *merges*
+    those keys into the login user's `~/.ssh` — merges rather than overwrites,
+    so a boot-partition file that omits the current key can no longer lock the
+    operator out.
+  * Keep password authentication enabled. Raspberry Pi Imager writes
+    `ssh_pwauth: false` into `/boot/firmware/user-data`, which cloud-init turns
+    into `PasswordAuthentication no`, leaving the public key as the only route
+    in. Installs a `10-`-prefixed sshd drop-in, which wins because sshd takes
+    the first obtained value.
+  * Remove cloud-init. It has done its job by install time and everything it
+    manages afterwards the piClock manages itself. Purges the packages, disables
+    the units, and clears `/etc/cloud`, `/var/lib/cloud`, and the boot-partition
+    seed files. `cloud-guest-utils` is left alone (no services/state, just
+    helpers like `growpart`).
+  * Keep `netcat-openbsd` (previously pulled in only as a cloud-init dependency;
+    cloud-init's removal would otherwise strip a general network debugging tool
+    from a headless unit with no console).
+  * Drop `apt-get autoremove` from the cloud-init removal step — it took 30
+    packages on the first real install, including `gdisk` and `netcat-openbsd`.
+  * Add a `[Y/n]` reboot prompt at the end of the install, guarded on a tty so a
+    piped invocation cannot reboot unasked.
+
 ## Version 1.3.16 (2026-08-02) — Trixie
 
 * USB / PCIe
