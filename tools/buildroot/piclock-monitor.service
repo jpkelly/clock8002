@@ -1,8 +1,0 @@
-[Unit]
-Description=Clock8002 Health Monitor
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/piclock-monitor.sh
-StandardOutput=journal
-StandardError=journal

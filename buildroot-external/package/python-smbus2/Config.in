@@ -1,6 +1,0 @@
-config BR2_PACKAGE_PYTHON_SMBUS2
-	bool "python-smbus2"
-	help
-	  Pure Python SMBus and I2C module.
-
-	  https://github.com/kplindegaard/smbus2

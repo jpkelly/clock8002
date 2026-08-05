@@ -1,7 +1,0 @@
-config BR2_PACKAGE_PYTHON_LUMA_OLED
-	bool "python-luma-oled"
-	select BR2_PACKAGE_PYTHON_LUMA_CORE
-	help
-	  Python library to drive monochrome OLED displays with Pillow.
-
-	  https://github.com/rm-hull/luma.oled
