@@ -95,6 +95,17 @@ def ssh_ok(host, remote_cmd, timeout=None):
     return out
 
 
+def host_reachable(host, timeout=5):
+    """Return True if the target unit answers a trivial SSH command. Uses a short
+    timeout so the soak poll loop doesn't stall on an offline unit. A false return
+    means the target is down/unreachable (reboot, power loss, shutdown)."""
+    try:
+        rc, _, _ = ssh(host, "true", timeout=timeout)
+        return rc == 0
+    except subprocess.TimeoutExpired:
+        return False
+
+
 def scp_content_to(host, remote_path, content):
     """Write `content` to `remote_path` on the unit via ssh (no sftp dependency,
     matches the BusyBox-safe streaming approach used throughout this session)."""
@@ -452,9 +463,21 @@ def cmd_run_soak(args):
     print(f"[{run_id}] running for {args.duration}s (poll every {args.poll}s)...")
     deadline = time.time() + args.duration
     failure = None
+    unreachable_s = 0
     while time.time() < deadline:
         time.sleep(min(args.poll, max(0, deadline - time.time())))
         csv_text = pull_csv(host, run_dir)
+        if not csv_text and not host_reachable(host):
+            # The target went offline (reboot, power loss, shutdown). Soak
+            # sampling can't continue and the CSV read is meaningless. Track how
+            # long it has been unreachable rather than silently treating this as
+            # "no new data" (which used to let a mid-run shutdown misreport PASSED).
+            # unreachable_s is cumulative (never reset on recovery) because any
+            # outage is a real gap in soak coverage - unlike cycle mode, where
+            # reboots are expected.
+            unreachable_s += args.poll
+            print(f"[{run_id}] target unreachable for {unreachable_s}s so far...")
+            continue
         failure = check_failure(csv_text)
         if failure:
             print(f"[{run_id}] FAILURE DETECTED: {failure}")
@@ -464,22 +487,39 @@ def cmd_run_soak(args):
     rss1, swap1 = harness_ram()
     update_meta(run_dir, harness_rss_kb_end=rss1, harness_swap_kb_end=swap1)
 
-    outcome = "FAILED" if failure else "PASSED"
+    # Determine outcome. A run that finished with the target unreachable must not
+    # be reported PASSED - the soak window did not complete and the unit could
+    # not be reverted/verified cleanly.
+    if failure:
+        outcome = "FAILED"
+        failure_detail = failure
+    elif unreachable_s > 0:
+        outcome = "INCONCLUSIVE"
+        failure_detail = (f"target unreachable for {unreachable_s}s at end of "
+                          f"run; soak window incomplete")
+    else:
+        outcome = "PASSED"
+        failure_detail = ""
     update_meta(run_dir, status="complete", outcome=outcome,
                 finished=datetime.datetime.now().isoformat(),
-                failure_detail=failure or "")
+                failure_detail=failure_detail,
+                unreachable_s=unreachable_s)
 
     if failure:
         print(f"[{run_id}] collecting forensic dumps (auto-collect on failure)...")
         cmd_collect(argparse.Namespace(run=run_id))
 
-    print(f"[{run_id}] reverting all changes made to {host} (auto-revert on completion)...")
-    cmd_revert(argparse.Namespace(run=run_id))
-    try:
-        cmd_verify(argparse.Namespace(run=run_id))
-    except SystemExit:
-        print(f"[{run_id}] WARNING: unit does not match pre-test fingerprint after "
-              f"revert - see fingerprint-before/after.json in {run_dir}")
+    if host_reachable(host):
+        print(f"[{run_id}] reverting all changes made to {host} (auto-revert on completion)...")
+        cmd_revert(argparse.Namespace(run=run_id))
+        try:
+            cmd_verify(argparse.Namespace(run=run_id))
+        except SystemExit:
+            print(f"[{run_id}] WARNING: unit does not match pre-test fingerprint after "
+                  f"revert - see fingerprint-before/after.json in {run_dir}")
+    else:
+        print(f"[{run_id}] target unreachable; skipping auto-revert. Soak files "
+              f"remain on the unit. Run 'revert --run {run_id}' once it is back up.")
 
     print(f"[{run_id}] {outcome}. Results: {run_dir}")
 
@@ -547,13 +587,17 @@ def cmd_run_cycle(args):
         print(f"[{run_id}] collecting forensic dumps (auto-collect on failure)...")
         cmd_collect(argparse.Namespace(run=run_id))
 
-    print(f"[{run_id}] reverting all changes made to {host} (auto-revert on completion)...")
-    cmd_revert(argparse.Namespace(run=run_id))
-    try:
-        cmd_verify(argparse.Namespace(run=run_id))
-    except SystemExit:
-        print(f"[{run_id}] WARNING: unit does not match pre-test fingerprint after "
-              f"revert - see fingerprint-before/after.json in {run_dir}")
+    if host_reachable(host):
+        print(f"[{run_id}] reverting all changes made to {host} (auto-revert on completion)...")
+        cmd_revert(argparse.Namespace(run=run_id))
+        try:
+            cmd_verify(argparse.Namespace(run=run_id))
+        except SystemExit:
+            print(f"[{run_id}] WARNING: unit does not match pre-test fingerprint after "
+                  f"revert - see fingerprint-before/after.json in {run_dir}")
+    else:
+        print(f"[{run_id}] target unreachable; skipping auto-revert. Cycle files "
+              f"remain on the unit. Run 'revert --run {run_id}' once it is back up.")
 
     print(f"[{run_id}] {outcome}. Results: {run_dir}")
 
@@ -676,6 +720,14 @@ def cmd_verify(args):
         sys.exit(1)
     with open(before_path) as f:
         fp_before = json.load(f)
+
+    if not host_reachable(host):
+        # The unit is offline (e.g. a run that ended with a mid-run shutdown, or
+        # the unit was powered off before verify). We cannot fingerprint a dead
+        # host; report it as unreachable rather than crashing on ssh_ok().
+        print("VERIFY SKIPPED - target is unreachable; cannot fingerprint. "
+              "Run 'verify --run <id>' once the unit is back up.")
+        sys.exit(2)
 
     fp_after = fingerprint(host)
     with open(os.path.join(run_dir, "fingerprint-after.json"), "w") as f:
