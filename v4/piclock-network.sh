@@ -99,6 +99,33 @@ elif [ "$NET_MODE" = "dhcp" ]; then
     else
         echo "Network mode: DHCP (already set)."
     fi
+elif [ "$NET_MODE" = "dual" ]; then
+    NET_ADDR=$(parse_ini "$NETWORK_INI" network address)
+    NET_MASK=$(parse_ini "$NETWORK_INI" network netmask)
+    NET_GW=$(parse_ini "$NETWORK_INI" network gateway)
+    NET_DNS=$(parse_ini "$NETWORK_INI" network dns)
+
+    if [ -n "$NET_ADDR" ] && [ -n "$NET_MASK" ]; then
+        echo "Applying dual mode: DHCP + static alias ${NET_ADDR}/${NET_MASK}..."
+        # With ipv4.method=auto, adding a static address keeps the DHCP lease too.
+        nmcli con mod "$NM_CON" ipv4.method auto \
+            ipv4.addresses "${NET_ADDR}/${NET_MASK}"
+        # In dual mode DHCP supplies the default route; leave gateway/dns empty
+        # unless the user explicitly provided them.
+        if [ -n "$NET_GW" ]; then
+            nmcli con mod "$NM_CON" ipv4.gateway "$NET_GW"
+        else
+            nmcli con mod "$NM_CON" ipv4.gateway ""
+        fi
+        if [ -n "$NET_DNS" ]; then
+            nmcli con mod "$NM_CON" ipv4.dns "$NET_DNS"
+        else
+            nmcli con mod "$NM_CON" ipv4.dns ""
+        fi
+        nmcli --wait 10 con up "$NM_CON"
+    else
+        echo "Warning: dual mode set but address/netmask missing."
+    fi
 fi
 
 # --- Wi-Fi Access Point ---
