@@ -45,7 +45,7 @@ Please consider supporting the original clock-8001 development: https://www.payp
 
 Built for the **piClock platform** on Raspberry Pi 5, arm64.
 
-- **Hardware**: Raspberry Pi 5 (field units currently include 2GB and 8GB variants)
+- **Hardware**: Raspberry Pi 5
 - **Display**: HDMI via SDL3 KMSDRM (headless, no desktop required)
 - **OS**: Raspberry Pi OS Lite (64-bit) / Debian Trixie (arm64), with internet access for the installer
 - **Network**: Required for OSC control and web configuration
