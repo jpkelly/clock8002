@@ -81,10 +81,20 @@ WantedBy=multi-user.target
 """
 
 
-def ssh(host, remote_cmd, timeout=None):
-    """Run a shell command on the target unit over SSH. Returns (rc, stdout, stderr)."""
+def ssh(host, remote_cmd, timeout=25):
+    """Run a shell command on the target unit over SSH. Returns (rc, stdout, stderr).
+
+    A default 25s timeout prevents a slow/unresponsive target from hanging the
+    harness forever (observed during deploy when a connection stalled in do_select
+    with no timeout set). On timeout we return rc=124 (like 'timeout' would) rather
+    than raising, so callers that check rc (e.g. pull_csv during the poll loop)
+    behave the same as a failed command and the unreachable-host detection still
+    works."""
     cmd = ["ssh"] + SSH_OPTS + [f"pi@{host}", remote_cmd]
-    p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return 124, "", "timeout"
     return p.returncode, p.stdout, p.stderr
 
 
@@ -111,7 +121,10 @@ def scp_content_to(host, remote_path, content):
     matches the BusyBox-safe streaming approach used throughout this session)."""
     quoted = remote_path.replace("'", "'\\''")
     cmd = ["ssh"] + SSH_OPTS + [f"pi@{host}", f"sudo tee '{quoted}' >/dev/null"]
-    p = subprocess.run(cmd, input=content, capture_output=True, text=True)
+    try:
+        p = subprocess.run(cmd, input=content, capture_output=True, text=True, timeout=25)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"SSH to {host} timed out writing {remote_path}")
     if p.returncode != 0:
         raise RuntimeError(f"failed to write {remote_path}: {p.stderr}")
 
