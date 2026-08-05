@@ -300,7 +300,7 @@ The installer enables the required UART overlays in `/boot/firmware/config.txt`.
 
 ## OSC Control
 
-See the local OSC reference in [`v4/osc.md`](v4/osc.md) for the full command set used by this repository.
+See the local OSC reference in [`app/osc.md`](app/osc.md) for the full command set used by this repository.
 
 Upstream reference is also available at [clock-8001/v4/osc.md](https://gitlab.com/clock-8001/clock-8001/-/blob/master/v4/osc.md).
 

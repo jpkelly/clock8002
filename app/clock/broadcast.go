@@ -1,0 +1,118 @@
+package clock
+
+import (
+	"context"
+	"fmt"
+	"github.com/jpkelly/clock8002/app/debug"
+	"log"
+	"net"
+	"strings"
+	"time"
+)
+
+const interfacePollTime = 5 * time.Second
+
+type feedbackDestination struct {
+	udpConns []*net.UDPConn
+	address  string
+	ctx      context.Context
+}
+
+func initFeedback(ctx context.Context, address string) *feedbackDestination {
+	var fbDest = feedbackDestination{
+		address: address,
+		ctx:     ctx,
+	}
+	go fbDest.monitor()
+	return &fbDest
+}
+
+func (fbDest *feedbackDestination) Write(data []byte) {
+	debug.Printf("Writing data to connections\n")
+	for _, conn := range fbDest.udpConns {
+		if _, err := conn.Write(data); err != nil {
+			debug.Printf(" -> Error writing to udp connection %v", conn)
+		}
+	}
+}
+
+func (fbDest *feedbackDestination) monitor() {
+	log.Printf("Monitoring network interface changes\n")
+	port := strings.Join(strings.Split(fbDest.address, ":")[1:], "")
+	log.Printf("Feedback port: %v", port)
+
+	for {
+		time.Sleep(interfacePollTime)
+		select {
+		case <-fbDest.ctx.Done():
+			log.Printf("fbDest monitor for %v shutting down", fbDest.address)
+			for _, c := range fbDest.udpConns {
+				c.Close()
+			}
+			return
+		default:
+		}
+		debug.Printf("Updating feedback connections\n")
+
+		if !strings.Contains(fbDest.address, "255.255.255.255") {
+			fbDest.singleAddr()
+			continue
+		}
+		fbDest.broadcastAll(port)
+	}
+}
+
+func (fbDest *feedbackDestination) singleAddr() {
+	debug.Printf(" -> Trying single address: %v\n", fbDest.address)
+	udpConns := make([]*net.UDPConn, 0)
+
+	if udpAddr, err := net.ResolveUDPAddr("udp", fbDest.address); err != nil {
+		log.Printf(" -> Failed to resolve feedback address: %v", err)
+	} else if udpConn, err := net.DialUDP("udp", nil, udpAddr); err != nil {
+		log.Printf(" -> Failed to open feedback address: %v", err)
+	} else {
+		debug.Printf("Feedback: sending to %v", fbDest.address)
+		udpConns = append(udpConns, udpConn)
+	}
+	fbDest.udpConns = udpConns
+}
+
+func (fbDest *feedbackDestination) broadcastAll(port string) {
+	debug.Printf(" -> Broadcasting to all interfaces\n")
+	udpConns := make([]*net.UDPConn, 0)
+
+	addrs, _ := net.InterfaceAddrs()
+	for _, addr := range addrs {
+		ip, n, err := net.ParseCIDR(addr.String())
+		if err != nil {
+			log.Printf(" -> error parsing network: %v\n", err)
+		} else {
+			if ip.IsLoopback() {
+				// Ignore loopback interfaces
+				continue
+			} else if ip.To4() != nil {
+				broadcast := net.IP(make([]byte, 4))
+				for i := range n.IP {
+					broadcast[i] = n.IP[i] | (^n.Mask[i])
+				}
+				debug.Printf(" -> using broadcast address %v", broadcast)
+
+				dest := fmt.Sprintf("%v:%v", broadcast, port)
+
+				if udpAddr, err := net.ResolveUDPAddr("udp", dest); err != nil {
+					log.Printf(" -> Failed to resolve broadcast address %v: %v", dest, err)
+				} else if udpConn, err := net.DialUDP("udp", nil, udpAddr); err != nil {
+					log.Printf("   -> Failed to open broadcast address %v: %v", dest, err)
+				} else {
+					debug.Printf("Feedback: sending to %v", dest)
+					udpConns = append(udpConns, udpConn)
+				}
+			}
+		}
+	}
+	fbDest.udpConns = udpConns
+}
+
+func (fbDest *feedbackDestination) String() string {
+	return fbDest.address
+}

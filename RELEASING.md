@@ -2,7 +2,7 @@
 
 This document covers cutting a new clock8002 release.
 
-The release artifact is the **Trixie installer tarball**, built from `v4/` on the `master` branch. Trixie is the only actively developed platform.
+The release artifact is the **Trixie installer tarball**, built from `app/` on the `master` branch. Trixie is the only actively developed platform.
 
 ## Versioning
 
@@ -51,8 +51,8 @@ If any metric is rising or unstable, hold release and investigate.
 3. On an ARM64 Trixie builder — `pi@cm5.local` preferred, `pi@pi5start.local` as fallback when cm5 is unavailable:
    ```bash
    cd ~/clock8002 && git fetch --tags origin && git checkout vX.X.X
-   rm -rf v4/lib && cp -r ~/sdl3-build/sdl3-trixie-lib v4/lib
-   cd v4
+   rm -rf app/lib && cp -r ~/sdl3-build/sdl3-trixie-lib app/lib
+   cd app
    make clean
    make release GIT_TAG=vX.X.X
    ```
@@ -77,7 +77,7 @@ If any metric is rising or unstable, hold release and investigate.
    on both ends before publishing — a truncated `scp` produces a corrupt but plausible-sized
    file, and only the checksum catches it:
    ```bash
-   scp pi@cm5.local:~/clock8002/v4/piClock-vX.X.X-linux-arm64.tar.gz /Users/jp/Desktop/
+   scp pi@cm5.local:~/clock8002/app/piClock-vX.X.X-linux-arm64.tar.gz /Users/jp/Desktop/
    shasum -a 256 /Users/jp/Desktop/piClock-vX.X.X-linux-arm64.tar.gz   # compare against sha256sum on the builder
    ```
 

@@ -1,0 +1,859 @@
+package clock
+
+import (
+	"context"
+	"fmt"
+	"image/color"
+	"log"
+	"net"
+	"os"
+	"os/exec"
+	"regexp"
+	db "runtime/debug"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/chabad360/go-osc/osc"
+	"github.com/denisbrodbeck/machineid"
+	"github.com/desertbit/timer"
+	"github.com/jpkelly/clock8002/app/oscutil"
+	"github.com/jpkelly/clock8002/app/udptime"
+)
+
+// MakeEngine creates a clock engine
+func MakeEngine(options *EngineOptions) (*Engine, error) {
+	var engine = Engine{
+		mode:               Normal,
+		oscTally:           false,
+		timeout:            time.Duration(options.Timeout) * time.Millisecond,
+		initialized:        false,
+		oscDests:           nil,
+		ltcShowSeconds:     options.LTCSeconds,
+		ltcFollow:          options.LTCFollow,
+		ltcEnabled:         !options.DisableLTC,
+		format12h:          options.Format12h,
+		displaySeconds:     !options.ToDHideSeconds,
+		off:                false,
+		messageColor:       &color.RGBA{255, 255, 155, 255},
+		signalHardware:     options.SignalHardware,
+		limitimer:          options.LimitimerMode,
+		limitimerSerial:    options.LimitimerSerial,
+		wg:                 &sync.WaitGroup{},
+		flashPeriod:        options.Flash,
+		overtimeVisibility: options.OvertimeVisibility,
+		highResolution:     options.HighResolution,
+	}
+	engine.ctx, engine.cancelFunc = context.WithCancel(context.Background())
+	uuid, err := machineid.ProtectedID("clock-8001")
+	if err != nil {
+		log.Fatalf("Failed to generate unique identifier: %v", err)
+	}
+	engine.uuid = uuid
+
+	log.Printf("Source1: %v", options.Source1)
+	log.Printf("Source2: %v", options.Source2)
+	log.Printf("Source3: %v", options.Source3)
+	log.Printf("Source4: %v", options.Source4)
+
+	ltc := ltcData{hours: 0}
+	engine.ltc[0] = &ltc
+	engine.ltc[1] = &ltc
+
+	engine.messageTimer = timer.NewTimer(engine.timeout)
+	engine.messageTimer.Stop()
+
+	engine.printVersion()
+	err = engine.initCounters(options)
+	if err != nil {
+		log.Fatalf("Failed to initialize counters: %v", err)
+	}
+
+	sources := make([]*SourceOptions, 4)
+	sources[0] = options.Source1
+	sources[1] = options.Source2
+	sources[2] = options.Source3
+	sources[3] = options.Source4
+
+	if err := engine.initSources(sources); err != nil {
+		log.Printf("Error initializing engine clock sources: %v", err)
+		return nil, err
+	}
+
+	// Initialize cue defaults before OSC listener starts. This avoids nil
+	// dereferences in state publishing and cue timer paths during startup.
+	engine.cueDuration = time.Duration(options.CueDuration) * time.Second
+	engine.cueState = &cueState{}
+	engine.cueChan = make(chan *cueState)
+
+	engine.initOSC(options)
+
+	// Millumin ignore regexp
+	regexp, err := regexp.Compile("(?i)" + options.Ignore)
+	if err != nil {
+		log.Fatalf("Invalid --millumin-ignore-layer=%v: %v", options.Ignore, err)
+	}
+	engine.ignoreRegexp = regexp
+
+	engine.prepareInfo()
+
+	engine.showInfoDuration = time.Duration(options.ShowInfo) * time.Second
+	engine.infoTimer = timer.NewTimer(engine.showInfoDuration)
+	go engine.infoTimeout()
+	engine.showInfo = true
+	fmt.Printf(engine.info)
+
+	engine.initPicturall(options)
+	engine.initVmix(options)
+	engine.initTricaster(options)
+	engine.initUDPTime(options)
+	engine.initLimitimer(options)
+	engine.initPerfectCue(options)
+	engine.hyperdeckInit(options)
+	engine.disguiseInit(options)
+
+	for i, o := range options.TimerOptions {
+		if o.ListenPort != 0 {
+			addr := fmt.Sprintf("0.0.0.0:%d", o.ListenPort)
+
+			server := oscListenerSetup(addr)
+			go server.run(engine.ctx, engine.wg)
+
+			engine.mittiListen(server, i, o.MittiBroadcast)
+			engine.milluminListen(server, i, o.MilluminBroadcast)
+		}
+	}
+
+	return &engine, nil
+}
+
+// Close stops the engine and closes all open connections and files
+func (engine *Engine) Close() {
+	log.Printf("Stopping the clock engine on request...")
+	engine.cancelFunc()
+	done := make(chan struct{})
+	go func() { engine.wg.Wait(); close(done) }()
+	select {
+	case <-done:
+		log.Printf("Clock engine stopped cleanly")
+	case <-time.After(5 * time.Second):
+		log.Printf("engine.Close() timed out waiting for goroutines — proceeding anyway")
+	}
+}
+
+func (engine *Engine) listenUDPTime() {
+	engine.wg.Add(1)
+	defer engine.wg.Done()
+	chan1, err := udptime.Listen(engine.ctx, "0.0.0.0:36700", engine.wg)
+	if err != nil {
+		log.Printf("UDPTime listen error: %v", err)
+		return
+	}
+	chan2, err := udptime.Listen(engine.ctx, "0.0.0.0:36701", engine.wg)
+	if err != nil {
+		log.Printf("UDPTime listen error: %v", err)
+		return
+	}
+
+	for {
+		var msg *udptime.Message
+		var t int
+		select {
+		case msg = <-chan1:
+			t = 0
+		case msg = <-chan2:
+			t = 1
+		case <-engine.ctx.Done():
+			return
+		}
+		icon := ""
+		if msg.OverTime {
+			icon = "+"
+		}
+		engine.udpCounters[t].SetSlave(0, msg.Minutes, msg.Seconds, true, icon)
+	}
+}
+
+func (engine *Engine) prepareInfo() {
+	commit := gitCommit
+	if len(commit) > 7 {
+		commit = commit[:7]
+	}
+	info := fmt.Sprintf("Clock-8002 %v (%v)\n\n", gitTag, commit)
+
+	if hostname, err := os.Hostname(); err == nil {
+		info += fmt.Sprintf("Hostname: %s.local\n", hostname)
+	}
+
+	info += fmt.Sprintf("Network Mode: %s\n", detectNetworkMode())
+	info += interfaceAddresses()
+
+	if ap := detectWifiAP(); ap != "" {
+		info += ap
+	}
+
+	if engine.oscServer.Addr != "" {
+		info += fmt.Sprintf("OSC-listen: %s\n", engine.oscServer.Addr)
+	}
+
+	engine.info = info
+}
+
+func detectNetworkMode() string {
+	mode, _ := networkINIConfig()
+	switch mode {
+	case "static":
+		return "Static"
+	case "dual":
+		return "Dual"
+	case "dhcp":
+		return "DHCP"
+	}
+	// Fallback: parse /etc/network/interfaces
+	if data, err := os.ReadFile("/etc/network/interfaces"); err == nil {
+		s := string(data)
+		hasStatic := strings.Contains(s, "inet static")
+		hasDHCP := strings.Contains(s, "inet dhcp")
+		if hasStatic && hasDHCP {
+			return "Dual"
+		} else if hasStatic {
+			return "Static"
+		} else if hasDHCP {
+			return "DHCP"
+		}
+	}
+	return "Unknown"
+}
+
+func networkINIPath() string {
+	return "/boot/firmware/piclock/network.ini"
+}
+
+func networkINIConfig() (mode string, staticIP string) {
+	data, err := os.ReadFile(networkINIPath())
+	if err != nil {
+		return "", ""
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(line, "mode="):
+			mode = strings.ToLower(strings.TrimSpace(strings.TrimPrefix(line, "mode=")))
+		case strings.HasPrefix(line, "address="):
+			staticIP = strings.TrimSpace(strings.TrimPrefix(line, "address="))
+		}
+	}
+	return mode, staticIP
+}
+
+// interfaceAddresses returns labeled IP addresses for eth0 and wlan0
+func interfaceAddresses() string {
+	var ret string
+	mode, staticIP := networkINIConfig()
+	dualMode := mode == "dual"
+	for _, name := range []string{"eth0", "end0", "wlan0"} {
+		iface, err := net.InterfaceByName(name)
+		if err != nil {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		ethAddrIndex := 0
+		for _, addr := range addrs {
+			ip, _, err := net.ParseCIDR(addr.String())
+			if err != nil || ip.To4() == nil {
+				continue
+			}
+			label := "Ethernet"
+			suffix := ""
+			if name == "wlan0" {
+				label = "Wi-Fi"
+			} else if dualMode {
+				if staticIP != "" {
+					if ip.String() == staticIP {
+						suffix = " (static)"
+					} else {
+						suffix = " (DHCP)"
+					}
+				} else if ethAddrIndex == 0 {
+					suffix = " (DHCP)"
+				} else {
+					suffix = " (static)"
+				}
+				ethAddrIndex++
+			}
+			ret += fmt.Sprintf("%s: %v%s\n", label, ip, suffix)
+		}
+	}
+	return ret
+}
+
+// detectWifiAP returns AP SSID line if wlan0 is in AP mode, empty string otherwise
+func detectWifiAP() string {
+	iwPaths := []string{"/usr/sbin/iw", "/sbin/iw", "/boot/iw"}
+	var iwPath string
+	for _, p := range iwPaths {
+		if _, err := os.Stat(p); err == nil {
+			iwPath = p
+			break
+		}
+	}
+	if iwPath == "" {
+		return ""
+	}
+	out, err := exec.Command(iwPath, "dev", "wlan0", "info").Output()
+	if err != nil {
+		return ""
+	}
+	s := string(out)
+	if !strings.Contains(s, "type AP") {
+		return ""
+	}
+	for _, line := range strings.Split(s, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "ssid ") {
+			return fmt.Sprintf("AP SSID: %s\n", strings.TrimPrefix(line, "ssid "))
+		}
+	}
+	return "AP: active\n"
+}
+
+func (engine *Engine) infoTimeout() {
+	for range engine.infoTimer.C {
+		engine.showInfo = false
+	}
+}
+
+// EnableInfo re-enables the info overlay and resets the auto-hide timer.
+func (engine *Engine) EnableInfo() {
+	engine.showInfo = true
+	engine.infoTimer.Reset(engine.showInfoDuration)
+}
+
+// InfoVisible returns whether the info overlay is currently active.
+func (engine *Engine) InfoVisible() bool {
+	return engine.showInfo
+}
+
+func (engine *Engine) sendUDPTimers() {
+	t := time.Now()
+	for i, conn := range engine.udpDests {
+		c := engine.udpCounters[i].Output(t)
+		mins := c.Minutes
+		secs := c.Seconds
+
+		if c.Hours != 0 {
+			// If timer is over an hour send hours and minutes
+			mins = c.Hours
+			secs = c.Minutes
+		}
+		msg := udptime.Message{
+			Minutes: mins,
+			Seconds: secs,
+			Red:     c.Countdown,
+			Green:   !c.Countdown,
+		}
+		data := udptime.Encode(&msg)
+		conn.Write(data)
+	}
+}
+
+// Check and execute the timer end actions
+func (engine *Engine) timerActions(t time.Time) {
+	for _, ctr := range engine.Counters {
+		o := ctr.Output(t.Add(-time.Second))
+		if o.Active && o.Countdown && o.Expired && !ctr.endAction.done {
+			ctr.endAction.done = true
+			if ctr.endAction.restart {
+				ctr.Stop()
+				engine.Counters[ctr.endAction.counter].Restart()
+			}
+
+			if ctr.endAction.sendOSC {
+				go sendOSC(ctr)
+			}
+		}
+	}
+}
+
+func sendOSC(ctr *Counter) {
+	ip := ctr.endAction.ip
+	port := ctr.endAction.port
+	command := ctr.endAction.command
+	params := ctr.endAction.params
+
+	if len(ip) == 0 || len(port) == 0 || len(command) == 0 {
+		log.Printf("Timer %d end action: ignoring OSC due to missing configuration.", ctr.number)
+		return
+	}
+
+	msg := osc.NewMessage(command)
+	err := oscutil.ParseParams(msg, params)
+	if err != nil {
+		log.Printf("Timer %d end action: Failed to parse OSC params: %v", ctr.number, err)
+		return
+	}
+
+	addr := fmt.Sprintf("%s:%s", ip, port)
+	udpAddr, err := net.ResolveUDPAddr("udp", addr)
+	if err != nil {
+		log.Printf("Timer %d end action: Failed to resolve %s: %v", ctr.number, addr, err)
+		return
+	}
+	conn, err := net.DialUDP("udp", nil, udpAddr)
+	if err != nil {
+		log.Printf("Timer %d end action: Failed to open %s: %v", ctr.number, addr, err)
+		return
+	}
+	b, err := msg.MarshalBinary()
+	if err != nil {
+		log.Printf("Timer %d end action: Failed to marshal: %v", ctr.number, err)
+		return
+	}
+	conn.Write(b)
+	conn.Close()
+}
+
+func (engine *Engine) flash(t time.Time) bool {
+	return t.Nanosecond() < engine.flashPeriod*1000000
+}
+
+// State creates a snapshot of the clock state for display on clock faces
+func (engine *Engine) State() *State {
+	t := time.Now()
+	var clocks []*Clock
+
+	engine.timerActions(t)
+
+	for _, s := range engine.sources {
+		var out *CounterOutput
+
+		c := Clock{
+			Text:        "",
+			Compact:     "",
+			Label:       s.title,
+			Icon:        "",
+			Expired:     false,
+			Hidden:      s.hidden,
+			TextColor:   s.textColor,
+			BGColor:     s.bgColor,
+			HideSeconds: !engine.displaySeconds,
+			SignalColor: color.RGBA{R: 0, G: 0, B: 0, A: 0},
+		}
+
+		hasLTC := s.ltc && engine.ltcActive[s.ltcChannel]
+
+		if hasLTC {
+			engine.ltcState(&c, s, s.ltcChannel)
+		} else {
+			if s.timer {
+				for _, ctr := range s.counters {
+					o := ctr.Output(t)
+					if o.Active {
+						c.SignalColor = o.SignalColor
+						c.ActiveTimer = ctr.number
+						out = o
+						c.Mute = ctr.mute
+						break
+					}
+				}
+
+			}
+
+			if out != nil {
+				engine.timerState(&c, s, out)
+			} else if s.tod {
+				engine.todState(&c, s, t)
+			}
+		}
+
+		clocks = append(clocks, &c)
+	}
+	cueRight := false
+	cueLeft := false
+	cueBlank := false
+	cueShow := false
+	if engine.cueState != nil {
+		cueRight = engine.cueState.RightArrow
+		cueLeft = engine.cueState.LeftArrow
+		cueBlank = engine.cueState.Blank
+		cueShow = engine.cueState.Show
+	}
+
+	state := State{
+		Initialized:         engine.initialized,
+		Clocks:              clocks,
+		Flash:               engine.flash(t),
+		TallyColor:          &color.RGBA{},
+		Background:          engine.background,
+		TitleColor:          engine.titleTextColor,
+		TitleBGColor:        engine.titleBGColor,
+		ScreenFlash:         engine.screenFlash,
+		HardwareSignalColor: engine.signalHardwareColor,
+		CueRight:            cueRight,
+		CueLeft:             cueLeft,
+		CueBlank:            cueBlank,
+		CueShow:             cueShow,
+	}
+
+	if engine.showInfo {
+		engine.prepareInfo()
+		state.Info = engine.info
+	}
+
+	if engine.oscTally {
+		state.Tally = engine.message
+		state.TallyColor = engine.messageColor
+		state.TallyBG = engine.messageBG
+	}
+
+	return &state
+}
+
+func (engine *Engine) todState(c *Clock, s *source, t time.Time) {
+	// Time of day
+	c.Mode = Normal
+	if engine.format12h {
+		if engine.displaySeconds {
+			c.Text = t.In(s.tz).Format("3:04:05")
+		} else {
+			c.Text = t.In(s.tz).Format("3:04")
+		}
+		c.Hours = t.In(s.tz).Hour() % 12
+		c.AMPMString = t.In(s.tz).Format("PM")
+	} else {
+		if engine.displaySeconds {
+			c.Text = t.In(s.tz).Format("15:04:05")
+		} else {
+			c.Text = t.In(s.tz).Format("15:04")
+		}
+		c.Hours = t.In(s.tz).Hour()
+		c.AMPMString = ""
+	}
+	c.Minutes = t.In(s.tz).Minute()
+	c.Seconds = t.In(s.tz).Second()
+}
+
+func (engine *Engine) ltcState(c *Clock, s *source, channel int) {
+	c.Expired = engine.ltcTimeout[channel]
+	c.Mode = LTC
+	ltc := engine.ltc[channel]
+	if !engine.ltcTimeout[channel] {
+		// We have LTC time, so display it
+		// engine.initialized = true
+		c.Text = fmt.Sprintf("%02d:%02d:%02d:%02d", ltc.hours, ltc.minutes, ltc.seconds, ltc.frames)
+		c.Hours = ltc.hours
+		c.Minutes = ltc.minutes
+		c.Seconds = ltc.seconds
+		c.Frames = ltc.frames
+	} else if engine.ltcFollow {
+		// Follow the LTC time when signal is lost
+		// Todo: must be easier way to print out the duration...
+		t := time.Now()
+		diff := t.Sub(engine.ltc[channel].target)
+		c.Text = fmt.Sprintf("%s:%02d", formatDuration(diff), 0)
+		c.Hours, c.Minutes, c.Seconds = splatDuration(diff)
+	} else {
+		// Timeout without follow mode
+		c.Text = ""
+	}
+}
+
+func (engine *Engine) timerState(c *Clock, s *source, out *CounterOutput) {
+	// Active timer
+	if s.timerTarget && out.Target != nil {
+		engine.todState(c, s, *out.Target)
+		c.Icon = IconTarget
+	} else {
+		c.Text = out.Text
+		c.Hours = out.Hours
+		c.Minutes = out.Minutes
+		c.Seconds = out.Seconds
+		c.Compact = out.Compact
+		c.Expired = out.Expired
+		c.Paused = out.Paused
+		c.Progress = out.Progress
+		c.Icon = out.Icon
+		c.SignalColor = out.SignalColor
+	}
+
+	if out.Mode == "slave" {
+		c.Mode = Slave
+	} else if out.Mode == "media" {
+		c.Mode = Media
+	} else if out.Countdown {
+		c.Mode = Countdown
+		if out.Expired {
+			switch engine.overtimeVisibility {
+			case "none":
+				c.Expired = false
+			case "blink":
+			case "background":
+				c.Expired = false
+				c.BGColor = s.overtime
+			case "both":
+				c.BGColor = s.overtime
+			}
+		}
+	} else {
+		c.Mode = Countup
+	}
+}
+
+// printVersion prints to stdout the clock version and dependency versions
+func (engine *Engine) printVersion() {
+	clockModule, ok := db.ReadBuildInfo()
+	if ok {
+		for _, mod := range clockModule.Deps {
+			log.Printf("Dep: %s: version %s", mod.Path, mod.Version)
+		}
+	} else {
+		log.Printf("Error reading BuildInfo, version data unavailable")
+	}
+	log.Printf("Clock-8002 engine version %s git: %s\n", gitTag, gitCommit)
+}
+
+// initCounters initializes the countdown and count up timers
+func (engine *Engine) initCounters(options *EngineOptions) (err error) {
+	if len(options.TimerOptions) != 10 {
+		options.TimerOptions = make([]*TimerOptions, 10)
+		options.TimerOptions[0] = options.Timer0
+		options.TimerOptions[1] = options.Timer1
+		options.TimerOptions[2] = options.Timer2
+		options.TimerOptions[3] = options.Timer3
+		options.TimerOptions[4] = options.Timer4
+		options.TimerOptions[5] = options.Timer5
+		options.TimerOptions[6] = options.Timer6
+		options.TimerOptions[7] = options.Timer7
+		options.TimerOptions[8] = options.Timer8
+		options.TimerOptions[9] = options.Timer9
+	}
+
+	engine.Counters = make([]*Counter, NumCounters)
+	for i := 0; i < NumCounters; i++ {
+		engine.Counters[i] = &Counter{
+			active:           false,
+			state:            &counterState{},
+			autoSignals:      options.AutoSignals,
+			signalStart:      options.SignalStart,
+			warningThreshold: time.Duration(options.SignalThresholdWarning) * time.Second,
+			endThreshold:     time.Duration(options.SignalThresholdEnd) * time.Second,
+			overtimeMode:     options.OvertimeCountMode,
+			number:           i,
+			mute:             options.TimerOptions[i].Mute,
+			stopAtEnd:        options.TimerOptions[i].StopAtEnd,
+			highResolution:   options.HighResolution,
+		}
+
+		engine.Counters[i].previous = &counterSetting{
+			countdown: !options.TimerOptions[i].Countup,
+			duration:  time.Duration(options.TimerOptions[i].Duration) * time.Second,
+		}
+
+		engine.Counters[i].endAction = &counterAction{
+			restart: options.TimerOptions[i].EndRestart,
+			sendOSC: options.TimerOptions[i].EndOSC,
+			counter: options.TimerOptions[i].RestartTarget,
+			ip:      options.TimerOptions[i].OSC.IP,
+			port:    options.TimerOptions[i].OSC.Port,
+			command: options.TimerOptions[i].OSC.Command,
+			params:  options.TimerOptions[i].OSC.Params,
+		}
+
+		engine.Counters[i].mediaColor, err = parseColor(options.TimerOptions[i].MediaColor)
+		if err != nil {
+			log.Printf("Error parsing media color for timer %d: %v", i, err)
+		}
+		engine.Counters[i].mediaBG, err = parseColor(options.TimerOptions[i].MediaBG)
+		if err != nil {
+			log.Printf("Error parsing media background color for timer %d: %v", i, err)
+		}
+	}
+
+	for i, s := range []string{options.SignalColorStart, options.SignalColorWarning, options.SignalColorEnd} {
+		c := color.RGBA{A: 255}
+		_, err = fmt.Sscanf(s, "#%02x%02x%02x", &c.R, &c.G, &c.B)
+		if err != nil {
+			return
+		}
+		for j := range engine.Counters {
+			engine.Counters[j].signalColors[i] = c
+		}
+	}
+
+	engine.mittiCounter = engine.Counters[options.Mitti]
+	engine.milluminCounter = engine.Counters[options.Millumin]
+	log.Printf("Media counters - Mitti: %d, Millumin %d", options.Mitti, options.Millumin)
+
+	log.Printf("Initialized %d timer counters", len(engine.Counters))
+	return nil
+}
+
+func (engine *Engine) initUDPTime(options *EngineOptions) {
+	// Stagetimer2 UDP time reception
+	if options.UDPTime != "off" {
+		engine.udpCounters = make([]*Counter, 2)
+		engine.udpCounters[0] = engine.Counters[options.UDPTimer1]
+		engine.udpCounters[1] = engine.Counters[options.UDPTimer2]
+
+		if options.UDPTime == "send" {
+			log.Printf("Initializing UDP time sender")
+			// Send timers
+			engine.udpDests = make([]*feedbackDestination, 2)
+			engine.udpDests[0] = initFeedback(engine.ctx, "255.255.255.255:36700")
+			engine.udpDests[1] = initFeedback(engine.ctx, "255.255.255.255:36701")
+		} else {
+			log.Printf("Initializing UDP time receiver")
+			// Receive timers
+			go engine.listenUDPTime()
+		}
+	}
+
+}
+
+func (engine *Engine) initLimitimer(options *EngineOptions) {
+	engine.limitimerReceive[0] = options.LimitimerReceive1
+	engine.limitimerReceive[1] = options.LimitimerReceive2
+	engine.limitimerReceive[2] = options.LimitimerReceive3
+	engine.limitimerReceive[3] = options.LimitimerReceive4
+	engine.limitimerReceive[4] = options.LimitimerReceive5
+
+	engine.limitimerBroadcast[0] = options.LimitimerBroadcast1
+	engine.limitimerBroadcast[1] = options.LimitimerBroadcast2
+	engine.limitimerBroadcast[2] = options.LimitimerBroadcast3
+	engine.limitimerBroadcast[3] = options.LimitimerBroadcast4
+	engine.limitimerBroadcast[4] = options.LimitimerBroadcast5
+
+	if options.LimitimerMode == "send" {
+		go engine.limitimerSend()
+	} else if options.LimitimerMode == "receive" {
+		go engine.limitimerListen()
+	}
+
+}
+
+func (engine *Engine) initSources(sources []*SourceOptions) error {
+	// Todo get the map from options...
+	engine.sources = make([]*source, len(sources))
+	for i, s := range sources {
+		// Time zone
+		tz, err := time.LoadLocation(s.TimeZone)
+		if err != nil {
+			return err
+		}
+
+		c := color.RGBA{A: 255}
+		_, err = fmt.Sscanf(s.OvertimeColor, "#%02x%02x%02x", &c.R, &c.G, &c.B)
+		if err != nil {
+			return err
+		}
+
+		engine.sources[i] = &source{
+			counters:    make([]*Counter, 0),
+			tod:         s.Tod,
+			timer:       s.Timer,
+			ltc:         s.LTC,
+			ltcChannel:  s.LTCChannel,
+			tz:          tz,
+			title:       s.Text,
+			hidden:      s.Hidden,
+			overtime:    c,
+			timerTarget: s.TimerTarget,
+		}
+
+		re := regexp.MustCompile(`^\d(?:,\d)*$`)
+		if re.MatchString(s.Counter) {
+			counters := strings.Split(s.Counter, ",")
+			for _, l := range counters {
+				n, _ := strconv.Atoi(l)
+				engine.sources[i].counters = append(engine.sources[i].counters, engine.Counters[n])
+			}
+		}
+
+	}
+	log.Printf("Initialized %d clock display sources", len(engine.sources))
+	return nil
+}
+
+// initOSC Sets up the OSC listener and feedback
+func (engine *Engine) initOSC(options *EngineOptions) {
+	// OSC feedback channel and processor
+	// We start this every time to consume the data even with
+	// OSC feedback disabled
+	engine.oscSendChan = make(chan []byte)
+	go engine.oscSender()
+
+	if options.DisableOSC {
+		log.Printf("OSC control and feedback disabled.\n")
+		return
+	}
+
+	engine.oscDispatcher = oscutil.NewRegexpDispatcher()
+	engine.oscServer = osc.Server{
+		Addr:    options.ListenAddr,
+		Handler: engine.oscDispatcher.Dispatch,
+	}
+	engine.clockServer = MakeServer(&engine.oscServer, engine.oscDispatcher, engine.uuid)
+	log.Printf("OSC control: listening on %v", engine.oscServer.Addr)
+
+	go engine.clockServer.run(engine.ctx, engine.wg)
+
+	err := engine.oscBridge(engine.clockServer.dispatcher)
+	if err != nil {
+		panic(err)
+	}
+
+	// process osc commands
+	go engine.listen()
+
+	if options.DisableFeedback {
+		log.Printf("OSC feedback disabled")
+		return
+	}
+
+	// OSC feedback destinations
+	engine.oscDests = initFeedback(engine.ctx, options.Connect)
+}
+
+func (engine *Engine) oscSender() {
+	for data := range engine.oscSendChan {
+		if engine.oscDests != nil {
+			engine.oscDests.Write(data)
+		}
+	}
+}
+
+func (engine *Engine) activateSourceByCounter(c int) {
+	for _, s := range engine.sources {
+		for _, ctr := range s.counters {
+			if ctr == engine.Counters[c] {
+				s.hidden = false
+			}
+		}
+	}
+}
+
+// SetSourceColors sets the source output colors
+func (engine *Engine) SetSourceColors(source int, text, bg color.RGBA) {
+	engine.sources[source].textColor = text
+	engine.sources[source].bgColor = bg
+}
+
+// SetTitleColors sets the source title colors
+func (engine *Engine) SetTitleColors(text, bg color.RGBA) {
+	engine.titleTextColor = text
+	engine.titleBGColor = bg
+}
+
+func (engine *Engine) mediaName(m MediaUpdate, counter *Counter, mediaName bool, timeout time.Duration) {
+	if mediaName {
+		engine.message = m.MediaName()
+		engine.messageColor = counter.mediaColor
+		engine.messageBG = counter.mediaBG
+		engine.oscTally = true
+		engine.messageTimer.Reset(timeout)
+	}
+}
