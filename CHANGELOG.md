@@ -19,6 +19,12 @@
     visible on the small display. Single/static and DHCP modes still show a
     single stable IP.
 
+* Release packaging
+  * Rename Trixie installer tarball from
+    `clock8002-vX.X.X-default-linux-arm64.tar.gz` to
+    `piClock-vX.X.X-linux-arm64.tar.gz`. The `default` variant segment is
+    dropped now that only one variant exists.
+
 ## Version 1.4.1-rc1 (2026-08-04) — Trixie
 
 * Network

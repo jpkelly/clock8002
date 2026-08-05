@@ -120,7 +120,7 @@ gh release create vX.X.X \
 4. Verify the built binary reports the tag you expect before publishing, not just that the
    build succeeded:
    ```bash
-   tar xzOf clock8002-vX.X.X-default-linux-arm64.tar.gz clock8002-vX.X.X-default-linux-arm64/alsa-ltc > /tmp/a && chmod +x /tmp/a && /tmp/a --version
+   tar xzOf piClock-vX.X.X-linux-arm64.tar.gz piClock-vX.X.X-linux-arm64/alsa-ltc > /tmp/a && chmod +x /tmp/a && /tmp/a --version
    ```
 5. **Publish directly from the builder (default).** `cm5.local` has `gh` installed and
    authenticated — publish the release from there rather than round-tripping the ~30 MB
@@ -130,15 +130,15 @@ gh release create vX.X.X \
        --title "Clock 8002 vX.X.X" \
        --notes-file /tmp/vX.X.X-release-notes.md \
        --latest \
-       clock8002-vX.X.X-default-linux-arm64.tar.gz
+       piClock-vX.X.X-linux-arm64.tar.gz
    ```
    **Fallback (builder has no `gh`, or `gh auth status` fails there):** `scp` the tarball to
    the Mac and run `gh release create` locally instead. If you do this, verify the checksum
    on both ends before publishing — a truncated `scp` produces a corrupt but plausible-sized
    file, and only the checksum catches it:
    ```bash
-   scp pi@cm5.local:~/clock8002/v4/clock8002-vX.X.X-default-linux-arm64.tar.gz /Users/jp/Desktop/
-   shasum -a 256 /Users/jp/Desktop/clock8002-vX.X.X-default-linux-arm64.tar.gz   # compare against sha256sum on the builder
+   scp pi@cm5.local:~/clock8002/v4/piClock-vX.X.X-linux-arm64.tar.gz /Users/jp/Desktop/
+   shasum -a 256 /Users/jp/Desktop/piClock-vX.X.X-linux-arm64.tar.gz   # compare against sha256sum on the builder
    ```
 
 ### Notes
