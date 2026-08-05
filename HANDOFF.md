@@ -1,68 +1,25 @@
 # Clock8002 Handoff
 
+> **Platform note (2026-08-05):** Buildroot has been **diverged/removed**. Trixie is the only platform. The `buildroot` branch was deleted (history preserved by the `buildroot-final` tag). The Buildroot build workflow, CM5 enforcement gate, manifests, and output-dir rules below are **obsolete** and have been removed. See the Trixie release process in `RELEASING.md`.
+
 ## Hard Rules (MUST follow)
 
-1. **Prebuilt kernel is the default.** `CLOCK8002_PREBUILT_KERNEL=1` is automatic. To compile a custom kernel, you MUST explicitly set `CLOCK8002_PREBUILT_KERNEL=0`. There is no other mode.
-2. **Never reuse an output directory across commits.** Each build gets a fresh `O=/home/pi/output-root-ram-<commit>-<timestamp>`.
-3. **Verify branch and commit before building.** Run `git branch --show-current && git log --oneline -1` on cm5 before every build.
-4. **Always build inside a screen session.** Never run long builds directly in an SSH one-liner.
+1. **Verify branch and commit before building or committing.** Run `git branch --show-current` before any commit; confirm it matches the intended branch (`master` = production Trixie code).
+2. **Never commit to `master` when changes belong on a feature branch**, or vice versa. Experimental work lives on a feature branch.
+3. **Tag before a release build.** The Makefile falls back to `git describe` when HEAD isn't tagged — tag first, then build (see `RELEASING.md`).
+4. **Verify the built binary reports the expected tag** before publishing a release, not just that the build succeeded.
 
-## Build Workflow Docs (Use These First)
+## Build / Release Docs (Use These First)
 
-- Policy: `docs/build-policy.md`
-- Manifest template: `docs/build-manifest-template.md`
+- Trixie release process: `RELEASING.md`
+- Trixie builder: `pi@cm5.local` preferred; `pi@pi5start.local` fallback.
+- Release artifact: `piClock-vX.X.X-linux-arm64.tar.gz` installer tarball, built from `v4/` on `master` via `make release` (in `v4/`).
+- Active product builds exclusively from `v4/`. The `v4/` name is the Go module major-version path (`gitlab.com/clock-8001/clock-8001/v4`), unrelated to the repo's `v1.x` release tags.
 
-### How to use
-1. Read `docs/build-policy.md` before starting a candidate build.
-2. Run the build using one source tree and one commit set only.
-3. Fill `docs/build-manifest-template.md` for the build before flashing.
-4. Only promote to known-good after hardware validation (boot, services, LTC).
-5. If build inputs or outputs are not recorded in a manifest, treat the image as non-reproducible.
+## Validation targets
 
-## CM5 Enforcement Gate
-
-Use this before any build on cm5.
-
-1. **One active working copy only**
-  - Use `/home/pi/clock8002-root-ram` as the canonical dev/RC checkout.
-  - Do not build from a second cm5 checkout path unless the workflow explicitly says so.
-
-2. **Pinned inputs only**
-  - Build from an explicit commit SHA or tag, not a moving branch tip.
-  - Record the exact source SHA(s) and kernel bundle path in the manifest.
-
-3. **Preflight must pass**
-  - `git -C /home/pi/clock8002-root-ram branch --show-current`
-  - `git -C /home/pi/clock8002-root-ram status --short`
-  - `git -C /home/pi/clock8002-root-ram worktree list`
-  - Fail if the working tree is dirty, the branch is wrong, or another worktree is attached to the target branch.
-
-4. **Manifest required for any candidate image**
-  - If the image might be flashed, tested, or promoted, create/update the manifest before sharing it.
-  - Manifest must be stored with the image basename and referenced in HANDOFF.
-
-5. **Reference unit rule**
-  - `/home/pi/clock8002-root-ram` is the active build tree.
-  - `root@192.168.8.245` is the primary validation target.
-  - `root@192.168.8.246` is reference/research only.
-
-## Commonly Missed Items
-
-1. **Filename labels are not provenance**
-  - Always trust manifest + hashes, not the commit string in an image filename.
-
-2. **Mixed source trees are invalid**
-  - Never combine app source from one checkout with buildroot-external from another.
-
-3. **Release vs dev are different flows**
-  - Dev/RC uses `feature/root-ram` and the canonical cm5 working copy.
-  - Release uses a ref-verified clean clone.
-
-4. **No branch switching during active build**
-  - Wait for the exit marker before any checkout or ref movement.
-
-5. **Every promoteable image needs a manifest**
-  - No manifest means no candidate / no known-good.
+- `pi@piClock.local` (192.168.8.245) — primary test/validation unit (Trixie).
+- `192.168.8.246` — reference/research unit only, never a build/deploy target.
 
 ## Root-Ram To Master Cutover Checklist (Concise)
 

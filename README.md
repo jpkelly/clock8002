@@ -2,8 +2,7 @@
 
 An HDMI clock display for Raspberry Pi 5, controllable via OSC and a built-in web UI.
 
-> **This branch (`master`) installs Clock 8002 on Raspberry Pi OS / Debian Trixie.** This is the primary, actively developed path.  
-> For the ready-to-flash Buildroot appliance image, see the [`buildroot`](https://github.com/jpkelly/clock8002/tree/buildroot) branch. That platform is maintained but parked.
+> **This branch (`master`) installs Clock 8002 on Raspberry Pi OS / Debian Trixie.** This is the primary and only actively developed platform.
 
 ## Table of Contents
 
@@ -311,8 +310,6 @@ Last verified: **2026-08-03**
 
 - This branch (`master`) provides the Raspberry Pi OS / Debian Trixie installer path, and is the primary platform.
 - Current release is `v1.4.0` (see Quick Start above).
-- The ready-to-flash Buildroot image is on the [`buildroot`](https://github.com/jpkelly/clock8002/tree/buildroot) branch, maintained but parked.
-- Build policy and reproducibility rules live in [`docs/build-policy.md`](docs/build-policy.md).
 - Current branch operational state and validation targets live in [`HANDOFF.md`](HANDOFF.md).
 
 ## License

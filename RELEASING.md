@@ -2,11 +2,7 @@
 
 This document covers cutting a new clock8002 release.
 
-The primary release artifact is the **Trixie installer tarball**, built from `v4/` on the `master` branch. See [Trixie Installer Release](#trixie-installer-release) below.
-
-The Buildroot SD card image is a **parked platform**. It is still maintained, but no new units are deployed on it and it is only built on explicit request. Its code lives on the `buildroot` branch.
-
-> Branch note (2026-07-31): what was previously the `trixie` branch is now `master`, and what was previously `master` is now `buildroot`.
+The release artifact is the **Trixie installer tarball**, built from `v4/` on the `master` branch. Trixie is the only actively developed platform.
 
 ## Versioning
 
@@ -14,8 +10,6 @@ The Buildroot SD card image is a **parked platform**. It is still maintained, bu
 - Tag format: `v1.x.y` (dropped the `trixie-` prefix starting with `v1.3.16`, since Trixie is
   now the only actively developed platform). Releases before that used `trixie-v1.x.y` —
   those existing tags are historical and are not renamed.
-- Buildroot tag format: `v1.x.y` (parked; last release `v1.3.7`) — same tag namespace,
-  disambiguated by branch (`buildroot`) rather than a prefix.
 
 ---
 
@@ -31,60 +25,6 @@ Run the piClock test unit with `shakemon.sh` or manual monitoring for at least 2
 - No throttle events
 
 If any metric is rising or unstable, hold release and investigate.
-
----
-
-## Buildroot Image Release (PARKED — only on explicit request)
-
-See [buildroot-external/README.buildroot.md](buildroot-external/README.buildroot.md) for the full build and flash workflow.
-
-This platform is dormant. Unless you have specifically been asked for a Buildroot image, use the Trixie process below instead.
-
-### 1. Update CHANGELOG.md and HANDOFF.md
-
-Add a CHANGELOG entry. Update HANDOFF.md Current State section with the new tag and commit hash.
-
-### 2. Commit, tag, and push
-
-```bash
-git add CHANGELOG.md HANDOFF.md
-git commit -m "release: vX.X.X"
-git tag vX.X.X
-git push origin buildroot vX.X.X
-```
-
-### 3. Verify cm5 is on the buildroot branch at the new tag
-
-```bash
-ssh pi@cm5.local 'cd ~/clock8002 && git fetch --tags origin && git reset --hard origin/buildroot && git branch --show-current && git describe --tags HEAD'
-```
-
-### 4. Build on cm5
-
-**Release images must never include an SSH key.** Always build without `--key`.
-
-```bash
-tools/buildroot/cm5-build-launch.sh --purpose release-<VERSION>
-```
-
-The launch script writes a manifest to `docs/manifests/` and prints monitor commands on launch.
-
-### 5. Transfer image
-
-```bash
-scp pi@cm5.local:~/buildroot/output/images/sdcard.img /Users/jp/Desktop/piClock-<COMMIT>-sdcard.img
-```
-
-Naming convention: `piClock-<7-char-commit-hash>-sdcard.img`
-
-### 6. Publish GitHub release
-
-```bash
-gh release create vX.X.X \
-    --title "vX.X.X — Buildroot / SDL3" \
-    --notes "<release notes>" \
-    /Users/jp/Desktop/piClock-<COMMIT>-sdcard.img
-```
 
 ---
 
@@ -143,6 +83,6 @@ gh release create vX.X.X \
 
 ### Notes
 
-- **Release builds must use `make clean`**, not `clock8002-dirclean`. `output/target/` is not wiped by partial cleans — stale files from prior dev builds (including SSH keys) can persist.
+- **Release builds must use `make clean`.** Stale files from prior dev builds can persist otherwise.
 - Do not use `pkill -f sdl-clock` in SSH commands — pattern matches can terminate the SSH session. Use `/etc/init.d/S99clock stop` instead.
 - There is a single release variant (`default`). The `gerry` variant was removed in `v1.4.0` — do not build or publish a `-gerry-` tarball.
