@@ -1,0 +1,17 @@
+[Unit]
+Description=Multi-boot LTC stability cycle test (production conditions)
+# Type=simple, and NOT After=clock8002.service. Both matter:
+#   - oneshot would block multi-user.target, and clock8002 is After=multi-user.target,
+#     so the display could never start during a cycle.
+#   - After=clock8002.service creates an ordering cycle and the job gets deleted.
+After=alsa-ltc.service
+Wants=alsa-ltc.service
+
+[Service]
+Type=simple
+ExecStart=/opt/clock8002/ltc-cycle.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

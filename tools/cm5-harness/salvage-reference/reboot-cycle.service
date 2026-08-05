@@ -1,0 +1,15 @@
+[Unit]
+Description=Multi-boot LTC stability cycle test
+After=alsa-ltc.service
+Wants=alsa-ltc.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/opt/clock8002/reboot-cycle.sh
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=400
+
+[Install]
+WantedBy=multi-user.target
