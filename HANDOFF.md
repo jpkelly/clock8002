@@ -1739,6 +1739,7 @@ the existing full fstab.
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
 - **Latest release: `v1.4.0`** (2026-08-03) — `master` branch (Trixie, primary platform). Commit: `44a7e3c`. Installer-only changes: boot-partition SSH key import, password auth kept enabled, cloud-init removed. Verified by a clean install plus a 12h soak (662 samples, zero errors) on chassis `4239e42b6042be00`.
+- **Pending release candidate: `v1.4.1-rc1`** (2026-08-04) — fixes Trixie network-mode detection in the HDMI info overlay and implements `mode=dual` under NetworkManager.
 - Previous release: `v1.3.16` (2026-08-02), commit `d15f825` — first release to drop the `trixie-` tag prefix.
 - Latest Buildroot release: **v1.3.7** — `buildroot` branch (parked platform)
 - **Active branch: `master`** (Trixie) — platform reversal and branch rename complete 2026-07-31
@@ -2278,7 +2279,8 @@ Branches reduced from 9 to 8. No history rewritten — renames only, all 212 tag
 
 ## Next Suggested Release
 
-- **Latest release: v1.4.0** (2026-08-03, Trixie, `master`, commit `44a7e3c`) — single `default` variant; the `gerry` variant was dropped. Next Trixie installer release will be **v1.4.x**; see RELEASING.md § Versioning.
+- **Latest release: v1.4.0** (2026-08-03, Trixie, `master`, commit `44a7e3c`) — single `default` variant; the `gerry` variant was dropped.
+- **Pending release candidate: v1.4.1-rc1** (2026-08-04, Trixie, `master`) — network overlay path fix and `mode=dual` support on NetworkManager. Build and test on `piClock.local` before promoting to `v1.4.1`.
 - Buildroot **v1.4.0** remains planned but parked; build only on explicit request.
 
 
