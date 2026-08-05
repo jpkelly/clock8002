@@ -306,7 +306,7 @@ Upstream reference is also available at [clock-8001/v4/osc.md](https://gitlab.co
 
 ## Project Status
 
-Last verified: **2026-08-03**
+Last verified: **2026-08-05**
 
 - This branch (`master`) provides the Raspberry Pi OS / Debian Trixie installer path, and is the primary platform.
 - Current release is `v1.4.0` (see Quick Start above).

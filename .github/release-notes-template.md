@@ -7,9 +7,9 @@
 ## Install (Default)
 
 ```bash
-wget https://github.com/jpkelly/clock8002/releases/download/__VERSION__/clock8002-__VERSION__-default-linux-arm64.tar.gz
-tar xzf clock8002-__VERSION__-default-linux-arm64.tar.gz
-cd clock8002-__VERSION__-default-linux-arm64
+wget https://github.com/jpkelly/clock8002/releases/download/__VERSION__/piClock-__VERSION__-linux-arm64.tar.gz
+tar xzf piClock-__VERSION__-linux-arm64.tar.gz
+cd piClock-__VERSION__-linux-arm64
 sudo bash install.sh
 ```
 
