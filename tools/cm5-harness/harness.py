@@ -116,6 +116,20 @@ def host_reachable(host, timeout=5):
         return False
 
 
+def wait_reachable(host, attempts=5, delay=5):
+    """Retry host_reachable() several times, returning True as soon as the target
+    responds. The single-probe host_reachable() can return a transient False right
+    after a poll (the ~5s SSH/sudo latency from target reverse-DNS makes a lone
+    reachability check unreliable at completion). Retrying avoids a spurious
+    'unreachable' skip of the auto-revert/verify cleanup."""
+    for i in range(attempts):
+        if host_reachable(host):
+            return True
+        if i < attempts - 1:
+            time.sleep(delay)
+    return False
+
+
 def scp_content_to(host, remote_path, content):
     """Write `content` to `remote_path` on the unit via ssh (no sftp dependency,
     matches the BusyBox-safe streaming approach used throughout this session)."""
@@ -500,9 +514,31 @@ def cmd_run_soak(args):
     rss1, swap1 = harness_ram()
     update_meta(run_dir, harness_rss_kb_end=rss1, harness_swap_kb_end=swap1)
 
-    # Determine outcome. A run that finished with the target unreachable must not
-    # be reported PASSED - the soak window did not complete and the unit could
-    # not be reverted/verified cleanly.
+    if failure:
+        print(f"[{run_id}] collecting forensic dumps (auto-collect on failure)...")
+        cmd_collect(argparse.Namespace(run=run_id))
+
+    # Revert/verify the unit before finalizing the outcome. Retry the reachability
+    # check so a transient SSH/sudo-latency miss doesn't spuriously skip cleanup.
+    if wait_reachable(host):
+        print(f"[{run_id}] reverting all changes made to {host} (auto-revert on completion)...")
+        cmd_revert(argparse.Namespace(run=run_id))
+        try:
+            cmd_verify(argparse.Namespace(run=run_id))
+            cleanup_ok = True
+        except SystemExit:
+            print(f"[{run_id}] WARNING: unit does not match pre-test fingerprint after "
+                  f"revert - see fingerprint-before/after.json in {run_dir}")
+            cleanup_ok = True
+    else:
+        print(f"[{run_id}] target unreachable after retries; skipping auto-revert. "
+              f"Soak files remain on the unit. Run 'revert --run {run_id}' once it "
+              f"is back up.")
+        cleanup_ok = False
+
+    # Finalize the outcome only now, after cleanup was attempted. A run that could
+    # not be reverted/verified must not be reported PASSED - it leaves the unit
+    # dirty and the run is not fully complete.
     if failure:
         outcome = "FAILED"
         failure_detail = failure
@@ -510,29 +546,19 @@ def cmd_run_soak(args):
         outcome = "INCONCLUSIVE"
         failure_detail = (f"target unreachable for {unreachable_s}s at end of "
                           f"run; soak window incomplete")
+    elif not cleanup_ok:
+        outcome = "INCONCLUSIVE"
+        failure_detail = ("soak window complete but auto-revert/verify could not "
+                          "run (target unreachable); run 'revert --run "
+                          f"{run_id}' once it is back up")
     else:
         outcome = "PASSED"
         failure_detail = ""
     update_meta(run_dir, status="complete", outcome=outcome,
                 finished=datetime.datetime.now().isoformat(),
                 failure_detail=failure_detail,
-                unreachable_s=unreachable_s)
-
-    if failure:
-        print(f"[{run_id}] collecting forensic dumps (auto-collect on failure)...")
-        cmd_collect(argparse.Namespace(run=run_id))
-
-    if host_reachable(host):
-        print(f"[{run_id}] reverting all changes made to {host} (auto-revert on completion)...")
-        cmd_revert(argparse.Namespace(run=run_id))
-        try:
-            cmd_verify(argparse.Namespace(run=run_id))
-        except SystemExit:
-            print(f"[{run_id}] WARNING: unit does not match pre-test fingerprint after "
-                  f"revert - see fingerprint-before/after.json in {run_dir}")
-    else:
-        print(f"[{run_id}] target unreachable; skipping auto-revert. Soak files "
-              f"remain on the unit. Run 'revert --run {run_id}' once it is back up.")
+                unreachable_s=unreachable_s,
+                cleanup_ok=cleanup_ok)
 
     print(f"[{run_id}] {outcome}. Results: {run_dir}")
 
@@ -591,26 +617,42 @@ def cmd_run_cycle(args):
     rss1, swap1 = harness_ram()
     update_meta(run_dir, harness_rss_kb_end=rss1, harness_swap_kb_end=swap1)
 
-    outcome = "FAILED" if failure else "PASSED"
-    update_meta(run_dir, status="complete", outcome=outcome,
-                finished=datetime.datetime.now().isoformat(),
-                failure_detail=failure or "")
-
     if failure:
         print(f"[{run_id}] collecting forensic dumps (auto-collect on failure)...")
         cmd_collect(argparse.Namespace(run=run_id))
 
-    if host_reachable(host):
+    # Revert/verify before finalizing outcome (see cmd_run_soak for rationale).
+    if wait_reachable(host):
         print(f"[{run_id}] reverting all changes made to {host} (auto-revert on completion)...")
         cmd_revert(argparse.Namespace(run=run_id))
         try:
             cmd_verify(argparse.Namespace(run=run_id))
+            cleanup_ok = True
         except SystemExit:
             print(f"[{run_id}] WARNING: unit does not match pre-test fingerprint after "
                   f"revert - see fingerprint-before/after.json in {run_dir}")
+            cleanup_ok = True
     else:
-        print(f"[{run_id}] target unreachable; skipping auto-revert. Cycle files "
-              f"remain on the unit. Run 'revert --run {run_id}' once it is back up.")
+        print(f"[{run_id}] target unreachable after retries; skipping auto-revert. "
+              f"Cycle files remain on the unit. Run 'revert --run {run_id}' once it "
+              f"is back up.")
+        cleanup_ok = False
+
+    if failure:
+        outcome = "FAILED"
+        failure_detail = failure
+    elif not cleanup_ok:
+        outcome = "INCONCLUSIVE"
+        failure_detail = ("cycle complete but auto-revert/verify could not run "
+                          "(target unreachable); run 'revert --run "
+                          f"{run_id}' once it is back up")
+    else:
+        outcome = "PASSED"
+        failure_detail = ""
+    update_meta(run_dir, status="complete", outcome=outcome,
+                finished=datetime.datetime.now().isoformat(),
+                failure_detail=failure_detail,
+                cleanup_ok=cleanup_ok)
 
     print(f"[{run_id}] {outcome}. Results: {run_dir}")
 
