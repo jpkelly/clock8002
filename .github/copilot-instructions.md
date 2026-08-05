@@ -27,9 +27,9 @@ Codebase orientation:
 - Config path (Trixie): `/boot/firmware/piclock/`. The old `/boot/piclock/` Buildroot path is gone.
 
 Stability decision gate note:
-- When investigating suspected memory/resource leaks, do not deploy code fixes until the current baseline run on the fully-populated 2GB piclock unit reaches at least the 24h checkpoint, unless the user explicitly overrides this gate.
-- Required decision checkpoints: 12h and 24h with the same metrics (`VmRSS`, `VmSwap`, system swap, service state, temperature/throttle).
-- Approve code change only if leak behavior is reproduced on that unit (e.g., materially rising `VmSwap` for `sdl3-clock` or sustained RSS growth over time). If metrics are flat by 24h, hold changes and treat prior 1GB findings as non-generalized.
+- When investigating suspected memory/resource leaks, do not deploy code fixes until the current baseline run on the fully-populated 2GB piclock unit reaches at least the 12h checkpoint, unless the user explicitly overrides this gate.
+- Required decision checkpoints: 6h and 12h with the same metrics (`VmRSS`, `VmSwap`, system swap, service state, temperature/throttle).
+- Approve code change only if leak behavior is reproduced on that unit (e.g., materially rising `VmSwap` for `sdl3-clock` or sustained RSS growth over time). If metrics are flat by 12h, hold changes and treat prior 1GB findings as non-generalized.
 
 Release management note:
 - The primary release artifact is the **installer tarball** (`piClock-v1.x.y-linux-arm64.tar.gz`), produced by `make release` in `app/`. This is what gets attached to GitHub releases.
