@@ -105,10 +105,17 @@ def ssh_ok(host, remote_cmd, timeout=None):
     return out
 
 
-def host_reachable(host, timeout=5):
-    """Return True if the target unit answers a trivial SSH command. Uses a short
-    timeout so the soak poll loop doesn't stall on an offline unit. A false return
-    means the target is down/unreachable (reboot, power loss, shutdown)."""
+def host_reachable(host, timeout=15):
+    """Return True if the target unit answers a trivial SSH command. A false return
+    means the target is down/unreachable (reboot, power loss, shutdown).
+
+    The timeout must comfortably exceed the target's SSH round-trip latency. On the
+    piClock units the SSH connection consistently takes ~5.2-5.5s (reverse-DNS lookup
+    on the target), so a 5s timeout would spuriously report a reachable unit as
+    unreachable (observed 2026-08-05: every probe timed out at 5s, skipping the
+    auto-revert/verify even though the unit was up). 15s tolerates that latency while
+    still returning promptly for a genuinely offline unit (which fails ConnectTimeout
+    almost immediately, well under 15s)."""
     try:
         rc, _, _ = ssh(host, "true", timeout=timeout)
         return rc == 0
