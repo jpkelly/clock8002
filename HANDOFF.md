@@ -1739,7 +1739,7 @@ the existing full fstab.
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
 - **Latest release: `v1.4.0`** (2026-08-03) — `master` branch (Trixie, primary platform). Commit: `44a7e3c`. Installer-only changes: boot-partition SSH key import, password auth kept enabled, cloud-init removed. Verified by a clean install plus a 12h soak (662 samples, zero errors) on chassis `4239e42b6042be00`.
-- **Pending release candidate: `v1.4.1-rc2`** (2026-08-04) — adds the OLED dual-mode IP alternation feature on top of the network overlay and dual-mode fixes in rc1.
+- **Pending release candidate: `v1.4.1-rc3`** (2026-08-05) — adds a large repository cleanup (removes the dead upstream v1 root module, the `v3/` module, duplicate root `fonts/`/`arduino/`, and unused standalone `cmd/` binaries). No runtime behaviour change; the product builds exclusively from `v4/`.
 - Previous release: `v1.3.16` (2026-08-02), commit `d15f825` — first release to drop the `trixie-` tag prefix.
 - Latest Buildroot release: **v1.3.7** — `buildroot` branch (parked platform)
 - **Active branch: `master`** (Trixie) — platform reversal and branch rename complete 2026-07-31
@@ -2280,7 +2280,7 @@ Branches reduced from 9 to 8. No history rewritten — renames only, all 212 tag
 ## Next Suggested Release
 
 - **Latest release: v1.4.0** (2026-08-03, Trixie, `master`, commit `44a7e3c`) — single `default` variant; the `gerry` variant was dropped.
-- **Pending release candidate: v1.4.1-rc2** (2026-08-04, Trixie, `master`) — network overlay path fix, `mode=dual` support, and OLED dual-mode IP alternation. Build and test on `piClock.local` before promoting to `v1.4.1`.
+- **Pending release candidate: v1.4.1-rc3** (2026-08-05, Trixie, `master`) — large repository cleanup: removed dead upstream v1 root module, `v3/` module, duplicate root `fonts/`/`arduino/`, and unused standalone `cmd/` binaries. No runtime behaviour change; builds exclusively from `v4/`. Build and test on `piClock.local` before promoting to `v1.4.1`.
 - Buildroot **v1.4.0** remains planned but parked; build only on explicit request.
 
 

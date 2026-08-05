@@ -1,3 +1,19 @@
+## Version 1.4.1-rc3 (2026-08-05) — Trixie
+
+* Repository cleanup (no runtime behaviour change)
+  * Remove the dead upstream v1 root Go module (`clock/`, `cmd/`, `millumin/`,
+    `mitti/`, `debug/`, `util/`, root `go.mod`/`go.sum`/`Makefile`).
+  * Remove the dead `v3/` Go module tree.
+  * Remove duplicate root `fonts/` and `arduino/` (byte-identical to the live
+    `v4/` copies).
+  * Remove unused standalone `cmd/` binaries (`disguise_test`, `hyperdeck`,
+    `ltc-emulator`, `matrix-clock`, `multi-clock`, `ontime_test`,
+    `picturall_autodiscovery`, `picturall_mediadump`, `picturall_test`,
+    `sdl-clock` SDL2 source, `tricaster_emulator`, `vmix_test`). The shipping
+    `sdl3-clock` binary and the library packages it uses are unchanged.
+  * The active product builds exclusively from `v4/`; nothing removed was on the
+    build path.
+
 ## Version 1.4.1-rc2 (2026-08-04) — Trixie
 
 * Network
