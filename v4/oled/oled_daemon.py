@@ -242,6 +242,50 @@ def parse_ini_settings():
                             settings[key] = line.split('=', 1)[1]
     return settings
 
+_NETWORK_INI_CANDIDATES = [
+    '/boot/firmware/piclock/network.ini',  # Trixie
+    '/boot/piclock/network.ini',           # Buildroot
+]
+NETWORK_INI_PATH = next((p for p in _NETWORK_INI_CANDIDATES if os.path.exists(p)), None)
+
+def parse_network_ini():
+    mode = ''
+    address = ''
+    if not NETWORK_INI_PATH:
+        return mode, address
+    try:
+        with open(NETWORK_INI_PATH, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('mode='):
+                    mode = line.split('=', 1)[1].strip().lower()
+                elif line.startswith('address='):
+                    address = line.split('=', 1)[1].strip()
+    except Exception:
+        pass
+    return mode, address
+
+def get_wired_ips():
+    try:
+        out = subprocess.check_output(
+            ['ip', '-4', '-o', 'addr', 'show', 'scope', 'global'],
+            stderr=subprocess.DEVNULL).decode()
+    except Exception:
+        return []
+    ips = []
+    for line in out.splitlines():
+        fields = line.split()
+        if len(fields) < 4:
+            continue
+        iface = fields[1]
+        try:
+            addr = line.split('inet ')[1].split('/')[0]
+        except IndexError:
+            continue
+        if iface.startswith(('eth', 'end', 'enp', 'enx')):
+            ips.append(addr)
+    return ips
+
 def get_ip():
     # Prefer the wired interface so a connected Wi-Fi (secondary) address is
     # never shown in its place. Fall back to any global-scope IPv4 address.
@@ -267,7 +311,9 @@ def get_ip():
             other = other or addr
     return wired or other or 'No IP'
 
-def get_stats():
+_DUAL_TOGGLE_SECONDS = 5
+
+def get_stats(now=None):
     settings = parse_ini_settings()
     port = settings['HTTPPort']
     http_user = settings['HTTPUser']
@@ -275,7 +321,26 @@ def get_stats():
     hostname = socket.gethostname() + '.local'
     if port:
         hostname = f"{hostname}:{port.lstrip(':')}"
-    ip = get_ip()
+
+    net_mode, static_addr = parse_network_ini()
+    ip = 'No IP'
+    if net_mode == 'dual':
+        wired_ips = get_wired_ips()
+        dhcp_addr = None
+        for addr in wired_ips:
+            if addr != static_addr:
+                dhcp_addr = addr
+                break
+        choices = [a for a in [static_addr, dhcp_addr] if a]
+        if choices:
+            # Alternate every _DUAL_TOGGLE_SECONDS based on wall-clock time.
+            now = now if now is not None else time.time()
+            ip = choices[int(now // _DUAL_TOGGLE_SECONDS) % len(choices)]
+        elif wired_ips:
+            ip = wired_ips[0]
+    else:
+        ip = get_ip()
+
     return hostname, ip, http_user, http_pass
 
 # Show logo at startup
@@ -301,7 +366,7 @@ def is_ap_active():
 while True:
     image = Image.new("1", device.size)
     draw = ImageDraw.Draw(image)
-    hostname, ip, http_user, http_pass = get_stats()
+    hostname, ip, http_user, http_pass = get_stats(time.time())
     draw.text((0, 0), ip, font=font, fill=255)
     draw.text((0, 16), hostname, font=font, fill=255)
     draw.text((0, 32), f"User: {http_user}", font=font, fill=255)
@@ -315,5 +380,5 @@ while True:
         else:
             draw.ellipse((OLED_WD - 5, 2, OLED_WD - 2, 5), fill=255)
     device.display(image)
-    time.sleep(2)
+    time.sleep(1)
 
