@@ -1,3 +1,12 @@
+## Version 1.4.1-rc5 (2026-08-05) — Trixie
+
+* Repository restructuring (repo-only, no runtime behaviour change)
+  * Rename the active product directory from `v4/` to `app/`.
+  * Rehome the Go module path from the upstream `gitlab.com/clock-8001/clock-8001/v4`
+    to `github.com/jpkelly/clock8002/app`, reflecting that this repo is a fork.
+  * This removes the confusing upstream `v4` major-version naming. The build,
+    deploy name (`sdl-clock`/`sdl3-clock`), and installer tarball are unchanged.
+
 ## Version 1.4.1-rc4 (2026-08-05) — Trixie
 
 * Buildroot divergence (repo cleanup, no runtime behaviour change on Trixie)

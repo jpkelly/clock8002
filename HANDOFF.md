@@ -1696,7 +1696,7 @@ the existing full fstab.
 - Repository: jpkelly/clock8002
 - Active release line: v1.x
 - **Latest release: `v1.4.0`** (2026-08-03) — `master` branch (Trixie, primary platform). Commit: `44a7e3c`. Installer-only changes: boot-partition SSH key import, password auth kept enabled, cloud-init removed. Verified by a clean install plus a 12h soak (662 samples, zero errors) on chassis `4239e42b6042be00`.
-- **Pending release candidate: `v1.4.1-rc4`** (2026-08-05) — diverges from the parked Buildroot platform: removes `buildroot-external/`, `tools/buildroot/`, `tools/cm5-harness/` and Buildroot docs; strips Buildroot-only paths from the shared `app/` runtime code; removes the dead upstream `.gitlab-ci.yml` and `Dockerfile`. No runtime behaviour change on Trixie; the product builds exclusively from `app/`.
+- **Pending release candidate: `v1.4.1-rc5`** (2026-08-05) — renames the active product directory from `v4/` to `app/` and rehomes the Go module to `github.com/jpkelly/clock8002/app` (was upstream `gitlab.com/clock-8001/clock-8001/v4`). Repo-only; no runtime behaviour change.
 - Previous release: `v1.3.16` (2026-08-02), commit `d15f825` — first release to drop the `trixie-` tag prefix.
 - Latest Buildroot release: **v1.3.7** — `buildroot` branch (parked platform)
 - **Active branch: `master`** (Trixie) — platform reversal and branch rename complete 2026-07-31
@@ -2237,7 +2237,7 @@ Branches reduced from 9 to 8. No history rewritten — renames only, all 212 tag
 ## Next Suggested Release
 
 - **Latest release: v1.4.0** (2026-08-03, Trixie, `master`, commit `44a7e3c`) — single `default` variant; the `gerry` variant was dropped.
-- **Pending release candidate: v1.4.1-rc4** (2026-08-05, Trixie, `master`) — Buildroot divergence: removed `buildroot-external/`, `tools/buildroot/`, `tools/cm5-harness/`, Buildroot docs, dead `.gitlab-ci.yml` and `Dockerfile`; stripped Buildroot-only paths from `app/` runtime code. No runtime behaviour change; builds exclusively from `app/`. Build and test on `piClock.local` before promoting to `v1.4.1`.
+- **Pending release candidate: v1.4.1-rc5** (2026-08-05, Trixie, `master`) — repo restructuring: renamed `v4/` → `app/` and rehomed Go module to `github.com/jpkelly/clock8002/app`. Repo-only, no runtime behaviour change. Build and test on `piClock.local` before promoting to `v1.4.1`.
 - Buildroot **v1.4.0** remains planned but parked; build only on explicit request.
 
 
