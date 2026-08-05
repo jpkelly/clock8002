@@ -227,10 +227,7 @@ func detectNetworkMode() string {
 }
 
 func networkINIPath() string {
-	if _, err := os.Stat("/boot/firmware/piclock/network.ini"); err == nil {
-		return "/boot/firmware/piclock/network.ini"
-	}
-	return "/boot/piclock/network.ini"
+	return "/boot/firmware/piclock/network.ini"
 }
 
 func networkINIConfig() (mode string, staticIP string) {

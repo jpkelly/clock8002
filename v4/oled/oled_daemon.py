@@ -12,27 +12,22 @@ from PIL import ImageDraw, ImageFont, Image
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _INI_CANDIDATES = [
-    '/boot/piclock/clock.ini',                              # Buildroot
     '/boot/firmware/piclock/clock.ini',                     # Trixie
     os.path.expanduser('~/.config/clock-8001/clock.ini'),  # Legacy/dev fallback
 ]
 INI_PATH = next((p for p in _INI_CANDIDATES if os.path.exists(p)), _INI_CANDIDATES[0])
 _OLED_INI_CANDIDATES = [
-    '/boot/piclock/oled.ini',                               # Buildroot
     '/boot/firmware/piclock/oled.ini',                      # Trixie
     os.path.join(_SCRIPT_DIR, 'oled.ini'),                  # Legacy/dev fallback
 ]
 OLED_INI_PATH = next((p for p in _OLED_INI_CANDIDATES if os.path.exists(p)), _OLED_INI_CANDIDATES[0])
 _LOGO_CANDIDATES = [
-    '/root/piclockLogo.bin',                              # Buildroot
-    '/boot/piclockLogo.bin',                              # Buildroot embedded-initramfs (FAT)
     os.path.expanduser('~/piclockLogo.bin'),               # Trixie / dev
 ]
 LOGO_PATH = next((p for p in _LOGO_CANDIDATES if os.path.exists(p)), _LOGO_CANDIDATES[0])
 _SDL_CLOCK_CANDIDATES = [
-    '/opt/clock8002/sdl3-clock',  # Buildroot squashfs
+    '/opt/clock8002/sdl3-clock',  # Trixie (installed by install.sh)
     '/opt/clock8002/sdl-clock',   # Trixie (installed by install.sh)
-    '/root/sdl-clock',            # Buildroot embedded-initramfs (FAT)
 ]
 SDL_CLOCK_PATH = next((p for p in _SDL_CLOCK_CANDIDATES if os.path.exists(p)), _SDL_CLOCK_CANDIDATES[0])
 LOGO_SECONDS = 8
@@ -73,8 +68,7 @@ _signal.signal(_signal.SIGINT, _blank_and_exit)
 
 _FONT_CANDIDATES = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # Debian/Trixie
-    "/opt/clock8002/DejaVuSans.ttf",                     # Buildroot (bundled)
-    "/boot/DejaVuSans.ttf",                              # Buildroot embedded-initramfs (FAT)
+    "/opt/clock8002/DejaVuSans.ttf",                     # Trixie (bundled by release)
 ]
 _FONT_PATH = next((p for p in _FONT_CANDIDATES if os.path.exists(p)), None)
 
@@ -85,8 +79,7 @@ except Exception:
     logo_font = ImageFont.load_default()
 
 _MATERIAL_FONT_CANDIDATES = [
-    "/opt/clock8002/MaterialIcons-Regular.ttf",  # Buildroot (opt)
-    "/root/MaterialIcons-Regular.ttf",            # Buildroot (golden-working-card/root)
+    "/opt/clock8002/MaterialIcons-Regular.ttf",  # Trixie (bundled by release)
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "../ttf_fonts/MaterialIcons-Regular.ttf"),  # dev
 ]
 _MATERIAL_FONT_PATH = next((p for p in _MATERIAL_FONT_CANDIDATES if os.path.exists(p)), None)
@@ -244,7 +237,6 @@ def parse_ini_settings():
 
 _NETWORK_INI_CANDIDATES = [
     '/boot/firmware/piclock/network.ini',  # Trixie
-    '/boot/piclock/network.ini',           # Buildroot
 ]
 NETWORK_INI_PATH = next((p for p in _NETWORK_INI_CANDIDATES if os.path.exists(p)), None)
 

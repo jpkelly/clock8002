@@ -1,11 +1,9 @@
 package clock
 
 import (
-	"bufio"
 	"fmt"
 	"image/color"
 	"log"
-	"os"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -94,27 +92,7 @@ func VersionInfo() string {
 			}
 		}
 	}
-	if IsBuildroot() {
-		return fmt.Sprintf("Clock-8002 version %s (%s BR)", version, commit)
-	}
 	return fmt.Sprintf("Clock-8002 version %s (%s)", version, commit)
-}
-
-// IsBuildroot returns true when the OS is Buildroot (reads /etc/os-release).
-func IsBuildroot() bool {
-	f, err := os.Open("/etc/os-release")
-	if err != nil {
-		return false
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if line == "NAME=Buildroot" || line == `NAME="Buildroot"` {
-			return true
-		}
-	}
-	return false
 }
 
 // AppVersionForConfig returns a stable app-version value for clock.ini.

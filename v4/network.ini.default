@@ -1,7 +1,6 @@
 # Clock-8002 Network Configuration
 #
-# Place this file at /boot/firmware/piclock/network.ini (Trixie)
-# or /boot/piclock/network.ini (Buildroot).
+# Place this file at /boot/firmware/piclock/network.ini (Trixie).
 # Settings are applied automatically on every boot.
 # Edit, save, and reboot for changes to take effect.
 

@@ -1,5 +1,5 @@
 # Clock-8002 default configuration
-# Place at /boot/piclock/clock.ini (editable on the FAT boot partition or via SSH)
+# Place at /boot/firmware/piclock/clock.ini (editable on the FAT boot partition or via SSH)
 
 Face=text
 

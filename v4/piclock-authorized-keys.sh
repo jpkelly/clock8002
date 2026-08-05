@@ -1,8 +1,8 @@
 #!/bin/sh
 # Install SSH public keys from the FAT boot partition into the login user's
-# ~/.ssh/authorized_keys. Buildroot does this in S03copy_clock_files; the Trixie
-# installer had no equivalent, so the documented boot-partition key drop never
-# actually worked on this platform (see README "authorized_keys").
+# ~/.ssh/authorized_keys. The Trixie installer had no equivalent, so the
+# documented boot-partition key drop never actually worked on this platform
+# (see README "authorized_keys").
 set -eu
 
 USER_NAME="${1:-pi}"
