@@ -1,3 +1,18 @@
+## Version 1.4.1-rc4 (2026-08-05) — Trixie
+
+* Buildroot divergence (repo cleanup, no runtime behaviour change on Trixie)
+  * Remove the parked Buildroot platform entirely: `buildroot-external/`,
+    `tools/buildroot/`, `tools/cm5-harness/`, and the Buildroot build docs.
+    The `buildroot` branch was deleted (history preserved by the
+    `buildroot-final` tag); Trixie is now the only platform.
+  * Strip Buildroot-only paths/branches from the shared `v4/` runtime code:
+    `clock/util.go` (drop `IsBuildroot()`), `clock/engine.go` (`networkINIPath`
+    returns `/boot/firmware/piclock/network.ini` directly), `oled/oled_daemon.py`
+    (drop Buildroot candidate paths), `piclock-network.sh`, and config comments.
+  * Remove the dead upstream `.gitlab-ci.yml` and `Dockerfile`.
+  * Update docs to Trixie-only: `README.md`, `RELEASING.md`, `HANDOFF.md`,
+    `.github/copilot-instructions.md`.
+
 ## Version 1.4.1-rc3 (2026-08-05) — Trixie
 
 * Repository cleanup (no runtime behaviour change)
