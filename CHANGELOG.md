@@ -1,3 +1,24 @@
+## Version 1.4.1-rc2 (2026-08-04) — Trixie
+
+* Network
+  * Fix HDMI info overlay reporting "Network Mode: Unknown" on Trixie. The
+    overlay code in `clock/engine.go` was reading `/boot/piclock/network.ini`
+    (Buildroot path) instead of `/boot/firmware/piclock/network.ini` (Trixie
+    path). It now checks the Trixie path first and falls back to the Buildroot
+    path, so static, DHCP, and dual modes are reported correctly.
+  * Implement `mode=dual` for Trixie/NetworkManager. `piclock-network.sh` now
+    keeps DHCP on the wired connection and adds the configured static address as
+    a secondary IP, matching the behaviour already documented in
+    `network.ini.default` and `boot-README.txt`.
+  * Correct the stale path comment in `network.ini.default` to point to the
+    Trixie boot-partition location (`/boot/firmware/piclock/network.ini`).
+
+* OLED
+  * In `mode=dual`, the OLED IP line now alternates every 5 seconds between the
+    configured static address and the wired DHCP address, so both addresses are
+    visible on the small display. Single/static and DHCP modes still show a
+    single stable IP.
+
 ## Version 1.4.1-rc1 (2026-08-04) — Trixie
 
 * Network
