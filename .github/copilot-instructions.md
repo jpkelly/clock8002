@@ -1,7 +1,7 @@
 Platform status (updated 2026-08-05):
 - **Raspberry Pi OS Trixie is the ONLY platform.** All releases ship from it.
 - **Buildroot has been removed/diverged** (2026-08-05). The `buildroot` branch was deleted; its history is preserved by the `buildroot-final` tag. Do not attempt Buildroot builds or reference Buildroot files/tools — they no longer exist in this repo.
-- Latest release candidate: `v1.4.1-rc5` (2026-08-05), built from `app/` on `master`. Install validated on a fresh Trixie reflash.
+- Latest release: `v1.4.1` (2026-08-06), built from `app/` on `master`. Install validated on a fresh Trixie reflash and a 15h soak (825 samples, zero errors).
 - Last full release: `v1.4.0`.
 
 Branch layout:

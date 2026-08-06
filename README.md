@@ -74,9 +74,9 @@ ssh pi@piclock.local
 Download the latest Trixie release tarball from the [Releases](https://github.com/jpkelly/clock8002/releases) page. Look for assets named `piClock-vX.X.Y-linux-arm64.tar.gz`.
 
 ```bash
-wget https://github.com/jpkelly/clock8002/releases/download/v1.4.0/piClock-v1.4.0-linux-arm64.tar.gz
-tar xzf piClock-v1.4.0-linux-arm64.tar.gz
-cd piClock-v1.4.0-linux-arm64
+wget https://github.com/jpkelly/clock8002/releases/download/v1.4.1/piClock-v1.4.1-linux-arm64.tar.gz
+tar xzf piClock-v1.4.1-linux-arm64.tar.gz
+cd piClock-v1.4.1-linux-arm64
 sudo bash install.sh
 ```
 
@@ -306,10 +306,10 @@ Upstream reference is also available at [clock-8001/v4/osc.md](https://gitlab.co
 
 ## Project Status
 
-Last verified: **2026-08-05**
+Last verified: **2026-08-06**
 
 - This branch (`master`) provides the Raspberry Pi OS / Debian Trixie installer path, and is the primary platform.
-- Current release is `v1.4.0` (see Quick Start above).
+- Current release is `v1.4.1` (see Quick Start above).
 - Current branch operational state and validation targets live in [`HANDOFF.md`](HANDOFF.md).
 
 ## License

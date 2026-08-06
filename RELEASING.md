@@ -15,11 +15,11 @@ The release artifact is the **Trixie installer tarball**, built from `app/` on t
 
 ## Soak Gate (Required Before Release)
 
-Run the piClock test unit with `shakemon.sh` or manual monitoring for at least 24h.
+Run the piClock test unit with `shakemon.sh` or manual monitoring for at least 12h.
 
-**12h checkpoint** — record `VmRSS`, `VmSwap`, system swap, service PIDs, temp/throttle. If clean, continue soak.
+**6h checkpoint** — record `VmRSS`, `VmSwap`, system swap, service PIDs, temp/throttle. If clean, continue soak.
 
-**24h checkpoint** — repeat. Approve release only if:
+**12h checkpoint** — repeat. Approve release only if:
 - `VmSwap` for `sdl-clock` is 0 or flat
 - All service PIDs stable (no restarts)
 - No throttle events
