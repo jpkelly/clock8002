@@ -1,11 +1,11 @@
 # piClock Quick Start
 
-You have a piClock. The SD card is already in the unit. Plug it in and go.
+Welcome to your piClock. The SD card is already in the unit. Plug it in and go.
 
 ## Power up
 
 1. Plug a display into either HDMI port (the ports are not labeled).
-2. Plug Ethernet in if you have a network, or skip it and use the Wi-Fi hotspot.
+2. Plug Ethernet into the network interface. The network interface needs to be active for the clock to boot.
 3. Power the unit.
 
 The clock starts by itself. For about 30 seconds the HDMI screen shows the version and IP address.
@@ -49,6 +49,8 @@ This is a hotspot only. The clock does not join venue Wi-Fi as a client.
 | Label | What it is |
 |-------|------------|
 | HDMI x 2 (unlabeled) | Main clock on the first display you plug in. Second display mirrors the clock, or shows full-screen PerfectCue icons if you turn that on in the web UI. |
+| RJ45 (unlabeled) | Network. This is the Raspberry Pi Ethernet port. |
+| USB-C (unlabeled) | Power. Part of the HDMI expansion board. |
 | PerfectCue | RS-485 for a DSAN Perfect Cue. |
 | Limitimer | RS-485 for Limitimer. |
 | LTC | USB ADC for LTC timecode. |
@@ -56,7 +58,7 @@ This is a hotspot only. The clock does not join venue Wi-Fi as a client.
 
 ## What's new compared with clock-8001
 
-- 4 line, and 1-line text clocks
+- 4-line, and 1-line text clocks
 - Second HDMI: PerfectCue full-screen icons, or a mirror of the main clock
 - PerfectCue overlay position and size in the web UI
 - Font picker in the web UI
@@ -146,8 +148,9 @@ Keys on the card are **added** to the `pi` account on every boot. They are never
 
 ## If you cannot reach it
 
-1. Read the IP off the OLED, or off the HDMI overlay in the first 30 seconds.
-2. Try the hotspot: join **piClock-ap**, password **clockwork**, then http://piclock.local.
-3. If Ethernet still fails, power off, put the SD card in a computer, set `mode=dhcp` in `network.ini`, comment out `address` and `netmask`, and boot again.
+1. Confirm Ethernet is plugged into a network or a switch. The network interface needs to be active for the clock to boot.
+2. Read the IP off the OLED, or off the HDMI overlay in the first 30 seconds.
+3. Try the hotspot: join **piClock-ap**, password **clockwork**, then http://piclock.local.
+4. If Ethernet still fails, power off, put the SD card in a computer, set `mode=dhcp` in `network.ini`, comment out `address` and `netmask`, and boot again.
 
 Usual causes: spaces around the `=` in `network.ini`, netmask written as `255.255.255.0`, two units sharing a hostname or IP, or a static address inside the router's DHCP pool.
