@@ -11,3 +11,6 @@ __pycache__/
 
 # macOS
 **/.DS_Store
+
+# Local chassis records — not for origin
+docs/chassis-inventory.md
