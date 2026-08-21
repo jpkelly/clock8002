@@ -33,16 +33,16 @@ SSH login: **pi** / **clockworkadmin**
 
 Change the web password before you put the unit on a network you do not control.
 
-### Wi-Fi hotspot
+### Wi-Fi Access Point
 
-Out of the box the unit broadcasts its own hotspot. Join it from a laptop or phone, then open http://piclock.local.
+Out of the box the unit broadcasts its own access point. Join it from a laptop or phone, then open http://piclock.local (or the IP address).
 
 - Network name: **piClock-ap**
 - Password: **clockwork**
 
 The OLED Wi-Fi icon is lit while the hotspot is running.
 
-This is a hotspot only. The clock does not join venue Wi-Fi as a client.
+This is an access point for managing the piClock only. The clock does not join venue Wi-Fi as a client.
 
 ## Ports on the chassis
 
