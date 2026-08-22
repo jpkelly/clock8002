@@ -1,6 +1,6 @@
 # piClock Quick Start
 
-Welcome to your piClock. The SD card is already in the unit. Plug it in and go.
+Welcome to your piClock! The SD card is already in the unit. Plug it in and go.
 
 ## Power up
 
@@ -8,24 +8,25 @@ Welcome to your piClock. The SD card is already in the unit. Plug it in and go.
 2. Plug Ethernet into the network interface. The network interface needs to be active for the clock to boot.
 3. Power the unit.
 
-The clock starts by itself. For about 30 seconds the HDMI screen shows the version and IP address.
+When the clock boots up, an overlay displays on the screen for about 30 seconds showing the IP address and other info.
 
 The small OLED on the unit shows:
 
 - IP address
-- `piclock.local`
+- Hostname (`piclock.local` by default)
 - Web user and password
 - A Wi-Fi icon in the top-right corner while the hotspot is on
 
 ## Get in
 
-Pick whichever is easiest:
+Pick whichever is easiest. The default IP address is `192.168.8.245`:
 
 | How | Address |
 |-----|---------|
-| Browser on the same network | http://piclock.local |
-| Browser by IP | http://192.168.8.245 |
-| SSH | `ssh pi@piclock.local` |
+| Browser by hostname | `http://piclock.local` |
+| Browser by IP | `http://<IP address>` |
+| SSH by hostname | `ssh pi@piclock.local` |
+| SSH by IP | `ssh pi@<IP address>` |
 
 Web login: **admin** / **clockwork**
 
@@ -35,7 +36,7 @@ Change the web password before you put the unit on a network you do not control.
 
 ### Wi-Fi Access Point
 
-Out of the box the unit broadcasts its own access point. Join it from a laptop or phone, then open http://piclock.local (or the IP address).
+Out of the box the unit broadcasts its own access point. Join it, then open `piclock.local` (hostname) or the IP address to access.
 
 - Network name: **piClock-ap**
 - Password: **clockwork**
@@ -55,6 +56,7 @@ This is an access point for managing the piClock only. The clock does not join v
 | Limitimer | RS-485 for Limitimer. |
 | LTC | USB ADC for LTC timecode. |
 | -5V+ | Auxiliary 5 V power (green phoenix connector). |
+| 3-pin JST-SH (unlabeled) | Debug UART on the Raspberry Pi 5. Console access, boot diagnostics, and headless troubleshooting. |
 
 ## What's new compared with clock-8001
 
