@@ -42,9 +42,54 @@ var textClock struct {
 
 // Font sizes. Rpi <4 is limited to 2048x2048 texture size.
 const (
-	labelSize = 200
-	iconSize  = 200
+	defaultLabelSize = 200
+	iconSize         = 200
+
+	// Upper bound accepted for label-size. The real limit is the renderer's
+	// texture size -- 2048x2048 on rpi models before the 4 -- and labels are
+	// truncated to 10 characters, so the default 200 already renders close to
+	// that on an older pi. This leaves headroom for boards with larger texture
+	// limits while refusing values that cannot render anywhere.
+	maxLabelSize = 512
 )
+
+// labelFontSize returns the configured label font size, falling back to the
+// default for a non-positive value. openFont panics on a size SDL_ttf rejects,
+// so a hand-edited label-size=0 would otherwise take the clock down at startup
+// rather than just rendering badly.
+func labelFontSize() int {
+	if options.LabelFontSize <= 0 {
+		return defaultLabelSize
+	}
+	return options.LabelFontSize
+}
+
+// overrideLabelRect applies the configured label rect to r, in 1920x1080
+// coordinates. label-w is the switch for the whole feature: at 0 the face keeps
+// its built-in layout, so a config that does not set it is unaffected.
+//
+// Once enabled, position is explicit: X and Y are applied as given, because 0
+// is a legitimate position (flush to the top or left edge) rather than "unset".
+// Height is the exception and is only overridden when positive, since a height
+// of 0 would collapse the label to nothing rather than fall back to the face's.
+//
+// useY is false for the multi-row faces, where Y is stepped per row and a fixed
+// value would stack every label on top of the first.
+func overrideLabelRect(r *sdl.FRect, useY bool) {
+	if options.LabelW <= 0 {
+		return
+	}
+	if options.LabelX >= 0 {
+		r.X = float32(options.LabelX)
+	}
+	r.W = float32(options.LabelW)
+	if options.LabelH > 0 {
+		r.H = float32(options.LabelH)
+	}
+	if useY && options.LabelY >= 0 {
+		r.Y = float32(options.LabelY)
+	}
+}
 
 func initTextClock() {
 	if textClock.numberFont != nil {
@@ -55,12 +100,35 @@ func initTextClock() {
 	if textClock.labelFont != nil {
 		textClock.labelFont.Close()
 	}
-	textClock.labelFont = openFont(options.LabelFont, labelSize)
+	textClock.labelFont = openFont(options.LabelFont, labelFontSize())
 
 	if textClock.iconFont != nil {
 		textClock.iconFont.Close()
 	}
 	textClock.iconFont = openFont(options.IconFont, iconSize)
+
+	if s := options.TextClockScale; s > 0 && (s < minTextClockScale || s > maxTextClockScale) {
+		log.Printf("text-clock-scale %v is outside %v-%v, using %v instead.",
+			s, minTextClockScale, maxTextClockScale, textClockScale())
+	}
+
+	if options.LabelFontSize <= 0 {
+		log.Printf("label-size %v is not usable, using %v instead.",
+			options.LabelFontSize, defaultLabelSize)
+	}
+
+	// The fonts have just been reopened, so every cached texture was rendered
+	// at the OLD size. preRenderFonts only re-renders the number glyphs; the
+	// label, AM/PM and tally textures are cached against their own text and
+	// renderLabel/renderAMPM/drawTally only re-render when that text changes.
+	// Clearing the cached strings forces a re-render on the next draw, without
+	// which a config reload that changes label-size leaves the old textures on
+	// screen indefinitely and the setting looks like it did nothing.
+	for i := range textClock.r {
+		textClock.r[i].label = ""
+		textClock.r[i].ampm = ""
+	}
+	textClock.tally = ""
 
 	textClock.glyphRegexp = regexp.MustCompile(`^[\d:]+$`)
 	preRenderFonts()
@@ -165,6 +233,7 @@ func drawMaxClock(state *clock.State) {
 
 func drawSingleLineClock(state *clock.State) {
 	labelR := sdl.FRect{X: 25, Y: 115, H: 150, W: 900}
+	overrideLabelRect(&labelR, true)
 	// 25px margin bellow label
 	numberBox := sdl.FRect{X: 25, Y: 290, H: 440, W: 1920 - 50}
 	iconR := sdl.FRect{X: 25, Y: 290, H: 440, W: 300}
@@ -175,6 +244,12 @@ func drawSingleLineClock(state *clock.State) {
 	}
 
 	signalR := sdl.FRect{X: 1920 - 170, Y: 115, H: 150, W: 150}
+
+	// signalR is excluded here, unlike the multi-row faces: on this face the
+	// signal dot sits on the label line rather than beside the timer, and the
+	// label is not scaled, so scaling the dot would pull it away from the row
+	// it belongs to and down into the number box.
+	scaleRow(textClockScale(), &numberBox, &textR, &iconR)
 
 	if options.DrawBoxes {
 		// Draw the placeholder boxes for timers and labels
@@ -210,6 +285,7 @@ func drawSingleLineClock(state *clock.State) {
 
 func draw3TextClocks(state *clock.State) {
 	var x, y float32
+	scale := textClockScale()
 
 	for i := 0; i < 3; i++ {
 		if state.Clocks[i].Hidden {
@@ -226,7 +302,9 @@ func draw3TextClocks(state *clock.State) {
 		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 300}
 		x = 10
 		labelR := sdl.FRect{X: x, Y: y, W: 500, H: 100}
+		overrideLabelRect(&labelR, false)
 		signalR := sdl.FRect{X: iconR.X - 175, Y: y + 125, W: 150, H: 150}
+		scaleRow(scale, &numberBox, &textR, &iconR, &signalR)
 		if options.DrawBoxes {
 			// Draw the placeholder boxes for timers and labels
 			rectColor(&numberBox, colors.rowBG[i])
@@ -262,6 +340,7 @@ func draw3TextClocks(state *clock.State) {
 
 func draw2TextClocks(state *clock.State) {
 	var x, y float32
+	scale := textClockScale()
 
 	for i := 0; i < 2; i++ {
 		if state.Clocks[i].Hidden {
@@ -277,7 +356,9 @@ func draw2TextClocks(state *clock.State) {
 		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 440}
 		x = 10
 		labelR := sdl.FRect{X: x, Y: y, W: 500, H: 150}
+		overrideLabelRect(&labelR, false)
 		signalR := sdl.FRect{X: iconR.X - 175, Y: y + 170, W: 150, H: 150}
+		scaleRow(scale, &numberBox, &textR, &iconR, &signalR)
 		if options.DrawBoxes {
 			rectColor(&numberBox, colors.rowBG[i])
 			rectColor(&labelR, colors.labelBG)
@@ -309,6 +390,7 @@ func draw2TextClocks(state *clock.State) {
 
 func draw4TextClocks(state *clock.State) {
 	var x, y float32
+	scale := textClockScale()
 
 	for i := 0; i < 4; i++ {
 		if state.Clocks[i].Hidden {
@@ -324,7 +406,9 @@ func draw4TextClocks(state *clock.State) {
 		iconR := sdl.FRect{X: x, Y: y, W: 300, H: 210}
 		x = 10
 		labelR := sdl.FRect{X: x, Y: y, W: 500, H: 80}
+		overrideLabelRect(&labelR, false)
 		signalR := sdl.FRect{X: iconR.X - 175, Y: y + 95, W: 120, H: 120}
+		scaleRow(scale, &numberBox, &textR, &iconR, &signalR)
 		if options.DrawBoxes {
 			rectColor(&numberBox, colors.rowBG[i])
 			rectColor(&labelR, colors.labelBG)
@@ -615,6 +699,69 @@ func renderedTextRight(tex *sdl.Texture, r sdl.FRect) float32 {
 	w, h, _ := tex.Size()
 	dest := centerRect(w, h, r)
 	return dest.X + dest.W
+}
+
+// Supported range for options.TextClockScale. 1.0 is the historical layout and
+// the default; anything below minTextClockScale shrinks the timers past the
+// point of being readable across a room.
+const (
+	minTextClockScale = 0.5
+	maxTextClockScale = 1.0
+)
+
+// textClockScale returns options.TextClockScale clamped to the supported range.
+// The web UI validates the same range, but clock.ini is hand-editable, so an
+// out-of-range value is clamped rather than allowed to render an unusable face.
+//
+// A non-positive value means the option was never set, and is treated as 1.0
+// rather than clamped up to minTextClockScale: the zero value must render the
+// historical layout, so a config predating this option is unaffected.
+func textClockScale() float32 {
+	s := options.TextClockScale
+	if s <= 0 || s > maxTextClockScale {
+		return maxTextClockScale
+	}
+	if s < minTextClockScale {
+		return minTextClockScale
+	}
+	return float32(s)
+}
+
+// scaleRectAbout scales r by scale about the point (ax, ay).
+//
+// Every rect in a row must be scaled about the SAME anchor, otherwise the row
+// stops composing: scaling each rect about its own center pulls each one
+// towards a different point, so the icon walks out of the number box it is
+// meant to sit in and the digits overflow the box's right edge. Anchoring the
+// whole row on one point is a similarity transform, which preserves the
+// relative geometry exactly at any scale.
+//
+// Scaling the destination rect is what actually resizes a timer on screen:
+// copyIntoRect fits the texture into the rect with centerRect, so on-screen
+// size follows the rect, not the font size it was rendered at.
+func scaleRectAbout(r *sdl.FRect, ax, ay, scale float32) {
+	if scale >= 1.0 || scale <= 0 || r.W <= 0 || r.H <= 0 {
+		return
+	}
+	r.X = ax + (r.X-ax)*scale
+	r.Y = ay + (r.Y-ay)*scale
+	r.W *= scale
+	r.H *= scale
+}
+
+// scaleRow scales a text clock row's rects about the center of its number box,
+// so the row shrinks as one composition and stays centered in the space it had.
+// Labels are deliberately not passed here: they keep their position and size.
+func scaleRow(scale float32, numberBox *sdl.FRect, rects ...*sdl.FRect) {
+	if scale >= 1.0 || scale <= 0 {
+		return
+	}
+	ax := numberBox.X + numberBox.W/2
+	ay := numberBox.Y + numberBox.H/2
+	for _, r := range rects {
+		scaleRectAbout(r, ax, ay, scale)
+	}
+	scaleRectAbout(numberBox, ax, ay, scale)
 }
 
 func centerRect(w, h float32, r sdl.FRect) sdl.FRect {

@@ -31,6 +31,14 @@ func ValidateTimer(timer int, title string) (msg string) {
 	return
 }
 
+// ValidateFloatRange checks that a float is within an inclusive range
+func ValidateFloatRange(value, min, max float64, title string) (msg string) {
+	if value < min || value > max {
+		msg = fmt.Sprintf("<li>%s: not in range %g-%g (%g)</li>", title, min, max, value)
+	}
+	return
+}
+
 // ValidateColor checks for valid CSS color
 func ValidateColor(color string, title string) (msg string) {
 	match, err := regexp.MatchString(`^#([0-9a-fA-F]{3}){1,2}$`, color)

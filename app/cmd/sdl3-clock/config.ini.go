@@ -437,6 +437,18 @@ label-bg-alpha={{.LabelBGAlpha}}
 # Numbers font size
 numbers-size={{.NumberFontSize}}
 
+# Label font size
+label-size={{.LabelFontSize}}
+
+# Label rect in 1920x1080 coordinates. label-w=0 keeps the built-in layout.
+label-x={{.LabelX}}
+label-y={{.LabelY}}
+label-w={{.LabelW}}
+label-h={{.LabelH}}
+
+# Scale for text clock timers, icons and signal dots, 0.5-1.0
+text-clock-scale={{printf "%.2f" .TextClockScale}}
+
 # Engine internals
 
 # Set to true to output verbose debug information

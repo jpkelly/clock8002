@@ -563,6 +563,24 @@ timer-bg-alpha=255
 label-bg-color=#202020
 label-bg-alpha=255
 numbers-size=250
+# Label font size, 1-512. Also used for the AM/PM indicator and the OSC tally
+# text. Higher renders smoother letters; too high will crash the rpi, which is
+# limited to a 2048x2048 texture on models before the rpi 4.
+label-size=200
+# Label rect, in 1920x1080 coordinates (SDL scales to the real display).
+# label-w is the switch: leave it 0 to keep each face's built-in label layout.
+# Once it is set, label-x and label-y are applied as given, so 0 means the left
+# or top edge rather than "unset"; label-h of 0 keeps the face's own height.
+# label-y applies to the single-line face only -- the multi-row faces step Y
+# per row, so a fixed value would stack every label on the first.
+label-x=0
+label-y=0
+label-w=0
+label-h=0
+# Scale for text clock timers, icons and signal dots, 0.5-1.0.
+# 1.0 is the full row height; lower values shrink the timers in place
+# without moving the labels.
+text-clock-scale=1.00
 
 # Engine
 Debug=false
