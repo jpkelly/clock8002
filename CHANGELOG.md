@@ -1,3 +1,30 @@
+## Unreleased
+
+* Text clock
+  * Add `label-size` (1-512), the font size used to render text clock labels,
+    the AM/PM indicator and the OSC tally text. Replaces a hardcoded constant,
+    so labels can now be sized independently of the timer numbers
+    (`numbers-size`). Defaults to 200, the previous hardcoded value, so existing
+    configs render unchanged. A non-positive value falls back to the default and
+    logs: `openFont` panics on a size SDL_ttf rejects, so a hand-edited
+    `label-size=0` would otherwise stop the clock at startup.
+  * Re-render the cached label, AM/PM and tally textures when the fonts are
+    reopened. Those textures are cached against their own text, so a config
+    reload that changed only the font size left the old textures on screen and
+    the new size appeared to do nothing until the clock was restarted.
+  * Add `text-clock-scale` (web config: "Text clock scale"), a 0.5-1.0 scale for
+    the timer numbers, icons and signal dots on the `text`, `text2`, `text4`
+    and `single` faces. Each row is scaled as a single composition about the
+    centre of its number box, so the icon stays inside the box and the digits
+    stay within it at every scale; labels keep their position and size.
+    Defaults to 1.0, which renders identically to previous versions; configs
+    without the key are unaffected.
+    An out-of-range value in `clock.ini` is normalised on load, so it cannot
+    make the browser reject the whole config form on submit.
+    Scaling the destination rect is what actually resizes a timer — `copyIntoRect`
+    fits the texture with `centerRect`, so on-screen size follows the rect rather
+    than `numbers-size`. The `max` face is deliberately not scaled.
+
 ## Version 1.4.1 (2026-08-06) — Trixie
 
 * Network

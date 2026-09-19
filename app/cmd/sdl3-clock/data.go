@@ -101,6 +101,10 @@ type clockOptions struct {
 	FontPath       string `long:"font-path" description:"Path for loading font choices into web config" default:"."`
 	FullScreen     bool   `long:"fullscreen" description:"Start in full screen mode"`
 
+	// Text clock layout
+	TextClockScale float64 `long:"text-clock-scale" description:"Scale for text clock timers, icons and signal dots, 0.5-1.0" default:"1.0"`
+	LabelFontSize  int     `long:"label-size" description:"Size used to render text clock labels, AM/PM and OSC tally text, too high will crash on the rpi" default:"200"`
+
 	SignalBrightness int    `long:"signal-hw-brightness" description:"Brightness for the hardware signal lamps, 0-255" default:"128"`
 	SignalType       string `long:"signal-hw-type" description:"Hardware signal type" default:"unicorn-hd" choice:"none" choice:"unicorn-hd"`
 	SignalFollow     bool   `long:"signal-hw-follow" description:"Hardware signal follows source 1"`
