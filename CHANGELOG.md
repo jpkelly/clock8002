@@ -1,3 +1,13 @@
+## Unreleased
+
+* Web config
+  * Fix the config page panicking instead of reporting validation errors. The
+    `FuncMap` `saveHandler` builds for the error re-render was missing the
+    `version` and `log` functions that `config.html` uses, so `t.Parse` failed
+    and the next line panicked — the user got a dead page, the config was not
+    saved, and the offending field was never named. Affected every validation
+    error (bad colour, missing font file, malformed address, invalid timezone).
+
 ## Version 1.4.1 (2026-08-06) — Trixie
 
 * Network
