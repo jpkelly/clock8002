@@ -393,6 +393,15 @@ func computeDerivedOptions() {
 	}
 	options.AppVersion = binaryAppVersion
 
+	// Normalise the text clock scale to the range the web form accepts. The
+	// draw code clamps too, but the raw value is what gets rendered into the
+	// form and written back to clock.ini, so a hand-edited out-of-range value
+	// would otherwise make the browser reject the entire config form on submit
+	// -- flagging a field the operator may not even be able to see.
+	if scale := float64(textClockScale()); scale != options.TextClockScale {
+		options.TextClockScale = scale
+	}
+
 	switch options.Face {
 	case "max":
 		options.textClock = true

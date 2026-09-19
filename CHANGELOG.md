@@ -1,3 +1,19 @@
+## Unreleased
+
+* Text clock
+  * Add `text-clock-scale` (web config: "Text clock scale"), a 0.5-1.0 scale for
+    the timer numbers, icons and signal dots on the `text`, `text2`, `text4`
+    and `single` faces. Each row is scaled as a single composition about the
+    centre of its number box, so the icon stays inside the box and the digits
+    stay within it at every scale; labels keep their position and size.
+    Defaults to 1.0, which renders identically to previous versions; configs
+    without the key are unaffected.
+    An out-of-range value in `clock.ini` is normalised on load, so it cannot
+    make the browser reject the whole config form on submit.
+    Scaling the destination rect is what actually resizes a timer — `copyIntoRect`
+    fits the texture with `centerRect`, so on-screen size follows the rect rather
+    than `numbers-size`. The `max` face is deliberately not scaled.
+
 ## Version 1.4.1 (2026-08-06) — Trixie
 
 * Network

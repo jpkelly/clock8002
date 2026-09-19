@@ -107,6 +107,10 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"number\" min=\"0\" max=\"255\" id=\"%s\" name=\"%s\" value=\"%d\" /></label>", id, label, id, id, value)
 				return htmlTemplate.HTML(ret)
 			},
+			"float": func(id string, label string, min float64, max float64, step float64, value float64) htmlTemplate.HTML {
+				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"number\" min=\"%g\" max=\"%g\" step=\"%g\" id=\"%s\" name=\"%s\" value=\"%g\" /></label>", id, label, min, max, step, id, id, value)
+				return htmlTemplate.HTML(ret)
+			},
 			"uint8": func(id string, label string, value uint8) htmlTemplate.HTML {
 				ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"number\" min=\"0\" max=\"255\" id=\"%s\" name=\"%s\" value=\"%d\" /></label>", id, label, id, id, value)
 				return htmlTemplate.HTML(ret)
@@ -308,6 +312,12 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	newOptions.NumberFontSize, err = strconv.Atoi(r.FormValue("NumberFontSize"))
 	errors += util.ValidateNumber(err, "Number font size")
 
+	newOptions.TextClockScale, err = strconv.ParseFloat(r.FormValue("TextClockScale"), 64)
+	errors += util.ValidateNumber(err, "Text clock scale")
+	if err == nil {
+		errors += util.ValidateFloatRange(newOptions.TextClockScale, minTextClockScale, maxTextClockScale, "Text clock scale")
+	}
+
 	alpha, err := strconv.Atoi(r.FormValue("row1-alpha"))
 	errors += util.ValidateNumber(err, "Row1 alpha")
 	newOptions.Row1Alpha = uint8(alpha)
@@ -419,6 +429,10 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 				},
 				"byte": func(id string, label string, value int) htmlTemplate.HTML {
 					ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"number\" min=\"0\" max=\"255\" id=\"%s\" name=\"%s\" value=\"%d\" /></label>", id, label, id, id, value)
+					return htmlTemplate.HTML(ret)
+				},
+				"float": func(id string, label string, min float64, max float64, step float64, value float64) htmlTemplate.HTML {
+					ret := fmt.Sprintf("<label for=\"%s\"><span>%s</span><input type=\"number\" min=\"%g\" max=\"%g\" step=\"%g\" id=\"%s\" name=\"%s\" value=\"%g\" /></label>", id, label, min, max, step, id, id, value)
 					return htmlTemplate.HTML(ret)
 				},
 				"uint8": func(id string, label string, value uint8) htmlTemplate.HTML {

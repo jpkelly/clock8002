@@ -563,6 +563,10 @@ timer-bg-alpha=255
 label-bg-color=#202020
 label-bg-alpha=255
 numbers-size=250
+# Scale for text clock timers, icons and signal dots, 0.5-1.0.
+# 1.0 is the full row height; lower values shrink the timers in place
+# without moving the labels.
+text-clock-scale=1.00
 
 # Engine
 Debug=false
