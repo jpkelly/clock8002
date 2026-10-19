@@ -1,3 +1,17 @@
+## Unreleased — Trixie
+
+* Boot / network
+  * Fix a ~30s delay before the clock appears when the unit boots with no
+    Ethernet cable. `piclock-network.sh` looked up the wired NetworkManager
+    connection by the device it was active on, and a wired connection only
+    activates once the cable has a link, so with no cable the lookup retried
+    for 30s and then exited — holding `clock8002.service` back (the HDMI showed
+    a login prompt meanwhile) and skipping the Wi-Fi AP and hostname steps. The
+    script now finds the connection by the interface it is bound to, saves the
+    `network.ini` settings without waiting for a link (NetworkManager applies
+    them when a cable is connected), and always runs the AP and hostname steps.
+    With no cable the clock now starts at ~9s instead of ~36s.
+
 ## Version 1.4.1 (2026-08-06) — Trixie
 
 * Network

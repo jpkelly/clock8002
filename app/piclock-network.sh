@@ -33,35 +33,73 @@ elif [ "$NTP_ENABLED" = "true" ]; then
     fi
 fi
 
-# Find the wired Ethernet connection.
+# Find the wired Ethernet interface.
 # Pi 5 Trixie uses end0 or eth0 depending on configuration.
-# We look for the NM connection bound to the first wired interface we find,
-# retrying for up to 30 seconds in case it hasn't come up yet.
-find_wired_con() {
+find_wired_iface() {
     for iface in end0 eth0 enp0s31f6; do
-        local con
-        con=$(nmcli -t -f NAME,DEVICE con show | grep ":${iface}$" | head -1 | cut -d: -f1)
-        if [ -n "$con" ]; then
-            echo "$con"
+        if [ -e "/sys/class/net/${iface}" ]; then
+            echo "$iface"
             return 0
         fi
     done
     return 1
 }
 
-NM_CON=""
-for i in $(seq 1 30); do
-    NM_CON=$(find_wired_con) && break
+# Print the UUID of the NM ethernet connection bound to interface $1, falling
+# back to one not bound to any interface.
+# This matches on the interface the connection is bound to, not the device it
+# is active on: a wired connection only activates once the cable has a link,
+# so with no cable plugged in an active-device lookup never matches.
+find_wired_con() {
+    local uuid bound fallback=""
+    for uuid in $(nmcli -g UUID,TYPE con show | grep ':802-3-ethernet$' | cut -d: -f1); do
+        bound=$(nmcli -g connection.interface-name con show uuid "$uuid")
+        if [ "$bound" = "$1" ]; then
+            echo "$uuid"
+            return 0
+        fi
+        [ -z "$bound" ] && [ -z "$fallback" ] && fallback="$uuid"
+    done
+    [ -n "$fallback" ] && echo "$fallback"
+}
+
+# Bring the wired connection up so modified settings take effect now. Without
+# a link (no cable, or still negotiating) there is nothing to bring up, and NM
+# applies the saved settings by itself when the link comes up, so don't wait
+# for it.
+activate_wired() {
+    if [ "$(cat "/sys/class/net/${WIRED_IFACE}/carrier" 2>/dev/null)" = "1" ]; then
+        nmcli --wait 10 con up "$NM_CON"
+    else
+        echo "No link on ${WIRED_IFACE} yet; NetworkManager will apply the settings when it comes up."
+    fi
+}
+
+WIRED_IFACE=""
+for i in $(seq 1 10); do
+    WIRED_IFACE=$(find_wired_iface) && break
     sleep 1
 done
 
-if [ -z "$NM_CON" ]; then
-    echo "No wired NetworkManager connection found after 30s."
-    exit 0
+NM_CON=""
+if [ -n "$WIRED_IFACE" ]; then
+    NM_CON=$(find_wired_con "$WIRED_IFACE")
+    # With no saved wired connection and no automatic default from NM yet,
+    # create one so the settings below have somewhere to go.
+    if [ -z "$NM_CON" ] && [ -n "$NET_MODE" ]; then
+        echo "Creating wired connection for ${WIRED_IFACE}..."
+        nmcli con add type ethernet ifname "$WIRED_IFACE" con-name piclock-wired autoconnect yes
+        NM_CON=$(find_wired_con "$WIRED_IFACE")
+    fi
 fi
-echo "Using wired connection: $NM_CON"
 
-if [ "$NET_MODE" = "static" ]; then
+if [ -n "$NM_CON" ]; then
+    echo "Using wired connection: $(nmcli -g connection.id con show uuid "$NM_CON") on ${WIRED_IFACE}"
+fi
+
+if [ -z "$NM_CON" ]; then
+    echo "No wired interface or NetworkManager connection found; skipping wired settings."
+elif [ "$NET_MODE" = "static" ]; then
     NET_ADDR=$(parse_ini "$NETWORK_INI" network address)
     NET_MASK=$(parse_ini "$NETWORK_INI" network netmask)
     NET_GW=$(parse_ini "$NETWORK_INI" network gateway)
@@ -81,7 +119,7 @@ if [ "$NET_MODE" = "static" ]; then
         else
             nmcli con mod "$NM_CON" ipv4.dns ""
         fi
-        nmcli --wait 10 con up "$NM_CON"
+        activate_wired
     else
         echo "Warning: static mode set but address/netmask missing."
     fi
@@ -90,7 +128,7 @@ elif [ "$NET_MODE" = "dhcp" ]; then
     if [ "$CURRENT_METHOD" != "auto" ]; then
         echo "Switching to DHCP..."
         nmcli con mod "$NM_CON" ipv4.method auto ipv4.addresses "" ipv4.gateway "" ipv4.dns ""
-        nmcli --wait 10 con up "$NM_CON"
+        activate_wired
     else
         echo "Network mode: DHCP (already set)."
     fi
@@ -117,7 +155,7 @@ elif [ "$NET_MODE" = "dual" ]; then
         else
             nmcli con mod "$NM_CON" ipv4.dns ""
         fi
-        nmcli --wait 10 con up "$NM_CON"
+        activate_wired
     else
         echo "Warning: dual mode set but address/netmask missing."
     fi
